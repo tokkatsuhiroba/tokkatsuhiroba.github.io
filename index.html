@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TOKKATU広場</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="特別活動の情報が溜まる場。ニュース・一次資料・学級会の学習過程・研究会カレンダー。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDPMincho&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FCFCFA;
+  --ink:#1C1C1A;
+  --accent:#1F5C3F;   /* 深い緑：締切・選択中 */
+  --alert:#B3261E;    /* 赤：研究会の当日（カレンダーだけで使う） */
+  --rule:#E3E2DC;
+  --mute:#6E6D67;
+  --tint:#F1F6F3;     /* 緑のごく薄い面 */
+  --pad:20px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px;
+  line-height:1.9;
+  padding-bottom:88px;
+}
+html[dir="rtl"] body{font-family:"Noto Sans Arabic","BIZ UDPGothic",sans-serif;line-height:2}
+.wrap{max-width:620px;margin:0 auto;padding:0 var(--pad)}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.skip{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip:focus{
+  width:auto;height:auto;clip:auto;overflow:visible;white-space:normal;
+  inset-inline-start:var(--pad);top:8px;z-index:20;background:#fff;
+  border:1px solid var(--accent);border-radius:5px;padding:8px 12px;font-size:13px;
+}
+
+/* ── ヘッダー ── */
+header{border-bottom:1px solid var(--rule);background:var(--bg);position:sticky;top:0;z-index:10}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0 12px}
+.logo{
+  font-family:"BIZ UDPMincho","Hiragino Mincho ProN",serif;
+  font-size:22px;letter-spacing:.10em;line-height:1.2;margin:0;font-weight:400;
+}
+html[dir="rtl"] .logo{font-family:"Noto Sans Arabic",serif;letter-spacing:0;font-weight:700;font-size:20px}
+.hd-r{display:flex;align-items:center;gap:7px;flex:none}
+.stamp{
+  font-size:11px;letter-spacing:.06em;color:var(--mute);
+  border:1px solid var(--rule);border-radius:3px;padding:3px 6px;line-height:1.4;
+}
+.lang{
+  font:inherit;font-size:12px;line-height:1.4;cursor:pointer;
+  border:1px solid var(--accent);color:var(--accent);background:#fff;
+  border-radius:4px;padding:4px 9px;font-weight:700;
+}
+.search{position:relative;padding-bottom:12px}
+.search input{
+  width:100%;font:inherit;font-size:15px;
+  padding:11px 13px;border:1px solid var(--rule);border-radius:6px;
+  background:#fff;color:var(--ink);
+}
+.search input::placeholder{color:#A8A7A1}
+.search input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+
+/* ── ページ・節 ── */
+.js [data-page]{display:none}
+.js [data-page].is-on{display:block}
+[data-page]:focus{outline:none}
+.lead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:24px 0 4px}
+.lead h1{font-size:17px;margin:0;letter-spacing:.04em}
+.lead .meta{font-size:12.5px;color:var(--mute);flex:none}
+.sec{padding:26px 0 4px;border-top:1px solid var(--rule);margin-top:26px}
+.sec.first{border-top:0;margin-top:0}
+.sec h2{font-size:15px;margin:0 0 2px;letter-spacing:.04em}
+.sec .note{font-size:13px;color:var(--mute);margin:0 0 12px;line-height:1.8}
+.placeholder{font-size:13.5px;color:var(--mute);line-height:1.8;margin:0;padding:14px 0 2px}
+
+/* ── 記事 ── */
+article{padding:24px 0;border-bottom:1px solid var(--rule);position:relative}
+.src{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--mute);line-height:1.4;flex-wrap:wrap}
+.src .name{color:var(--accent);font-weight:700;letter-spacing:.02em}
+.src .dot{width:3px;height:3px;border-radius:50%;background:var(--rule);flex:none}
+article h3{font-size:18.5px;line-height:1.6;margin:9px 0 8px;font-weight:700;letter-spacing:.01em}
+article h3 a{color:var(--ink);text-decoration:none}
+article h3 a::after{content:"";position:absolute;inset:0}
+article h3 a:hover{text-decoration:underline}
+article h3 a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+article .acts{position:relative;z-index:1}
+@media (hover:none){ article:active{background:#F4F4F1} }
+.sum{font-size:15px;line-height:1.95;color:#33322E;margin:0}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;flex-wrap:wrap}
+.rank{display:flex;align-items:center;gap:8px;flex:none}
+.rank .lb{font-size:11.5px;color:var(--mute);letter-spacing:.06em}
+.bars{display:flex;gap:3px}
+.bars i{width:12px;height:4px;background:var(--rule);border-radius:1px;display:block}
+.bars i.on{background:var(--accent)}
+.acts{display:flex;align-items:center;gap:6px}
+
+/* ── ボタン ── */
+.btn{
+  font:inherit;font-size:12.5px;line-height:1.4;
+  border:1px solid var(--rule);background:#fff;color:var(--mute);
+  border-radius:5px;padding:9px 11px;cursor:pointer;text-decoration:none;display:inline-block;
+}
+.btn.on{border-color:var(--accent);color:var(--accent);font-weight:700;background:var(--tint)}
+.btn.link{color:var(--accent);border-color:var(--accent)}
+.btn.wide{display:block;width:100%;text-align:center;font-size:14px;padding:13px 11px;color:var(--accent);border-color:var(--accent)}
+
+/* ── 自作SVG ── */
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.thumb{flex:none;width:42px;height:53px;color:var(--accent)}
+.gthumb{flex:none;width:40px;height:40px;color:var(--accent)}
+.sill{flex:none;width:60px;height:41px;color:var(--accent)}
+html[data-w="pc"] .thumb{width:50px;height:63px}
+html[data-w="pc"] .cycle{max-width:420px}
+html[data-w="pc"] .sill{width:72px;height:49px}
+
+/* ── 初心者向けの3つのポイント ── */
+.leadline{
+  font-size:15.5px;line-height:1.9;margin:2px 0 14px;color:var(--ink);
+  border-inline-start:3px solid var(--accent);padding-inline-start:11px;
+}
+.pts{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+html[data-w="pc"] .pts{grid-template-columns:1fr 1fr}
+.pt{
+  display:flex;align-items:flex-start;gap:11px;
+  border:1px solid var(--rule);border-radius:6px;background:#fff;padding:13px 14px;
+}
+.pt .pn{
+  flex:none;width:25px;height:25px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;margin-top:2px;
+}
+.pt b{display:block;font-size:15.5px;line-height:1.65;font-weight:700}
+.pt span.ps{display:block;font-size:13.5px;line-height:1.85;color:#33322E;margin-top:3px}
+
+/* つまずき → こうする（色だけに頼らず、ラベルの文字でも分かるようにする） */
+.fix{display:grid;gap:9px;margin-top:14px}
+html[data-w="pc"] .fix{grid-template-columns:1fr 1fr}
+.fx{border:1px solid var(--rule);border-radius:6px;padding:12px 13px;background:#fff}
+.fx .fl{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+  border-radius:3px;padding:2px 8px;line-height:1.7;margin-bottom:5px;
+}
+.fx.bad{border-color:#D9BDB9}
+.fx.bad .fl{background:var(--alert);color:#fff}
+.fx.good{border-color:var(--accent)}
+.fx.good .fl{background:var(--accent);color:#fff}
+.fx p{font-size:13.5px;line-height:1.85;margin:0;color:#33322E}
+.fixarrow{text-align:center;color:var(--mute);font-size:13px;line-height:1;padding:1px 0}
+html[data-w="pc"] .fixarrow{display:none}
+
+.tomorrow{
+  display:flex;align-items:flex-start;gap:11px;margin-top:14px;
+  border:1px solid var(--accent);border-radius:6px;background:var(--tint);padding:13px 14px;
+}
+.tomorrow .tl{
+  flex:none;font-size:12px;font-weight:700;color:#fff;background:var(--accent);
+  border-radius:3px;padding:3px 8px;line-height:1.6;
+}
+.tomorrow span.tt2{font-size:14.5px;line-height:1.85;font-weight:700}
+
+/* ── 外から借りてくる資料（写真・動画） ── */
+.pick3{display:grid;gap:10px;margin:10px 0 0}
+html[data-w="pc"] .pick3{grid-template-columns:repeat(3,1fr)}
+.way{border:1px solid var(--rule);border-radius:6px;background:#fff;padding:13px 14px}
+.way .wh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.way .wh b{font-size:14.5px;line-height:1.5}
+.way dl{margin:0;font-size:13px;line-height:1.85}
+.way dt{color:var(--accent);font-weight:700;margin-top:6px}
+.way dd{margin:0;color:#33322E}
+.shot{margin:12px 0 0;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:#fff}
+.shot img{display:block;width:100%;height:auto}
+.shot figcaption{font-size:12px;line-height:1.75;color:var(--mute);padding:9px 11px;border-top:1px solid var(--rule)}
+.shot figcaption b{color:var(--ink)}
+.cred{font-size:11px;color:var(--mute);line-height:1.7;margin:4px 0 0}
+.slot{border:1px dashed var(--rule);border-radius:6px;padding:14px;text-align:center;font-size:12.5px;color:var(--mute);line-height:1.7}
+.step-body .cred{font-size:12px;color:var(--mute);line-height:1.75}
+.step-body .leadline{font-size:15.5px}
+.step-body .fx p{font-size:14px}
+.step-body .pt .ps{font-size:14px}
+.step-body .slot{font-size:12.5px;color:var(--mute);text-align:center}
+.step-body .talk-cap{font-size:12.5px}
+.step-body .ytbtn b{font-size:14px}
+.step-body .ytbtn span span{font-size:12.5px}
+
+.yt{margin:12px 0 0}
+.ytbtn{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:start;cursor:pointer;
+  border:1px solid var(--accent);border-radius:6px;background:#fff;padding:12px 13px;font:inherit;color:var(--ink);
+}
+.ytbtn:hover{background:var(--tint)}
+.ytbtn .play{flex:none;width:38px;height:38px;border-radius:50%;background:var(--alert);position:relative}
+.ytbtn .play::after{content:"";position:absolute;left:14px;top:11px;border-style:solid;border-width:8px 0 8px 12px;border-color:transparent transparent transparent #fff}
+.ytbtn b{display:block;font-size:15px;line-height:1.5}
+.ytbtn span{display:block;font-size:12.5px;color:var(--mute);line-height:1.65}
+.ytalt{display:block;font-size:12.5px;line-height:1.7;margin:6px 0 0;text-align:center}
+.ytalt a{color:var(--accent)}
+.ytframe{position:relative;padding-top:56.25%;border-radius:6px;overflow:hidden;border:1px solid var(--rule)}
+.ytframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+/* ── 出し合う → くらべ合う → まとめる ── */
+.talk{border:1px solid var(--rule);border-radius:6px;background:#fff;padding:12px;margin:12px 0 0}
+.talk-stage{position:relative;height:196px;background:var(--tint);border-radius:4px;overflow:hidden}
+html[data-w="pc"] .talk-stage{height:230px}
+.tc{
+  position:absolute;width:44%;box-sizing:border-box;
+  background:#fff;border:1px solid var(--rule);border-radius:4px;
+  font-size:11px;line-height:1.5;padding:5px 7px;color:var(--ink);
+}
+html[data-w="pc"] .tc{width:30%;font-size:12px}
+.tc.final{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;width:76%;opacity:0}
+@media (prefers-reduced-motion:no-preference){
+  .tc{transition:left .55s ease,top .55s ease,opacity .45s ease,transform .55s ease}
+}
+.talk[data-stage="1"] .tc{left:var(--x1);top:var(--y1)}
+.talk[data-stage="2"] .tc{left:var(--x2);top:var(--y2)}
+.talk[data-stage="3"] .tc{left:var(--x3);top:var(--y3);opacity:.25}
+.talk[data-stage="3"] .tc.keep{opacity:1;border-color:var(--accent);background:#fff}
+.talk[data-stage="3"] .tc:not(.keep):not(.final){opacity:.18}
+.talk[data-stage="3"] .tc.final{opacity:1}
+.talk[data-stage="1"] .tc.final,.talk[data-stage="2"] .tc.final{opacity:0}
+.talk-nav{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.talk-nav button{
+  font:inherit;font-size:12px;line-height:1.5;cursor:pointer;padding:9px 4px;text-align:center;
+  border:1px solid var(--rule);border-radius:5px;background:#fff;color:var(--mute);
+}
+.talk-nav button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700;background:var(--tint)}
+.talk-cap{font-size:12.5px;line-height:1.8;color:#33322E;margin:10px 0 0;min-height:3.6em}
+.talk-play{margin-top:8px}
+
+/* ── 学習過程のサイクル図 ── */
+.cycwrap{display:flex;justify-content:center;padding:4px 0 10px}
+.cycle{width:100%;max-width:330px;height:auto;color:var(--ink)}
+.cycle .node{cursor:pointer}
+.cycle .node circle{fill:#fff;stroke:var(--accent);stroke-width:1.8}
+.cycle .node:hover circle,.cycle .node:focus circle{fill:var(--tint)}
+.cycle .node.on circle{fill:var(--accent)}
+.cycle .node.on .nn,.cycle .node.on .nl{fill:#fff}
+.cycle .node:focus{outline:none}
+.cycle .node:focus-visible circle{stroke-width:3.5}
+.cycle text{text-anchor:middle;fill:var(--ink);font-family:inherit}
+.cycle .nn{font-size:16px;font-weight:700}
+.cycle .nl{font-size:12px}
+.cycle .cc{font-size:11px;fill:var(--mute)}
+
+/* ── 大きめのボタン（まなぶ・ひろば・マイの入口） ── */
+.tiles{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.tiles.two{grid-template-columns:1fr 1fr}
+.tile{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--rule);border-radius:6px;background:#fff;
+  padding:13px 14px;text-decoration:none;color:var(--ink);font-size:14.5px;line-height:1.6;
+  width:100%;font-family:inherit;text-align:start;cursor:pointer;
+}
+.tile:hover{border-color:var(--accent)}
+.tile .tt{font-weight:700;display:block}
+.tile .ts{display:block;font-size:12px;color:var(--mute);line-height:1.6;font-weight:400}
+.tile .go{font-size:12px;color:var(--accent);flex:none}
+.tile .go.ext{border:1px solid var(--rule);border-radius:3px;padding:2px 6px;color:var(--mute);letter-spacing:.06em}
+.tile .tl{flex:1;min-width:0}
+.tile:hover .thumb,.tile:hover .gthumb{color:var(--accent)}
+
+/* ── 一覧の行 ── */
+.rows{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.rows li{border-bottom:1px solid var(--rule)}
+.rows li:last-child{border-bottom:0}
+.rows a{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 2px;text-decoration:none;color:var(--ink);font-size:15px;line-height:1.7}
+.rows a:hover .t{text-decoration:underline}
+.rows .d{font-size:12.5px;color:var(--mute);flex:none}
+.rows .sub{display:block;font-size:13px;color:var(--mute);line-height:1.7}
+.rows .d.ext{font-size:11px;letter-spacing:.06em;border:1px solid var(--rule);border-radius:3px;padding:2px 6px;color:var(--mute);line-height:1.4}
+
+/* ── ホーム：いま気にすること ── */
+.soon{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.soon li{display:flex;align-items:center;gap:14px;border:1px solid var(--rule);border-radius:6px;background:#fff;padding:12px 14px}
+.soon .cd{flex:none;text-align:center;min-width:62px;line-height:1.25}
+.soon .cd b{display:block;font-size:25px;font-weight:700;letter-spacing:.02em}
+.soon .cd span{display:block;font-size:10.5px;color:var(--mute);letter-spacing:.06em}
+.soon li.dl .cd b{color:var(--accent)}
+.soon li.ev .cd b{color:var(--alert)}
+.soon .tx{font-size:14px;line-height:1.65}
+.soon .tx b{display:block;font-weight:700}
+.soon .tx span{display:block;font-size:12px;color:var(--mute)}
+.soon li.today{background:var(--tint)}
+
+/* ── 今週の特活 ── */
+.week{border:1px solid var(--rule);border-radius:6px;padding:16px;background:#fff}
+.week .k{font-size:12px;color:var(--mute);letter-spacing:.06em;margin:0}
+.week p.b{font-size:17px;font-weight:700;line-height:1.7;margin:4px 0 6px}
+.week p.s{font-size:14px;color:#33322E;line-height:1.9;margin:0}
+
+/* ── カレンダー ── */
+.cal{border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:#fff}
+.cal-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-bottom:1px solid var(--rule)}
+.cal-title{margin:0;font-size:14px;font-weight:700;letter-spacing:.04em}
+.cal-nav{font:inherit;font-size:12px;border:1px solid var(--rule);background:#fff;color:var(--mute);border-radius:5px;padding:7px 10px;cursor:pointer;flex:none}
+.cal-nav:hover{border-color:var(--accent);color:var(--accent)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.cal-grid .wd{font-size:10.5px;color:var(--mute);text-align:center;padding:5px 0;border-bottom:1px solid var(--rule);letter-spacing:.02em}
+.cal-cell{
+  min-height:76px;border-top:1px solid var(--rule);border-inline-end:1px solid var(--rule);
+  padding:3px 3px 5px;background:none;font:inherit;text-align:start;display:block;width:100%;
+  border-left:0;border-right:0;min-width:0;overflow:hidden;
+}
+button.cal-cell{cursor:pointer;border-inline-end:1px solid var(--rule)}
+button.cal-cell:hover{background:var(--tint)}
+button.cal-cell.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.cal-grid .cal-cell:nth-child(7n){border-inline-end:0}
+.cal-cell .n{font-size:11.5px;color:var(--mute);line-height:1.5}
+.cal-cell.today{background:var(--tint)}
+.cal-cell.today .n{color:var(--accent);font-weight:700}
+.cal-cell .mk{
+  margin-top:2px;font-size:9.5px;font-weight:700;line-height:1.4;
+  border-radius:3px;padding:2px 3px;color:#fff;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-all;
+}
+html[data-w="pc"] .cal-cell .mk{font-size:11px;padding:1px 5px}
+
+/* ── その日の中身 ── */
+.evbox{border:1px solid var(--accent);border-radius:6px;background:#fff;padding:15px 16px;margin-top:12px}
+.evbox .k{font-size:12px;color:var(--mute);margin:0 0 2px;letter-spacing:.04em}
+.evbox h3{font-size:16px;margin:0 0 8px;line-height:1.6}
+.evbox dl{margin:0 0 12px;font-size:13.5px;line-height:1.85}
+.evbox dt{color:var(--mute);font-size:12px;float:inline-start;width:5.2em;clear:both}
+.evbox dd{margin:0 0 0 5.2em}
+html[dir="rtl"] .evbox dd{margin:0 5.2em 0 0}
+.evbox .kind{display:inline-block;font-size:10.5px;font-weight:700;color:#fff;border-radius:3px;padding:1px 7px;line-height:1.7;margin-inline-end:6px}
+.evbox .kind.ev{background:var(--alert)}
+.evbox .kind.dl{background:var(--accent)}
+.evbox .none{font-size:12.5px;color:var(--mute);margin:0;line-height:1.7}
+.mk.ev{background:var(--alert)}
+.mk.dl{background:var(--accent)}
+.legend{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px 18px}
+.legend li{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mute)}
+.legend .mk{display:inline-block;font-size:10px;font-weight:700;border-radius:3px;padding:1px 6px;color:#fff;line-height:1.6}
+
+/* ── 学級会の学習過程（お悩み別の入口） ── */
+.steps{margin:0;padding:0;list-style:none}
+.step{border:1px solid var(--rule);border-radius:6px;background:#fff;margin-bottom:0}
+.step[open]{border-color:var(--accent)}
+.step summary{
+  display:flex;align-items:flex-start;gap:12px;padding:13px 14px;cursor:pointer;list-style:none;
+}
+.step summary::-webkit-details-marker{display:none}
+.step .no{
+  flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;margin-top:2px;
+}
+.step[open] .no{background:var(--accent);color:#fff}
+.step .sh{flex:1}
+.step .sh b{display:block;font-size:15px;font-weight:700;line-height:1.6}
+.step .sh span{display:block;font-size:12.5px;color:var(--mute);line-height:1.65}
+.step .pm{flex:none;font-size:12px;color:var(--accent);margin-top:4px}
+.step[open] .pm .p{display:none}
+.step .pm .m{display:none}
+.step[open] .pm .m{display:inline}
+.step-body{padding:2px 14px 15px;border-top:1px solid var(--rule);margin-top:2px}
+.step-body h4{font-size:12.5px;margin:14px 0 4px;letter-spacing:.06em;color:var(--accent)}
+.step-body p{font-size:14px;line-height:1.9;margin:0;color:#33322E}
+.step-body ul{margin:0;padding-inline-start:1.2em;font-size:14px;line-height:1.9;color:#33322E}
+.arrow{text-align:center;color:var(--mute);font-size:15px;line-height:1;padding:6px 0;user-select:none}
+.arrow b{color:var(--accent);font-size:12px;font-weight:400}
+.loop{
+  border:1px dashed var(--rule);border-radius:6px;padding:9px 12px;
+  font-size:12.5px;color:var(--mute);text-align:center;margin-top:8px;
+}
+.nayami{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.nayami button{
+  font:inherit;font-size:14px;line-height:1.6;text-align:start;width:100%;cursor:pointer;
+  border:1px solid var(--rule);border-radius:6px;background:#fff;color:var(--ink);padding:12px 13px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.nayami button:hover{border-color:var(--accent)}
+.nayami .to{flex:none;font-size:12.5px;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:3px 8px;line-height:1.6}
+
+/* ── サイトの足もと ── */
+.site-foot{border-top:1px solid var(--rule);margin-top:34px;background:var(--bg)}
+.site-foot .in{max-width:620px;margin:0 auto;padding:18px var(--pad) 22px}
+.site-foot p{margin:0 0 4px;font-size:11.5px;color:var(--mute);line-height:1.85}
+.site-foot a{color:var(--accent)}
+.about{font-size:12.5px;color:var(--mute);line-height:1.9;margin:0;padding-inline-start:1.1em}
+.about li{margin-bottom:2px}
+
+/* ── タブ ── */
+nav.tabbar{
+  position:fixed;left:0;right:0;bottom:0;background:var(--bg);
+  border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom);z-index:10;
+}
+.tabs{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{
+  font:inherit;font-size:12px;letter-spacing:.02em;text-align:center;text-decoration:none;
+  background:none;border:0;color:var(--mute);padding:13px 0 14px;cursor:pointer;
+  border-top:2px solid transparent;margin-top:-1px;
+}
+.tab[aria-current="page"]{color:var(--accent);font-weight:700;border-top-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+
+/* ── 画面の見せ方の切替 ── */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg .btn{text-align:center;font-size:13.5px;padding:12px 6px}
+
+/* ══ PC表示（html[data-w="pc"]／900px以上で自動、マイタブで固定も可） ══ */
+html[data-w="pc"] body{padding-bottom:0}
+html[data-w="pc"] .wrap{max-width:1040px}
+html[data-w="pc"] header{position:static}
+html[data-w="pc"] .hd{padding:24px 0 8px}
+html[data-w="pc"] .logo{font-size:26px}
+html[data-w="pc"] .search{padding-bottom:16px}
+html[data-w="pc"] .search input{max-width:340px}
+html[data-w="pc"] nav.tabbar{position:static;border-top:1px solid var(--rule);border-bottom:0;padding-bottom:0}
+html[data-w="pc"] .tabs{max-width:1040px;grid-template-columns:repeat(5,max-content);gap:2px;padding:0 calc(var(--pad) - 12px)}
+html[data-w="pc"] .tab{padding:12px;font-size:13.5px;border-top:0;border-bottom:2px solid transparent;margin-top:0}
+html[data-w="pc"] .tab[aria-current="page"]{border-top-color:transparent;border-bottom-color:var(--accent)}
+html[data-w="pc"] .lead{padding-top:32px}
+html[data-w="pc"] .lead h1{font-size:19px}
+html[data-w="pc"] .sec h2{font-size:16px}
+html[data-w="pc"] article{display:grid;grid-template-columns:190px 1fr;column-gap:30px;align-items:start;padding:26px 0}
+html[data-w="pc"] .src{grid-column:1;grid-row:1;flex-direction:column;align-items:flex-start;gap:1px;padding-top:5px}
+html[data-w="pc"] .src .dot{display:none}
+html[data-w="pc"] .src .name{font-size:13px;line-height:1.6}
+html[data-w="pc"] article h3{grid-column:2;grid-row:1;margin:0 0 9px;font-size:20px;line-height:1.55}
+html[data-w="pc"] .sum{grid-column:2;grid-row:2;font-size:16px}
+html[data-w="pc"] .foot{display:contents}
+html[data-w="pc"] .rank{grid-column:1;grid-row:2;flex-direction:column;align-items:flex-start;gap:5px}
+html[data-w="pc"] .acts{grid-column:2;grid-row:3;margin-top:16px}
+html[data-w="pc"] .rows{display:grid;grid-template-columns:1fr 1fr;column-gap:30px}
+html[data-w="pc"] .rows li{border-bottom:1px solid var(--rule)}
+html[data-w="pc"] .rows a{padding:15px 2px}
+html[data-w="pc"] .tiles{grid-template-columns:1fr 1fr}
+html[data-w="pc"] .nayami{grid-template-columns:1fr 1fr}
+html[data-w="pc"] .soon{grid-template-columns:1fr 1fr}
+html[data-w="pc"] .cal-cell{min-height:78px}
+html[data-w="pc"] .cal-cell .mk{font-size:11px}
+html[data-w="pc"] .week,html[data-w="pc"] .onboard,html[data-w="pc"] .steps,html[data-w="pc"] .cal{max-width:860px}
+html[data-w="pc"] .note,html[data-w="pc"] .placeholder,html[data-w="pc"] .about{max-width:760px}
+html[data-w="pc"] .site-foot .in{max-width:1040px}
+html[data-w="pc"] .btn.wide{width:auto;display:inline-block;padding:13px 24px}
+html[data-w="pc"] .seg{grid-template-columns:repeat(3,max-content)}
+html[data-w="pc"] .seg .btn{padding:11px 20px}
+
+/* ── はじめての方へ ── */
+.onboard{border:1px solid var(--rule);border-radius:6px;padding:16px;margin:0;background:#fff}
+.onboard h2{font-size:14px;margin:0 0 3px;letter-spacing:.04em}
+.onboard p{font-size:12.5px;color:var(--mute);margin:0 0 12px;line-height:1.7}
+.onboard .pick{display:grid;gap:8px}
+html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
+.onboard .pick .btn{font-size:14px;padding:13px 11px;text-align:center;color:var(--accent);border-color:var(--accent)}
+
+@media (prefers-reduced-motion:no-preference){
+  .btn,.tab,.rows a,.tile,.nayami button,.cal-nav{transition:background-color .12s,color .12s,border-color .12s}
+}
+</style>
+<script src="storage.js"></script>
+<script>
+/* 表示モードと言語を、描いてしまう前に決める。保存は storage.js の中だけ。 */
+(function(){
+  var d=document.documentElement, mq=window.matchMedia('(min-width:900px)');
+  d.className='js';
+  var view=(window.Store&&Store.get('view'))||'auto';
+  var lang=(window.Store&&Store.get('lang'))||'ja';
+  function applyView(){
+    var pc=(view==='pc')||(view==='auto'&&mq.matches);
+    d.setAttribute('data-w',pc?'pc':'sp');
+    d.setAttribute('data-view',view);
+  }
+  d.setAttribute('data-lang',lang);
+  d.lang=(lang==='ar')?'ar':'ja';
+  d.dir=(lang==='ar')?'rtl':'ltr';
+  window.__view={get:function(){return view;},set:function(v){view=v;if(window.Store)Store.set('view',v);applyView();},apply:applyView};
+  window.__langPref=lang;
+  applyView();
+  function onchange(){ if(view==='auto') applyView(); }
+  if(mq.addEventListener) mq.addEventListener('change',onchange); else if(mq.addListener) mq.addListener(onchange);
+  window.addEventListener('resize',onchange);
+  window.addEventListener('orientationchange',onchange);
+})();
+</script>
+</head>
+<body>
+
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <!-- 資料のサムネイル（紙は縦48×60） -->
+  <symbol id="t-kokuji" viewBox="0 0 48 60">
+    <rect x="4" y="2" width="40" height="56" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M4 4a2 2 0 0 1 2-2h36a2 2 0 0 1 2 2v11H4z" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".55" stroke-linecap="round">
+      <path d="M10 24h28M10 30h28M10 36h28M10 42h20M10 48h24"/>
+    </g>
+  </symbol>
+  <symbol id="t-kaisetsu" viewBox="0 0 48 60">
+    <rect x="4" y="2" width="40" height="56" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/>
+    <rect x="9" y="7" width="30" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".55" stroke-linecap="round">
+      <path d="M10 25h28M10 30h28M10 35h28M10 40h28M10 45h28M10 50h18"/>
+    </g>
+    <path d="M14 22v32" stroke="currentColor" stroke-width="1.6" opacity=".8"/>
+  </symbol>
+  <symbol id="t-shido" viewBox="0 0 48 60">
+    <rect x="4" y="2" width="40" height="56" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/>
+    <rect x="9" y="8" width="30" height="20" rx="1.5" fill="currentColor" opacity=".12"/>
+    <rect x="9" y="8" width="30" height="20" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <g stroke="currentColor" stroke-width="1.3" opacity=".7" stroke-linecap="round">
+      <path d="M13 14h12M13 19h18M13 24h8"/>
+    </g>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".5" stroke-linecap="round">
+      <path d="M10 36h28M10 42h28M10 48h20"/>
+    </g>
+  </symbol>
+  <symbol id="t-video" viewBox="0 0 48 60">
+    <rect x="3" y="12" width="42" height="30" rx="3" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M20 21.5v11l10-5.5z" fill="currentColor"/>
+    <path d="M16 48h16M20 42v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="t-form" viewBox="0 0 48 60">
+    <rect x="4" y="2" width="40" height="56" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.6"/>
+    <g stroke="currentColor" stroke-width="1.6">
+      <rect x="10" y="14" width="7" height="7" rx="1.5" fill="none"/>
+      <rect x="10" y="27" width="7" height="7" rx="1.5" fill="currentColor" opacity=".18"/>
+      <rect x="10" y="40" width="7" height="7" rx="1.5" fill="none"/>
+    </g>
+    <path d="M11.5 30l1.8 2 3.2-3.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".55" stroke-linecap="round">
+      <path d="M22 17.5h16M22 30.5h16M22 43.5h11"/>
+    </g>
+  </symbol>
+  <symbol id="t-web" viewBox="0 0 48 60">
+    <rect x="3" y="10" width="42" height="34" rx="3" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M3 19h42" stroke="currentColor" stroke-width="1.6"/>
+    <circle cx="8.5" cy="14.5" r="1.4" fill="currentColor"/><circle cx="13" cy="14.5" r="1.4" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="1.5" opacity=".55" stroke-linecap="round"><path d="M9 26h20M9 32h26M9 38h14"/></g>
+    <path d="M28 38l10-10M31 28h7v7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <!-- 学級会グッズのサムネイル（48×48） -->
+  <symbol id="g-post" viewBox="0 0 48 48">
+    <path d="M10 20h28v20a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2z" fill="currentColor" opacity=".12"/>
+    <path d="M10 20h28v20a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+    <path d="M14 20V9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v11" fill="#fff" stroke="currentColor" stroke-width="1.6"/>
+    <g stroke="currentColor" stroke-width="1.3" opacity=".6" stroke-linecap="round"><path d="M18 13h12M18 17h8"/></g>
+    <path d="M15 24h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="g-card" viewBox="0 0 48 48">
+    <rect x="7" y="10" width="34" height="28" rx="2.5" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
+    <rect x="7" y="10" width="34" height="7" rx="2.5" fill="currentColor"/>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".55" stroke-linecap="round"><path d="M12 24h24M12 30h16"/></g>
+  </symbol>
+  <symbol id="g-note" viewBox="0 0 48 48">
+    <path d="M24 12c-4-3-9-3-14-2v25c5-1 10-1 14 2z" fill="#fff" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M24 12c4-3 9-3 14-2v25c-5-1-10-1-14 2z" fill="#fff" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M24 12v25" stroke="currentColor" stroke-width="1.7"/>
+    <g stroke="currentColor" stroke-width="1.2" opacity=".5" stroke-linecap="round"><path d="M14 18h6M14 23h6M28 18h6M28 23h6"/></g>
+  </symbol>
+  <symbol id="g-shikai" viewBox="0 0 48 48">
+    <rect x="13" y="7" width="22" height="34" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
+    <g fill="currentColor"><circle cx="19" cy="15" r="2"/><circle cx="19" cy="23" r="2"/><circle cx="19" cy="31" r="2"/></g>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".55" stroke-linecap="round"><path d="M24 15h7M24 23h7M24 31h5"/></g>
+  </symbol>
+  <symbol id="g-flow" viewBox="0 0 48 48">
+    <rect x="9" y="7" width="30" height="8" rx="1.6" fill="currentColor" opacity=".14" stroke="currentColor" stroke-width="1.5"/>
+    <rect x="9" y="20" width="30" height="8" rx="1.6" fill="currentColor" opacity=".14" stroke="currentColor" stroke-width="1.5"/>
+    <rect x="9" y="33" width="30" height="8" rx="1.6" fill="currentColor" opacity=".14" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M24 15.5v4M24 28.5v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" marker-end="url(#ar2)"/>
+  </symbol>
+
+  <symbol id="g-corner" viewBox="0 0 48 48">
+    <rect x="5" y="8" width="38" height="30" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
+    <g fill="currentColor" opacity=".18"><rect x="10" y="13" width="12" height="9" rx="1"/><rect x="26" y="13" width="12" height="9" rx="1"/><rect x="10" y="26" width="12" height="9" rx="1"/><rect x="26" y="26" width="12" height="9" rx="1"/></g>
+    <g fill="none" stroke="currentColor" stroke-width="1.3"><rect x="10" y="13" width="12" height="9" rx="1"/><rect x="26" y="13" width="12" height="9" rx="1"/><rect x="10" y="26" width="12" height="9" rx="1"/><rect x="26" y="26" width="12" height="9" rx="1"/></g>
+    <path d="M24 38v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="g-digital" viewBox="0 0 48 48">
+    <rect x="12" y="5" width="24" height="38" rx="3" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
+    <rect x="16" y="11" width="16" height="4" rx="1" fill="currentColor" opacity=".2"/>
+    <g stroke="currentColor" stroke-width="1.4" opacity=".6" stroke-linecap="round"><path d="M16 21h16M16 26h16M16 31h10"/></g>
+    <circle cx="24" cy="38.5" r="1.6" fill="currentColor"/>
+  </symbol>
+
+  <!-- 学習過程の挿絵（64×44・顔は描かない） -->
+  <symbol id="s1" viewBox="0 0 64 44">
+    <path d="M18 20h28v16a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2z" fill="currentColor" opacity=".12" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M22 24h20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <rect x="26" y="5" width="14" height="12" rx="1.5" fill="#fff" stroke="currentColor" stroke-width="1.6" transform="rotate(-12 33 11)"/>
+    <g stroke="currentColor" stroke-width="1.2" opacity=".6" stroke-linecap="round"><path d="M28 9h9M27.5 12.5h6"/></g>
+  </symbol>
+  <symbol id="s2" viewBox="0 0 64 44">
+    <path d="M4 8h26v16H16l-6 6v-6H4z" fill="#fff" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="M60 18H34v16h14l6 6v-6h6z" fill="currentColor" opacity=".12" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+    <g stroke="currentColor" stroke-width="1.3" opacity=".6" stroke-linecap="round"><path d="M9 14h16M9 19h11M39 24h16M39 29h11"/></g>
+  </symbol>
+  <symbol id="s3" viewBox="0 0 64 44">
+    <path d="M6 10h24v14H18l-5 5v-5H6z" fill="#fff" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M58 10H34v14h12l5 5v-5h7z" fill="#fff" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M18 34h28" stroke="currentColor" stroke-width="1.6" opacity=".4"/>
+    <circle cx="32" cy="34" r="8" fill="currentColor"/>
+    <path d="M28.5 34l2.5 2.6 4.5-5" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="s4" viewBox="0 0 64 44">
+    <rect x="20" y="4" width="24" height="18" rx="1.6" fill="currentColor" opacity=".12" stroke="currentColor" stroke-width="1.6"/>
+    <g stroke="currentColor" stroke-width="1.3" opacity=".6" stroke-linecap="round"><path d="M24 10h16M24 15h10"/></g>
+    <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="14" cy="30" r="4"/><path d="M8 41c1-4 3-5 6-5s5 1 6 5"/>
+      <circle cx="50" cy="30" r="4"/><path d="M44 41c1-4 3-5 6-5s5 1 6 5"/>
+    </g>
+    <path d="M26 33h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" marker-end="url(#ar2)"/>
+  </symbol>
+  <symbol id="s5" viewBox="0 0 64 44">
+    <rect x="20" y="12" width="24" height="24" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.7"/>
+    <g stroke="currentColor" stroke-width="1.3" opacity=".6" stroke-linecap="round"><path d="M25 20h14M25 25h14M25 30h9"/></g>
+    <path d="M52 24a20 20 0 0 1-20 16A20 20 0 0 1 12 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" marker-end="url(#ar2)"/>
+    <path d="M12 24l-4 5M12 24l5 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  </symbol>
+
+  <marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+    <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+  </marker>
+</defs>
+</svg>
+
+<a class="skip" href="#main" data-ar="إلى المحتوى">本文へ</a>
+
+<header>
+  <div class="wrap">
+    <div class="hd">
+      <p class="logo">TOKKATU広場</p>
+      <div class="hd-r">
+        <span class="stamp" data-ar="بيانات تجريبية">見本データ</span>
+        <button class="lang" id="langBtn" type="button" lang="ar">عربي</button>
+      </div>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="ニュース・資料・用語をさがす" aria-label="さがす" data-ar-ph="ابحث في الأخبار والمواد والمصطلحات">
+    </div>
+  </div>
+  <nav class="tabbar" aria-label="メニュー">
+    <div class="tabs">
+      <a class="tab" href="#home" data-tab="home" data-ar="الرئيسية">ホーム</a>
+      <a class="tab" href="#news" data-tab="news" data-ar="الأخبار">ニュース</a>
+      <a class="tab" href="#manabu" data-tab="manabu" data-ar="التعلّم">まなぶ</a>
+      <a class="tab" href="#hiroba" data-tab="hiroba" data-ar="الساحة">ひろば</a>
+      <a class="tab" href="#my" data-tab="my" data-ar="حسابي">マイ</a>
+    </div>
+  </nav>
+</header>
+
+<main class="wrap" id="main">
+
+<!-- ═══ ホーム ═══ -->
+<section data-page="home" tabindex="-1" aria-labelledby="h-home">
+  <div class="lead">
+    <h1 id="h-home" data-ar="الرئيسية">ホーム</h1>
+    <span class="meta" id="todayLabel"></span>
+  </div>
+
+  <div class="sec first">
+    <h2 data-ar="ما يستحقّ انتباهك الآن">いま気にすること</h2>
+    <p class="note" data-ar="أقرب المواعيد النهائية وأيام انعقاد اللقاءات.">締切と当日が近いものから並びます。</p>
+    <ul class="soon" id="soonList"></ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="توكاتسو هذا الأسبوع">今週の特活</h2>
+    <p class="note" id="weekLabel">8月第4週</p>
+    <div class="week">
+      <p class="k" data-ar="في بداية الفصل الدراسي الثاني">2学期のはじめに</p>
+      <p class="b" data-ar="أعيدوا معًا تحديد أدوار المجموعات في الفصل">係活動を、もう一度みんなで決め直す</p>
+      <p class="s" data-ar="بدل الاستمرار بأدوار الفصل السابق، ابدأوا بسؤال: ما الأدوار التي يحتاجها فصلنا الآن؟ ليست توزيعًا للمهام، بل نشاطًا يجعل الفصل أفضل.">1学期の係をそのまま続けるのではなく、「クラスに今いる係は何か」を出し合うところから始めます。仕事の分担ではなく、クラスをよくする活動として立て直す週です。</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="أحدث الأخبار">最新のニュース</h2>
+    <p class="note" data-ar="اضغط لفتح المصدر الأصلي مباشرة.">押すと一次情報がそのまま開きます。</p>
+    <ul class="rows">
+      <li><a href="https://zentokkatsu.com/" target="_blank" rel="noopener noreferrer"><span class="t" data-ar="اختُتم المؤتمر الوطني الـ70 في طوكيو<span class='sub'>الجمعية الوطنية・8 أغسطس</span>">第70回の全国大会が東京で終了<span class="sub">全国特別活動研究会・8月8日</span></span><span class="d ext">外部</span></a></li>
+      <li><a href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/101/siryo/mext_00055.html" target="_blank" rel="noopener noreferrer"><span class="t" data-ar="بدأ العمل على خلاصة مداولات المراجعة القادمة<span class='sub'>المجلس المركزي للتعليم・4 أغسطس</span>">次期改訂の「審議まとめ」に向けた検討が始まった<span class="sub">中央教育審議会・8月4日</span></span><span class="d ext">外部</span></a></li>
+      <li><a href="https://tosho-tokkatsu.tokyo/" target="_blank" rel="noopener noreferrer"><span class="t" data-ar="نُشرت قائمة دروس التحقّق لعام 2026<span class='sub'>جمعية طوكيو・2 أغسطس</span>">令和8年度の検証授業一覧が公表。10月から8本<span class="sub">東京都小学校特別活動研究会・8月2日</span></span><span class="d ext">外部</span></a></li>
+    </ul>
+    <p class="placeholder"><a href="#news" data-ar="عرض كل الأخبار">ニュースをすべて見る</a></p>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="تقويم اللقاءات البحثية">研究会カレンダー</h2>
+    <p class="note" data-ar="الأحمر: يوم انعقاد اللقاء / الأخضر: آخر موعد للتسجيل. اضغط اليوم لترى التفاصيل.">赤は研究会の当日、緑は申込の締切日です。日付を押すと、主催・会場・内容が開きます。</p>
+    <div id="homeCal"></div>
+    <ul class="legend" id="homeLegend"></ul>
+    <div id="homeDetail"></div>
+    <p class="placeholder"><a href="#hiroba" data-ar="فتح التقويم كاملًا">カレンダーを大きく見る</a></p>
+  </div>
+
+  <div class="sec">
+    <div class="onboard">
+      <h2 data-ar="للزائر لأول مرة">はじめての方へ</h2>
+      <p data-ar="اختيارك يغيّر ترتيب الصفحة الرئيسية فقط. لا يُخفى أي محتوى، ويمكن تغييره لاحقًا من تبويب «حسابي».">選ぶと、ホームの並び順だけが変わります。中身は隠れません。あとからマイタブで変えられます。</p>
+      <div class="pick">
+        <button class="btn" type="button" data-ar="أجمع معلومات عن توكاتسو">特活の情報を集めたい</button>
+        <button class="btn" type="button" data-ar="أريد التعرّف على توكاتسو">特活をこれから知りたい</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ニュース ═══ -->
+<section data-page="news" tabindex="-1" aria-labelledby="h-news">
+  <div class="lead">
+    <h1 id="h-news" data-ar="أحدث الأخبار">最新のニュース</h1>
+    <span class="meta" data-ar="آخر تحقّق: 24 أغسطس 2026">8月24日 最終確認</span>
+  </div>
+  <p class="note" data-ar="مرتّبة من الأحدث. العناوين والملخّصات من صياغة هذا الموقع. <strong>اضغط أي مكان في البطاقة ليفتح المصدر الأصلي.</strong> النصوص المرجعية الدائمة (المنهج، الأدلة) في تبويب «التعلّم».">
+    <strong>新しい順に並んでいます。</strong>見出しと要約は本サイトの言葉によるものです。カードのどこを押しても一次情報が開きます。学習指導要領などの<strong>いつでも引く資料は「まなぶ」タブ</strong>に移しました。</p>
+
+  <article>
+    <div class="src"><span class="name" data-ar="الجمعية الوطنية لبحوث الأنشطة الخاصة">全国特別活動研究会</span><span class="dot"></span><span data-ar="8 أغسطس 2026">2026年8月8日</span></div>
+    <h3><a href="https://zentokkatsu.com/" target="_blank" rel="noopener noreferrer" data-ar="اختُتم المؤتمر الوطني الـ70 في طوكيو بمشاركة أكثر من 650 شخصًا">第70回の全国大会が東京で終了。650名を超える参加だった</a></h3>
+    <p class="sum" data-ar="يومان: 7 و8 أغسطس. يضمّ الموقع الرسمي صفحات وثائق المؤتمرات السابقة، ويُنشر فيه إعلان الدورة القادمة.">8月7日・8日の2日間。公式サイトには過去の研究大会の資料ページも公開されていて、当日行けなくても中身をたどれます。次回の案内も同じページに出ます。</p>
+    <div class="foot">
+      <div class="rank"><span class="lb" data-ar="الأهمية">重要度</span><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+      <div class="acts">
+        <button class="btn stock" type="button" aria-pressed="false" data-ar="حفظ">ストック</button>
+        <a class="btn link" href="https://zentokkatsu.com/" target="_blank" rel="noopener noreferrer" data-ar="المصدر">原文（外部）</a>
+      </div>
+    </div>
+  </article>
+
+  <article>
+    <div class="src"><span class="name" data-ar="المجلس المركزي للتعليم">中央教育審議会</span><span class="dot"></span><span data-ar="4 أغسطس 2026">2026年8月4日</span></div>
+    <h3><a href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/101/siryo/mext_00055.html" target="_blank" rel="noopener noreferrer" data-ar="بدأ العمل على «خلاصة المداولات» للمراجعة القادمة، وظهرت مسوّدات التجميع">次期改訂の「審議まとめ」に向けた検討が始まった。取りまとめ案が出そろった</a></h3>
+    <p class="sum" data-ar="الاجتماع الـ16 للجنة التخطيط الخاصة. وُزّعت مسوّدات تجميع لجنة المبادئ العامة ومجموعات عمل المواد، وجدول المراجعة. مكانة الأنشطة الخاصة تُحسَم ضمن هذا المسار.">教育課程企画特別部会（第16回）。総則・評価特別部会と各教科等ワーキンググループの取りまとめ（案）、改訂スケジュールが配られました。特別活動の扱いも、この流れの中で決まっていきます。ここが今いちばん動いている場所です。</p>
+    <div class="foot">
+      <div class="rank"><span class="lb" data-ar="الأهمية">重要度</span><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+      <div class="acts">
+        <button class="btn stock" type="button" aria-pressed="false" data-ar="حفظ">ストック</button>
+        <a class="btn link" href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/101/siryo/mext_00055.html" target="_blank" rel="noopener noreferrer" data-ar="المصدر">原文（外部）</a>
+      </div>
+    </div>
+  </article>
+
+  <article>
+    <div class="src"><span class="name" data-ar="جمعية طوكيو لبحوث الأنشطة الخاصة">東京都小学校特別活動研究会</span><span class="dot"></span><span data-ar="2 أغسطس 2026">2026年8月2日</span></div>
+    <h3><a href="https://tosho-tokkatsu.tokyo/" target="_blank" rel="noopener noreferrer" data-ar="نُشرت قائمة دروس التحقّق لعام 2026: ثمانية دروس من أكتوبر إلى ديسمبر، بلا تسجيل مسبق">令和8年度の検証授業一覧が公表。10月から12月に8本、事前登録は不要</a></h3>
+    <p class="sum" data-ar="لكلٍّ من الأقسام الأربعة، مع اسم المدرسة والصف والوقت والمحاضِر. أُدرجت في تقويم هذا الموقع.">学級活動・児童会活動・クラブ活動・学校行事の4部それぞれで、会場の学校・学年・時刻・講師まで出ています。本サイトの研究会カレンダーにも入れました。</p>
+    <div class="foot">
+      <div class="rank"><span class="lb" data-ar="الأهمية">重要度</span><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+      <div class="acts">
+        <button class="btn stock" type="button" aria-pressed="false" data-ar="حفظ">ストック</button>
+        <a class="btn link" href="https://tosho-tokkatsu.tokyo/" target="_blank" rel="noopener noreferrer" data-ar="المصدر">原文（外部）</a>
+      </div>
+    </div>
+  </article>
+
+  <article>
+    <div class="src"><span class="name" data-ar="جمعية طوكيو لبحوث الأنشطة الخاصة">東京都小学校特別活動研究会</span><span class="dot"></span><span data-ar="27 يوليو 2026">2026年7月27日</span></div>
+    <h3><a href="https://tosho-tokkatsu.tokyo/" target="_blank" rel="noopener noreferrer" data-ar="أُقيم «مهرجان توكاتسو الصيفي» في مدرسة تويوتاما الابتدائية، مع لقاءات تبادل للأقسام الأربعة">「夏の特活まつり」を練馬区立豊玉小学校で開催。4研究部の実践交流会つき</a></h3>
+    <p class="sum" data-ar="تقارير ميدانية ومحاضرة للأستاذ كاواموتو من جامعة تاماغاوا. المشاركة مجانية.">実践報告と、玉川大学TAPセンター 川本和孝 教授の講演。参加費は無料でした。同じ会場で6月8日に総会（講師：國學院大學 杉田洋 教授）も開かれています。</p>
+    <div class="foot">
+      <div class="rank"><span class="lb" data-ar="الأهمية">重要度</span><div class="bars"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div>
+      <div class="acts">
+        <button class="btn stock" type="button" aria-pressed="false" data-ar="حفظ">ストック</button>
+        <a class="btn link" href="https://tosho-tokkatsu.tokyo/" target="_blank" rel="noopener noreferrer" data-ar="المصدر">原文（外部）</a>
+      </div>
+    </div>
+  </article>
+
+  <article>
+    <div class="src"><span class="name" data-ar="المجلس المركزي للتعليم">中央教育審議会</span><span class="dot"></span><span data-ar="1 يونيو 2026">2026年6月1日</span></div>
+    <h3><a href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/103/mext_00053.html" target="_blank" rel="noopener noreferrer" data-ar="ناقشت لجنة المبادئ العامة والتقويم صيغة إدارة المنهج">総則・評価特別部会で、カリキュラム・マネジメントの在り方が議論された</a></h3>
+    <p class="sum" data-ar="الاجتماع التاسع. وثائق حول المبادئ العامة والتعلّم العميق. الأنشطة الخاصة ترتبط مباشرة بهذا النقاش.">第9回。総則の在り方、深い学びの実現、各教科等WGの検討ポイントが資料として出ています。特別活動は教育課程全体をつなぐ位置にあるので、総則の議論と直結します。</p>
+    <div class="foot">
+      <div class="rank"><span class="lb" data-ar="الأهمية">重要度</span><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+      <div class="acts">
+        <button class="btn stock" type="button" aria-pressed="false" data-ar="حفظ">ストック</button>
+        <a class="btn link" href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/103/mext_00053.html" target="_blank" rel="noopener noreferrer" data-ar="المصدر">原文（外部）</a>
+      </div>
+    </div>
+  </article>
+
+  <article>
+    <div class="src"><span class="name" data-ar="المجلس المركزي للتعليم">中央教育審議会</span><span class="dot"></span><span data-ar="29 يناير 2026">2026年1月29日</span></div>
+    <h3><a href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/004/gaiyou/mext_00010.html" target="_blank" rel="noopener noreferrer" data-ar="نُشرت «خلاصة نقاط النقاش» للمراجعة القادمة، وهي منطلق كل ما يليها">次期改訂の「論点整理」が公表された。ここが議論の出発点になっている</a></h3>
+    <p class="sum" data-ar="إلى جانب النص، نسخة موجزة ونسخة مفصّلة ومجموعة مراجع. عند ضيق الوقت، ابدأ بالنسخة الموجزة.">本文のほか、ポイントの概要版・詳細版、参考資料集が置かれています。時間がないときは、まず概要版（1.3MB）を見るのが速いです。</p>
+    <div class="foot">
+      <div class="rank"><span class="lb" data-ar="الأهمية">重要度</span><div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div></div>
+      <div class="acts">
+        <button class="btn stock" type="button" aria-pressed="false" data-ar="حفظ">ストック</button>
+        <a class="btn link" href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/004/gaiyou/mext_00010.html" target="_blank" rel="noopener noreferrer" data-ar="المصدر">原文（外部）</a>
+      </div>
+    </div>
+  </article>
+
+  <p class="placeholder" data-ar="التحديث اليومي التلقائي والبحث والحفظ والملاحظات ستُضاف في المرحلة 2. مؤشّر الأهمية من تقدير الموقع.">毎晩の自動更新（<code>content/news.json</code> の読み込み）と、検索・ストック・メモの保存は Step 2 で入れます。重要度の5マスは本サイトの判断です。</p>
+</section>
+
+<!-- ═══ まなぶ ═══ -->
+<section data-page="manabu" tabindex="-1" aria-labelledby="h-manabu">
+  <div class="lead">
+    <h1 id="h-manabu" data-ar="التعلّم">まなぶ</h1>
+    <span class="meta" data-ar="ابدأ من هنا">はじめての方はここから</span>
+  </div>
+
+  <div class="sec first">
+    <h2 data-ar="ابدأ من مشكلتك">お悩み別の入口</h2>
+    <p class="note" data-ar="اضغط ما يشبه حالك، وسيُفتح لك المكان المقابل في مسار التعلّم بالأسفل.">いま困っていることを押すと、下の学習過程のうち、あなたが立っている場所が開きます。</p>
+    <ul class="nayami">
+      <li><button type="button" data-step="2"><span data-ar="اجتماع الفصل لا يتحوّل إلى حوار">学級会が話し合いにならない</span><span class="to" data-ar="② الحوار">②へ</span></button></li>
+      <li><button type="button" data-step="1"><span data-ar="لا تظهر موضوعات للنقاش">議題が出てこない</span><span class="to" data-ar="① الاكتشاف">①へ</span></button></li>
+      <li><button type="button" data-step="4"><span data-ar="أدوار المجموعات صارت شكلية">係活動が形だけになっている</span><span class="to" data-ar="④ التنفيذ">④へ</span></button></li>
+      <li><button type="button" data-step="1"><span data-ar="لا أعرف كيف أدير اجتماع الفصل">学級会の進め方が分からない</span><span class="to" data-ar="① من البداية">①から</span></button></li>
+      <li><button type="button" data-step="3"><span data-ar="لا نصل إلى قرار مشترك">話合いが決まらない・多数決になる</span><span class="to" data-ar="③ القرار">③へ</span></button></li>
+      <li><button type="button" data-step="5"><span data-ar="ينتهي النشاط ولا شيء يتراكم">やりっぱなしで次につながらない</span><span class="to" data-ar="⑤ المراجعة">⑤へ</span></button></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="مسار التعلّم في «أنشطة الفصل (1)»">学級活動(1)の学習過程</h2>
+    <p class="note" data-ar="خمس مراحل تدور في حلقة. اضغط أي مرحلة في الدائرة أو في القائمة.">①から⑤がひと回りして、また①に戻ります。丸を押しても、下の帯を押しても、その段階が開きます。</p>
+
+    <div class="cycwrap"><svg class="cycle" viewBox="0 0 320 320" role="img" aria-labelledby="cycTitle"><title id="cycTitle" data-ar="دورة اجتماع الفصل: خمس مراحل">学級会の1サイクル（5つの段階）</title><defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--rule)"/></marker></defs><path d="M 203.0 58.7 A 110 110 0 0 1 243.0 87.8" fill="none" stroke="var(--rule)" stroke-width="2.5" marker-end="url(#ar)"/><path d="M 269.6 169.6 A 110 110 0 0 1 254.3 216.7" fill="none" stroke="var(--rule)" stroke-width="2.5" marker-end="url(#ar)"/><path d="M 184.7 267.2 A 110 110 0 0 1 135.3 267.2" fill="none" stroke="var(--rule)" stroke-width="2.5" marker-end="url(#ar)"/><path d="M 65.7 216.7 A 110 110 0 0 1 50.4 169.6" fill="none" stroke="var(--rule)" stroke-width="2.5" marker-end="url(#ar)"/><path d="M 77.0 87.8 A 110 110 0 0 1 117.0 58.7" fill="none" stroke="var(--rule)" stroke-width="2.5" marker-end="url(#ar)"/><g class="node" data-step="1" tabindex="0" role="button" aria-label="見つける"><circle cx="160.0" cy="50.0" r="36"/><text class="nn" x="160.0" y="46.0">1</text><text class="nl" x="160.0" y="65.0" data-ar="اكتشاف">見つける</text></g><g class="node" data-step="2" tabindex="0" role="button" aria-label="話し合う"><circle cx="264.6" cy="126.0" r="36"/><text class="nn" x="264.6" y="122.0">2</text><text class="nl" x="264.6" y="141.0" data-ar="حوار">話し合う</text></g><g class="node" data-step="3" tabindex="0" role="button" aria-label="決める"><circle cx="224.7" cy="249.0" r="36"/><text class="nn" x="224.7" y="245.0">3</text><text class="nl" x="224.7" y="264.0" data-ar="قرار">決める</text></g><g class="node" data-step="4" tabindex="0" role="button" aria-label="やってみる"><circle cx="95.3" cy="249.0" r="36"/><text class="nn" x="95.3" y="245.0">4</text><text class="nl" x="95.3" y="264.0" data-ar="تنفيذ">やってみる</text></g><g class="node" data-step="5" tabindex="0" role="button" aria-label="ふり返る"><circle cx="55.4" cy="126.0" r="36"/><text class="nn" x="55.4" y="122.0">5</text><text class="nl" x="55.4" y="141.0" data-ar="مراجعة">ふり返る</text></g><text class="cc" x="160" y="154" data-ar="دورة">ひと回りして</text><text class="cc" x="160" y="176" data-ar="اجتماع الفصل">また はじめに戻る</text></svg></div>
+
+    <div class="steps">
+      <details class="step" data-step="1">
+        <summary>
+          <span class="no">1</span>
+          <svg class="sill" aria-hidden="true"><use href="#s1"/></svg>
+          <span class="sh"><b data-ar="اكتشاف المشكلة وتأكيدها">問題の発見・確認</b><span data-ar="نجمع مشكلات حياة الفصل، ويقرّر الفصل كلّه موضوع النقاش.">学級生活の困りごとを出し合い、議題を学級全員で決める。</span></span>
+          <span class="pm"><span class="p">＋</span><span class="m">−</span></span>
+        </summary>
+        <div class="step-body">
+  <p class="leadline" data-ar="وقت اختيار موضوع النقاش من مشكلات حياة الفصل، والتحضير للحوار.">クラスの困りごとから議題を決めて、話合いの準備をする時間です。</p>
+  <ol class="pts">
+    <li class="pt"><span class="pn" aria-hidden="true">1</span><span><b data-ar="الأطفال هم من يختارون الموضوع">議題は子どもが決める</b><span class="ps" data-ar="إن اختاره المعلّم، صار كل ما بعده مفروضًا. اختر إحدى الطرق الثلاث بالأسفل.">先生が決めると、そのあとが全部「やらされ」になります。集め方は下の3つから選びます。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">2</span><span><b data-ar="اكتبوا سبب الاقتراح">提案理由を書かせる</b><span class="ps" data-ar="«لماذا نناقش هذا الآن؟» إن غمض هذا، توقّف الحوار في المرحلة ٢.">「なぜ今これを話し合うのか」。ここがあいまいだと、②で話合いが止まります。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">3</span><span><b data-ar="لجنة التخطيط تُحضّر">計画委員会が準備する</b><span class="ps" data-ar="اختيار الموضوع، ترتيب النقاش، تحديد المُيسِّر — كلّها من عمل الأطفال.">議題を選ぶ・順番を決める・司会を決める。ここも子どもの仕事です。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">4</span><span><b data-ar="لكلٍّ رأيه قبل البدء">一人一人が考えをもって入る</b><span class="ps" data-ar="حين يكتب كل طفل رأيه في دفتر الاجتماع قبل الحوار، تخرج الأصوات.">学級会ノートに自分の考えを書いてから話合いに入ると、発言が出ます。</span></span></li>
+  </ol>
+  <div class="fix">
+    <div class="fx bad"><span class="fl" data-ar="ما يحدث كثيرًا">よくある姿</span><p data-ar="يعلن المعلّم: «موضوع اليوم هو كذا».">先生が「今日の議題はこれです」と示してしまう。</p></div>
+    <p class="fixarrow" aria-hidden="true">↓</p>
+    <div class="fx good"><span class="fl" data-ar="جرّب هذا">こうしてみる</span><p data-ar="اسأل بدلًا من ذلك: «هل هذا شيء نقرّره معًا؟» واترك القرار للأطفال.">「これはみんなで決めることかな？」と問い返す。決めるのは子どもに渡す。</p></div>
+  </div>
+  <p class="tomorrow"><span class="tl" data-ar="خطوة الغد">明日やること</span><span class="tt2" data-ar="ضع صندوق الموضوعات وبجانبه ورق وقلم. هذا يكفي لليوم الأول.">議題ポストと、紙とペンを教室に置く。初日はこれだけでいい。</span></p>
+
+<h4 data-ar="ثلاث طرق لجمع الموضوعات">議題の集め方は3つある</h4>
+          <p data-ar="ليست طريقة واحدة صحيحة. اختر ما يناسب صفّك.">どれが正しいということはありません。学級に合うものを選びます。</p>
+          <div class="pick3">
+            <div class="way">
+              <div class="wh"><svg class="gthumb" aria-hidden="true"><use href="#g-post"/></svg><b data-ar="أ. صندوق الموضوعات">A 議題箱（ポスト）</b></div>
+              <dl>
+                <dt data-ar="ما تحتاجه">用意するもの</dt><dd data-ar="صندوق・قصاصات ورق・قلم">箱／短ざくの紙／ペン</dd>
+                <dt data-ar="ما يجيده">よいところ</dt><dd data-ar="من لا يستطيع رفع يده يستطيع الكتابة. يمكن الإدلاء في أي وقت.">手を挙げられない子も出せる。思いついた時に出せる。</dd>
+                <dt data-ar="انتبه">気をつけること</dt><dd data-ar="إن بقي مغلقًا مات. تفتحه لجنة التخطيط مرّة كل أسبوع، بموعد ثابت.">開けずに放っておくと死にます。曜日を決めて、計画委員会が週1で開ける。</dd>
+                <dt data-ar="مناسب لـ">向いている学年</dt><dd data-ar="من الصف الأول فما فوق. الأنسب للمبتدئين.">低学年から。はじめての学級会に一番向いています。</dd>
+              </dl>
+            </div>
+            <div class="way">
+              <div class="wh"><svg class="gthumb" aria-hidden="true"><use href="#g-corner"/></svg><b data-ar="ب. ركن الموضوعات (لوحة)">B 議題コーナー（掲示）</b></div>
+              <dl>
+                <dt data-ar="ما تحتاجه">用意するもの</dt><dd data-ar="ورق كبير・أوراق لاصقة・مساحة على الحائط">模造紙／付せん／貼る場所</dd>
+                <dt data-ar="ما يجيده">よいところ</dt><dd data-ar="الجميع يرى الموضوعات، فتتجمّع الأفكار المتشابهة من نفسها.">みんなの議題が見える。似た議題が自然に集まる。</dd>
+                <dt data-ar="انتبه">気をつけること</dt><dd data-ar="مع ظهور الاسم يتردّد بعض الأطفال. اجعله بلا أسماء.">名前が見えると書きにくい子がいます。無記名にする。</dd>
+                <dt data-ar="مناسب لـ">向いている学年</dt><dd data-ar="من الصف الثالث فما فوق، بعد أن يعتادوا الحوار.">中学年から。話合いに慣れてきた学級。</dd>
+              </dl>
+            </div>
+            <div class="way">
+              <div class="wh"><svg class="gthumb" aria-hidden="true"><use href="#g-digital"/></svg><b data-ar="ج. رقميًّا (نموذج إلكتروني)">C デジタル（フォーム）</b></div>
+              <dl>
+                <dt data-ar="ما تحتاجه">用意するもの</dt><dd data-ar="جهاز لكل طفل・نموذج واحد">1人1台の端末／フォーム1つ</dd>
+                <dt data-ar="ما يجيده">よいところ</dt><dd data-ar="يمكن الإرسال من البيت. التجميع فوري. يسهل جعله بلا أسماء.">家からでも出せる。集まったものを並べるのが一瞬。無記名にしやすい。</dd>
+                <dt data-ar="انتبه">気をつけること</dt><dd data-ar="لا يخرج شيء إن لم يُخصَّص وقت لفتح الجهاز. الورق أسهل «بالمرور».">端末を開く時間を取らないと出てきません。紙より「ついで」に出しにくい。</dd>
+                <dt data-ar="مناسب لـ">向いている学年</dt><dd data-ar="الصفوف العليا، حيث ترسّخ استخدام الجهاز اليومي.">高学年。端末を毎日使っている学級。</dd>
+              </dl>
+            </div>
+          </div>
+
+          <figure class="shot">
+            <img src="data:image/jpeg;base64,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" alt="白い投書箱と、そのとなりに置かれた記入用の紙とペン" loading="lazy" width="680" height="505">
+            <figcaption data-ar="<b>الشكل هو نفسه.</b> هذا صندوق اقتراحات في مطار ناها، وليس صندوق موضوعات مدرسيًّا — لكن «صندوق + فتحة + ورق وقلم بجانبه» هو نفس الترتيب. أهمّ نقطة: <b>ضع الورق والقلم بجوار الصندوق مباشرة.</b>"><b>形はこれと同じです。</b>これは那覇空港の投書箱で、学校の議題箱ではありません。ですが「箱・入れ口・そばに紙とペン」は同じです。いちばん効くのは、<b>紙とペンを箱のとなりに置くこと</b>。取りに行かせた時点で、出てこなくなります。</figcaption>
+          </figure>
+          <p class="cred">写真：「投書箱」くーさん（Flickr）／<a href="https://commons.wikimedia.org/wiki/File:%E6%8A%95%E6%9B%B8%E7%AE%B1_(4950922745).jpg" target="_blank" rel="noopener noreferrer">Wikimedia Commons</a>／<a href="https://creativecommons.org/licenses/by/2.0/deed.ja" target="_blank" rel="noopener noreferrer">CC BY 2.0</a>。切り出して縮小しています。</p>
+
+          <p class="slot" data-ar="لم نجد صورًا لصندوق موضوعات مدرسي حقيقي بترخيص يسمح بالنشر. صور صفّك من تصويرك أنت — الحقوق لك، ويمكن وضعها هنا.">学校の議題箱そのものの写真は、使える権利のものが見つかりませんでした。先生が自分の教室で撮った写真なら権利はご本人にあります。ここに入れられます。</p>
+
+
+<div class="yt" data-yt="Quzd_1wLM_o"><button class="ytbtn" type="button"><span class="play" aria-hidden="true"></span><span><b data-ar="كيف تُدار لجنة التخطيط">計画委員会の進め方（議題を選ぶところ）</b><span data-ar="القناة الرسمية لوزارة التعليم・10 دقيقة">文部科学省 公式チャンネル・10分</span></span></button><p class="ytalt"><a href="https://www.youtube.com/watch?v=Quzd_1wLM_o" target="_blank" rel="noopener noreferrer" data-ar="افتح في YouTube">YouTubeで開く（別のタブ）</a></p></div>
+<div class="yt" data-yt="TAFLPYbblKE"><button class="ytbtn" type="button"><span class="play" aria-hidden="true"></span><span><b data-ar="لنعقد اجتماع الفصل (للمبتدئين)">学級会をしよう（入門期の学級会）</b><span data-ar="القناة الرسمية لوزارة التعليم・11 دقيقة">文部科学省 公式チャンネル・11分</span></span></button><p class="ytalt"><a href="https://www.youtube.com/watch?v=TAFLPYbblKE" target="_blank" rel="noopener noreferrer" data-ar="افتح في YouTube">YouTubeで開く（別のタブ）</a></p></div>
+</div>
+      </details>
+      <p class="arrow" aria-hidden="true">↓</p>
+
+      <details class="step" data-step="2">
+        <summary>
+          <span class="no">2</span>
+          <svg class="sill" aria-hidden="true"><use href="#s2"/></svg>
+          <span class="sh"><b data-ar="التحاور حول طرق الحل">解決方法等の話合い</b><span data-ar="نطرح الآراء ونقارنها: ماذا نفعل؟ وكيف؟ ومن يقوم بماذا؟">取り組む内容や方法、役割分担について、出し合い・くらべ合う。</span></span>
+          <span class="pm"><span class="p">＋</span><span class="m">−</span></span>
+        </summary>
+        <div class="step-body">
+  <p class="leadline" data-ar="نطرح، ثم نقارن، ثم نقرّر. هذه هي صُلب الحوار.">出し合って、くらべ合って、まとめる。ここが話合いの本体です。</p>
+  <ol class="pts">
+    <li class="pt"><span class="pn" aria-hidden="true">1</span><span><b data-ar="نطرح">出し合う</b><span class="ps" data-ar="نُخرج كل ما نفكر فيه. الحكم المبكر يُسكِت الأصوات لاحقًا.">思いついたことを全部出します。ここで良し悪しを言うと、次から出てこなくなります。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">2</span><span><b data-ar="نقارن">くらべ合う</b><span class="ps" data-ar="«أيّها متشابه؟» و«أيّها يخدم سبب الاقتراح؟» — ثم نعيد الترتيب.">「にた考えはどれ？」「提案理由に合うのはどれ？」で並べ直します。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">3</span><span><b data-ar="المعلّم لا يعطي الجواب">先生は答えを言わない</b><span class="ps" data-ar="دوره إعادة الصياغة وربط الآراء. تُكتب كلمات الأطفال كما هي على السبورة.">言い換えと、意見と意見をつなぐ役に徹します。板書は子どもの言葉のまま。</span></span></li>
+  </ol>
+  <div class="fix">
+    <div class="fx bad"><span class="fl" data-ar="ما يحدث كثيرًا">よくある姿</span><p data-ar="يقتصر الأمر على «أوافق» و«أعارض»، فلا يتقدّم الحوار.">「賛成です」「反対です」だけで終わり、話が進まない。</p></div>
+    <p class="fixarrow" aria-hidden="true">↓</p>
+    <div class="fx good"><span class="fl" data-ar="جرّب هذا">こうしてみる</span><p data-ar="اسأل دائمًا «لماذا ترى ذلك؟» مرّة واحدة على الأقل. بالأسباب تصبح المقارنة ممكنة.">「どうしてそう思ったの？」を必ず一往復。理由が出ると、くらべられます。</p></div>
+  </div>
+  <p class="tomorrow"><span class="tl" data-ar="خطوة الغد">明日やること</span><span class="tt2" data-ar="علّق لوحة «مسار الحوار» حيث يراها المُيسِّر الطفل.">「話合いの流れ」の掲示を、司会の子から見える位置に貼る。</span></p>
+
+<h4 data-ar="ما الذي يحدث فعلًا في الحوار">話合いの中で起きていること</h4>
+          <p data-ar="اضغط الأزرار بالترتيب. البطاقات تتحرّك، وترى شكل «نطرح ← نقارن ← نقرّر».">下のボタンを順に押すと、意見のカードが動きます。「出し合う→くらべ合う→まとめる」の形が見えます。</p>
+          <div class="talk" data-stage="1">
+            <div class="talk-stage" aria-hidden="true">
+            <div class="tc keep" style="--x1:4%;--y1:6%;--x2:3%;--y2:4%;--x3:4%;--y3:6%" data-ar="زيادة أيام اللعب الجماعي">みんな遊びの日をふやす</div>
+            <div class="tc" style="--x1:52%;--y1:16%;--x2:53%;--y2:4%;--x3:28%;--y3:44%" data-ar="إقامة بطولة الكرة المراوغة">ドッジボール大会をする</div>
+            <div class="tc keep" style="--x1:8%;--y1:40%;--x2:3%;--y2:30%;--x3:52%;--y3:6%" data-ar="بطاقة «اكتشفتُ جانبك الجميل»">いいところ見つけカード</div>
+            <div class="tc" style="--x1:48%;--y1:44%;--x2:53%;--y2:30%;--x3:28%;--y3:44%" data-ar="اللعب في مجموعات متعدّدة الأعمار">たてわり班であそぶ</div>
+            <div class="tc" style="--x1:6%;--y1:70%;--x2:3%;--y2:56%;--x3:28%;--y3:44%" data-ar="تتابُع التحيّة">あいさつリレー</div>
+            <div class="tc" style="--x1:50%;--y1:72%;--x2:53%;--y2:56%;--x3:28%;--y3:44%" data-ar="تغيير طريقة توزيع المقاعد">席がえのしかたを変える</div>
+            <div class="tc final" style="--x1:12%;--y1:110%;--x2:12%;--y2:110%;--x3:12%;--y3:58%" data-ar="القرار: نزيد يوم اللعب الجماعي مرّتين شهريًّا، ونصنع بطاقة «اكتشفتُ جانبك الجميل»">決まったこと：みんな遊びの日を月2回ふやす＋いいところ見つけカードも作る</div>
+            </div>
+            <div class="talk-nav" role="group" aria-label="話合いの3段">
+              <button type="button" data-talk="1" aria-pressed="true" data-ar="١ نطرح">1 出し合う</button>
+              <button type="button" data-talk="2" aria-pressed="false" data-ar="٢ نقارن">2 くらべ合う</button>
+              <button type="button" data-talk="3" aria-pressed="false" data-ar="٣ نقرّر">3 まとめる</button>
+            </div>
+            <button class="btn wide talk-play" type="button" data-ar="شغّل من البداية">はじめから動かす</button>
+            <p class="talk-cap" data-ar="<b>نطرح.</b> نُخرج كل ما نفكر فيه دون ترتيب. في هذه المرحلة لا نحكم على أي رأي — الحكم المبكر يوقف الأصوات.">
+              <b>出し合う。</b>思いついたことを、ばらばらのまま全部出します。ここで良し悪しを言うと、次から出てこなくなります。</p>
+          </div>
+
+
+<div class="yt" data-yt="mNjfIBhpqS8"><button class="ytbtn" type="button"><span class="play" aria-hidden="true"></span><span><b data-ar="لكي يصبح الحوار أفضل">よりよい話合いにするために</b><span data-ar="القناة الرسمية لوزارة التعليم・15 دقيقة">文部科学省 公式チャンネル・15分</span></span></button><p class="ytalt"><a href="https://www.youtube.com/watch?v=mNjfIBhpqS8" target="_blank" rel="noopener noreferrer" data-ar="افتح في YouTube">YouTubeで開く（別のタブ）</a></p></div>
+</div>
+      </details>
+      <p class="arrow" aria-hidden="true">↓</p>
+
+      <details class="step" data-step="3">
+        <summary>
+          <span class="no">3</span>
+          <svg class="sill" aria-hidden="true"><use href="#s3"/></svg>
+          <span class="sh"><b data-ar="اتخاذ القرار (بناء التوافق)">解決方法の決定（合意形成）</b><span data-ar="نعترف باختلاف الآراء، ونتنازل قليلًا لنصل إلى قرار الجماعة.">意見の違いを認め合い、折り合いを付けて、集団として決める。</span></span>
+          <span class="pm"><span class="p">＋</span><span class="m">−</span></span>
+        </summary>
+        <div class="step-body">
+  <p class="leadline" data-ar="لا نحسمها بالتصويت، بل بالتنازل المتبادل. هذا هو «بناء التوافق».">多数決ではなく、折り合いをつけて決めます。これが「合意形成」です。</p>
+  <ol class="pts">
+    <li class="pt"><span class="pn" aria-hidden="true">1</span><span><b data-ar="التصويت ليس بناءً للتوافق">多数決は合意形成ではない</b><span class="ps" data-ar="لحظة الحسم بالعدد ينتهي الحوار، ويتوقّف من خسر عن المشاركة.">数で決めた瞬間に、話合いは終わってしまいます。負けた子が動かなくなります。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">2</span><span><b data-ar="علّمهم عبارات التنازل">折り合いの言い方を教える</b><span class="ps" data-ar="«هذه المرّة كذا، والقادمة كذا»، «نأخذ نصف الفكرتين». بلا عبارات لا يحدث تنازل.">「今回はこっちで、次はこっち」「両方を半分ずつ」。言い方を知らないと折り合えません。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">3</span><span><b data-ar="أدخِل رأي الأقلية في القرار">少数の意見を決定に入れる</b><span class="ps" data-ar="اسأل: «ماذا نأخذ من فكرتك؟» وأدخِل ولو عنصرًا واحدًا.">「その考えのどこを使える？」と聞いて、1つだけでも決定に混ぜます。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">4</span><span><b data-ar="مَن، وماذا، ومتى">だれが・何を・いつ まで決める</b><span class="ps" data-ar="إن كُتب هذا، تحرّك التنفيذ في المرحلة ٤. أما «سنجتهد» فلا تُحرّك شيئًا.">ここまで書いて終わると、④で動きます。「がんばる」で終わると動きません。</span></span></li>
+  </ol>
+  <div class="fix">
+    <div class="fx bad"><span class="fl" data-ar="ما يحدث كثيرًا">よくある姿</span><p data-ar="اتُّخذ القرار، لكن لا أحد ينفّذه.">決まったのに、だれも動かない。</p></div>
+    <p class="fixarrow" aria-hidden="true">↓</p>
+    <div class="fx good"><span class="fl" data-ar="جرّب هذا">こうしてみる</span><p data-ar="غالبًا لأن رأي الأقلية لم يدخل القرار. أعِد إدخال عنصر منه.">少数意見の良いところが決定に入っていないことがほとんど。1つ入れ直す。</p></div>
+  </div>
+  <p class="tomorrow"><span class="tl" data-ar="خطوة الغد">明日やること</span><span class="tt2" data-ar="علّق كلمة «التنازل» مع أمثلة على صياغتها.">「折り合い」という言葉と、その言い方の例を掲示する。</span></p>
+
+<div class="yt" data-yt="RFTx54MW1j0"><button class="ytbtn" type="button"><span class="play" aria-hidden="true"></span><span><b data-ar="لنفتح اجتماع الفصل (حتى القرار)">学級会を開こう（決めるところまで）</b><span data-ar="القناة الرسمية لوزارة التعليم・15 دقيقة">文部科学省 公式チャンネル・15分</span></span></button><p class="ytalt"><a href="https://www.youtube.com/watch?v=RFTx54MW1j0" target="_blank" rel="noopener noreferrer" data-ar="افتح في YouTube">YouTubeで開く（別のタブ）</a></p></div>
+</div>
+      </details>
+      <p class="arrow" aria-hidden="true">↓</p>
+
+      <details class="step" data-step="4">
+        <summary>
+          <span class="no">4</span>
+          <svg class="sill" aria-hidden="true"><use href="#s4"/></svg>
+          <span class="sh"><b data-ar="تنفيذ ما تمّ الاتفاق عليه">決めたことの実践</b><span data-ar="كلٌّ يؤدّي دوره، ويستفيد من نقاط قوّة الآخرين في العمل المشترك.">自分の役割を果たし、互いのよさを生かして協働する。</span></span>
+          <span class="pm"><span class="p">＋</span><span class="m">−</span></span>
+        </summary>
+        <div class="step-body">
+  <p class="leadline" data-ar="وقت تنفيذ ما تمّ الاتفاق عليه. الاجتماع لا يكتمل إلا بهذا.">決めたことを、実際にやってみる時間です。ここまでが学級会です。</p>
+  <ol class="pts">
+    <li class="pt"><span class="pn" aria-hidden="true">1</span><span><b data-ar="التنفيذ ليس واجبًا منزليًّا">実践は宿題ではない</b><span class="ps" data-ar="هو جزء من النشاط. خصّص له وقتًا داخل الجدول.">活動の一部です。時間割の中に、やる時間を取ります。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">2</span><span><b data-ar="أبقِ القرار معلّقًا">決まったことを貼り続ける</b><span class="ps" data-ar="ما يغيب عن العين يُنسى. اجعله في مكان ظاهر بالفصل.">見えなくなった時点で忘れられます。教室の見える場所に出しておきます。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">3</span><span><b data-ar="امدح مَن ساعد وكيف">だれがどう助けたかを返す</b><span class="ps" data-ar="بدل «نجح/فشل»، لاحِظ التعاون وسمِّه بالكلمات.">「できた・できない」より、支え合いを見取って言葉にします。</span></span></li>
+  </ol>
+  <div class="fix">
+    <div class="fx bad"><span class="fl" data-ar="ما يحدث كثيرًا">よくある姿</span><p data-ar="صارت أدوار المجموعات أشبه بمناوبات ميكانيكية.">係活動が、当番の仕事のようになっている。</p></div>
+    <p class="fixarrow" aria-hidden="true">↓</p>
+    <div class="fx good"><span class="fl" data-ar="جرّب هذا">こうしてみる</span><p data-ar="عُد إلى ① واسألوا: «أيّ دور يحتاجه فصلنا الآن؟» أعِدها نشاطًا لا مهمّة.">①に戻って「今のクラスに必要な係は何か」を出し直す。仕事ではなく活動に戻す。</p></div>
+  </div>
+  <p class="tomorrow"><span class="tl" data-ar="خطوة الغد">明日やること</span><span class="tt2" data-ar="خصّص خمس دقائق في نهاية اليوم لتقرير مجموعة واحدة.">帰りの会の5分を、係からの報告に充てる。</span></p>
+
+<div class="yt" data-yt="xXVfL1T8G5A"><button class="ytbtn" type="button"><span class="play" aria-hidden="true"></span><span><b data-ar="لنقم بأنشطة المجموعات">係活動をしよう</b><span data-ar="القناة الرسمية لوزارة التعليم・11 دقيقة">文部科学省 公式チャンネル・11分</span></span></button><p class="ytalt"><a href="https://www.youtube.com/watch?v=xXVfL1T8G5A" target="_blank" rel="noopener noreferrer" data-ar="افتح في YouTube">YouTubeで開く（別のタブ）</a></p></div>
+</div>
+      </details>
+      <p class="arrow" aria-hidden="true">↓</p>
+
+      <details class="step" data-step="5">
+        <summary>
+          <span class="no">5</span>
+          <svg class="sill" aria-hidden="true"><use href="#s5"/></svg>
+          <span class="sh"><b data-ar="التأمّل والمراجعة">振り返り</b><span data-ar="نراجع النتائج، ونشعر بالنموّ، ونحوّله إلى المشكلة التالية.">成果と課題を振り返り、成長を実感し、次の課題につなげる。</span></span>
+          <span class="pm"><span class="p">＋</span><span class="m">−</span></span>
+        </summary>
+        <div class="step-body">
+  <p class="leadline" data-ar="وقت التحقّق ممّا حدث، وربطه بالمشكلة التالية.">やってみてどうだったかを確かめ、次の課題につなげる時間です。</p>
+  <ol class="pts">
+    <li class="pt"><span class="pn" aria-hidden="true">1</span><span><b data-ar="لا تسأل «هل استمتعتم؟»">「楽しかったか」を聞かない</b><span class="ps" data-ar="اسأل: «ما الذي تغيّر في فصلنا؟» هذا هو محور المراجعة.">聞くのは「クラスの何が変わったか」。ここが振り返りの軸です。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">2</span><span><b data-ar="عُد إلى سبب الاقتراح">最初の提案理由に戻す</b><span class="ps" data-ar="«هل تحقّق ما أردناه؟» هنا يظهر النموّ.">「やりたかったことは、できた？」と照らします。ここで成長が見えます。</span></span></li>
+    <li class="pt"><span class="pn" aria-hidden="true">3</span><span><b data-ar="إن ظهر موضوع جديد، عُد إلى ①">次の議題が出れば①に戻れる</b><span class="ps" data-ar="حين تولد المشكلة التالية من المراجعة، تدور الحلقة من تلقاء نفسها.">振り返りの中から次の課題が出ると、この輪が自分で回り始めます。</span></span></li>
+  </ol>
+  <div class="fix">
+    <div class="fx bad"><span class="fl" data-ar="ما يحدث كثيرًا">よくある姿</span><p data-ar="توزيع بطاقات المراجعة وجمعها فقط.">振り返りカードを配って、書かせて、集めて終わり。</p></div>
+    <p class="fixarrow" aria-hidden="true">↓</p>
+    <div class="fx good"><span class="fl" data-ar="جرّب هذا">こうしてみる</span><p data-ar="ابدأ شفهيًّا بثلاثة أطفال فقط. الكتابة تأتي بعد أن تستقرّ العادة.">まずは口頭で3人だけ。書かせるのは、続くようになってからで十分。</p></div>
+  </div>
+  <p class="tomorrow"><span class="tl" data-ar="خطوة الغد">明日やること</span><span class="tt2" data-ar="اسأل ثلاثة أطفال: «ما الذي تغيّر في فصلنا هذا الأسبوع؟»">「今週、クラスの何が変わった？」を3人に聞く。</span></p>
+
+<div class="yt" data-yt="0Xb1XnKG-GM"><button class="ytbtn" type="button"><span class="play" aria-hidden="true"></span><span><b data-ar="تحسين تدريس أنشطة الفصل (1) — للمعلّمين">学級活動(1)の指導の工夫【学級会編・先生向け】</b><span data-ar="القناة الرسمية لوزارة التعليم・20 دقيقة">文部科学省 公式チャンネル・20分</span></span></button><p class="ytalt"><a href="https://www.youtube.com/watch?v=0Xb1XnKG-GM" target="_blank" rel="noopener noreferrer" data-ar="افتح في YouTube">YouTubeで開く（別のタブ）</a></p></div>
+</div>
+      </details>
+
+      <p class="loop" data-ar="↑ التأمّل يولّد المشكلة التالية، فنعود إلى المرحلة ①. هذه الحلقة هي جوهر «أنشطة الفصل (1)».">↑ 振り返りから次の課題が出て、また ① に戻ります。この輪が回ることが、学級活動(1)そのものです。</p>
+    </div>
+    <p class="note" style="margin-top:14px" data-ar="الفيديوهات من القناة الرسمية لوزارة التعليم اليابانية على YouTube، وتُحمَّل فقط عند الضغط. ما لم تضغط، لا يُرسَل شيء إلى الخارج.">動画は文部科学省の公式YouTubeチャンネルのものです。<strong>押したときだけ読み込みます。</strong>押さなければ、外部には何も送りません。</p>
+    <p class="note" data-ar="أُعدّ هذا الرسم في هذا الموقع بالاستناد إلى مسار التعلّم الوارد في «شرح المنهج الدراسي للمرحلة الابتدائية (إعلان 2017) — الأنشطة الخاصة»، وزارة التعليم اليابانية. الصياغة والأمثلة من الموقع.">出典：「小学校学習指導要領（平成29年告示）解説 特別活動編」（文部科学省）に示された学習過程を参考に、本サイトが作成。文言と例は本サイトによるものです。</p>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="المصادر الأولية (النصوص الأصلية)">一次資料（原文）</h2>
+    <p class="note" data-ar="روابط مباشرة إلى صفحات النشر الرسمية. آخر تحقّق: 22 أغسطس 2026">公式の掲載ページに直接つなぎます。PDFは同梱しません。最終確認：2026年8月22日</p>
+    <ul class="tiles">
+      <li><a class="tile" href="https://www.mext.go.jp/content/20230120-mxt_kyoiku02-100002604_01.pdf" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-kokuji"/></svg><span class="tl"><b class="tt" data-ar="المنهج الدراسي للمرحلة الابتدائية (إعلان 2017)">小学校学習指導要領（平成29年告示）</b><span class="ts" data-ar="الأنشطة الخاصة في الفصل السادس / وزارة التعليم">特別活動は第6章／文部科学省</span></span><span class="go ext">PDF</span></a></li>
+      <li><a class="tile" href="https://www.mext.go.jp/content/20221213-mxt_kyoiku02-100002607_014.pdf" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-kaisetsu"/></svg><span class="tl"><b class="tt" data-ar="شرح المنهج — الأنشطة الخاصة">解説 特別活動編</b><span class="ts" data-ar="شرح أنشطة الفصل ومجلس التلاميذ والأندية والفعاليات / وزارة التعليم">学級活動・児童会・クラブ・学校行事の解説／文部科学省</span></span><span class="go ext">PDF</span></a></li>
+      <li><a class="tile" href="https://www.mext.go.jp/a_menu/shotou/new-cs/1384661.htm" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-web"/></svg><span class="tl"><b class="tt" data-ar="قائمة النصوص والشروح">本文・解説の一覧</b><span class="ts" data-ar="وزارة التعليم">平成29・30・31年改訂／文部科学省</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://www.mext.go.jp/b_menu/shingi/chukyo/chukyo3/004/index.html" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-web"/></svg><span class="tl"><b class="tt" data-ar="لجنة المناهج بالمجلس المركزي للتعليم">中央教育審議会 教育課程部会</b><span class="ts" data-ar="وثائق نقاشات المراجعة القادمة">次期改訂の議論と配付資料</span></span><span class="go ext">外部</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="المواد الإرشادية (المعهد الوطني)">指導資料（国立教育政策研究所）</h2>
+    <ul class="tiles">
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_20240722-01.pdf" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-shido"/></svg><span class="tl"><b class="tt" data-ar="الدليل الإرشادي للمعلّم (المرحلة الابتدائية)">教師用指導資料（小学校編）</b><span class="ts" data-ar="مسار اجتماع الفصل ونماذج السبورة">学級会の流れと板書例</span></span><span class="go ext">PDF</span></a></li>
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_h300704-01.pdf" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-shido"/></svg><span class="tl"><b class="tt" data-ar="كتيّب مختصر للمعلّم">教師向けパンフレット</b><span class="ts" data-ar="نسخة قصيرة: ابدأ من هنا">短い版。まず読むならこちら</span></span><span class="go ext">PDF</span></a></li>
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo/" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-video"/></svg><span class="tl"><b class="tt" data-ar="مواد مرئية: أنشطة الفصل">映像資料 学級活動編</b><span class="ts" data-ar="شاهد حوارًا حقيقيًّا في الفصل">話合いの実際を動画で見る</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo2/" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-video"/></svg><span class="tl"><b class="tt" data-ar="مواد مرئية: مجلس التلاميذ والأندية">映像資料 児童会・クラブ活動編</b><span class="ts" data-ar="المعهد الوطني لبحوث السياسات التعليمية">教育課程研究センター</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://www.mext.go.jp/a_menu/shotou/career/detail/1419917.htm" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-form"/></svg><span class="tl"><b class="tt" data-ar="«كاريا باسبورت»: نماذج ووثائق">キャリア・パスポート 例示資料</b><span class="ts" data-ar="مرتبط بأنشطة الفصل (3) / وزارة التعليم">学級活動(3)と結び付く／文部科学省</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/shidousiryou.html" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-web"/></svg><span class="tl"><b class="tt" data-ar="قائمة كل المواد الإرشادية">指導資料・事例集の一覧</b><span class="ts" data-ar="نُسخ بالعربية والإنجليزية والصينية متاحة هنا">アラビア語・英語・中国語版もここから</span></span><span class="go ext">外部</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="أدوات اجتماع الفصل">学級会グッズ</h2>
+    <p class="note" data-ar="قيد الإعداد. الرسوم أدناه من رسم الموقع؛ ستُستبدل بصور الأدوات الحقيقية عند جاهزيتها.">準備中です。下の絵は本サイトの自作図で、実物のデータが揃いしだい差し替えます。PDFとWordの両方を置きます（登録は要りません）。</p>
+    <ul class="tiles">
+      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-post"/></svg><span class="tl"><b class="tt" data-ar="ورقة صندوق الموضوعات">議題ポスト用紙</b><span class="ts" data-ar="يكتب الطفل ما يريد أن يقرّره الفصل معًا">「クラスのみんなで決めたいこと」を書いて入れる紙</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
+      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-card"/></svg><span class="tl"><b class="tt" data-ar="بطاقة الاقتراح">提案カード</b><span class="ts" data-ar="الموضوع وسبب الاقتراح في ورقة واحدة">議題と提案理由を、1枚で書けるようにしたカード</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
+      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-note"/></svg><span class="tl"><b class="tt" data-ar="دفتر اجتماع الفصل">学級会ノート</b><span class="ts" data-ar="رأيي قبل الحوار، وما قرّرناه بعده">話合いの前の自分の考えと、決まったことを書く</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
+      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-shikai"/></svg><span class="tl"><b class="tt" data-ar="ورقة المُيسِّر">司会進行メモ</b><span class="ts" data-ar="ما يقوله المُيسِّر، بالترتيب">司会の子が読むことばを、順番どおりに並べたもの</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
+      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-flow"/></svg><span class="tl"><b class="tt" data-ar="لوحة مسار الحوار">話合いの流れ掲示</b><span class="ts" data-ar="نطرح ← نقارن ← نقرّر (تُعلَّق على الحائط)">「出し合う→くらべ合う→まとめる」を貼って示す</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ ひろば ═══ -->
+<section data-page="hiroba" tabindex="-1" aria-labelledby="h-hiroba">
+  <div class="lead">
+    <h1 id="h-hiroba" data-ar="الساحة">ひろば</h1>
+    <span class="meta" data-ar="مكان الحديث في LINE">話す場はLINEにあります</span>
+  </div>
+
+  <div class="sec first">
+    <h2 data-ar="تقويم اللقاءات البحثية">研究会カレンダー</h2>
+    <p class="note" data-ar="الأحمر: يوم انعقاد اللقاء / الأخضر: آخر موعد للتسجيل. اضغط على اليوم لترى الجهة المنظِّمة والمكان والمحتوى. المصادر: المواقع الرسمية للجمعيات (آخر تحقّق: 23 أغسطس 2026)">赤は研究会の当日、緑は申込の締切日です。<strong>日付を押すと、主催・会場・内容・申込が開きます。</strong>出どころは各団体の公式サイトと公式の配布資料です（最終確認：2026年8月23日）。</p>
+    <div id="mainCal"></div>
+    <ul class="legend" id="mainLegend"></ul>
+    <div id="mainDetail"></div>
+    <ul class="rows" id="calList" style="margin-top:18px"></ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="المصادر الرسمية للّقاءات">研究会の一次情報</h2>
+    <p class="note" data-ar="مصدر المواعيد أعلاه. آخر تحقّق: 22 أغسطس 2026">上のカレンダーは、ここから拾って並べ直したものです。最終確認：2026年8月22日</p>
+    <ul class="tiles">
+      <li><a class="tile" href="https://zentokkatsu.com/" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-web"/></svg><span class="tl"><b class="tt" data-ar="الجمعية الوطنية لبحوث الأنشطة الخاصة">全国特別活動研究会</b><span class="ts" data-ar="المؤتمر الوطني ولقاءات المناطق">全国研究協議大会と各地の研究会</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://jaseatokkatsu.jimdoweb.com/" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-web"/></svg><span class="tl"><b class="tt" data-ar="الجمعية اليابانية للأنشطة الخاصة">日本特別活動学会</b><span class="ts" data-ar="المؤتمرات واللقاءات البحثية والفروع">大会・研究会・支部研究会</span></span><span class="go ext">外部</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="الملخّص الشهري للساحة">ひろばの月次まとめ</h2>
+    <p class="note" data-ar="بلا أسماء الكاتبين، وبلا نصوص أصلية — ملخّص فقط.">投稿者名は出しません。要約なので原文も出ません。</p>
+    <ul class="tiles">
+      <li><a class="tile" href="#hiroba"><svg class="thumb" aria-hidden="true"><use href="#t-kaisetsu"/></svg><span class="tl"><b class="tt" data-ar="نقاط أغسطس 2026 الثلاث">2026年8月の論点3つ</b><span class="ts" data-ar="أدوار بداية الفصل / التبادل بين الأعمار / صياغة سبب الاقتراح">2学期はじめの係活動／異年齢交流／提案理由の書かせ方</span></span><span class="go">→</span></a></li>
+      <li><a class="tile" href="#hiroba"><svg class="thumb" aria-hidden="true"><use href="#t-kaisetsu"/></svg><span class="tl"><b class="tt" data-ar="نقاط يوليو 2026 الثلاث">2026年7月の論点3つ</b><span class="ts" data-ar="حين تصير الحفلة هدفًا / أنماط المراجعة / صندوق الموضوعات">お楽しみ会が目的化する問題／振り返りの型／議題箱</span></span><span class="go">→</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="مجموعة LINE">LINEひろば</h2>
+    <p class="note" data-ar="كل الآراء والأسئلة وطلبات المزايا تذهب إلى LINE. لا يوجد صندوق نشر في هذا الموقع.">意見・質問・「こんな機能がほしい」は、すべてこちらへ。このサイトに投稿欄はありません。</p>
+    <a class="btn wide" href="#hiroba" data-ar="افتح «ساحة توكاتسو للجميع»">みんなの特活ひろばを開く</a>
+  </div>
+</section>
+
+<!-- ═══ マイ ═══ -->
+<section data-page="my" tabindex="-1" aria-labelledby="h-my">
+  <div class="lead">
+    <h1 id="h-my" data-ar="حسابي">マイ</h1>
+    <span class="meta" data-ar="يُحفظ داخل جهازك فقط">端末の中だけに保存</span>
+  </div>
+
+  <div class="sec first">
+    <h2 data-ar="المحفوظات وملاحظاتي">ストックと自分のメモ</h2>
+    <p class="note" data-ar="ما تحفظه من الأخبار والمواد يتجمّع هنا مع ملاحظاتك.">ニュースや資料に付けた印と、記事ごとに書いたメモが、ここに溜まります。</p>
+    <ul class="tiles two">
+      <li><button class="tile" type="button"><span><b class="tt" data-ar="المحفوظات">ストック</b><span class="ts" data-ar="0 عنصر">0件</span></span><span class="go">→</span></button></li>
+      <li><button class="tile" type="button"><span><b class="tt" data-ar="ملاحظاتي">自分のメモ</b><span class="ts" data-ar="0 عنصر">0件</span></span><span class="go">→</span></button></li>
+    </ul>
+    <p class="placeholder" data-ar="الحفظ الفعلي يبدأ من المرحلة 2.">保存は Step 2 から動きます。</p>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="تصدير">書き出し</h2>
+    <p class="note" data-ar="أخرِج محفوظاتك وملاحظاتك كنصّ عادي.">ストックとメモを、そのままテキストで取り出せます。</p>
+    <a class="btn wide" href="#my" data-ar="تصدير كنصّ">テキストで書き出す</a>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="طريقة العرض">画面の見せ方</h2>
+    <p class="note" data-ar="«تلقائي» يتحوّل إلى تخطيط الحاسوب عندما تكون الشاشة عريضة. يمكنك تثبيته على «حاسوب» لقراءة المنهج بتأنٍّ.">「じどう」は、画面の幅が広ければパソコン向けの並びに変わります。学習指導要領をパソコンでじっくり読むときは「パソコン」に固定できます。</p>
+    <div class="seg" role="group" aria-label="画面の見せ方">
+      <button class="btn" type="button" data-set-view="auto" aria-pressed="false" data-ar="تلقائي">じどう</button>
+      <button class="btn" type="button" data-set-view="sp" aria-pressed="false" data-ar="هاتف">スマホ</button>
+      <button class="btn" type="button" data-set-view="pc" aria-pressed="false" data-ar="حاسوب">パソコン</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="اللغة">ことば</h2>
+    <p class="note" data-ar="الأخبار وعناوين المواد تبقى باليابانية. أمّا مسار التعلّم في اجتماع الفصل فمترجَم بالكامل.">ニュースの本文と資料の題名は日本語のままです。学級会の学習過程は、全文をアラビア語にしてあります。</p>
+    <div class="seg" role="group" aria-label="ことば" style="grid-template-columns:1fr 1fr">
+      <button class="btn" type="button" data-set-lang="ja" aria-pressed="false">日本語</button>
+      <button class="btn" type="button" data-set-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="ترتيب الصفحة الرئيسية">ホームの並び順</h2>
+    <ul class="tiles two">
+      <li><button class="tile" type="button"><span><b class="tt" data-ar="أجمع المعلومات">情報を集めたい</b><span class="ts" data-ar="مُختار حاليًا">選択中</span></span><span class="go">✓</span></button></li>
+      <li><button class="tile" type="button"><span><b class="tt" data-ar="أتعرّف من جديد">これから知りたい</b><span class="ts" data-ar="التعلّم أوّلًا">まなぶを上に</span></span><span class="go">→</span></button></li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="عن هذا الموقع">このサイトについて</h2>
+    <ul class="about">
+      <li data-ar="هذا موقع غير رسمي.">本サイトは非公式です。</li>
+      <li data-ar="لا نستخدم أي تحليلات، ولا نرسل أي بيانات. كل ما يُحفظ يبقى داخل جهازك.">アクセス解析を行わず、いかなるデータも送信しません。保存は端末の中だけです。</li>
+      <li data-ar="ملخّصات الأخبار مُولَّدة بالذكاء الاصطناعي؛ يُرجى دائمًا مراجعة المصدر الأصلي.">ニュースの要約は生成AIによるものです。必ず出典元をご確認ください。</li>
+      <li data-ar="نصّ المنهج الدراسي صادر عن وزارة التعليم اليابانية (إعلان رسمي).">「学習指導要領」の本文は文部科学省告示によります。</li>
+      <li data-ar="مواد وزارة التعليم والمعهد الوطني تُقتبس وتُعالَج مع ذكر المصدر.">文部科学省・国立教育政策研究所の資料は、出典を明記して引用・加工しています。</li>
+      <li data-ar="الفيديوهات من القناة الرسمية لوزارة التعليم على YouTube، وتُحمَّل فقط عند الضغط. الحقوق لأصحابها.">動画は文部科学省の公式YouTubeチャンネルのもので、<strong>押したときだけ読み込みます</strong>。権利は各権利者に帰属します。</li>
+      <li data-ar="صورة صندوق الاقتراحات: «投書箱» لـ くーさん، من ويكيميديا كومنز، رخصة CC BY 2.0، مقصوصة ومصغَّرة.">投書箱の写真：「投書箱」くーさん（Flickr／Wikimedia Commons、CC BY 2.0）を切り出して縮小しています。</li>
+      <li data-ar="«LINE» علامة تجارية مسجّلة لشركة LY Corporation.">「LINE」はLINEヤフー株式会社の商標または登録商標です。</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="in">
+    <p><span data-ar="المشرف على الموقع">管理者</span>：伊藤 優（Ito Yu）</p>
+    <p><span data-ar="البريد الإلكتروني">メール</span>：<span id="adminMail">（未設定）</span></p>
+    <p><span data-ar="لطلبات التعديل أو الإضافة على الموقع، تفضّل من هنا.">HPへの依頼や修正がありましたら、こちらからお願いします。</span> <a id="formLink" href="#my" data-ar="نموذج الطلبات">ご依頼・修正フォーム</a></p>
+    <p data-ar="موقع غير رسمي / لا يجمع أي بيانات">本サイトは非公式です／データを一切集めません</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ══ 1. ことば ══ */
+  var lang = window.__langPref || 'ja';
+  var T = {
+    ja:{ wd:['日','月','火','水','木','金','土'],
+         month:function(y,m){return y+'年'+(m+1)+'月';},
+         prev:'前の月', next:'次の月',
+         ev:'研', dl:'〆',
+         evL:'研究会・大会の当日', dlL:'申込の締切日',
+         today:'今日', daysLeft:function(n){return n+'日';}, left:'あと',
+         dayOf:function(d){return (d.getMonth()+1)+'月'+d.getDate()+'日';},
+         deadlineOf:function(t){return t+'の申込〆切';},
+         eventOf:function(t){return t+'（当日）';},
+         todayLabel:function(d){return (d.getMonth()+1)+'月'+d.getDate()+'日（'+T.ja.wd[d.getDay()]+'）';} },
+    ar:{ wd:['أحد','إثن','ثلا','أرب','خمي','جمع','سبت'],
+         month:function(y,m){return ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][m]+' '+y;},
+         prev:'الشهر السابق', next:'الشهر التالي',
+         ev:'لقاء', dl:'تسجيل',
+         evL:'يوم انعقاد اللقاء', dlL:'آخر موعد للتسجيل',
+         today:'اليوم', daysLeft:function(n){return n+' يوم';}, left:'متبقٍ',
+         dayOf:function(d){return d.getDate()+'/'+(d.getMonth()+1);},
+         deadlineOf:function(t){return 'آخر موعد للتسجيل: '+t;},
+         eventOf:function(t){return t+'（يوم الانعقاد）';},
+         todayLabel:function(d){return d.getDate()+' '+['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'][d.getMonth()];} }
+  };
+  function t(){ return T[lang]; }
+
+  function applyLang(l){
+    lang = l;
+    var d = document.documentElement;
+    d.setAttribute('data-lang', l);
+    d.lang = (l==='ar') ? 'ar' : 'ja';
+    d.dir  = (l==='ar') ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-ar]').forEach(function(el){
+      if(el.dataset.ja === undefined) el.dataset.ja = el.innerHTML;
+      el.innerHTML = (l==='ar') ? el.dataset.ar : el.dataset.ja;
+    });
+    document.querySelectorAll('[data-ar-ph]').forEach(function(el){
+      if(el.dataset.jaPh === undefined) el.dataset.jaPh = el.placeholder;
+      el.placeholder = (l==='ar') ? el.dataset.arPh : el.dataset.jaPh;
+    });
+    if(window.__talkStage){
+      var tk = document.querySelector('.talk');
+      if(tk) window.__talkStage(+tk.dataset.stage || 1);
+    }
+    var lb = document.getElementById('langBtn');
+    lb.textContent = (l==='ar') ? '日本語' : 'عربي';
+    lb.lang = (l==='ar') ? 'ja' : 'ar';
+    if(window.Store) Store.set('lang', l);
+    paintSeg();
+    renderAll();
+  }
+
+  /* ══ 2. 研究会のデータ（いまは見本。実データに差し替えて使う） ══ */
+  /* 研究会の予定。出どころは各団体の公式サイト・公式配布物。
+     日付を足すときは、この配列に1行足すだけでカレンダーに出ます。
+     url を入れると「案内ページを開く」ボタンが有効になります。 */
+  var EVENTS = [
+    { ja:'第70回 全国研究協議大会', ar:'المؤتمر الوطني الـ70 لبحوث الأنشطة الخاصة',
+      s_ja:'全特活 全国大会', s_ar:'المؤتمر الوطني',
+      org_ja:'全国特別活動研究会', org_ar:'الجمعية الوطنية لبحوث الأنشطة الخاصة',
+      venue:'', place_ja:'東京', place_ar:'طوكيو',
+      about_ja:'2日間開催。650名を超える参加。過去の大会の資料も公式サイトから見られます。',
+      days:['2026-08-07','2026-08-08'], deadline:'',
+      apply_ja:'終了しました', url:'https://zentokkatsu.com/' },
+
+    { ja:'夏の特活まつり', ar:'مهرجان توكاتسو الصيفي',
+      s_ja:'都小特活 特活まつり', s_ar:'مهرجان الصيف',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'練馬区立豊玉小学校', place_ja:'東京都練馬区', place_ar:'نيريما، طوكيو',
+      about_ja:'実践報告／講演（玉川大学TAPセンター 教授 川本和孝 先生）／4研究部ごとの実践交流会。参加費無料。',
+      days:['2026-07-27'], deadline:'', apply_ja:'終了しました', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'学校行事部 検証授業（学芸会 事前指導）', ar:'درس تحقّق — قسم فعاليات المدرسة',
+      s_ja:'都小特活 行事部', s_ar:'قسم الفعاليات',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'町田市立町田第三小学校', place_ja:'東京都町田市', place_ar:'ماتشيدا، طوكيو',
+      about_ja:'2年 学芸会の事前指導／13:30〜　講師：全国小学校学校行事研究会 前会長 鈴木恒雄 先生',
+      days:['2026-10-02'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'学級活動部 検証授業（学級活動(1)）', ar:'درس تحقّق — قسم أنشطة الفصل',
+      s_ja:'都小特活 学活部', s_ar:'قسم أنشطة الفصل',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'世田谷区立山野小学校', place_ja:'東京都世田谷区', place_ar:'سيتاغايا، طوكيو',
+      about_ja:'6年 学級活動(1)／14:15〜　講師：帝京大学教育学部 教授 安部恭子 先生',
+      days:['2026-10-09'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'クラブ活動部 検証授業（ボッチャクラブ）', ar:'درس تحقّق — قسم الأندية',
+      s_ja:'都小特活 クラブ部', s_ar:'قسم الأندية',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'江東区立浅間竪川小学校', place_ja:'東京都江東区', place_ar:'كوتو، طوكيو',
+      about_ja:'ボッチャクラブ／14:10〜　講師：玉川大学 客員教授 赤羽根智 先生',
+      days:['2026-10-27'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'児童会活動部 検証授業（保健委員会）', ar:'درس تحقّق — قسم مجلس التلاميذ',
+      s_ja:'都小特活 児童会部', s_ar:'قسم مجلس التلاميذ',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'北区立滝野川第四小学校', place_ja:'東京都北区', place_ar:'كيتا، طوكيو',
+      about_ja:'保健委員会／14:20〜　講師：帝京大学教職センター 教授 佐野匡 先生',
+      days:['2026-11-09'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'学級活動部 検証授業（学級活動(1)）', ar:'درس تحقّق — قسم أنشطة الفصل',
+      s_ja:'都小特活 学活部', s_ar:'قسم أنشطة الفصل',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'足立区立中川小学校', place_ja:'東京都足立区', place_ar:'أداتشي، طوكيو',
+      about_ja:'4年 学級活動(1)／14:30〜　講師：國學院大學人間開発学部 教授 杉田洋 先生',
+      days:['2026-11-12'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'学校行事部 検証授業（音楽会 事後指導）', ar:'درس تحقّق — قسم فعاليات المدرسة',
+      s_ja:'都小特活 行事部（多摩）', s_ar:'قسم الفعاليات (تاما)',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'多摩市立多摩第三小学校', place_ja:'東京都多摩市', place_ar:'تاما، طوكيو',
+      about_ja:'5年 音楽会の事後指導／13:25〜　講師：玉川大学TAPセンター 教授 川本和孝 先生',
+      days:['2026-11-30'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'クラブ活動部 検証授業（科学クラブ）', ar:'درس تحقّق — قسم الأندية',
+      s_ja:'都小特活 クラブ部', s_ar:'قسم الأندية',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'大田区立矢口東小学校', place_ja:'東京都大田区', place_ar:'أوتا، طوكيو',
+      about_ja:'科学クラブ／14:15〜　講師：東京都小学校特別活動研究会 元会長 山口祐一 先生',
+      days:['2026-12-03'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' },
+
+    { ja:'児童会活動部 検証授業（代表委員会）', ar:'درس تحقّق — قسم مجلس التلاميذ',
+      s_ja:'都小特活 児童会部', s_ar:'قسم مجلس التلاميذ',
+      org_ja:'東京都小学校特別活動研究会（都小特活）', org_ar:'جمعية طوكيو لبحوث الأنشطة الخاصة (الابتدائي)',
+      venue:'昭島市立つつじが丘小学校', place_ja:'東京都昭島市', place_ar:'أكيشيما، طوكيو',
+      about_ja:'代表委員会／14:15〜　講師：帝京大学教職センター 教授 佐野匡 先生',
+      days:['2026-12-04'], deadline:'', apply_ja:'事前登録は不要です', url:'https://tosho-tokkatsu.tokyo/' }
+  ];
+  var SOURCES = [
+    { url:'https://zentokkatsu.com/', ja:'全国特別活動研究会', ar:'الجمعية الوطنية لبحوث الأنشطة الخاصة' },
+    { url:'https://jaseatokkatsu.jimdoweb.com/', ja:'日本特別活動学会', ar:'الجمعية اليابانية للأنشطة الخاصة' }
+  ];
+  function title(e){ return (lang==='ar') ? e.ar : e.ja; }
+  function short(e){ return (lang==='ar') ? e.s_ar : e.s_ja; }
+  function place(e){ return (lang==='ar') ? e.place_ar : e.place_ja; }
+  function org(e){ return (lang==='ar') ? e.org_ar : e.org_ja; }
+  function dayList(e){ return e.days || (e.event ? [e.event] : []); }
+  function firstDay(e){ return dayList(e)[0]; }
+  function esc(x){ return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+  var TODAY = new Date(); TODAY.setHours(0,0,0,0);
+  function parse(s){ var p=s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function key(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function diffDays(d){ return Math.round((d - TODAY)/86400000); }
+
+  /* 日付 → その日に立つ印 */
+  function markMap(){
+    var m = {};
+    EVENTS.forEach(function(e){
+      dayList(e).forEach(function(k){ (m[k] = m[k] || []).push({ type:'ev', e:e }); });
+      if(e.deadline) (m[e.deadline] = m[e.deadline] || []).push({ type:'dl', e:e });
+    });
+    return m;
+  }
+
+  /* ══ 3. カレンダーを描く ══ */
+  function buildCal(host, y, mo){
+    var marks = markMap();
+    var first = new Date(y, mo, 1), last = new Date(y, mo+1, 0);
+    var html = '<div class="cal"><div class="cal-hd">' +
+      '<button class="cal-nav" type="button" data-cal="-1">' + t().prev + '</button>' +
+      '<p class="cal-title">' + t().month(y, mo) + '</p>' +
+      '<button class="cal-nav" type="button" data-cal="1">' + t().next + '</button>' +
+      '</div><div class="cal-grid">';
+    t().wd.forEach(function(w){ html += '<div class="wd">' + w + '</div>'; });
+    for(var i=0; i<first.getDay(); i++) html += '<div class="cal-cell"></div>';
+    for(var d=1; d<=last.getDate(); d++){
+      var date = new Date(y, mo, d), k = key(date);
+      var isToday = (+date === +TODAY);
+      var ms = marks[k] || [];
+      var tag = ms.length ? 'button' : 'div';
+      var attr = ms.length ? ' type="button" data-day="' + k + '"' : '';
+      var aria = ms.length ? ' aria-label="' + esc(d + '　' + ms.map(function(m){
+            return (m.type==='ev' ? t().eventOf(title(m.e)) : t().deadlineOf(title(m.e)));
+          }).join('／')) + '"' : '';
+      html += '<' + tag + ' class="cal-cell' + (isToday ? ' today' : '') + (ms.length ? ' has' : '') + '"' + attr + aria + '>' +
+              '<span class="n">' + d + '</span>';
+      ms.forEach(function(m){
+        html += '<span class="mk ' + m.type + '">' +
+                (m.type==='ev' ? t().ev : t().dl) + ' ' + esc(short(m.e)) + '</span>';
+      });
+      html += '</' + tag + '>';
+    }
+    var tail = (7 - ((first.getDay() + last.getDate()) % 7)) % 7;
+    for(var j=0; j<tail; j++) html += '<div class="cal-cell"></div>';
+    html += '</div></div>';
+    host.innerHTML = html;
+    host.dataset.y = y; host.dataset.m = mo;
+    host.querySelectorAll('[data-cal]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var n = mo + (+b.dataset.cal), ny = y;
+        if(n < 0){ n = 11; ny--; } if(n > 11){ n = 0; ny++; }
+        buildCal(host, ny, n);
+      });
+    });
+    host.querySelectorAll('[data-day]').forEach(function(b){
+      b.addEventListener('click', function(){
+        host.querySelectorAll('.cal-cell').forEach(function(c){ c.classList.remove('sel'); });
+        b.classList.add('sel');
+        showDay(host, b.dataset.day);
+      });
+    });
+  }
+
+  /* その日に何があるかを、カレンダーの下に開く */
+  function showDay(host, k){
+    var box = document.getElementById(host.dataset.detail);
+    if(!box) return;
+    var ms = markMap()[k] || [];
+    var d = parse(k);
+    var L = (lang==='ar')
+      ? { org:'الجهة المنظِّمة', venue:'المكان', addr:'الموقع', about:'المحتوى', day:'اليوم', apply:'التسجيل', open:'افتح صفحة الإعلان', src:'مصادر مواعيد اللقاءات：' }
+      : { org:'主催', venue:'会場', addr:'所在地', about:'内容', day:'日程', apply:'申込', open:'主催団体のページを開く', src:'日程の出どころ：' };
+    var html = ms.map(function(m){
+      var e = m.e;
+      var days = dayList(e).map(function(x){ return t().dayOf(parse(x)); }).join('・');
+      if(e.deadline) days += '　' + t().dlL + '：' + t().dayOf(parse(e.deadline));
+      var rows = '';
+      function row(dt, dd){ if(dd) rows += '<dt>' + dt + '</dt><dd>' + esc(dd) + '</dd>'; }
+      row(L.org, org(e));
+      row(L.venue, e.venue || (lang==='ar' ? '—' : '公式サイトで確認'));
+      row(L.addr, place(e));
+      row(L.about, e.about_ja);
+      row(L.day, days);
+      row(L.apply, e.apply_ja);
+      var link = e.url
+        ? '<a class="btn wide" href="' + esc(e.url) + '" target="_blank" rel="noopener noreferrer">' + L.open + '</a>'
+        : '<p class="none">' + (lang==='ar' ? 'لم تُسجَّل صفحة إعلان بعد.' : '案内ページはまだ登録されていません。') + '</p>';
+      return '<div class="evbox">' +
+        '<p class="k"><span class="kind ' + m.type + '">' + (m.type==='ev' ? t().ev : t().dl) + '</span>' +
+          t().dayOf(d) + '</p>' +
+        '<h3>' + esc(title(e)) + '</h3>' +
+        '<dl>' + rows + '</dl>' + link +
+      '</div>';
+    }).join('');
+    box.innerHTML = html + '<p class="none" style="margin-top:10px">' + L.src +
+      SOURCES.map(function(x){
+        return '<a href="' + x.url + '" target="_blank" rel="noopener noreferrer">' + (lang==='ar'?x.ar:x.ja) + '</a>';
+      }).join('　') + '</p>';
+    box.scrollIntoView({ block:'nearest', behavior:(window.matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth') });
+  }
+
+  function legend(host){
+    host.innerHTML =
+      '<li><span class="mk ev">' + t().ev + '</span>' + t().evL + '</li>' +
+      '<li><span class="mk dl">' + t().dl + '</span>' + t().dlL + '</li>';
+  }
+
+  /* ══ 4. 近いものを並べる（ホームの「いま気にすること」） ══ */
+  function renderSoon(){
+    var host = document.getElementById('soonList'); if(!host) return;
+    var items = [];
+    EVENTS.forEach(function(e){
+      if(e.deadline) items.push({ kind:'dl', d:parse(e.deadline), e:e });
+      dayList(e).forEach(function(x){ items.push({ kind:'ev', d:parse(x), e:e }); });
+    });
+    items = items.filter(function(i){ return diffDays(i.d) >= 0; })
+                 .sort(function(a,b){ return a.d - b.d; })
+                 .slice(0, 4);
+    if(!items.length){
+      host.innerHTML = '<li><span class="tx"><b>' +
+        (lang==='ar' ? 'لا مواعيد قادمة مسجَّلة حاليًا.' : 'これから先の予定は、いまのところありません。') +
+        '</b></span></li>';
+      return;
+    }
+    host.innerHTML = items.map(function(i){
+      var n = diffDays(i.d);
+      var head = (n === 0) ? '<b>' + t().today + '</b>'
+                           : '<b>' + n + '</b><span>' + (lang==='ar' ? t().daysLeft('').trim() : '日後') + '</span>';
+      var what = (i.kind === 'dl') ? t().deadlineOf(title(i.e)) : title(i.e);
+      var sub = t().dayOf(i.d) + '　' + (i.e.venue || place(i.e));
+      return '<li class="' + i.kind + (n===0 ? ' today' : '') + '" data-open="' + firstDay(i.e) + '">' +
+               '<span class="cd">' + head + '</span>' +
+               '<span class="tx"><b>' + esc(what) + '</b><span>' + esc(org(i.e)) + '</span><span>' + esc(sub) + '</span></span>' +
+             '</li>';
+    }).join('');
+  }
+
+  /* ══ 5. カレンダーの下の一覧（文字でも読めるように） ══ */
+  function renderList(){
+    var host = document.getElementById('calList'); if(!host) return;
+    host.innerHTML = EVENTS.map(function(e){
+      var d0 = parse(firstDay(e)), n = diffDays(d0);
+      var badge = (n > 0) ? t().left + ' ' + t().daysLeft(n) : (n === 0 ? t().today : (lang==='ar' ? 'انتهى' : '終了'));
+      return '<li><a href="#hiroba" data-open="' + firstDay(e) + '"><span class="t">' + esc(title(e)) +
+             '<span class="sub">' + esc(org(e)) + '</span>' +
+             '<span class="sub">' + t().dayOf(d0) + '　' + esc(e.venue || place(e)) + '</span></span>' +
+             '<span class="d">' + badge + '</span></a></li>';
+    }).join('');
+    host.querySelectorAll('[data-open]').forEach(function(a){
+      a.addEventListener('click', function(ev){
+        ev.preventDefault();
+        jumpTo(a.dataset.open);
+      });
+    });
+  }
+
+  function jumpTo(k){
+    var m = document.getElementById('mainCal');
+    if(!m) return;
+    var d = parse(k);
+    buildCal(m, d.getFullYear(), d.getMonth());
+    var cell = m.querySelector('[data-day="' + k + '"]');
+    if(cell) cell.click();
+  }
+
+  function renderAll(){
+    var h = document.getElementById('homeCal');
+    var m = document.getElementById('mainCal');
+    if(h) h.dataset.detail = 'homeDetail';
+    if(m) m.dataset.detail = 'mainDetail';
+    if(h) buildCal(h, +(h.dataset.y || TODAY.getFullYear()), +(h.dataset.m !== undefined ? h.dataset.m : TODAY.getMonth()));
+    if(m) buildCal(m, +(m.dataset.y || TODAY.getFullYear()), +(m.dataset.m !== undefined ? m.dataset.m : TODAY.getMonth()));
+    legend(document.getElementById('homeLegend'));
+    legend(document.getElementById('mainLegend'));
+    renderSoon();
+    renderList();
+    var soon = document.getElementById('soonList');
+    if(soon) soon.querySelectorAll('[data-open]').forEach(function(li){
+      li.style.cursor = 'pointer';
+      li.addEventListener('click', function(){ location.hash = '#hiroba'; setTimeout(function(){ jumpTo(li.dataset.open); }, 60); });
+    });
+    var tl = document.getElementById('todayLabel');
+    if(tl) tl.textContent = t().todayLabel(TODAY);
+  }
+
+  /* ══ 6. お悩み・サイクル図 → 学習過程の該当ステップを開く ══ */
+  function openStep(n, scroll){
+    var target = document.querySelector('.step[data-step="' + n + '"]');
+    if(!target) return;
+    document.querySelectorAll('.step').forEach(function(s){ s.open = (s === target); });
+    document.querySelectorAll('.cycle .node').forEach(function(g){
+      g.classList.toggle('on', g.dataset.step === String(n));
+    });
+    if(scroll){
+      target.scrollIntoView({ block:'start', behavior:(window.matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth') });
+      target.querySelector('summary').focus();
+    }
+  }
+  document.querySelectorAll('.cycle .node').forEach(function(g){
+    function go(){ openStep(g.dataset.step, true); }
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+  });
+  document.querySelectorAll('.step').forEach(function(d){
+    d.addEventListener('toggle', function(){
+      if(d.open) document.querySelectorAll('.cycle .node').forEach(function(g){
+        g.classList.toggle('on', g.dataset.step === d.dataset.step);
+      });
+    });
+  });
+
+  document.querySelectorAll('.nayami button').forEach(function(b){
+    b.addEventListener('click', function(){ openStep(b.dataset.step, true); });
+  });
+
+  /* ══ 7. タブの切替 ══ */
+  var PAGES = { home:'ホーム', news:'ニュース', manabu:'まなぶ', hiroba:'ひろば', my:'マイ' };
+  var secs = document.querySelectorAll('[data-page]');
+  var tabs = document.querySelectorAll('[data-tab]');
+  var first = true;
+  function route(){
+    var id = location.hash.replace(/^#/, '');
+    if(!PAGES[id]) id = 'home';
+    secs.forEach(function(s){
+      var on = (s.dataset.page === id);
+      s.classList.toggle('is-on', on);
+      s.hidden = !on;
+    });
+    tabs.forEach(function(x){
+      if(x.dataset.tab === id) x.setAttribute('aria-current','page');
+      else x.removeAttribute('aria-current');
+    });
+    document.title = 'TOKKATU広場｜' + PAGES[id];
+    if(!first){
+      var cur = document.querySelector('[data-page="' + id + '"]');
+      if(cur) cur.focus({ preventScroll:true });
+      window.scrollTo(0, 0);
+    }
+    first = false;
+  }
+  window.addEventListener('hashchange', route);
+
+  /* ══ 8. 設定のボタン ══ */
+  function paintSeg(){
+    var v = window.__view ? window.__view.get() : 'auto';
+    document.querySelectorAll('[data-set-view]').forEach(function(b){
+      var on = (b.dataset.setView === v);
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    });
+    document.querySelectorAll('[data-set-lang]').forEach(function(b){
+      var on = (b.dataset.setLang === lang);
+      b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    });
+  }
+  document.querySelectorAll('[data-set-view]').forEach(function(b){
+    b.addEventListener('click', function(){ if(window.__view) window.__view.set(b.dataset.setView); paintSeg(); });
+  });
+  document.querySelectorAll('[data-set-lang]').forEach(function(b){
+    b.addEventListener('click', function(){ applyLang(b.dataset.setLang); });
+  });
+  document.getElementById('langBtn').addEventListener('click', function(){
+    applyLang(lang === 'ar' ? 'ja' : 'ar');
+  });
+
+  /* ══ 8-2. 動画 ══
+     ファイルを直接開いている（file://）ときは、YouTube側が埋め込みを拒むため
+     埋め込まずに新しいタブで開く。https で配ったときだけページ内で再生する。 */
+  var canEmbed = (location.protocol === 'http:' || location.protocol === 'https:');
+  document.querySelectorAll('.yt').forEach(function(box){
+    var b = box.querySelector('.ytbtn');
+    if(!b) return;
+    var id = box.dataset.yt;
+    var watch = 'https://www.youtube.com/watch?v=' + id;
+    if(!canEmbed){
+      var note = box.querySelector('.ytalt');
+      if(note){
+        note.dataset.ja = '<a href="' + watch + '" target="_blank" rel="noopener noreferrer">YouTubeで開く（別のタブ）</a>' +
+          '<br>※ ファイルを直接開いているため、ページの中では再生できません。';
+        note.dataset.ar = '<a href="' + watch + '" target="_blank" rel="noopener noreferrer">افتح في YouTube</a>' +
+          '<br>※ لا يمكن التشغيل داخل الصفحة عند فتح الملف مباشرة.';
+        note.innerHTML = (lang==='ar') ? note.dataset.ar : note.dataset.ja;
+      }
+    }
+    b.addEventListener('click', function(){
+      if(!canEmbed){ window.open(watch, '_blank', 'noopener'); return; }
+      var f = document.createElement('div');
+      f.className = 'ytframe';
+      f.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id +
+        '?rel=0&modestbranding=1" title="' + (b.querySelector('b').textContent) +
+        '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"' +
+        ' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+      box.replaceChild(f, b);
+    });
+  });
+
+  /* ══ 8-3. 出し合う → くらべ合う → まとめる ══ */
+  var CAP = {
+    ja:{
+      1:'<b>出し合う。</b>思いついたことを、ばらばらのまま全部出します。ここで良し悪しを言うと、次から出てこなくなります。',
+      2:'<b>くらべ合う。</b>並べ直して、「にた考えはどれか」「提案理由に合うのはどれか」を見ます。ここが話合いの本体です。',
+      3:'<b>まとめる。</b>1つに絞るのではなく、<b>折り合いをつけて</b>決めます。残った意見の良いところを入れると、決めたあとに動きます。'
+    },
+    ar:{
+      1:'<b>نطرح.</b> نُخرج كل ما نفكر فيه دون ترتيب. الحكم المبكر يوقف الأصوات.',
+      2:'<b>نقارن.</b> نعيد الترتيب ونسأل: أيّها متشابه؟ وأيّها يخدم سبب الاقتراح؟ هذه هي صُلب الحوار.',
+      3:'<b>نقرّر.</b> لا نختار واحدًا فقط، بل <b>نتنازل قليلًا</b> وندمج ما يصلح من الباقي — عندها يتحرّك القرار فعلًا.'
+    }
+  };
+  var talk = document.querySelector('.talk');
+  if(talk){
+    var cap = talk.querySelector('.talk-cap');
+    var timer = null;
+    function setStage(n){
+      talk.dataset.stage = n;
+      talk.querySelectorAll('[data-talk]').forEach(function(b){
+        b.setAttribute('aria-pressed', b.dataset.talk === String(n));
+      });
+      cap.innerHTML = CAP[lang][n];
+      cap.dataset.ja = CAP.ja[n]; cap.dataset.ar = CAP.ar[n];
+    }
+    talk.querySelectorAll('[data-talk]').forEach(function(b){
+      b.addEventListener('click', function(){ clearTimeout(timer); setStage(+b.dataset.talk); });
+    });
+    talk.querySelector('.talk-play').addEventListener('click', function(){
+      clearTimeout(timer);
+      var quick = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+      setStage(1);
+      timer = setTimeout(function(){ setStage(2);
+        timer = setTimeout(function(){ setStage(3); }, quick ? 900 : 1900);
+      }, quick ? 900 : 1900);
+    });
+    window.__talkStage = setStage;
+  }
+
+  /* ══ 9. ストックの見た目（保存は Step 2） ══ */
+  document.querySelectorAll('.stock').forEach(function(b){
+    b.addEventListener('click', function(){
+      var on = b.classList.toggle('on');
+      b.setAttribute('aria-pressed', on);
+      if(b.dataset.ja !== undefined){
+        b.dataset.ja = on ? 'ストック済み' : 'ストック';
+        b.dataset.ar = on ? 'محفوظ' : 'حفظ';
+      }
+      b.textContent = (lang==='ar') ? (on ? 'محفوظ' : 'حفظ') : (on ? 'ストック済み' : 'ストック');
+    });
+  });
+
+  /* ══ 10. はじめる ══ */
+  route();
+  if(lang === 'ar') applyLang('ar'); else { paintSeg(); renderAll(); }
+})();
+</script>
+</body>
+</html>
