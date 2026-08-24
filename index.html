@@ -456,7 +456,66 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
   .btn,.tab,.rows a,.tile,.nayami button,.cal-nav{transition:background-color .12s,color .12s,border-color .12s}
 }
 </style>
-<script src="storage.js"></script>
+<script>
+/* ══ storage.js を取りこみ（保存はここだけ。差しかえるときはこのブロックごと） ══ */
+/* 特活広場｜保存はここだけ。localStorage 以外は触らない。
+   将来ネイティブ化するときは、このファイルの中だけを差し替える。
+   扱うキー：stock / memo / read / mode / view                      */
+(function (g) {
+  'use strict';
+  var NS = 'tokkatsu.';
+  var fallback = {};          // localStorage が使えない端末のための一時置き場
+  var usable = (function () {
+    try {
+      var k = NS + '__test';
+      localStorage.setItem(k, '1');
+      localStorage.removeItem(k);
+      return true;
+    } catch (e) { return false; }
+  })();
+
+  function raw(key) {
+    if (!usable) return (key in fallback) ? fallback[key] : null;
+    try { return localStorage.getItem(NS + key); } catch (e) { return null; }
+  }
+
+  var Store = {
+    usable: usable,
+
+    get: function (key, dflt) {
+      var v = raw(key);
+      if (v === null || v === undefined) return (dflt === undefined ? null : dflt);
+      try { return JSON.parse(v); } catch (e) { return v; }
+    },
+
+    set: function (key, value) {
+      var v = (typeof value === 'string') ? value : JSON.stringify(value);
+      if (!usable) { fallback[key] = v; return true; }
+      try { localStorage.setItem(NS + key, v); return true; }
+      catch (e) { fallback[key] = v; return false; }   // 容量超過でも落とさない
+    },
+
+    remove: function (key) {
+      delete fallback[key];
+      if (!usable) return;
+      try { localStorage.removeItem(NS + key); } catch (e) {}
+    },
+
+    /* マイタブの「書き出し」用。Obsidian にそのまま貼れるテキストにする */
+    dump: function () {
+      var keys = ['mode', 'view', 'stock', 'memo', 'read'], out = ['# 特活広場 書き出し'];
+      keys.forEach(function (k) {
+        var v = Store.get(k);
+        if (v === null) return;
+        out.push('', '## ' + k, (typeof v === 'string') ? v : JSON.stringify(v, null, 2));
+      });
+      return out.join('\n');
+    }
+  };
+
+  g.Store = Store;
+})(window);
+</script>
 <script>
 /* 表示モードと言語を、描いてしまう前に決める。保存は storage.js の中だけ。 */
 (function(){
@@ -1099,7 +1158,7 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
   <div class="sec">
     <h2 data-ar="مجموعة LINE">LINEひろば</h2>
     <p class="note" data-ar="كل الآراء والأسئلة وطلبات المزايا تذهب إلى LINE. لا يوجد صندوق نشر في هذا الموقع.">意見・質問・「こんな機能がほしい」は、すべてこちらへ。このサイトに投稿欄はありません。</p>
-    <a class="btn wide" href="#hiroba" data-ar="افتح «ساحة توكاتسو للجميع»">みんなの特活ひろばを開く</a>
+    <a class="btn wide" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer" data-ar="افتح «ساحة توكاتسو للجميع»">みんなの特活ひろばを開く</a>
   </div>
 </section>
 
