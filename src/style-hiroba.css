@@ -2202,13 +2202,32 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   background:rgba(16,16,15,.95);
   display:grid;grid-template-rows:1fr auto;
 }
-.zen-naka{overflow:auto;display:grid;place-items:center;padding:8px}
-.zen-naka img{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+/* ★ますめは minmax(0,1fr) で「画面ぴったり」に決めます（2026-09-22 実測）。
+   ただの place-items:center だと、ますめの大きさが中身で決まってしまい、
+   height:100% が 1068px（画面は832px）になって、縦にはみ出しました。 */
+.zen-naka{
+  overflow:auto;padding:8px;
+  display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);
+  place-items:stretch;
+}
+/* 「画面に合わせる」＝画面いっぱいまで **のばして** 合わせます。
+   2026-09-22：前は max-width:100% だけでした。これは「大きすぎたら縮める」
+   であって、のばしません。送られてくる板書は 1400px までに縮めてから
+   届くので、PCの広い画面では 1400px のまま、まん中に小さく浮いていました
+   （画面の3分の2ほど）。width/height を 100% にして、object-fit:contain で
+   縦横を保ったまま、入るところまで大きくします。 */
+.zen-naka img{
+  display:block;width:100%;height:100%;
+  object-fit:contain;object-position:center;
+}
 /* 「大きく」＝もとの大きさ。はみ出したぶんは指で動かせます（横長の黒板はこれで読めます） */
 /* はみ出していないほうの向きは、まんなかに寄せます（safe＝はみ出すときは端から）。
    これが start だと、画面より低い写真が上にはりついて、下に地が残ります。 */
-.zen--ookiku .zen-naka{place-items:safe center}
-.zen--ookiku .zen-naka img{max-width:none;max-height:none}
+.zen--ookiku .zen-naka{place-items:safe center;grid-template-rows:auto}
+/* 「大きく」＝もとの大きさのまま。のばしも縮めもしません */
+.zen--ookiku .zen-naka img{
+  max-width:none;max-height:none;width:auto;height:auto;object-fit:none;
+}
 .zen-te{
   display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
   padding:12px 14px;background:#100F0E;
@@ -2495,4 +2514,26 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .sagasu .sagasu-b-kazu{margin-inline-start:5px;padding:1px 6px;font-size:11px}
   .sagasu-gyo{gap:5px}
   .sagasu-i{min-height:46px;padding:10px 12px}
+}
+
+/* ══ 推しポイント（2026-09-22 夜 依頼）══════════════════════
+   いちばん伝えたいことを、ひとことで。題のすぐ下に、本文より
+   ひとまわり大きく出します。任意なので、無い札もあります。
+   ★色だけで目立たせません。大きさと、左の太い線でも分かるようにします。 */
+.bfuda-oshi{
+  margin:0 0 14px;padding:2px 0 2px 14px;
+  border-inline-start:5px solid var(--accent);
+  font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(16px,1.9vw,19px);line-height:1.75;letter-spacing:.02em;
+}
+
+/* ══ スマホでの、実践の字の大きさ（2026-09-22 夜 依頼）══════
+   実践内容の字が、スマホだと少し大きく感じる、という話から。
+   ★14pxより小さくはしません。読めなくなるほうが困ります。
+   ★変えるのは「送っていただいた中身」だけです。題・推しポイント・
+     押すところの大きさは、そのままにします。 */
+@media (max-width:719px){
+  .bfuda-lead{font-size:14px;line-height:1.9}
+  .bfuda-naka p,.bfuda-naka li{font-size:14px;line-height:1.9}
+  .bfuda-oshi{font-size:15.5px;padding-inline-start:12px}
 }

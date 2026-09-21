@@ -616,6 +616,28 @@ def kenmon_jissen(fm, goods):
     if not re.match(r'^[a-z0-9-]+$', fm['slug']):
         raise Tomeru('%s：ファイル名の _ から後ろは 英小文字・数字・- だけにしてください' % f)
     fm['by'] = fm.get('by') or '本サイト'
+    # ── 推しポイント（2026-09-22 夜 依頼）──────────────────
+    #   いちばん伝えたいことを、ひとことで。題のすぐ下に大きく出ます。任意です。
+    #
+    #   ★なぜ front matter ではなく、本文の1行目に目じるしで運ぶのか
+    #     front matter に oshi: を書くのは **受け口（Apps Script）** です。
+    #     受け口はこちらのファイルを直しても、貼り直すまで古いまま動きます。
+    #     そのあいだ、入力してもらった推しポイントが どこにも残りません。
+    #     本文に混ぜて運べば、**受け口を1行も触らずに** 今日から効きます。
+    #   ★手で書く .md では、front matter の oshi: も使えます（そちらが優先）。
+    oshi = (fm.get('oshi') or '').strip()
+    hon = fm['summary'].strip()
+    if not oshi and hon.startswith(OSHI_SHIRUSHI):
+        kire = hon.split('\n', 1)
+        oshi = kire[0][len(OSHI_SHIRUSHI):].strip()
+        hon = (kire[1] if len(kire) > 1 else '').strip()
+    elif hon.startswith(OSHI_SHIRUSHI):
+        hon = hon.split('\n', 1)[1].strip() if '\n' in hon else ''
+    fm['oshi'] = oshi[:OSHI_MOJI_MAX]
+    fm['summary'] = hon
+    if not hon:
+        # 推しポイントしか無いときは、それを本文にもします（空の札を出さない）
+        fm['summary'] = hon = oshi
     # 最初の段落が「ひとこと」。残りが本文
     parts = re.split(r'\n\s*\n', fm['summary'].strip(), maxsplit=1)
     fm['lead'] = parts[0].strip()
@@ -623,6 +645,12 @@ def kenmon_jissen(fm, goods):
     if fm['lead'].startswith('#'):
         raise Tomeru('%s：本文は見出しではなく、ひとことの段落から始めてください' % f)
     return True, None
+
+
+# 推しポイントを、本文の1行目に混ぜて運ぶときの目じるし。
+#   画面の入力欄（src/hiroba.html）と、ここと、2か所でしか使いません。
+OSHI_SHIRUSHI = '★推しポイント：'
+OSHI_MOJI_MAX = 60
 
 
 _GIT_TODOITA = {}
@@ -2618,7 +2646,7 @@ def build_jissen_hiroba(jissen, goods):
 BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
-        <p class="bfuda-lead">{lead}</p>
+{oshi}        <p class="bfuda-lead">{lead}</p>
 {mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
       </article>"""
 
@@ -2693,6 +2721,8 @@ def build_bansho(jissen):
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
             toki=a['todoita'].strftime('%Y%m%d%H%M'),
             nen=' '.join(nen_bunkai(a['grade'])),
+            oshi=('        <p class="bfuda-oshi">%s</p>\n' % inline_md(a['oshi'])
+                  if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),

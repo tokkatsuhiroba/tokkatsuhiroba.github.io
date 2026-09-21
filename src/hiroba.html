@@ -694,6 +694,15 @@
         </div>
       </div>
 
+      <!-- 推しポイント（2026-09-22 夜 依頼）。任意です。
+           題のすぐ下に、ひとまわり大きく出ます。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-o">推しポイント<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">いちばん伝えたいことを、ひとことで。題のすぐ下に、大きく出ます。</p>
+        <input class="okuru-i" type="text" id="okuru-o" name="o" maxlength="60"
+               placeholder="例：提案理由を真ん中に置くだけで、話合いが迷子になりません">
+      </div>
+
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-m">実践内容<span class="okuru-hissu">必須</span></label>
         <p class="okuru-yomi okuru-yomi--sub">ひとことでも大丈夫です。長く書く必要はありません。</p>
@@ -996,6 +1005,13 @@
 
       var gakunen = nen_fuda('okuru-gn'), nen = gakunen.yomu, nen_kesu = gakunen.kesu;
       var naiyo = hitotsu_fuda('okuru-nn');
+
+      var OSHI_SHIRUSHI = '★推しポイント：';
+      var oshi_tsukeru = function(o, m){
+        o = (o || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
+        m = (m || '').slice(0, 1000);
+        return o ? (OSHI_SHIRUSHI + o + '\n\n' + m) : m;
+      };
 
       var mIn = document.getElementById('okuru-m');
       var kazu = document.getElementById('okuru-kazu');
@@ -1410,7 +1426,12 @@
               n:  naiyo.yomu(),                                /* 6つの内容（1つだけ） */
               t:  document.getElementById('okuru-t').value.slice(0, 60),
               g:  nen(),                                       /* 押された学年 */
-              m:  document.getElementById('okuru-m').value.slice(0, 1000),
+              /* 推しポイントは、本文の1行めに目じるしを付けて混ぜます。
+                 こうすると **受け口（Apps Script）を1行も触らずに** 効きます。
+                 受け口はこちらを直しても、貼り直すまで古いまま動くためです。
+                 取り出すのは build.py の kenmon_jissen（OSHI_SHIRUSHI）。 */
+              m:  oshi_tsukeru(document.getElementById('okuru-o').value,
+                               document.getElementById('okuru-m').value),
               na: naIn.value.trim().slice(0, 40),              /* お名前（必須） */
               sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
               ko: document.getElementById('okuru-ko').checked ? 1 : 0
@@ -1598,6 +1619,7 @@
     var tag  = fuda.querySelector('.bfuda-tag');
     var kind = fuda.querySelector('.fuda-kind');
     var dai  = ga_moji(fuda.querySelector('.bfuda-h'));
+    var oshi = ga_moji(fuda.querySelector('.bfuda-oshi'));
     var lead = ga_moji(fuda.querySelector('.bfuda-lead'));
     var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
     var by   = ga_moji(fuda.querySelector('.bfuda-by'));
@@ -1618,6 +1640,13 @@
     var daiG = ga_oru(ctx, dai, naka);
     okiba.push({t:'dai', g:daiG, y:y}); y += daiG.length * 74 + 16;
 
+    if(oshi){
+      /* 推しポイント。題のすぐ下に、本文よりひとまわり大きく。
+         画面と同じように、左に太い線を引きます（色だけで目立たせない）。 */
+      ctx.font = '700 36px ' + GA_JI;
+      var oshiG = ga_oru(ctx, oshi, naka - 26);
+      okiba.push({t:'oshi', g:oshiG, y:y}); y += oshiG.length * 54 + 18;
+    }
     if(meta){
       ctx.font = '500 27px ' + GA_HON;
       var metaG = ga_oru(ctx, meta, naka);
@@ -1700,6 +1729,11 @@
       if(o.t === 'dai'){
         ctx.fillStyle = '#1C1C1A'; ctx.font = '900 54px ' + GA_JI;
         ga_kaku(ctx, o.g, GA_P, o.y, 74);
+      } else if(o.t === 'oshi'){
+        ctx.fillStyle = '#1F5C3F';
+        ctx.fillRect(GA_P, o.y + 2, 7, o.g.length * 54 - 10);
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '700 36px ' + GA_JI;
+        ga_kaku(ctx, o.g, GA_P + 26, o.y, 54);
       } else if(o.t === 'meta'){
         ctx.fillStyle = '#63625C'; ctx.font = '500 27px ' + GA_HON;
         ga_kaku(ctx, o.g, GA_P, o.y, 42);
