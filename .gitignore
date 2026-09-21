@@ -42,3 +42,6 @@ __pycache__/
 /hiroba.html
 /index-simple.html
 /storage.js
+
+# Apps Script の置き場（clasp が作る控え。公開しません）
+_gas-bansho/

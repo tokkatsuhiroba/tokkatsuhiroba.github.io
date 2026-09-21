@@ -1884,3 +1884,34 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .okuru-shirase:empty{display:none}
 .okuru-chu{margin:16px 0 0;font-size:12.5px;line-height:1.85;color:var(--mute);text-align:center}
+
+/* ══ このサイトは、なに（ホームのいちばん上）══════════════
+   LINEのオープンチャットの案内に合わせた4行。4人が1つずつ持ちます。
+   スマホでは2×2、720px以上で横1列。.kyara と同じ作りにしてあるので、
+   4人ならびと見た目がそろいます。 */
+.igi-bun{
+  max-width:640px;margin:0 auto;text-align:center;
+  font-size:15.5px;line-height:1.85;
+}
+.igi-bun b{font-weight:700;border-bottom:3px solid var(--ki);padding-bottom:1px}
+.igi-l{
+  list-style:none;margin:20px auto 0;padding:0;max-width:720px;
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;
+}
+@media (min-width:720px){.igi-l{grid-template-columns:repeat(4,1fr);gap:14px}}
+.igi-h{
+  padding:12px 6px 10px;background:var(--bg);
+  border:2.5px solid var(--ink);border-radius:18px;box-shadow:4px 4px 0 var(--ink);
+}
+.igi-h .e{display:block;line-height:0}
+.igi-h .e svg{width:auto;height:64px}
+.igi-h b{
+  display:block;margin-top:6px;font-family:var(--f-maru);font-weight:700;
+  font-size:14.5px;letter-spacing:.03em;
+}
+.igi-h .t{
+  display:block;margin-top:4px;font-size:12.5px;line-height:1.55;color:var(--mute);
+  /* 日本語は語の切れ目で折る。効かないブラウザでも見た目は崩れません */
+  word-break:auto-phrase;text-wrap:pretty;
+}
+.igi-b{margin:22px 0 0;text-align:center}

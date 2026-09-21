@@ -365,8 +365,51 @@
       <li><span class="n">4</span><b>使われる</b>ほかの先生が持ち帰って、月曜の学級会で使います。</li>
     </ol>
 
-    <div class="naka">
-      <a class="btn" href="{{FORM_JISSEN}}" target="_blank" rel="noopener noreferrer">実践・板書を送る<span class="btn-ya">→</span></a>
+    <!-- ══ サイトの中で、そのまま送る（2026-09-21）══════════════
+         いままでは外のフォームへ出ていました。ところが実践フォームは
+         ファイル添付があるため、Googleが全員にログインを求めます。
+         それでは「誰でも簡単に」になりません。だから入力欄を ここに置きます。
+         ★開いただけでは、外へ1バイトも出ません。
+           写真を選んでも、まだ出ません。「送る」を押したときだけ出ます。 -->
+    <form class="okuru-f" id="okuru-f" novalidate>
+      <p class="okuru-midashi">今週の板書を送る</p>
+      <p class="okuru-yomi">写真だけで大丈夫です。名前もメールも要りません。</p>
+
+      <div class="okuru-g">
+        <label class="okuru-shashin" for="okuru-e">
+          <span class="okuru-shashin-ji">板書の写真をえらぶ</span>
+          <span class="okuru-shashin-chu">3枚まで／その場で撮ってもOK</span>
+          <input type="file" id="okuru-e" name="e" accept="image/*" multiple>
+        </label>
+        <p class="okuru-mihon" id="okuru-mihon" aria-live="polite"></p>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-t">ひとこと<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="okuru-t" name="t" maxlength="60"
+               placeholder="例：6年・学級会・お楽しみ会の話合い">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-g">学年<span class="okuru-nin">任意</span></label>
+        <select class="okuru-i" id="okuru-g" name="g">
+          <option value="">えらばない</option>
+          <option>1〜2年</option><option>3〜4年</option>
+          <option>5〜6年</option><option>中学校</option>
+        </select>
+      </div>
+
+      <p class="okuru-kiwo"><b>送るまえに ひとつだけ</b>子どもの顔や名前、学校名が写っていないか見てください。写っていたら、こちらでは載せられません。</p>
+
+      <p class="okuru-botan">
+        <button class="btn" type="submit" id="okuru-b">送る<span class="btn-ya">→</span></button>
+      </p>
+      <p class="okuru-shirase" id="okuru-shirase" role="status" aria-live="polite"></p>
+      <p class="okuru-chu">開いただけでは、何も出ていきません。写真を選んでも、まだ出ません。<br><b>「送る」を押したときだけ</b>、管理人のところへ届きます。</p>
+    </form>
+
+    <div class="naka okuru-yobi" id="okuru-yobi" hidden>
+      <a class="btn" href="{{FORM_JISSEN}}" target="_blank" rel="noopener noreferrer">フォームで送る<span class="btn-ya">↗</span></a>
     </div>
     <p class="yomi" style="margin-top:26px;font-size:14px;color:var(--mute)">
       うまくいったことだけでなく、うまくいかなかったことも歓迎です。<br>
@@ -474,6 +517,88 @@
     window.addEventListener('resize', naosu);
     naosu();
   });
+
+  /* ══ サイトの中から、そのまま送る（2026-09-21）══════════════
+     ★開いただけでは、外に1バイトも出ません。写真を選んでも出ません。
+       出ていくのは「送る」を押したときの1回だけです。
+     ★写真は、送るまえに この場で小さくします（長辺1400px・だいたい120KB）。
+       もとの大きさのまま送ると、溜めるページがすぐ太るためです。
+       Exif（撮った場所や日時）も、描きなおすので落ちます。
+
+     OKURU_URL … Apps Script の ウェブアプリURL。
+       空のあいだは、この入力欄を出さずに 外のフォームへ案内します。
+       （実践フォームはファイル添付があるため、Googleがログインを求めます。
+         URLが入れば、ログイン無しで送れるようになります）        */
+  var OKURU_URL = '';
+
+  var okuruF = document.getElementById('okuru-f');
+  if(okuruF){
+    if(!OKURU_URL){
+      okuruF.hidden = true;
+      var yobi = document.getElementById('okuru-yobi');
+      if(yobi) yobi.hidden = false;
+    } else {
+      var eIn = document.getElementById('okuru-e');
+      var mihon = document.getElementById('okuru-mihon');
+      var shirase = document.getElementById('okuru-shirase');
+      var botan = document.getElementById('okuru-b');
+      var MAI = 3, HEN = 1400, OMOSA = 0.72;
+
+      var chijimeru = function(file){
+        return new Promise(function(ok, dame){
+          var fr = new FileReader();
+          fr.onerror = function(){ dame(new Error('読めませんでした')); };
+          fr.onload = function(){
+            var im = new Image();
+            im.onerror = function(){ dame(new Error('画像ではないようです')); };
+            im.onload = function(){
+              var w = im.width, h = im.height, r = Math.min(1, HEN / Math.max(w, h));
+              var c = document.createElement('canvas');
+              c.width = Math.round(w * r); c.height = Math.round(h * r);
+              c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+              ok(c.toDataURL('image/jpeg', OMOSA));
+            };
+            im.src = fr.result;
+          };
+          fr.readAsDataURL(file);
+        });
+      };
+
+      eIn.addEventListener('change', function(){
+        var n = eIn.files.length;
+        mihon.textContent = n ? (n > MAI ? MAI + '枚まで送れます（いまは' + n + '枚えらんでいます）'
+                                         : n + '枚えらびました') : '';
+      });
+
+      okuruF.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var fs = [].slice.call(eIn.files, 0, MAI);
+        if(!fs.length){ shirase.textContent = '写真を1枚えらんでください。'; return; }
+        botan.disabled = true;
+        shirase.textContent = '小さくしています…';
+        Promise.all(fs.map(chijimeru)).then(function(e){
+          shirase.textContent = '送っています…';
+          return fetch(OKURU_URL, {
+            method: 'POST',
+            /* text/plain にすると、Apps Script へ前置きの問い合わせが飛びません */
+            headers: {'Content-Type': 'text/plain;charset=utf-8'},
+            body: JSON.stringify({
+              kind: 'bansho', e: e,
+              t: document.getElementById('okuru-t').value.slice(0, 60),
+              g: document.getElementById('okuru-g').value
+            })
+          });
+        }).then(function(){
+          okuruF.reset(); mihon.textContent = '';
+          shirase.textContent = '送りました。管理人が読んでから、板書のページに載ります。';
+          botan.disabled = false;
+        })['catch'](function(){
+          shirase.textContent = 'うまく送れませんでした。LINEオープンチャットに直接あげてもらえると助かります。';
+          botan.disabled = false;
+        });
+      });
+    }
+  }
 
   function setCycle(n){
     document.querySelectorAll('[data-learn-step]').forEach(function(button){

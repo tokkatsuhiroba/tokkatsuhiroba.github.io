@@ -2114,6 +2114,52 @@ def build_kyara_narabi(kyara):
             + '\n    </ul>')
 
 
+# ── このサイトは、なに（ホームのいちばん上）─────────────
+#   LINEオープンチャット「みんなの特活ひろば（仮）」の案内に合わせた4行。
+#   ポスターの「ちょっと聞きたい／知りたい／伝えたい」を、
+#   4人に1つずつ持たせて、このサイトの行き先につなげています。
+#   （id, 「ちょっと◯◯」, このサイトでできること, 行き先）
+IGI_MEN = (
+    ('gakkatsu', 'ちょっと聞きたい', '話す場は、LINE。',       ''),
+    ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'index.html#ima'),
+    ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'manabu.html#jissen'),
+    ('jidokai',  'ちょっと伝えたい', 'あなたの実践も載ります。', 'atsumaru.html#okuru'),
+)
+
+IGI_T = """      <li class="igi-h h--{n}">
+        <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{n}"/></svg></span>
+        <b>{chotto}</b><span class="t">{dekiru}</span>
+      </li>"""
+
+
+def build_igi(kyara):
+    """ホームのいちばん上。このサイトが何のためにあるかを、4人で短く渡します。"""
+    men = []
+    for n, chotto, dekiru, _ in IGI_MEN:
+        if n not in kyara:
+            raise Tomeru('意義の節が %s.svg を呼んでいますが、その絵がありません' % n)
+        men.append(IGI_T.format(n=n, chotto=esc_html(chotto),
+                                dekiru=esc_html(dekiru),
+                                w=kyara[n][0], h=kyara[n][1]))
+    return ('<section class="sec" id="igi">\n'
+            '  <div class="uchi">\n'
+            '    <h2 class="midashi"><span class="en">WHY</span>'
+            '<span class="ja">このサイトは、なに</span></h2>\n'
+            '    <p class="igi-bun">日本の特別活動の<b>情報交流</b>を高めるための'
+            'サイトです。LINEオープンチャット'
+            '<b>「みんなの特活ひろば（仮）」</b>と連携しています。'
+            '<br>あちらで話し、ここで<b>確かめて、持ち帰る</b>。'
+            'そのためにお使いください。</p>\n'
+            '    <ul class="igi-l">\n' + '\n'.join(men) + '\n    </ul>\n'
+            # ★ここは切り分けたあとに作るので、{{◯◯}} は置きかわりません。
+            #   LINKS から直に入れます。
+            '    <p class="igi-b"><a class="btn" href="' + LINKS['LINE_OC'] + '" '
+            'target="_blank" rel="noopener noreferrer">'
+            'みんなの特活ひろば（仮）へ</a></p>\n'
+            '  </div>\n'
+            '</section>')
+
+
 # ══ ホーム（2026-09-21に新設）════════════════════════════
 #   全部の項目を、短く・面白そうに1枚にまとめる入口。
 #   数は、その場で数えたものだけを出します（手で書いた数は置きません。
@@ -2518,12 +2564,16 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', gaiyo_html):
         doko[i] = HOME
 
+    igi_html = build_igi(kyara)
+    for i in re.findall(r'\sid="([^"]+)"', igi_html):
+        doko[i] = HOME
+
     pages = {}
     for f, na, yo, setsu in PAGES:
         if f == HOME:
-            # ホームの並び … 8つの札 → こよみ → 中身をざっと
-            atama, saki = hero, 'ichiran'
-            naka_html = '\n\n'.join([home_html]
+            # ホームの並び … このサイトは、なに → 8つの札 → こよみ → 中身をざっと
+            atama, saki = hero, 'igi'
+            naka_html = '\n\n'.join([igi_html, home_html]
                                     + [sec[s] for s in setsu] + [gaiyo_html])
         else:
             atama = ko_atama(f, yo)
