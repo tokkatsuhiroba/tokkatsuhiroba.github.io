@@ -1916,6 +1916,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   padding:12px 6px 10px;background:var(--bg);
   border:2.5px solid var(--ink);border-radius:18px;box-shadow:4px 4px 0 var(--ink);
 }
+/* 札ごと押せるようにします（2026-09-21 夜）。字の色と下線はそのまま */
+.igi-a{display:block;color:inherit;text-decoration:none}
+.igi-a:hover .igi-ya,.igi-a:focus-visible .igi-ya{transform:translateX(3px)}
+.igi-ya{
+  display:block;margin-top:6px;font-weight:700;font-size:13px;color:var(--shu);
+  transition:transform .15s ease;
+}
 .igi-h .e{display:block;line-height:0}
 .igi-h .e svg{width:auto;height:64px}
 .igi-h b{

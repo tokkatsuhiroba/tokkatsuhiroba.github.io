@@ -2143,15 +2143,27 @@ def build_kyara_narabi(kyara):
 #   LINEオープンチャット「みんなの特活ひろば（仮）」の案内に合わせた4行。
 #   ポスターの「ちょっと聞きたい／知りたい／伝えたい」を、
 #   4人に1つずつ持たせて、このサイトの行き先につなげています。
-#   （id, 「ちょっと◯◯」, このサイトでできること, 行き先）
+#   （id, 「ちょっと◯◯」, このサイトでできること, 行き先の節のid）
+#   ★行き先は **節の id だけ** を書きます（page.html#id と書かないこと）。
+#     節がどのページに移っても、tsunagi_naosu() が張りなおしてくれます。
+#     2026-09-21 夜、「伝えたい」が atsumaru.html#okuru を指したまま
+#     送るところがホームへ移り、行き先が消えかけました。
 IGI_MEN = (
     ('gakkatsu', 'ちょっと聞きたい', '話す場は、LINE。',       ''),
-    ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'index.html#ima'),
-    ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'manabu.html#jissen'),
-    ('jidokai',  'ちょっと伝えたい', 'あなたの実践も載ります。', 'atsumaru.html#okuru'),
+    ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
+    ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'jissen'),
+    ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
 )
 
 IGI_T = """      <li class="igi-h h--{n}">
+        <a class="igi-a" href="#{saki}">
+          <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{n}"/></svg></span>
+          <b>{chotto}</b><span class="t">{dekiru}</span>
+          <span class="igi-ya" aria-hidden="true">→</span>
+        </a>
+      </li>"""
+
+IGI_T_NASHI = """      <li class="igi-h h--{n}">
         <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{n}"/></svg></span>
         <b>{chotto}</b><span class="t">{dekiru}</span>
       </li>"""
@@ -2160,12 +2172,12 @@ IGI_T = """      <li class="igi-h h--{n}">
 def build_igi(kyara):
     """ホームのいちばん上。このサイトが何のためにあるかを、4人で短く渡します。"""
     men = []
-    for n, chotto, dekiru, _ in IGI_MEN:
+    for n, chotto, dekiru, saki in IGI_MEN:
         if n not in kyara:
             raise Tomeru('意義の節が %s.svg を呼んでいますが、その絵がありません' % n)
-        men.append(IGI_T.format(n=n, chotto=esc_html(chotto),
-                                dekiru=esc_html(dekiru),
-                                w=kyara[n][0], h=kyara[n][1]))
+        men.append((IGI_T if saki else IGI_T_NASHI).format(
+            n=n, chotto=esc_html(chotto), dekiru=esc_html(dekiru),
+            saki=saki, w=kyara[n][0], h=kyara[n][1]))
     return ('<section class="sec" id="igi">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">WHY</span>'
@@ -2239,7 +2251,9 @@ def home_kazu(sid, sec, kiji, jissen, ken):
     if sid == 'kai':
         return '%d会' % len(KAI)
     if sid == 'okuru':
-        return '%dつの手順' % kazoe(r'<li><span class="n">')
+        # 送るところの札には「いくつ届いたか」を出します。
+        # （手順の数を出していましたが、手順の箇条書きをやめたので 0 になりました）
+        return '%d件とどいた' % len(bansho_aru(jissen))
     raise Tomeru('ホームの札 %s に、数の出し方がありません' % sid)
 
 
