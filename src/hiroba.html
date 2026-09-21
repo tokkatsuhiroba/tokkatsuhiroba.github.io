@@ -23,6 +23,121 @@
     <h2 class="midashi"><span class="en">CALENDAR</span><span class="ja">研究日程</span></h2>
     <p class="yomi">研究会の当日と、申込の締切。</p>
     <!--BUILD:KENKYUKAI-->
+
+    <!-- 研究日程を、ここから知らせてもらう（2026-09-22 依頼）────────
+         これまで日程は、こちらで調べて手で書くぶんだけでした。
+         知っている人がいても、その人からは載せられませんでした。
+         見るところの すぐ下に、送るところを置きます。
+         ★開いただけでは、外に1バイトも出ません。押したときだけです。 -->
+    <details class="hiraku hako" id="nittei">
+      <summary><span class="a">研究日程を知らせる（知っている会を、ここに足す）</span><span class="b">とじる</span></summary>
+
+      <form class="okuru-f" id="nt-f" novalidate>
+        <p class="okuru-midashi">知っている研究会を知らせる</p>
+        <p class="okuru-yomi">押すと、そのまま上のこよみに出ます。数分かかります。<br>
+          <b>公になっている会だけ</b>にしてください。校内の予定は載せられません。</p>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-na">会の名前<span class="okuru-hissu">必須</span></label>
+          <input class="okuru-i" type="text" id="nt-na" maxlength="60"
+                 placeholder="例：学級活動部 検証授業（学級活動(1)）">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-h1">いつ<span class="okuru-hissu">必須</span></label>
+          <input class="okuru-i" type="date" id="nt-h1">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-h2">2日目<span class="okuru-nin">任意</span></label>
+          <p class="okuru-yomi okuru-yomi--sub">2日開催のときだけ。1日で終わる会は、空のままで。</p>
+          <input class="okuru-i" type="date" id="nt-h2">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-sh">申込の〆切<span class="okuru-nin">任意</span></label>
+          <p class="okuru-yomi okuru-yomi--sub">入れると、こよみに<b>点線の丸</b>で出ます。</p>
+          <input class="okuru-i" type="date" id="nt-sh">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-m">何をやる会か<span class="okuru-hissu">必須</span></label>
+          <p class="okuru-yomi okuru-yomi--sub">学年・内容・始まる時こく・講師など。<b>10字以上</b>。<br>
+            名前と日付だけ並べるのは、このサイトではやらないと決めています。</p>
+          <textarea class="okuru-i okuru-hiroi" id="nt-m" maxlength="300" rows="4"
+            placeholder="例：6年 学級活動(1)／14:15〜　講師：帝京大学教育学部 教授 安部恭子 先生"></textarea>
+          <p class="okuru-kazu" id="nt-kazu" aria-live="polite">0 / 300字</p>
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-ba">会場<span class="okuru-nin">任意</span></label>
+          <input class="okuru-i" type="text" id="nt-ba" maxlength="60"
+                 placeholder="例：世田谷区立山野小学校">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-to">市区町村<span class="okuru-nin">任意</span></label>
+          <input class="okuru-i" type="text" id="nt-to" maxlength="30"
+                 placeholder="例：東京都世田谷区">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-sy">主催<span class="okuru-nin">任意</span></label>
+          <input class="okuru-i" type="text" id="nt-sy" maxlength="60"
+                 placeholder="例：東京都小学校特別活動研究会（都小特活）">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-mo">申込みについて<span class="okuru-nin">任意</span></label>
+          <input class="okuru-i" type="text" id="nt-mo" maxlength="60"
+                 placeholder="例：事前登録は不要です">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-u">案内ページ<span class="okuru-nin">任意</span></label>
+          <p class="okuru-yomi okuru-yomi--sub">主催の公式ページがあれば。押した人だけが、外へ出ます。</p>
+          <input class="okuru-i" type="url" id="nt-u" maxlength="200"
+                 inputmode="url" placeholder="https://">
+        </div>
+
+        <div class="okuru-g">
+          <label class="okuru-l" for="nt-by">お名前<span class="okuru-nin">任意</span></label>
+          <input class="okuru-i" type="text" id="nt-by" maxlength="40"
+                 autocomplete="name" placeholder="例：伊藤 優">
+        </div>
+
+        <p class="okuru-check">
+          <label for="nt-ko"><input type="checkbox" id="nt-ko">
+            <span>サイトに<b>名前を出してよい</b></span></label>
+          <span class="okuru-check-chu">入れなければ「提供：送ってくださった先生」と出ます。</span>
+        </p>
+
+        <p class="okuru-kiwo"><b>送るまえに かならず</b>主催の案内と、日づけを見くらべてください。<b>押すと、そのまま公開のこよみに出ます。</b></p>
+
+        <p class="okuru-botan">
+          <button class="btn" type="submit" id="nt-b">知らせる<span class="btn-ya">→</span></button>
+        </p>
+        <p class="okuru-shirase" id="nt-shirase" role="status" aria-live="polite"></p>
+        <p class="okuru-chu">開いただけでは、何も出ていきません。<b>「知らせる」を押したときだけ</b>、送られて、そのまま載ります。</p>
+      </form>
+
+      <!-- 送れたら、ここが出ます（2026-09-22）─────────────────
+           オープンチャットには、外から自動で書きこむ道がありません
+           （ボットは入れません。LINE Notify も2025年3月で終わりました）。
+           できるのは「文をこちらで作っておいて、1押しで送れるようにする」ところまで。
+           ★ここは、送れたあとにだけ出します。 -->
+      <div class="nt-line" id="nt-line" hidden>
+        <p class="nt-line-h">LINEのみんなに知らせる</p>
+        <p class="nt-line-y">文はもう作ってあります。押すと<b>LINEが開いて、送り先をえらぶだけ</b>です。<br>
+          「みんなの特活ひろば」をえらんでください。（スマホのLINEだけ。パソコンでは下の文をコピーしてください）</p>
+        <textarea class="okuru-i okuru-hiroi nt-line-bun" id="nt-line-bun" rows="7" readonly></textarea>
+        <p class="nt-line-botan">
+          <a class="btn btn--line" id="nt-line-b" href="#" target="_blank" rel="noopener noreferrer">LINEで知らせる<span class="btn-ya">↗</span></a>
+          <button class="btn btn--usu" type="button" id="nt-line-c">文をコピーする</button>
+        </p>
+        <p class="okuru-chu" id="nt-line-shirase" role="status" aria-live="polite"></p>
+      </div>
+    </details>
   </div>
 </section>
 
@@ -376,18 +491,20 @@
            ★選べる6つと、カードの4つは別です。学級活動(1)(2)(3)はぜんぶ
              「学級活動」のカードへ入ります（変換は Apps Script の _naiyo）。 -->
       <div class="okuru-g">
-        <label class="okuru-l" for="komari-n">内容<span class="okuru-hissu">必須</span></label>
-        <p class="okuru-yomi okuru-yomi--sub">選んだ内容の<b>カード</b>に集まります。<br>
+        <!-- 2026-09-22：実践を送るときと**まったく同じ札**にしました。
+             片方がプルダウン、片方が札だと、同じ「内容」に見えません。
+             ★1つだけ押せます（1つの困りごとは、1つの内容に属します）。 -->
+        <span class="okuru-l" id="komari-nn-l">内容<span class="okuru-hissu">必須</span></span>
+        <p class="okuru-yomi okuru-yomi--sub">1つだけ押してください。押したものの<b>カード</b>に集まります。<br>
           その内容の<b>実践</b>と、同じところに並びます。</p>
-        <select class="okuru-i" id="komari-n" name="n" required>
-          <option value="">えらんでください</option>
-          <option value="gakkyu1">学級活動(1)　話合い活動・係活動</option>
-          <option value="gakkyu2">学級活動(2)　日常の生活・健康安全</option>
-          <option value="gakkyu3">学級活動(3)　キャリア形成・自己実現</option>
-          <option value="gyoji">学校行事</option>
-          <option value="jidokai">児童会活動</option>
-          <option value="club">クラブ活動</option>
-        </select>
+        <div class="okuru-nen okuru-nai" id="komari-nn" role="group" aria-labelledby="komari-nn-l">
+          <button type="button" class="okuru-nen-b" data-n="gakkyu1" aria-pressed="false">学級活動(1)<i>話合い活動・係活動</i></button>
+          <button type="button" class="okuru-nen-b" data-n="gakkyu2" aria-pressed="false">学級活動(2)<i>日常の生活・健康安全</i></button>
+          <button type="button" class="okuru-nen-b" data-n="gakkyu3" aria-pressed="false">学級活動(3)<i>キャリア形成・自己実現</i></button>
+          <button type="button" class="okuru-nen-b" data-n="gyoji" aria-pressed="false">学校行事</button>
+          <button type="button" class="okuru-nen-b" data-n="jidokai" aria-pressed="false">児童会活動</button>
+          <button type="button" class="okuru-nen-b" data-n="club" aria-pressed="false">クラブ活動</button>
+        </div>
       </div>
 
       <div class="okuru-g">
@@ -948,7 +1065,7 @@
   var komariF = document.getElementById('komari-f');
   if(komariF && OKURU_URL){
     var kM = document.getElementById('komari-m');
-    var kN = document.getElementById('komari-n');
+    var kN = hitotsu_fuda('komari-nn');
     var kT = document.getElementById('komari-t');
     var kGn = nen_fuda('komari-gn');
     var kKazu = document.getElementById('komari-kazu');
@@ -963,7 +1080,12 @@
       ev.preventDefault();
       var m = kM.value.trim();
       if(!m){ kShirase.textContent = '困っていることを書いてください。'; return; }
-      if(!kN.value){ kShirase.textContent = '内容をえらんでください。'; kN.focus(); return; }
+      if(!kN.yomu()){
+        kShirase.textContent = '内容を1つ押してください。';
+        if(kN.saki) kN.saki.focus();
+        if(kN.moto) kN.moto.scrollIntoView({block:'center'});
+        return;
+      }
       kBotan.disabled = true;
       kShirase.textContent = '送っています…';
       fetch(OKURU_URL, {
@@ -971,9 +1093,9 @@
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kGn.yomu(),
-                               n: kN.value, t: kT.value.trim().slice(0, 60) })
+                               n: kN.yomu(), t: kT.value.trim().slice(0, 60) })
       }).then(function(){
-        komariF.reset(); kGn.kesu(); kKazu.textContent = '0 / 1000字';
+        komariF.reset(); kGn.kesu(); kN.kesu(); kKazu.textContent = '0 / 1000字';
         kShirase.textContent = '送りました。数分で、この下に出ます。';
         kBotan.disabled = false;
       })['catch'](function(err){
@@ -981,6 +1103,125 @@
           + ((err && (err.message || err.name)) || '理由不明')
           + '）。電波のいいところで、もう一度ためしてください。';
         kBotan.disabled = false;
+      });
+    });
+  }
+
+  /* ══ 研究日程を知らせる（2026-09-22）══════════════════════
+     同じ受け口に kind: 'nittei' で投げます。字だけです。
+     送られたぶんは src/nittei/*.md に入り、上のこよみに合流します
+     （こちらで調べて手で書くぶんは src/app.js の EVENTS のまま）。
+     ★ここも、開いただけでは1バイトも出ません。押したときだけです。 */
+  var ntF = document.getElementById('nt-f');
+  if(ntF && OKURU_URL){
+    var ntV = function(id){ return (document.getElementById(id).value || '').trim(); };
+    var ntM = document.getElementById('nt-m');
+    var ntKazu = document.getElementById('nt-kazu');
+    var ntShirase = document.getElementById('nt-shirase');
+    var ntBotan = document.getElementById('nt-b');
+    var NT_MOJI_MIN = 10;
+
+    ntM.addEventListener('input', function(){
+      ntKazu.textContent = ntM.value.length + ' / 300字';
+    });
+
+    /* 2026-10-09 → 10月9日（木）。こよみと同じ出し方にそろえます。 */
+    var NT_YOUBI = ['日','月','火','水','木','金','土'];
+    var ntHi = function(ymd){
+      var a = ymd.split('-');
+      var d = new Date(Number(a[0]), Number(a[1]) - 1, Number(a[2]));
+      return Number(a[1]) + '月' + Number(a[2]) + '日（' + NT_YOUBI[d.getDay()] + '）';
+    };
+
+    /* ── LINEに貼る文を、こちらで作っておく ──────────────
+       ★オープンチャットに、外から自動で書きこむ道はありません。
+         ボットは入れませんし、LINE Notify も2025年3月で終わりました。
+         できるのは、文を作って **1押しで送れる形にしておく** ところまでです。
+         残る1押し（送り先をえらぶ）は、どうしても人の手になります。 */
+    var ntBun = function(n){
+      var gyo = ['【TOKKATSU広場】研究日程を更新しました！', ''];
+      gyo.push(ntHi(n.h1) + (n.h2 ? '〜' + ntHi(n.h2) : '') + '　' + n.na);
+      if(n.ba || n.to) gyo.push('会場：' + [n.ba, n.to].filter(Boolean).join('　'));
+      if(n.sh) gyo.push('申込〆切：' + ntHi(n.sh));
+      gyo.push(n.m);
+      if(n.u) gyo.push('案内：' + n.u);
+      gyo.push('');
+      gyo.push('こよみで見てね！');
+      gyo.push('{{SITE_URL}}#ima');
+      return gyo.join('\n');
+    };
+
+    var ntLine = document.getElementById('nt-line');
+    var ntLineBun = document.getElementById('nt-line-bun');
+    var ntLineB = document.getElementById('nt-line-b');
+    var ntLineC = document.getElementById('nt-line-c');
+    var ntLineShirase = document.getElementById('nt-line-shirase');
+
+    ntLineC.addEventListener('click', function(){
+      var ji = ntLineBun.value;
+      var owari = function(ok){
+        ntLineShirase.textContent = ok ? 'コピーしました。LINEに貼ってください。'
+                                       : 'コピーできませんでした。上の文を選んで、手でコピーしてください。';
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(ji).then(function(){ owari(true); },
+                                              function(){ owari(false); });
+      } else {
+        ntLineBun.select();
+        try{ owari(document.execCommand('copy')); }catch(e){ owari(false); }
+      }
+    });
+
+    ntF.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var n = { na: ntV('nt-na'), h1: ntV('nt-h1'), h2: ntV('nt-h2'), sh: ntV('nt-sh'),
+                m: ntM.value.trim(), ba: ntV('nt-ba'), to: ntV('nt-to'),
+                sy: ntV('nt-sy'), mo: ntV('nt-mo'), u: ntV('nt-u'),
+                by: ntV('nt-by'), ko: document.getElementById('nt-ko').checked ? 1 : 0 };
+
+      /* novalidate なので、ここで自分で見ます。
+         書いていないところへ連れていって、そこを光らせます。 */
+      var tomeru = function(ji, id){
+        ntShirase.textContent = ji;
+        var el = document.getElementById(id);
+        if(el){ el.focus(); el.scrollIntoView({block:'center'}); }
+        return true;
+      };
+      if(!n.na) return tomeru('会の名前を書いてください。', 'nt-na');
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(n.h1)) return tomeru('いつの会か、日を入れてください。', 'nt-h1');
+      if(n.m.length < NT_MOJI_MIN){
+        return tomeru('何をやる会かを、' + NT_MOJI_MIN + '字以上で書いてください。'
+                    + '名前と日付だけ並べるのは、このサイトではやらないと決めています。', 'nt-m');
+      }
+      if(n.u && !/^https?:\/\//.test(n.u)){
+        return tomeru('案内ページは https:// から書いてください（空でもかまいません）。', 'nt-u');
+      }
+
+      ntBotan.disabled = true;
+      ntShirase.textContent = '送っています…';
+      fetch(OKURU_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify({ kind: 'nittei', na: n.na, h1: n.h1, h2: n.h2, sh: n.sh,
+                               m: n.m, ba: n.ba, to: n.to, sy: n.sy, mo: n.mo,
+                               u: n.u, by: n.by, ko: n.ko })
+      }).then(function(){
+        /* ★ reset の前に文を作ります（reset すると読めなくなります） */
+        var bun = ntBun(n);
+        ntLineBun.value = bun;
+        ntLineB.href = 'https://line.me/R/share?text=' + encodeURIComponent(bun);
+        ntLine.hidden = false;
+        ntLineShirase.textContent = '';
+        ntF.reset(); ntKazu.textContent = '0 / 300字';
+        ntShirase.textContent = '送りました。数分で、上のこよみに出ます。';
+        ntBotan.disabled = false;
+        ntLine.scrollIntoView({block:'center'});
+      })['catch'](function(err){
+        ntShirase.textContent = 'うまく送れませんでした（'
+          + ((err && (err.message || err.name)) || '理由不明')
+          + '）。電波のいいところで、もう一度ためしてください。';
+        ntBotan.disabled = false;
       });
     });
   }

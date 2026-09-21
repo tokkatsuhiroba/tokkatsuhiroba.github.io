@@ -105,6 +105,9 @@ function doPost(e) {
     // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
     if (d.kind === 'komari') return _komari(d);
 
+    // 研究日程（2026-09-22）。これも字だけです。
+    if (d.kind === 'nittei') return _nittei(d);
+
     var shashin = (d.e || []).slice(0, MAI_MAX);
     var pdfs    = (d.p || []).slice(0, 1);        // PDFは1つまで（2026-09-21 夜）
     if (!shashin.length && !pdfs.length) {
@@ -237,6 +240,145 @@ function _shiraseru_komari(slug, d, m, nose) {
 
   var mail = _mail();
   if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】困りごとが1件とどきました', honbun);
+}
+
+
+/* ══ 1の3. 研究日程 ═══════════════════════════════════════
+   2026-09-22。これまで研究日程は src/app.js の EVENTS だけでした。
+   手で書くしかないので、知っている人がいても、その人からは載りません。
+   ここで受けて src/nittei/<日付>_<slug>.md に置くと、build.py の
+   load_nittei() が こよみに合流させます。
+   ★誰の目も通りません。板書・困りごとと同じです。
+     知らせの［すぐ消す］で1押しで下ろせます。 */
+
+var NITTEI_MOJI_MIN = 10;     // 「何をやる会か」の下限（サイト側と同じ線）
+var NITTEI_MOJI_MAX = 300;
+
+function _nittei(d) {
+  var na = _arau(d.na);
+  var m  = _arau_hon(d.m);
+  if (!na)                       return _kotae({ ok: false, riyu: '会の名前がありません' });
+  if (!_hiduke(d.h1))            return _kotae({ ok: false, riyu: '日がありません' });
+  if (m.length < NITTEI_MOJI_MIN) return _kotae({ ok: false, riyu: '中身が短すぎます' });
+  if (!_kazoeru())               return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
+
+  var slug = _slug('nittei');
+  var nose = { ok: false, riyu: '' };
+  try {
+    _github('src/nittei/' + _kyou() + '_' + slug + '.md',
+            Utilities.base64Encode(_md_nittei(d, na, m), Utilities.Charset.UTF_8),
+            '研究日程を1件のせる（' + slug + '）');
+    nose.ok = true;
+  } catch (err) {
+    nose.riyu = String(err);
+  }
+  _shiraseru_nittei(slug, d, na, m, nose);
+  return _kotae({ ok: true, noseta: nose.ok });
+}
+
+/* 2026-10-09 の形だけ通します。ちがえば空を返します
+   （front matter に変な字が入ると、その1件が こよみから落ちるだけで
+     サイトは止まりません。build.py の load_nittei() が飛ばします）。 */
+function _hiduke(s) {
+  var t = String(s || '').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : '';
+}
+
+/* 外へ出る道は http(s) だけ。javascript: などは入れさせません。 */
+function _url(s) {
+  var t = _arau(s);
+  return /^https?:\/\//.test(t) ? t : '';
+}
+
+function _md_nittei(d, na, m) {
+  var hi = [_hiduke(d.h1), _hiduke(d.h2)].filter(String).join('|');
+  return [
+    '---',
+    'share: true',
+    'date: ' + _kyou(),
+    'title: ' + na,
+    'org: ' + _arau(d.sy),
+    'days: ' + hi,
+    'deadline: ' + _hiduke(d.sh),
+    'venue: ' + _arau(d.ba),
+    'place: ' + _arau(d.to),
+    'apply: ' + _arau(d.mo),
+    'url: ' + _url(d.u),
+    /* 名前は、出してよいと押した人だけ出ます。
+       押していなければ空にして、サイト側が「送ってくださった先生」と出します。 */
+    'by: ' + (Number(d.ko) === 1 ? _arau(d.by) : ''),
+    '---',
+    '',
+    m.slice(0, NITTEI_MOJI_MAX)
+  ].join('\n');
+}
+
+/* 知らせのメール。★ここに「LINEに貼る文」も入れます（2026-09-22）。
+   オープンチャットには外から書きこめないので（ボットは入れません。
+   LINE Notify も2025年3月で終わりました）、
+   **文はこちらで作っておいて、押すだけ**にします。
+   スマホでこのメールを開いて、下のリンクを1回押せば、
+   LINEが開いて送り先をえらぶところまで行きます。 */
+function _shiraseru_nittei(slug, d, na, m, nose) {
+  var url = _webapp();
+  var bun = _line_bun(d, na, m);
+  var honbun =
+    (nose.ok ? '研究日程が1件とどき、そのまま載せました。数分でこよみに出ます。\n'
+             : '研究日程が1件とどきましたが、載せられませんでした。\n' +
+               '　理由：' + (nose.riyu || '（不明）') + '\n') +
+    '\n' +
+    '　会の名前：' + na + '\n' +
+    '　いつ　　：' + _hiduke(d.h1) + (_hiduke(d.h2) ? '〜' + _hiduke(d.h2) : '') + '\n' +
+    '　〆切　　：' + (_hiduke(d.sh) || '（なし）') + '\n' +
+    '　会場　　：' + (_arau(d.ba) || '（なし）') + '　' + (_arau(d.to) || '') + '\n' +
+    '　主催　　：' + (_arau(d.sy) || '（なし）') + '\n' +
+    '　案内　　：' + (_url(d.u) || '（なし）') + '\n' +
+    '　送り主　：' + (_arau(d.by) || '（名前なし）') +
+        (Number(d.ko) === 1 ? '（出してよい）' : '（出しません）') + '\n\n' +
+    '＜中身＞\n' + m + '\n\n' +
+    '★ 主催の案内と、日づけを見くらべてください。ちがっていたら、下から消せます。\n\n' +
+    '───────────────────────────\n' +
+    '■ LINEに知らせる（スマホでこのメールを開いて、下を1回押す）\n\n' +
+    'https://line.me/R/share?text=' + encodeURIComponent(bun) + '\n\n' +
+    '　押すとLINEが開いて、送り先をえらぶだけです。\n' +
+    '　「みんなの特活ひろば」をえらんでください。\n' +
+    '　（パソコンのLINEでは開きません。下の文をコピーして貼ってください）\n\n' +
+    '＜貼る文＞\n' + bun + '\n' +
+    '───────────────────────────\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&x=1\n\n' +
+           '（公開ページからは消えます。GitHubの履歴には残ります）\n'
+         : '（WEBAPP_URL が空なので、消すところを出せていません）');
+
+  var mail = _mail();
+  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】研究日程が1件とどきました', honbun);
+}
+
+/* LINEに貼る文。サイト側（src/hiroba.html の ntBun）と同じ形にそろえています。
+   どちらを直すときも、もう一方も直してください。 */
+function _line_bun(d, na, m) {
+  var gyo = ['【TOKKATSU広場】研究日程を更新しました！', ''];
+  gyo.push(_hi_ja(_hiduke(d.h1))
+           + (_hiduke(d.h2) ? '〜' + _hi_ja(_hiduke(d.h2)) : '') + '　' + na);
+  var ba = [_arau(d.ba), _arau(d.to)].filter(String).join('　');
+  if (ba) gyo.push('会場：' + ba);
+  if (_hiduke(d.sh)) gyo.push('申込〆切：' + _hi_ja(_hiduke(d.sh)));
+  gyo.push(m);
+  if (_url(d.u)) gyo.push('案内：' + _url(d.u));
+  gyo.push('');
+  gyo.push('こよみで見てね！');
+  gyo.push(SITE_URL + '#ima');
+  return gyo.join('\n');
+}
+
+var SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/';
+var NITTEI_YOUBI = ['日', '月', '火', '水', '木', '金', '土'];
+
+/* 2026-10-09 → 10月9日（木） */
+function _hi_ja(ymd) {
+  if (!ymd) return '';
+  var a = ymd.split('-');
+  var d = new Date(Number(a[0]), Number(a[1]) - 1, Number(a[2]));
+  return Number(a[1]) + '月' + Number(a[2]) + '日（' + NITTEI_YOUBI[d.getDay()] + '）';
 }
 
 
@@ -377,7 +519,7 @@ function _noseru(slug, n) {
      履歴ごと消すには、手もとで git の作り直しが要ります。 */
 function doGet(e) {
   var slug = (e.parameter.v || '').trim();
-  if (!/^(bansho|komari)-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
+  if (!/^(bansho|komari|nittei)-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
   if (e.parameter.x !== '1') {
     return _html('何もしていません。消すなら、メールの［すぐ消す］を押してください。');
   }
@@ -385,6 +527,8 @@ function doGet(e) {
   try {
     if (slug.indexOf('komari-') === 0) {
       keshita += _kesu_md(slug, 'src/komari');
+    } else if (slug.indexOf('nittei-') === 0) {
+      keshita += _kesu_md(slug, 'src/nittei');
     } else {
       keshita += _kesu_folder('src/bansho/' + slug, slug);
       keshita += _kesu_folder('src/shiryo/' + slug, slug);   // PDFから作った画像も
