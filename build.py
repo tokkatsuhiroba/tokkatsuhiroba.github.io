@@ -1320,6 +1320,220 @@ def hiroba_svg(ill):
             % (HIROBA_W, HIROBA_H, hiroba_naka(ill)))
 
 
+
+# ══════════════════════════════════════════════════════════
+# 2-6. ページの頭の絵（2026-09-22）
+#
+#   ホームには広場の絵があるのに、そこから飛んだ先の頭には
+#   何も無く、名前だけが置いてありました。だから「同じサイトの中だ」
+#   という手がかりが、帯しかありません。
+#
+#   そこで、**同じ部品・同じ9色・同じ線2.5** で、ページごとに
+#   遠目の絵を1本ずつ組みます。広場をただ切り出すのではなく、
+#   そのページの中身（学級会・集会・板書・困りごと）を描きます。
+#
+#   ・canvas は 2400×420 の1つだけ。どのページでも帯の高さが同じになります
+#   ・部品は拡大も縮小もしません（線の太さがそろわなくなるため）
+#   ・絵は <defs> に1つだけ置き、広い窓とスマホ用の窓を <use> で切り出します
+#     （2回そのまま書くと、ページが絵2枚ぶん重くなります）
+# ══════════════════════════════════════════════════════════
+
+KO_E_W, KO_E_H = 2400, 420
+
+# 地面の線。どのページでも同じ高さにして、頭の帯がそろって見えるようにします
+_OKA   = 'M0 140C420 112 900 146 1400 132S2060 104 2400 128V210H0Z'   # 奥の丘
+_SHIBA = 'M0 190C440 164 980 204 1520 186S2120 160 2400 182V420H0Z'   # 芝
+_NIWA  = 'M0 262C520 238 1140 276 1720 258S2180 236 2400 252V420H0Z'  # 校庭
+
+
+class KoE:
+    """ページの頭の絵に、部品を置く道具。決まりは hiroba_naka の oku と同じ。"""
+
+    def __init__(self, ill, kyara, r):
+        self.ill, self.kyara, self.r, self.o = ill, kyara, r, []
+
+    def _hako(self, name):
+        return self.ill[name] if name in self.ill else self.kyara[name]
+
+    def oku(self, name, x, base, fuku=None, ashi=8, kage=0):
+        w, h, naka = self._hako(name)
+        e = ''
+        if kage:
+            e = ('<ellipse cx="%g" cy="%g" rx="%g" ry="%g" fill="#1C1C1A" opacity=".13"/>'
+                 % (x, base + 2, kage, max(3, kage * 0.26)))
+        self.o.append(e + '<g transform="translate(%g,%g)">%s</g>'
+                      % (x - w / 2.0, base - (h - ashi),
+                         naka.replace('#D2552A', fuku) if fuku else naka))
+
+    def nama(self, s):
+        self.o.append(s)
+
+    def sora(self, kumo, hi=None):
+        self.o.append('<rect width="%d" height="%d" fill="#A9E1F5"/>' % (KO_E_W, KO_E_H))
+        if hi:
+            self.o.append('<circle cx="%g" cy="%g" r="54" fill="#E8C547"%s/>'
+                          % (hi[0], hi[1], SEN_ZOKUSEI))
+        for x, y in kumo:
+            self.oku('kumo', x, y, ashi=110)
+
+    def jimen(self, niwa=True):
+        self.o.append('<path d="%s" fill="#1F5C3F"%s/>' % (_OKA, SEN_ZOKUSEI))
+        self.o.append('<path d="%s" fill="#2FBA68"%s/>' % (_SHIBA, SEN_ZOKUSEI))
+        if niwa:
+            self.o.append('<path d="%s" fill="#E8C547"%s/>' % (_NIWA, SEN_ZOKUSEI))
+
+    def ki(self, xs, base=250):
+        for i, x in enumerate(xs):
+            self.oku('ki' if i % 2 == 0 else 'ki-hoso', x,
+                     base + self.r.randint(-10, 10), kage=38)
+
+    def fuki(self, x, y, w, h, muki=1):
+        """まるい吹き出し。しっぽは下向き（muki＝1で右下、-1で左下）。
+           中は「…」の3つの点。言葉を入れないので、どの困りごとにも合います。"""
+        self.o.append(
+            '<rect x="%g" y="%g" width="%g" height="%g" rx="%g" fill="#FCFBF7"%s/>'
+            '<path d="M%g %gl%g 26 %g-6z" fill="#FCFBF7"%s/>'
+            '<circle cx="%g" cy="%g" r="7" fill="#1C1C1A"/>'
+            '<circle cx="%g" cy="%g" r="7" fill="#1C1C1A"/>'
+            '<circle cx="%g" cy="%g" r="7" fill="#1C1C1A"/>'
+            % (x, y, w, h, h / 2.4, SEN_ZOKUSEI,
+               x + w / 2 - 12 * muki, y + h, 14 * muki, -26 * muki, SEN_ZOKUSEI,
+               x + w / 2 - 30, y + h / 2, x + w / 2, y + h / 2, x + w / 2 + 30, y + h / 2))
+
+
+# ══ ① 知る（特活とは・4つの内容）══════════════════════════
+#   4人のキャラクターが、それぞれの持ち場に立っている。
+#   「この4つが特別活動です」が、言葉なしで分かるようにします。
+def _e_shiru(k):
+    k.sora(((250, 58), (1180, 38), (2010, 70)), hi=(1560, 56))
+    k.jimen()
+    k.ki((70, 1350, 2350))
+    k.oku('kokuban', 360, 398)                      # 学級活動
+    k.oku('gakkatsu', 556, 404, kage=24)
+    k.oku('bankokki', 940, 196, ashi=130)           # 学校行事
+    k.oku('nyutaijo', 940, 406, kage=132)
+    k.oku('gyoji', 1160, 410, kage=24)
+    k.oku('keijiban', 1540, 402, kage=96)           # 児童会活動
+    k.oku('jidokai', 1724, 408, kage=24)
+    k.oku('taiko', 2040, 406, kage=64)              # クラブ活動
+    k.oku('club', 2186, 412, kage=24)
+
+
+# ══ ② 学ぶ（学ぶ・実践）══════════════════════════════════
+#   教室を白い面で切りとって置く（広場の学級活動と同じやり方）。
+#   黒板が奥のかべ、子どもは左右にわかれて向かい合う（コの字）。
+def _e_manabu(k):
+    k.sora(((230, 46), (2160, 60)))
+    k.jimen(niwa=False)
+    k.ki((90, 2340))
+    k.nama('<path d="M434 196h1546a14 14 0 0 1 14 14v210H420V210a14 14 0 0 1 14-14z" '
+           'fill="#FCFBF7"%s/>' % SEN_ZOKUSEI)
+    k.oku('kokuban', 1060, 330)
+    k.oku('shihai', 1420, 336)
+    k.oku('ko-te', 620, 412, '#D2552A')
+    for i, x in enumerate((730, 822, 914)):
+        k.oku('ko-suwaru', x, 412, FUKU[i % 4])
+    for i, x in enumerate((1512, 1604, 1696)):
+        k.oku('ko-suwaru', x, 412, FUKU[(i + 2) % 4])
+    for i, x in enumerate((1006, 1098, 1210, 1302)):
+        k.oku('ko-ushiro', x, 382, FUKU[(i + 1) % 4])
+    k.oku('sensei', 1850, 412)
+
+
+# ══ ③ 集まる（ニュース・日本の研究会）════════════════════
+#   2026-09-22 に作りなおしました。
+#   はじめ「マイクの前に子どもが整列している集会」を描きましたが、
+#   それは **児童会活動の絵** で、このページの中身ではありませんでした
+#   （「伝わりにくい」）。このページに載っているのは
+#       ・ニュース … 外から届いた知らせ
+#       ・日本の研究会 … 各地で、先生が集まって研究している
+#   の2つです。だから絵も2つに分けます。
+#       左 … 知らせが貼り出された掲示板を、子どもが見ている
+#       右 … のぼり旗の下に、先生が2〜3人ずつ集まって話している
+#   ★子どもを整列させない（集会に見える）
+#   ★右に立つのは先生だけ（研究会は大人が集まる場なので）
+#   ★木で3つのかたまりを仕切る（同じ場所ではなく「各地」に見せる）
+def _e_atsumaru(k):
+    k.sora(((300, 44), (1340, 62), (2200, 38)), hi=(1750, 54))
+    k.jimen()
+    k.ki((120, 880, 1480, 2330))
+
+    # ── 左：ニュース。掲示板に知らせが3枚。子どもが見上げている ──
+    k.oku('keijiban', 480, 398, kage=96)
+    k.oku('ko-ushiro', 370, 414, FUKU[0], kage=15)
+    k.oku('ko-ushiro', 580, 416, FUKU[1], kage=15)
+    k.oku('sensei', 680, 414, kage=17)
+
+    # ── 右：日本の研究会。のぼりの下に、先生のかたまりが3つ ──
+    #   （のぼり, 高さ, 色）と、そのまわりに立つ先生の (x, 高さ)
+    for nobori, sensei in (
+            ((( 990, 386, '#D2552A'), (1046, 394, '#E8C547')),
+             ((1120, 408), (1172, 412))),
+            (((1600, 390, '#3A6EA5'), (1656, 398, '#D2552A')),
+             ((1730, 410), (1782, 414), (1834, 408))),
+            (((2080, 398, '#E8C547'), (2136, 406, '#3A6EA5')),
+             ((2210, 412), (2262, 416)))):
+        for x, base, iro in nobori:
+            k.oku('nobori', x, base, iro, kage=20)
+        for x, base in sensei:
+            k.oku('sensei', x, base, kage=17)
+
+
+# ══ ④ 板書 ═══════════════════════════════════════════════
+#   黒板が校庭にならんで、溜まっていく。前を子どもが見て歩く。
+#   （教室の白い面は使いません。「学ぶ」と同じ絵に見えてしまうため）
+def _e_bansho(k):
+    k.sora(((340, 44), (1520, 36), (2210, 66)))
+    k.jimen()
+    k.ki((80, 2340))
+    for x in (500, 1180, 1860):
+        k.oku('kokuban', x, 372, kage=124)
+    for i, (x, n) in enumerate(((300, 'sensei'), (760, 'ko-ushiro'), (960, 'ko-te'),
+                                (1440, 'ko-ushiro'), (1640, 'ko-ushiro'),
+                                (2120, 'ko-te'), (2220, 'ko-ushiro'))):
+        k.oku(n, x, 412, None if n == 'sensei' else FUKU[i % 4], kage=15)
+
+
+# ══ ⑤ 困りごと ═══════════════════════════════════════════
+#   あちこちで、こどもと先生が話している。吹き出しの中は「…」だけ。
+def _e_komari(k):
+    k.sora(((260, 64), (2130, 48)))
+    k.jimen()
+    k.ki((70, 1420, 2350))
+    for x, muki, kumi in ((300, 1, 'te'), (900, -1, 'futari'),
+                          (1500, 1, 'te'), (2060, -1, 'futari')):
+        k.fuki(x, 186 if muki > 0 else 200, 196, 92, muki)
+        if kumi == 'te':
+            k.oku('ko-te', x + 56, 404, '#D2552A', kage=16)
+            k.oku('sensei', x + 152, 406, kage=17)
+        else:
+            k.oku('ko-tatsu', x + 58, 402, '#3A6EA5', kage=16)
+            k.oku('ko-te', x + 138, 404, '#E8C547', kage=16)
+
+
+# （ファイル名, 絵を組む関数, 絵の説明, スマホ用の窓）
+#   窓は「その絵でいちばん見せたい所」を 880幅で切り出します。
+KO_E = {
+    'shiru.html':    (_e_shiru,    '校庭にならんだ黒板・入退場門・掲示板・たいこと、'
+                                   '4つの内容のキャラクター', '480 0 880 420'),
+    'manabu.html':   (_e_manabu,   '黒板を囲んで学級会をしている教室', '400 0 880 420'),
+    'atsumaru.html': (_e_atsumaru, '知らせが貼られた掲示板と、のぼり旗の下で'
+                                   '集まって話している先生たち', '320 0 880 420'),
+    'bansho.html':   (_e_bansho,   '校庭にならんだ3枚の黒板と、それを見ている子どもたち',
+                                   '820 0 880 420'),
+    'komari.html':   (_e_komari,   'あちこちで話しているこどもと先生。頭の上に吹き出し',
+                                   '260 0 880 420'),
+}
+
+
+def ko_e_naka(f, ill, kyara):
+    """ページの頭の絵の中身。種は固定（毎回おなじ絵になります）。"""
+    import random
+    k = KoE(ill, kyara, random.Random(7))
+    KO_E[f][0](k)
+    return ''.join(k.o)
+
+
 # 本体の各タブの頭に置く「帯」。広場のどこを切り出すか（x y 幅 高さ）。どれも 5:1
 OBI = {
     'home':   ('0 600 3200 640',   '校庭で特別活動をしている学校の広場'),
@@ -2547,19 +2761,33 @@ KO_T = """<header class="ko" id="ue">
     <h1 class="ko-h">{na}</h1>
     <p class="ko-yo">{yo}</p>
   </div>
-</header>"""
+{e}</header>"""
+
+# 頭の絵。広い窓とスマホ用の窓を、同じ絵から <use> で切り出します。
+#   絵そのものは <defs> の #ill-atama に1つだけ入ります（build_tane）。
+#   2回そのまま書くと、ページが絵2枚ぶん重くなります。
+KO_E_T = ('  <div class="ko-e ko-e--hiro"><svg viewBox="0 0 {w} {h}" role="img" '
+          'aria-label="{yo}のイラスト"><use href="#ill-atama"/></svg></div>\n'
+          '  <div class="ko-e ko-e--semai"><svg viewBox="{mado}" role="img" '
+          'aria-label="{yo}のイラスト"><use href="#ill-atama"/></svg></div>\n')
 
 # 帯に出ないページの、親への戻り道。帯で「いまどこ」が出ないぶんを、ここで補います。
 KO_OYA = """<a class="ko-oya" href="{saki}#{sid}">{na}</a>"""
 
 
 def ko_atama(f, yo):
-    """ページの頭。親があるページには、親への戻り道も出します。"""
+    """ページの頭。親があるページには、親への戻り道も出します。
+       2026-09-22：名前の下に、そのページの中身を描いた遠目の絵を1枚足しました。"""
     oya = ''
     if f in OYA:
         saki, sid, na = OYA[f]
         oya = KO_OYA.format(saki=saki, sid=sid, na=esc_html(na))
-    return KO_T.format(home=HOME, oya=oya, na=esc_html(page_na(f)), yo=esc_html(yo))
+    if f not in KO_E:
+        raise Tomeru('%s の頭に置く絵が KO_E にありません。'
+                     'ページを足したら、絵も1枚足してください' % f)
+    e = KO_E_T.format(w=KO_E_W, h=KO_E_H, mado=KO_E[f][2], yo=esc_html(KO_E[f][1]))
+    return KO_T.format(home=HOME, oya=oya, na=esc_html(page_na(f)),
+                       yo=esc_html(yo), e=e)
 
 
 def page_na(f):
@@ -2589,12 +2817,14 @@ def tsukau_e(html):
     return set(m.groups() for m in re.finditer(r'href="#ill-([kb])-([a-z0-9-]+)"', html))
 
 
-def build_tane(html, e_naka, buhin, kyara):
+def build_tane(html, e_naka, buhin, kyara, atama_naka=None):
     """ページが呼んでいる絵だけを、そのページの defs に入れる。
        呼んでいない絵は入りません（ページごとに軽くなります）。"""
     g = []
     if 'href="#ill-hiroba"' in html:
         g.append('<g id="ill-hiroba">%s</g>' % e_naka)
+    if 'href="#ill-atama"' in html and atama_naka:
+        g.append('<g id="ill-atama">%s</g>' % atama_naka)
     # 絵の中にも地紋の <defs> があるので、いちばん外がわ（末尾）にだけ足します
     g.append(kazari_defs(tsukau_e(html), buhin, kyara))
     tane = ('<svg class="tane" aria-hidden="true" focusable="false" width="0" height="0" '
@@ -2759,7 +2989,10 @@ def build_shin():
         html = '\n'.join([
             '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>',
             head_de(f, na), '<style>', rd(CSS_H), '</style>', '</head>',
-            '<body>', build_tane(p, e_naka, buhin, kyara), p, '</body>', '</html>',
+            '<body>',
+            build_tane(p, e_naka, buhin, kyara,
+                       None if f == HOME else ko_e_naka(f, buhin, kyara)),
+            p, '</body>', '</html>',
         ]) + '\n'
         ngword_check(html, '公開用/' + f)
         pages[f] = html

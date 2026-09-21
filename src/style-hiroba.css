@@ -1997,6 +1997,27 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hero-e svg{animation:none}
 }
 
+/* ══ ページの頭の絵（2026-09-22）════════════════════════════
+   ホームには広場の絵があるのに、飛んだ先の頭には名前しか無く、
+   「同じサイトの中だ」という手がかりが帯しかありませんでした。
+   そこで、ページごとに遠目の絵を1枚、名前の下に敷きます。
+
+   ★決めごと
+     ・絵は名前の「下」。名前の上に重ねません（文字が絵に埋もれる）
+     ・頭の地は空の色にします。絵の空とつながって、境目が出ません
+     ・絵は横いっぱい（uchi の外）。下は帯にぴったり着けます
+     ・スマホは、絵を寄って切り出します（横に広いまま縮めると、
+       子どもが10px を切って、何の絵か分からなくなるため）           */
+.ko{background:var(--sora);padding-block:clamp(22px,3.4vw,40px) 0;overflow:hidden}
+.ko-e{display:block;width:100%;margin-top:clamp(14px,2vw,26px)}
+.ko-e svg{display:block;width:100%;height:auto}
+.ko-e--semai{display:none}
+@media (max-width:719px){
+  .ko{padding-block:20px 0}
+  .ko-e--hiro{display:none}
+  .ko-e--semai{display:block}
+}
+
 /* ══════════════════════════════════════════════════════════════
    ページのいちばん下（夜の地）
    押せるものは、ページの中と同じ「丸いボタン＋ベタ影」にそろえます。
@@ -2027,4 +2048,52 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (max-width:719px){
   .foot-botan{gap:11px}
   .foot-botan .btn{width:100%;justify-content:space-between;font-size:14.5px;padding:12px 20px}
+}
+
+/* ══ ホームの札を、目に留まるようにする（2026-09-22）════════
+   相手は「ぜんぶで、8つ」の8枚と、「このサイトは、なに」の4枚。
+   ホームなので、まず目を引きたい。ただし押しにくくはしない。
+
+   ★決めごと
+     ・札そのものは、ふだん動かさない。動く的は押しづらいためです。
+       動くのは中の絵だけ。札は止まったまま、絵がゆっくり息をします。
+     ・出てくる動きは translate と scale（単独の指定）で書きます。
+       transform で書くと、hover の持ち上がりを上書きして殺します。
+     ・入ってきたときに1回。ずっと出たり入ったりはしません。 */
+
+/* ① 中の絵が、ゆっくり息をする。1枚ずつ速さと間をずらす */
+.hfuda-e svg,.igi-h .e svg{
+  transform-origin:50% 100%;
+  animation:fuda-e 3.6s ease-in-out infinite alternate;
+}
+@keyframes fuda-e{
+  from{transform:translateY(0)    rotate(-1.1deg)}
+  to  {transform:translateY(-5px) rotate(1.1deg)}
+}
+.hban  >:nth-child(3n+1) .hfuda-e svg{animation-duration:4.3s;animation-delay:-.7s}
+.hban  >:nth-child(3n+2) .hfuda-e svg{animation-duration:3.2s;animation-delay:-1.9s}
+.hban  >:nth-child(4n)   .hfuda-e svg{animation-duration:4.8s;animation-delay:-1.1s}
+.igi-l >:nth-child(2n)   .e svg{animation-duration:4.4s;animation-delay:-1.5s}
+.igi-l >:nth-child(3n)   .e svg{animation-duration:3.1s;animation-delay:-.5s}
+
+/* ② 画面に入ってきたとき、下からすっと出る。
+      対応していないブラウザでは、ふつうに出るだけ（消えたりしません） */
+@supports (animation-timeline:view()){
+  .hfuda,.igi-h{
+    animation:fuda-deru linear both;
+    animation-timeline:view();
+    animation-range:entry 4% entry 48%;
+  }
+  @keyframes fuda-deru{
+    from{opacity:0;translate:0 24px;scale:.96}
+    to  {opacity:1;translate:0 0;   scale:1}
+  }
+}
+
+/* ③ 押したときの手ごたえ。スマホには hover が無いので、ここが返事になります */
+.hfuda:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+
+@media (prefers-reduced-motion:reduce){
+  .hfuda-e svg,.igi-h .e svg{animation:none}
+  .hfuda,.igi-h{animation:none;opacity:1;translate:none;scale:none}
 }
