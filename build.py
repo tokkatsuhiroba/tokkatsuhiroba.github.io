@@ -2140,6 +2140,19 @@ def build_bansho_iriguchi(jissen):
             '板書の写真だけを並べて見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
 
 
+def build_okuru_miru(jissen):
+    """送るところの、すぐ下に置く「見るところ」（2026-09-22 依頼）。
+       送る人は、まず人のを見たい。離れていると往復できません。
+       0件のときはリンクにしません（押しても何も無い、を作らないため）。"""
+    n = len(bansho_aru(jissen))
+    if not n:
+        return ('    <p class="bansho-iri bansho-iri--mada">'
+                '<b>送られた実践</b>まだ1件もありません。いちばん乗りをどうぞ。</p>')
+    mai = sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))
+    return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#bansho">'
+            '送られた実践を見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
+
+
 NEWS_H_N = 5      # ニュースを、上から何件だけ出しておくか（のこりはふたの中）
 
 
@@ -2676,6 +2689,7 @@ def build_shin():
                        ('    <!--BUILD:KYARA-->',  build_kyara_narabi(kyara)),
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
                        ('    <!--BUILD:BANSHO_IRI-->', build_bansho_iriguchi(jissen)),
+                       ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
                        ('    <!--BUILD:KAI-->',      build_kai()),
