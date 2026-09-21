@@ -77,13 +77,17 @@ SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
 PAGES = (
     # 2026-09-21 夜：板書を送るところを、ホームのいちばん上にしました。
     #   このサイトの目玉はここです。研究日程より前に出します。
-    ('index.html',    'TOKKATSU広場', '', ('okuru', 'kiku', 'ima')),
+    # ホームは「実践を送る」1本に絞りました（2026-09-22）。
+    #   研究日程は、ホームのいちばん下にありました。目当ての人には遠く、
+    #   送りに来た人には邪魔でした。ニュースと同じページの上に移します
+    #   （どちらも「外の動きを知る」ものなので、隣どうしが自然です）。
+    ('index.html',    'TOKKATSU広場', '', ('okuru',)),
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。',
      ('about', 'yotsu')),
-    ('manabu.html',   '学ぶ',   '学級会の学習過程と、明日そのまま使える実践。',
+    ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
      ('manabu', 'jissen')),
-    ('atsumaru.html', '集まる', 'ニュース、各地の研究会。',
-     ('news', 'kai')),
+    ('atsumaru.html', '集まる', '研究日程、ニュース、各地の研究会。',
+     ('ima', 'news', 'kai')),
     # みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。
     #   **このサイトの主役です。**だから帯の8つに入れました。
     #   かわりに「すぐ使える道具」を外しています（学ぶ と同じページなので、
@@ -92,8 +96,12 @@ PAGES = (
      ('bansho',)),
     # 困りごと（2026-09-21 夜 新設）。帯の8つには入れません。
     #   入口は ホームの「ちょっと聞きたい」の札です。
-    ('komari.html',   '困りごと', '送られた困りごとを、そのまま並べています。',
-     ('komari',)),
+    # 困りごと（2026-09-21 夜 新設 → 2026-09-22 組み替え）。
+    #   **書くところと、読むところを、同じページに置きました。**
+    #   前は 書くところがホーム、読むところがこのページ で割れていました。
+    #   困っている人が開いた先に、書く欄が無いのは おかしい、という話から。
+    ('komari.html',   '困りごと', 'いま困っていることを書く。届いたものを読む。',
+     ('kiku', 'komari')),
 )
 HOME = PAGES[0][0]
 
@@ -105,7 +113,12 @@ OYA = {'komari.html': ('index.html', 'igi', 'ホーム')}
 # 節の名前。ホームの札と、ページの中の見出しで使い回します
 SETSU_NA = {
     'ima':    '研究日程', 'news':   'ニュース',
-    'about':  '特活とは',   'manabu': '学ぶ',
+    # 2026-09-22：「学ぶ」→「はじめかた」。
+    #   このサイト全体が学ぶ場所なので、「学ぶ」では何の場所か分かりません。
+    #   お悩み別の入口を困りごとへ渡したので、ここに残るのは
+    #   **学級活動(1)の学習過程・一次資料・すぐ使える道具**。
+    #   はじめての人が最初に読むところ、という顔になりました。
+    'about':  '特活とは',   'manabu': 'はじめかた',
     'yotsu':  '4つの内容',  'jissen': 'すぐ使える道具',
     'kai':    '日本の研究会', 'okuru': '実践を送る',
     # 2026-09-22：ここがこのサイトの主役です。
@@ -2343,17 +2356,22 @@ NAYAMI_KARA = """      <p class="nayami-mada">まだ1件もありません。<br
 
 
 def build_nayami(komari):
-    """「学ぶ」のお悩み別の入口。送られた困りごとを、新しいものから数件。
-       答えが付いたもの（saki あり）を先に出します。"""
+    """「学ぶ」から困りごとへの行き先。**中身はもう出しません**（2026-09-22）。
+
+       前は、届いた困りごとの札を6つ、ここにも並べていました。同じ札が
+       困りごと・学ぶ・4つの内容 の3か所にあり、読む人は同じものを何度も
+       見せられていました。**中身は1か所**と決めたので、ここは
+       「いくつあるか」と「どこへ行けば読めるか」だけにします。
+
+       答えが付いたもの（saki あり）の数は、別に出します。
+       「答えが付いている」こと自体が、学ぶへ来た人の知りたいことなので。"""
     if not komari:
         return NAYAMI_KARA
-    narabi = [a for a in komari if a['saki']] + [a for a in komari if not a['saki']]
-    gyo = [nayami_gyo(a) for a in narabi[:NAYAMI_IRIGUCHI]]
-    ato = ''
-    if len(komari) > NAYAMI_IRIGUCHI:
-        ato = ('\n      <p class="nayami-motto"><a href="#komari">'
-               'のこり%d件も見る<i>→</i></a></p>' % (len(komari) - NAYAMI_IRIGUCHI))
-    return '      <ul class="nayami">\n' + '\n'.join(gyo) + '\n      </ul>' + ato
+    tsuita = sum(1 for a in komari if a['saki'])
+    return ('      <p class="nayami-saki"><a href="#komari">'
+            '届いた困りごと %d件を読む<i>→</i></a>'
+            '<span class="nayami-uchi">うち %d件は、答えが見つかっています</span></p>'
+            % (len(komari), tsuita))
 
 
 YOTSU_T = """      <div class="naiyo {cls}" id="naiyo-{nid}">
@@ -2368,52 +2386,32 @@ YOTSU_T = """      <div class="naiyo {cls}" id="naiyo-{nid}">
 {atsume}        </div>
       </div>"""
 
-YOTSU_AKE = """          <details class="hiraku naiyo-ake">
-            <summary><span class="a">{aji}</span><span class="b">とじる</span></summary>
-            <div class="naiyo-naka">
-{naka}
-            </div>
-          </details>
-"""
-
-YOTSU_KARA = """          <p class="naiyo-saki naiyo-mada">悩みも実践も、まだ集まっていません</p>
-          <p class="naiyo-okuru"><a href="#okuru">{ja}の実践を送る</a></p>
+YOTSU_OKURU = """          <p class="naiyo-okuru"><a href="#okuru">{ja}の実践を送る<span class="d">→</span></a></p>
 """
 
 
 def yotsu_atsume(nid, ja, nayami, jissen):
-    """カードの中に、その内容の悩みと実践を集める。開くのは、このページの中。"""
-    if not nayami and not jissen:
-        return YOTSU_KARA.format(ja=esc_html(ja))
-    naka, aji = [], []
-    if nayami:
-        aji.append('悩み%d件' % len(nayami))
-        naka.append('              <p class="naiyo-h">広場で出た悩み<i>%d</i></p>' % len(nayami))
-        naka.append('              <ul class="nayami nayami--naka">\n'
-                    + '\n'.join(nayami_gyo(a, ' ' * 16) for a in nayami)
-                    + '\n              </ul>')
-    if jissen:
-        aji.append('実践%d件' % len(jissen))
-        naka.append('              <p class="naiyo-h">この内容の実践<i>%d</i></p>' % len(jissen))
-        # 行き先は、その実践が **どちらの棚にいるか** で変わります（2026-09-22）。
-        #   届いたもの   → みんなの実践（#b-◯◯）
-        #   用意したもの → すぐ使える道具（#j-◯◯）
-        # ここが「6つで選んでもらったものが、4つのカードにつながる」ところです。
-        naka.append('              <ul class="naiyo-jissen">\n'
-                    + '\n'.join('                <li><a href="#%s-%s"><span>%s</span>'
-                                # 矢印は →。この一覧から行く先は、どれも別のページです
-                                # （みんなの実践／すぐ使える道具）。↓ だと同じページに
-                                # 見えて、押した人が迷います。
-                                '<span class="d">→</span></a></li>'
-                                % ('b' if a.get('okuri') else 'j',
-                                   a['slug'], esc_html(a['title'])) for a in jissen)
-                    + '\n              </ul>')
-    else:
-        naka.append('              <p class="naiyo-nai">この内容の実践は、まだ1件もありません。'
-                    'あなたの1件めが、ここに載ります。</p>')
-    naka.append('              <p class="naiyo-okuru"><a href="#okuru">%sの実践を送る</a></p>'
-                % esc_html(ja))
-    return YOTSU_AKE.format(aji='・'.join(aji) + 'をひらく', naka='\n'.join(naka))
+    """カードの下に置く、1行だけ。
+
+       2026-09-22：ここには その内容の悩みと実践を集めていました。
+       同じ札が 困りごと・学ぶ・4つの内容 の3か所に出ていたためです。
+       **索引は外して、カードは「4つとは何か」の説明に戻しました。**
+       残すのは、送るところへの行き1本だけです（これは索引ではなく、
+       その場でできることなので）。"""
+    return YOTSU_OKURU.format(ja=esc_html(ja))
+
+
+# 「中身は1か所」の決めごと（2026-09-22）──────────────────
+#   同じ札が、困りごと・学ぶ・4つの内容 の3か所に出ていました。
+#   実践の題名も、みんなの実践 と 4つの内容 の2か所に出ていました。
+#   読む人は、同じものを何度も見せられて、どこが本物か分からなくなります。
+#
+#   だから決めました。**中身（札そのもの）は1か所だけ。**
+#   ほかの場所に置くのは「いくつあるか」と「どこへ行けば読めるか」だけです。
+#
+#     困りごと … 中身は 困りごと。ほかは 数＋行き先
+#     実践　　 … 中身は みんなの実践。ほかは 数＋行き先
+#     道具　　 … 中身は すぐ使える道具。ほかは 数＋行き先
 
 
 def build_yotsu(kyara, jissen, komari):
@@ -2844,7 +2842,7 @@ HOME_FUDA = (
     # komari（困っている → 学ぶ、の順に並べます。2026-09-22）
     ('komari', 'b', 'sensei',   '送られた困りごとが、そのまま並びます。'),
     # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
-    ('manabu', 'k', 'club',     '学習過程と、こちらで用意した道具。'),
+    ('manabu', 'k', 'club',     '①から⑤の学習過程と、一次資料と、道具。'),
     # atsumaru
     ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
     ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),

@@ -1194,7 +1194,9 @@ a.maru:hover,a.maru:focus-visible{transform:scale(1.12)}
   color:var(--accent);font-family:var(--f-maru);font-weight:700;
   letter-spacing:.04em;text-decoration:none;
 }
-.naiyo-okuru a::after{content:"　↓"}
+/* 矢印は型のほうに <span class="d">→</span> で入れています（2026-09-22）。
+   ここで ↓ を足すと二重になり、しかも行き先は別のページなので向きも違います。 */
+.naiyo-okuru a .d{margin-inline-start:4px;font-family:var(--f-en)}
 .naiyo-okuru a:hover,.naiyo-okuru a:focus-visible{text-decoration:underline}
 .naiyo-t .naiyo-mada{margin-bottom:0}
 
@@ -2406,3 +2408,28 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   margin:12px 0 0;font-size:12.5px;color:var(--mute);text-align:end;
 }
 .komari-by::before{content:"提供："}
+
+/* 「中身は1か所」にしたあとの、行き先の行（2026-09-22）。
+   数と行き先だけを出します。札そのものは、本物の場所にしかありません。 */
+.nayami-saki{margin:0;display:flex;flex-wrap:wrap;gap:10px;align-items:baseline}
+.nayami-saki a{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 18px;min-height:44px;
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:999px;
+  box-shadow:3px 3px 0 var(--ink);color:var(--ink);text-decoration:none;
+  font-family:var(--f-maru);font-size:14px;font-weight:700;letter-spacing:.04em;
+}
+.nayami-saki a i{font-style:normal;font-family:var(--f-en);font-size:15px}
+.nayami-saki a:hover,.nayami-saki a:focus-visible{background:var(--ki)}
+.nayami-uchi{font-size:12.5px;color:var(--mute);line-height:1.8}
+
+/* 4つの内容のカードの中。中身ではなく、数と行き先だけの行 */
+.naiyo-saki-gyo{
+  margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;
+}
+.naiyo-saki-gyo a{
+  margin-inline-start:auto;font-family:var(--f-maru);font-weight:700;
+  font-size:13px;letter-spacing:.03em;color:var(--accent);text-decoration:none;
+}
+.naiyo-saki-gyo a:hover,.naiyo-saki-gyo a:focus-visible{text-decoration:underline}
+.naiyo-saki-gyo .d{margin-inline-start:6px;font-family:var(--f-en)}
