@@ -197,6 +197,9 @@
       <h3 class="manabu-h">学級活動(1)の学習過程</h3>
       <p class="manabu-note">①から⑤がひと回りして、また①に戻ります。上の丸か、下の帯を押すと、その段階が開きます。</p>
 
+      <details class="hiraku hako">
+        <summary><span class="a">5つの段階を、ここで開く</span><span class="b">とじる</span></summary>
+
       <ol class="learn-cycle" aria-label="学級会の1サイクル（5つの段階）">
         <li><button type="button" data-learn-step="1"><b>1</b><span>発見・確認</span></button></li>
         <li><button type="button" data-learn-step="2"><b>2</b><span>話合い</span></button></li>
@@ -277,12 +280,15 @@
         </details>
       </div>
       <p class="learn-loop">↑ 振り返りから次の課題が出て、また①に戻ります。この輪が回ることが、学級活動(1)そのものです。</p>
+      </details>
       <p class="manabu-note manabu-source">出典：「小学校学習指導要領（平成29年告示）解説 特別活動編」（文部科学省）に示された学習過程を参考に、本サイトが作成。文言と例は本サイトによるものです。</p>
     </div>
 
     <div class="manabu-box">
       <h3 class="manabu-h">一次資料・指導資料</h3>
       <p class="manabu-note">公式の掲載ページへ直接つなぎます。PDFや外部ページは、新しいタブで開きます。</p>
+      <details class="hiraku hako">
+        <summary><span class="a">資料5件を、ここで開く</span><span class="b">とじる</span></summary>
       <ul class="learn-links">
         <li><a href="https://www.mext.go.jp/content/20230120-mxt_kyoiku02-100002604_01.pdf" target="_blank" rel="noopener noreferrer"><span><b>小学校学習指導要領（平成29年告示）</b><small>特別活動は第6章／文部科学省</small></span><i>PDF</i></a></li>
         <li><a href="https://www.mext.go.jp/content/20221213-mxt_kyoiku02-100002607_014.pdf" target="_blank" rel="noopener noreferrer"><span><b>解説 特別活動編</b><small>学級活動・児童会・クラブ・学校行事の解説／文部科学省</small></span><i>PDF</i></a></li>
@@ -290,6 +296,7 @@
         <li><a href="https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo/" target="_blank" rel="noopener noreferrer"><span><b>映像資料 学級活動編</b><small>話合いの実際を動画で見る／国立教育政策研究所</small></span><i>外部</i></a></li>
         <li><a href="https://www.nier.go.jp/kaihatsu/shidousiryou.html" target="_blank" rel="noopener noreferrer"><span><b>指導資料・事例集の一覧</b><small>アラビア語・英語・中国語版もここから</small></span><i>外部</i></a></li>
       </ul>
+      </details>
     </div>
   </div>
 </section>
@@ -378,6 +385,36 @@
   'use strict';
   var reduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
+  /* ── 行き先がふたの中にあるときは、先にふたを開く（2026-09-21）──
+     節を「顔だけ」にしたので、こよみの日づけ・4つの内容から押した先が、
+     閉じたふたの中に入ることがあります。別ページへは飛ばさないまま、
+     その場でふたを開いてから連れていきます。何も送信しません。 */
+  function akeru(el){
+    for(var oya = el && el.parentElement; oya; oya = oya.parentElement){
+      if(oya.tagName === 'DETAILS') oya.open = true;
+    }
+  }
+  function ikisaki(id){
+    if(!id) return null;
+    try{ id = decodeURIComponent(id); }catch(e){}
+    return document.getElementById(id);
+  }
+  /* 押された瞬間（既定の移動より前）に開ける。だから移動先がずれません */
+  document.addEventListener('click', function(ev){
+    var a = ev.target && ev.target.closest && ev.target.closest('a[href^="#"]');
+    if(!a) return;
+    akeru(ikisaki(a.getAttribute('href').slice(1)));
+  }, true);
+  /* URLに # を付けて開いた／戻ってきたとき */
+  function hashDe(){
+    var el = ikisaki(location.hash.slice(1));
+    if(!el) return;
+    akeru(el);
+    el.scrollIntoView({block:'start', behavior:'auto'});
+  }
+  window.addEventListener('hashchange', hashDe);
+  if(location.hash) setTimeout(hashDe, 0);
+
   function setCycle(n){
     document.querySelectorAll('[data-learn-step]').forEach(function(button){
       button.classList.toggle('is-on', button.dataset.learnStep === String(n));
@@ -391,6 +428,7 @@
       detail.open = (detail === target);
     });
     setCycle(n);
+    akeru(target);          /* 5段階がふたの中にあるときは、ふたごと開く */
     if(scroll){
       target.scrollIntoView({block:'start', behavior:reduced ? 'auto' : 'smooth'});
       var summary = target.querySelector('summary');

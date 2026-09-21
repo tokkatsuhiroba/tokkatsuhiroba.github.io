@@ -1209,6 +1209,7 @@ def tenken(html):
 # ══════════════════════════════════════════════════════════
 
 KOYOMI_TSUKI_MAX = 4      # こよみに出す月の数（今月から）
+KEN_UE_N = 3              # こよみの右の一覧に、近いものから何件出しておくか（のこりはふたの中）
 YOUBI = ('日', '月', '火', '水', '木', '金', '土')
 
 # 会の名前から研究部を見わける。見わけた人が、こよみの丸と一覧の顔になる
@@ -1363,9 +1364,18 @@ def build_kenkyukai(ken, kyara, buhin, kyou=None):
             ja=esc_html(a['ja']), shurui=a['shurui'], ja_date=ja_md(d),
             basho=('・' + esc_html(a['basho'])) if a['basho'] else '',
             nokori=a['nokori'])
-    # 一覧は、こよみから飛べるように ぜんぶ出します（ふたの中に隠しません）
+    # 2026-09-21：一覧は、近い KEN_UE_N 件だけ出して、のこりはふたの中へ。
+    #   （前は「こよみから飛べるように」ぜんぶ出していました。いまは
+    #     hiroba.html の akeru() が、飛び先のふたを先に開くので、
+    #     ふたの中にあってもこよみから飛べます。）
+    ue, ato = ken[:KEN_UE_N], ken[KEN_UE_N:]
     hyo = ('      <div class="hyo hyo--ken">\n'
-           + '\n'.join(gyo(a, i) for i, a in enumerate(ken)) + '\n      </div>')
+           + '\n'.join(gyo(a, i) for i, a in enumerate(ue)) + '\n      </div>')
+    if ato:
+        naka = ('        <div class="hyo hyo--ken">\n'
+                + '\n'.join(gyo(a, i + len(ue)) for i, a in enumerate(ato))
+                + '\n        </div>')
+        hyo = tsunagu(hyo, naka, len(ato))
     return ('    <div class="ima-2">\n'
             + build_koyomi(ken, kyou) + '\n'
             + '    <div class="ima-migi">\n' + hyo + '\n    </div>\n'
