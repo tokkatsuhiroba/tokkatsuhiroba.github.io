@@ -2304,20 +2304,23 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .okuru-nen-b[aria-pressed="true"]:hover{background:var(--ink)}
 
-/* この実践について、LINEで聞く（2026-09-22）。
-   札の足もとに1本だけ。押す場所を増やしすぎないよう、ここで打ち止めにします。
-   外へ出るので「外部」と字で書きます（色だけで伝えない）。 */
-.bansho-b--line{
+/* この実践を画像で保存（2026-09-22 夜）。
+   前は「LINEで聞く」でした。送れるのが**字だけ**で、板書の写真も
+   書いていただいた中身も、受けとった人は押さないと読めませんでした。
+   いまは1枚の絵にします。開かなくても、その1枚で実践が分かります。
+   ★<button> なので、外へ出る印（外部）は付けません。ここから何も出ません。
+   ★札の足もとの押す場所は、これ1本だけ。増やしません。 */
+.bansho-b--ga{
   background:var(--midori);border-color:var(--ink);color:var(--ink);
-  font-size:13.5px;padding:9px 16px;
+  font-size:13.5px;padding:9px 16px;cursor:pointer;
 }
-.bansho-b--line i{
-  font-style:normal;font-family:var(--f-hon);font-size:11px;font-weight:400;
-  color:var(--ink);opacity:.75;
+.bansho-b--ga i{
+  font-style:normal;font-family:var(--f-en);font-size:15px;font-weight:700;
 }
-.bansho-b--line:hover,.bansho-b--line:focus-visible{background:var(--ki)}
+.bansho-b--ga:hover,.bansho-b--ga:focus-visible{background:var(--ki)}
+.bansho-b--ga[disabled]{opacity:.55;cursor:default;transform:none;box-shadow:3px 3px 0 var(--ink)}
 @media (max-width:719px){
-  .bansho-b--line{width:100%;justify-content:center}
+  .bansho-b--ga{width:100%;justify-content:center}
 }
 
 /* 内容の札（2026-09-22）。学年と同じ押す形ですが、**1つだけ**押せます。

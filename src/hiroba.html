@@ -1436,6 +1436,274 @@
     }
   }
 
+  /* ══ この実践を画像で保存（2026-09-22 夜）══════════════════
+     1件ぶんを、1枚の絵にします。開かなくても、その1枚で実践が分かります。
+     あとは、その画像を好きな所（LINEでも、学年の共有でも）へ送れます。
+
+     ★絵は、押した人のブラウザの中で作ります。何も出ていきません。
+     ★中にこの実践のURLを必ず入れます。見た人が、ここへ来られるように。
+     ★スマホは「共有」が出せるなら、そちらを開きます。ただの保存だと、
+       iPhoneでは「ファイル」に入るだけで、送るまでが遠いためです。
+     ★字の折り返しは、1字ずつ measureText で測ります。日本語はどこでも
+       折れますが、行あたまに 。、）」 が来ないところだけ直します。      */
+  var GA_W = 1080;              /* 絵のはば。スマホでもPCでも、これ1つ */
+  var GA_TAKASA_MAX = 2600;     /* これを超えたら、本文を切って「つづきはサイトで」 */
+  var GA_P = 64;                /* まわりの余白 */
+  var GA_E_TAKASA = 900;        /* 絵の高さの上限。これを超えたら上だけ切り出す */
+  var GA_JI = '"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif';
+  var GA_HON = '"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif';
+  var GA_ATAMA = 'みんなの実践';
+
+  function ga_oru(ctx, ji, haba){
+    /* 字を、はばに収まるところで折る。戻りは行の並び。 */
+    var gyo = [], ima = '';
+    var tsugi_dame = '。、）」』！？・々ゝー';
+    for(var i = 0; i < ji.length; i++){
+      var c = ji[i];
+      if(c === '\n'){ gyo.push(ima); ima = ''; continue; }
+      if(ctx.measureText(ima + c).width > haba && ima){
+        /* 行あたまに来てほしくない字は、前の行に連れていく */
+        if(tsugi_dame.indexOf(c) >= 0){ gyo.push(ima + c); ima = ''; continue; }
+        gyo.push(ima); ima = c;
+      } else {
+        ima += c;
+      }
+    }
+    if(ima) gyo.push(ima);
+    return gyo;
+  }
+
+  function ga_kaku(ctx, gyo, x, y, aki){
+    gyo.forEach(function(g, i){ ctx.fillText(g, x, y + i * aki); });
+    return y + gyo.length * aki;
+  }
+
+  function ga_moji(el){
+    if(!el) return '';
+    return (el.innerText || el.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  function ga_e_yomu(fuda){
+    /* 札の絵を1枚、**読みこんでから**返します。
+       ★ページの絵には loading="lazy" が付いています。画面に入るまで
+         読みこまれないので、そのまま canvas に描くと 0×0 になり、
+         絵の無い（字だけの）1枚ができます（2026-09-22 実測）。
+       ★板書の写真が無い件（PDFだけで届いたもの）は、資料の1ページめを
+         使います。ここを見ないと、指導案しか無い実践が字だけになります。 */
+    var el = fuda.querySelector('.bfuda-mado img') || fuda.querySelector('.shiryo-mado img');
+    if(!el || !el.getAttribute('src')) return Promise.resolve(null);
+    return new Promise(function(ok){
+      var im = new Image();
+      im.onload  = function(){ ok(im.naturalWidth ? im : null); };
+      im.onerror = function(){ ok(null); };
+      im.src = el.getAttribute('src');
+    });
+  }
+
+  function ga_tsukuru(fuda, url, shashin){
+    var naka = GA_W - GA_P * 2;
+    var tag  = fuda.querySelector('.bfuda-tag');
+    var kind = fuda.querySelector('.fuda-kind');
+    var dai  = ga_moji(fuda.querySelector('.bfuda-h'));
+    var lead = ga_moji(fuda.querySelector('.bfuda-lead'));
+    var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
+    var by   = ga_moji(fuda.querySelector('.bfuda-by'));
+    var me   = fuda.querySelector('.bfuda-me');
+    /* 見出しの行から、札のことば（内容・議題）をのぞいた残り＝場面・学年・日づけ */
+    var meta = ga_moji(me).replace(tag ? tag.textContent : '', '')
+                          .replace(kind ? kind.textContent : '', '').trim();
+    var iro = tag ? getComputedStyle(tag).backgroundColor : '#1F5C3F';
+    var jiIro = tag ? getComputedStyle(tag).color : '#FCFBF7';
+
+    /* ── まず、高さを測る（描かずに数えるだけ）── */
+    var c = document.createElement('canvas');
+    var ctx = c.getContext('2d');
+    var okiba = [];
+    var y = GA_P + 92;                                   /* 頭の帯のぶん */
+
+    ctx.font = '900 54px ' + GA_JI;
+    var daiG = ga_oru(ctx, dai, naka);
+    okiba.push({t:'dai', g:daiG, y:y}); y += daiG.length * 74 + 16;
+
+    if(meta){
+      ctx.font = '500 27px ' + GA_HON;
+      var metaG = ga_oru(ctx, meta, naka);
+      okiba.push({t:'meta', g:metaG, y:y}); y += metaG.length * 42 + 10;
+    }
+    y += 34; okiba.push({t:'sen', y:y - 17});
+
+    if(shashin && shashin.naturalWidth){
+      /* 絵は、はばいっぱいに置きます。縦に長すぎるときは **上だけ切り出します**。
+         ★はばと高さを別々に決めてはいけません（2026-09-22 実測）。
+           指導案のような縦長の紙が、横に伸びて出ていました。
+         ★小さく縮めるのではなく、切ります。A4を丸ごと入れると
+           字が小さすぎて、1枚見ただけでは何も分からないためです。
+           上から切るのは、題と ねらいが 紙の上にあるからです。 */
+      var h = Math.round(naka * shashin.naturalHeight / shashin.naturalWidth);
+      var kirinuki = false;
+      if(h > GA_E_TAKASA){ kirinuki = true; h = GA_E_TAKASA; }
+      okiba.push({t:'e', y:y, h:h, kiri:kirinuki}); y += h + (kirinuki ? 46 : 40);
+    }
+    ctx.font = '700 32px ' + GA_JI;
+    var leadG = lead ? ga_oru(ctx, lead, naka) : [];
+    if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 52 + 26; }
+
+    ctx.font = '400 29px ' + GA_HON;
+    var honG = hon ? ga_oru(ctx, hon, naka) : [];
+    /* 入りきらないぶんは切る。切ったことは、画面の中で正直に言う */
+    var ashi = 178;
+    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi) / 54);
+    var kitta = false;
+    if(honG.length > kiru && kiru > 3){ honG = honG.slice(0, kiru); kitta = true; }
+    if(honG.length){ okiba.push({t:'hon', g:honG, y:y}); y += honG.length * 54 + 12; }
+    if(kitta){ okiba.push({t:'kitta', y:y}); y += 46; }
+    y += 28;
+
+    var takasa = y + ashi;
+
+    /* ── ここから、ほんとうに描く ── */
+    c.width = GA_W; c.height = takasa;
+    ctx = c.getContext('2d');
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#FCFBF7'; ctx.fillRect(0, 0, GA_W, takasa);
+    ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, GA_W - 10, takasa - 10);
+
+    /* 頭 … サイトの名前と、この棚の名前 */
+    ctx.fillStyle = '#1C1C1A';
+    ctx.font = '900 30px ' + GA_JI;
+    ctx.fillText('TOKKATSU広場', GA_P, GA_P);
+    ctx.font = '700 24px ' + GA_JI;
+    ctx.fillStyle = '#63625C';
+    var mn = GA_ATAMA;
+    ctx.fillText(mn, GA_W - GA_P - ctx.measureText(mn).width, GA_P + 6);
+
+    /* 内容の札 */
+    if(tag){
+      ctx.font = '700 25px ' + GA_JI;
+      var tj = tag.textContent.trim();
+      var tw = ctx.measureText(tj).width + 40;
+      var ty = GA_P + 46;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(GA_P, ty, tw, 44, 22);
+      else ctx.rect(GA_P, ty, tw, 44);
+      ctx.fillStyle = iro; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A'; ctx.stroke();
+      ctx.fillStyle = jiIro; ctx.fillText(tj, GA_P + 20, ty + 8);
+      if(kind){
+        ctx.font = '700 25px ' + GA_JI;
+        var kj = kind.textContent.trim();
+        var kw = ctx.measureText(kj).width + 36;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(GA_P + tw + 12, ty, kw, 44, 22);
+        else ctx.rect(GA_P + tw + 12, ty, kw, 44);
+        ctx.fillStyle = '#FCFBF7'; ctx.fill();
+        ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#1C1C1A'; ctx.fillText(kj, GA_P + tw + 30, ty + 8);
+      }
+    }
+
+    okiba.forEach(function(o){
+      if(o.t === 'dai'){
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '900 54px ' + GA_JI;
+        ga_kaku(ctx, o.g, GA_P, o.y, 74);
+      } else if(o.t === 'meta'){
+        ctx.fillStyle = '#63625C'; ctx.font = '500 27px ' + GA_HON;
+        ga_kaku(ctx, o.g, GA_P, o.y, 42);
+      } else if(o.t === 'sen'){
+        ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(GA_P, o.y); ctx.lineTo(GA_W - GA_P, o.y); ctx.stroke();
+      } else if(o.t === 'e'){
+        ctx.save();
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(GA_P, o.y, naka, o.h, 14); else ctx.rect(GA_P, o.y, naka, o.h);
+        ctx.clip();
+        if(o.kiri){
+          /* 元の絵の「上のほう」だけを、そのままの縦横のまま置きます */
+          var moto_h = Math.round(shashin.naturalWidth * o.h / naka);
+          ctx.drawImage(shashin, 0, 0, shashin.naturalWidth, moto_h,
+                        GA_P, o.y, naka, o.h);
+        } else {
+          ctx.drawImage(shashin, GA_P, o.y, naka, o.h);
+        }
+        ctx.restore();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A';
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(GA_P, o.y, naka, o.h, 14); else ctx.rect(GA_P, o.y, naka, o.h);
+        ctx.stroke();
+        if(o.kiri){
+          ctx.fillStyle = '#63625C'; ctx.font = '500 22px ' + GA_HON;
+          ctx.fillText('\u203b \u3053\u306e\u5148\u306f\u3001\u4e0b\u306eURL\u304b\u3089\u898b\u3089\u308c\u307e\u3059',
+                       GA_P, o.y + o.h + 10);
+        }
+      } else if(o.t === 'lead'){
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '700 32px ' + GA_JI;
+        ga_kaku(ctx, o.g, GA_P, o.y, 52);
+      } else if(o.t === 'hon'){
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '400 29px ' + GA_HON;
+        ga_kaku(ctx, o.g, GA_P, o.y, 54);
+      } else if(o.t === 'kitta'){
+        ctx.fillStyle = '#63625C'; ctx.font = '700 26px ' + GA_JI;
+        ctx.fillText('…つづきは、下のURLで読めます', GA_P, o.y);
+      }
+    });
+
+    /* 足もと … 提供と、このサイトのURL（ここが、いちばん大事） */
+    var fy = takasa - ashi;
+    ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(GA_P, fy); ctx.lineTo(GA_W - GA_P, fy); ctx.stroke();
+    ctx.fillStyle = '#63625C'; ctx.font = '500 25px ' + GA_HON;
+    ctx.fillText(by || '', GA_P, fy + 22);
+    ctx.fillStyle = '#1C1C1A'; ctx.font = '900 27px ' + GA_JI;
+    ctx.fillText('この実践は、ここに溢めています', GA_P, fy + 62);
+    ctx.font = '500 24px ' + GA_HON;
+    var u = ga_oru(ctx, url, naka);
+    ga_kaku(ctx, u, GA_P, fy + 104, 34);
+    return c;
+  }
+
+  function ga_hozon(botan){
+    var fuda = botan.closest('.bfuda');
+    if(!fuda) return;
+    var moto = botan.innerHTML;
+    botan.disabled = true;
+    botan.textContent = '絵にしています…';
+    var owari = function(ji){
+      botan.disabled = false;
+      botan.innerHTML = moto;
+      if(ji) botan.setAttribute('data-shirase', ji);
+    };
+    /* 書体が来る前に描くと、別の書体で焼きついてしまいます */
+    (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
+    .then(function(){
+      return ga_e_yomu(fuda);
+    }).then(function(shashin){
+      var c = ga_tsukuru(fuda, botan.getAttribute('data-url') || location.href, shashin);
+      var na = (ga_moji(fuda.querySelector('.bfuda-h')) || '実践')
+                 .replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40) + '.png';
+      return new Promise(function(ok){ c.toBlob(ok, 'image/png'); }).then(function(b){
+        var f = new File([b], na, {type: 'image/png'});
+        /* スマホで送れるなら、共有を開きます（保存も、その中にあります）。
+           ただの保存だと、iPhoneでは「ファイル」に入るだけで送るまでが遠い。 */
+        if(navigator.canShare && navigator.canShare({files: [f]})){
+          return navigator.share({files: [f]})['catch'](function(){})
+                 .then(function(){ owari(''); });
+        }
+        var u = URL.createObjectURL(b);
+        var a = document.createElement('a');
+        a.href = u; a.download = na;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(u); }, 4000);
+        owari('');
+      });
+    })['catch'](function(){ owari('うまく絵にできませんでした'); });
+  }
+
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('[data-ga]');
+    if(b) ga_hozon(b);
+  });
+
   /* ══ 困りごとを送る（2026-09-21 夜）══════════════════════
      板書と同じ受け口に、kind: 'komari' で投げます。
      写真もPDFもありません。字だけです。

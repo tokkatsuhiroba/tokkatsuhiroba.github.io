@@ -2567,7 +2567,7 @@ BFUDA = """      <article class="bfuda" id="b-{slug}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
         <p class="bfuda-lead">{lead}</p>
-{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><a class="bansho-b bansho-b--line" href="{line}" target="_blank" rel="noopener noreferrer">この実践について、LINEで聞く<i>外部 ↗</i></a></p>
+{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
       </article>"""
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
@@ -2627,15 +2627,15 @@ def build_bansho(jissen):
         more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
                                      ja_md(a['d'])) if x)
-        # ── この実践について、LINEで聞く（2026-09-22）─────────────
-        #   ★LINEには「決まったオープンチャットを、本文を入れた状態で開く」
-        #     入口がありません。できるのは次の2つだけです。
-        #       line.me/R/share?text=…  … 本文は入る。送り先は押した人が選ぶ
-        #       line.me/ti/g2/…         … あの部屋が直接開く。本文は空
-        #   本文が入っているほうが値打ちが大きいので、前者にしました。
-        #   押す → LINEが開く → 一覧から「みんなの特活ひろば」を選ぶ → 本文は入っている。
-        #   ★ここから何かが出ていくことはありません。送るのは押した人です。
-        #   ★話す場はLINE、溜まる場はここ。この1本が、その芯そのものです。
+        # ── この実践を画像で保存（2026-09-22 夜。依頼で差しかえ）────────
+        #   前は「LINEで聞く」でした。押すとLINEが開いて、題とURLが本文に
+        #   入った状態で送り先を選ぶ、というものです。
+        #   やめた理由 … 送れるのは**字だけ**でした。板書の写真も、書いて
+        #   いただいた中身も、受けとった人は押さないと読めません。
+        #   かわりに **1枚の画像**にします。開かなくても、その1枚で実践が
+        #   ぜんぶ分かります。あとはその画像を、好きな所へ送れます。
+        #   ★画像は、押した人のブラウザの中で作ります。何も出ていきません。
+        #   ★画像の中に、この実践のURLを必ず入れます。見た人がここへ来られます。
         ima = SITE_URL + 'bansho.html#b-' + a['slug']
         fuda.append(BFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
@@ -2643,7 +2643,7 @@ def build_bansho(jissen):
                      if a['kind'] == 'gidai' else ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             mado=mado, shiryo=sh, more=more, by=esc_html(a['by']),
-            line=esc_html(line_share(a['title'] + '\n' + ima + '\n\n'))))
+            ima=esc_html(ima)))
     return '    <div class="bantana">\n' + '\n'.join(fuda) + '\n    </div>'
 
 
