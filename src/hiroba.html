@@ -329,6 +329,66 @@
   </div>
 </section>
 
+<!-- 困りごと（2026-09-21 夜 新設）。帯には出しません。
+     入口は ホームの「ちょっと聞きたい」の札です。
+     ★送られた1件は、誰の目も通らずにここへ出ます。板書と同じ決めごとです。
+       出してはいけない語が入っていた1件だけは、出しません（ビルドは止めません）。 -->
+<section class="sec sec--sora" id="komari">
+  <i class="kazari" data-k="gakkatsu" style="--y:22%;--w:112px;--d:.3s"></i>
+  <i class="kazari kazari--migi" data-k="jidokai" style="--y:54%;--w:104px;--d:1.2s"></i>
+  <div class="uchi">
+    <h2 class="midashi"><span class="en">ASK</span><span class="ja">ちょっと聞きたい</span></h2>
+    <p class="yomi">
+      いま困っていることを、そのまま書いてください。<br>
+      ログインは要りません。名前もメールも要りません。<strong>送ると、数分でこの下に出ます。</strong>
+    </p>
+    <p class="yomi">
+      ここは<strong>溜める場</strong>です。答えが早いのは
+      <strong>LINEオープンチャット「みんなの特活ひろば」</strong>のほうです。
+      あちらには505人がいて、その日のうちに誰かが答えてくれます。
+    </p>
+
+    <form class="okuru-f" id="komari-f" novalidate>
+      <p class="okuru-midashi">いま困っていることを書く</p>
+      <p class="okuru-yomi">学校名や子どもの名前は書かないでください。そのまま出ます。</p>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="komari-m">困っていること</label>
+        <textarea class="okuru-i okuru-hiroi" id="komari-m" maxlength="1000" rows="10"
+                  placeholder="例：
+学級会の話合いが、いつも司会だけで進んでしまいます。
+
+どこから直せばいいのか分かりません。"></textarea>
+        <p class="okuru-kazu" id="komari-kazu" aria-live="polite">0 / 1000字</p>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="komari-g">学年<span class="okuru-nin">任意</span></label>
+        <select class="okuru-i" id="komari-g">
+          <option value="">えらばない</option>
+          <option>1〜2年</option><option>3〜4年</option>
+          <option>5〜6年</option><option>中学校</option>
+        </select>
+      </div>
+
+      <p class="okuru-kiwo"><b>送るまえに かならず</b>学校名・子どもの名前・同僚の名前が入っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b>誰も間に入りません。</p>
+
+      <p class="okuru-botan">
+        <button class="btn" type="submit" id="komari-b">送る<span class="btn-ya">→</span></button>
+      </p>
+      <p class="okuru-shirase" id="komari-shirase" role="status" aria-live="polite"></p>
+      <p class="okuru-chu">開いただけでは、何も出ていきません。<br><b>「送る」を押したときだけ</b>、送られて、そのまま載ります。</p>
+    </form>
+
+    <h3 class="komari-h">届いている困りごと</h3>
+    <!--BUILD:KOMARI-->
+
+    <div class="naka">
+      <a class="btn btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">LINEで聞いてみる<span class="btn-ya">↗</span></a>
+    </div>
+  </div>
+</section>
+
 <section class="sec" id="kai">
   <i class="kazari" data-k="jidokai" style="--y:24%;--w:110px;--d:.5s"></i>
   <i class="kazari kazari--migi" data-b="hata" style="--y:48%;--w:96px;--d:1.1s"></i>
@@ -678,6 +738,44 @@
         });
       });
     }
+  }
+
+  /* ══ 困りごとを送る（2026-09-21 夜）══════════════════════
+     板書と同じ受け口に、kind: 'komari' で投げます。
+     写真もPDFもありません。字だけです。
+     ★ここも、開いただけでは1バイトも出ません。押したときだけです。 */
+  var komariF = document.getElementById('komari-f');
+  if(komariF && OKURU_URL){
+    var kM = document.getElementById('komari-m');
+    var kG = document.getElementById('komari-g');
+    var kKazu = document.getElementById('komari-kazu');
+    var kShirase = document.getElementById('komari-shirase');
+    var kBotan = document.getElementById('komari-b');
+
+    kM.addEventListener('input', function(){
+      kKazu.textContent = kM.value.length + ' / 1000字';
+    });
+
+    komariF.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var m = kM.value.trim();
+      if(!m){ kShirase.textContent = '困っていることを書いてください。'; return; }
+      kBotan.disabled = true;
+      kShirase.textContent = '送っています…';
+      fetch(OKURU_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kG.value })
+      }).then(function(){
+        komariF.reset(); kKazu.textContent = '0 / 1000字';
+        kShirase.textContent = '送りました。数分で、この下に出ます。';
+        kBotan.disabled = false;
+      })['catch'](function(){
+        kShirase.textContent = 'うまく送れませんでした。LINEオープンチャットに直接どうぞ。';
+        kBotan.disabled = false;
+      });
+    });
   }
 
   function setCycle(n){

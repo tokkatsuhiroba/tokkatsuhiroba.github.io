@@ -42,6 +42,7 @@ JISSEN = os.path.join(SRC, 'jissen')   # すぐ使える実践（1件＝1ファ�
 GOODS  = os.path.join(SRC, 'goods')    # 学級会グッズ（1点＝1ファイル）
 SHIRYO = os.path.join(SRC, 'shiryo')   # 資料の画像（1件＝1フォルダ。ページの中に埋めこむ）
 BANSHO = os.path.join(SRC, 'bansho')   # 板書の写真（1件＝1フォルダ。板書のページにだけ埋めこむ）
+KOMARI = os.path.join(SRC, 'komari')   # 困りごと（1件＝1ファイル。送られたら、そのまま出ます）
 JISSEN_HOME_N = 2                      # ホームに出す実践の数
 
 # 資料をページの中に入れるときの上限。ここを外すと配れない重さになります。
@@ -86,19 +87,24 @@ PAGES = (
     #   入口は「学ぶ」の実践の節の中だけ。溜まった写真を並べて見るためのページです。
     ('bansho.html',   '板書',   '送ってもらった板書の写真を、溜めていきます。',
      ('bansho',)),
+    # 困りごと（2026-09-21 夜 新設）。帯の8つには入れません。
+    #   入口は ホームの「ちょっと聞きたい」の札です。
+    ('komari.html',   '困りごと', '送られた困りごとを、そのまま並べています。',
+     ('komari',)),
 )
 HOME = PAGES[0][0]
 
 # 親のページ（帯に出ないページだけ）。頭のところに「← 学ぶ」を出すために使います。
 #   帯で今どこにいるかが出ないぶん、ここで戻り道を見せます。
-OYA = {'bansho.html': ('manabu.html', 'jissen', '実践')}
+OYA = {'bansho.html': ('manabu.html', 'jissen', '実践'),
+       'komari.html': ('index.html', 'igi', 'ホーム')}
 # 節の名前。ホームの札と、ページの中の見出しで使い回します
 SETSU_NA = {
     'ima':    '研究日程', 'news':   'ニュース',
     'about':  '特活とは',   'manabu': '学ぶ',
     'yotsu':  '4つの内容',  'jissen': '実践',
     'kai':    '日本の研究会', 'okuru': '板書を送る',
-    'bansho': '板書',
+    'bansho': '板書', 'komari': '困りごと',
 }
 
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
@@ -348,17 +354,25 @@ def kenmon(fm):
     return True, None
 
 
-def ngword_check(text, where):
-    """出してはいけない語が1つでも混ざっていたら止める（src/_ngword.txt）。"""
+def ngword_aru(text):
+    """出してはいけない語が入っていたら、その語を返す。無ければ None。"""
     if not os.path.exists(NG):
-        return
+        return None
     for line in io.open(NG, encoding='utf-8'):
         w = line.strip()
         if not w or w.startswith('#'):
             continue
         if w in text:
-            raise Tomeru('%s に、出してはいけない語「%s」が入っています'
-                         '（src/_ngword.txt を見てください）' % (where, w))
+            return w
+    return None
+
+
+def ngword_check(text, where):
+    """出してはいけない語が1つでも混ざっていたら止める（src/_ngword.txt）。"""
+    w = ngword_aru(text)
+    if w:
+        raise Tomeru('%s に、出してはいけない語「%s」が入っています'
+                     '（src/_ngword.txt を見てください）' % (where, w))
 
 
 def load_news():
@@ -598,6 +612,65 @@ def load_jissen(goods):
         for g in a['goods_ids']:
             goods[g]['used'].append(a)
     return kiji, tobashita
+
+
+# ══ 困りごと（2026-09-21 夜 新設）════════════════════════
+#   サイトの入力欄から送られた1件が、そのままここに出ます。
+#   **誰の目も通りません。**板書と同じ決めごとです。
+#   ★ここだけは、当たったら「止める」のではなく「その1件を出さない」に
+#     しています。1件の困りごとでサイト全体が止まると、送った人にも
+#     ほかの人にも分からないからです。
+KOMARI_MOJI_MAX = 1000
+
+
+def load_komari():
+    kiji, tobashita = [], []
+    for p in sorted(glob.glob(os.path.join(KOMARI, '*.md'))):
+        if os.path.basename(p).startswith('_'):
+            continue
+        fm = parse_md(p)
+        f = fm['_file']
+        if fm.get('share', '').lower() != 'true':
+            tobashita.append('%s … share: true が無いので出しません' % f)
+            continue
+        hon = fm['summary'].strip()
+        if not hon:
+            tobashita.append('%s … 中身が空です' % f)
+            continue
+        w = ngword_aru(hon + fm.get('grade', ''))
+        if w:
+            tobashita.append('%s … 出してはいけない語「%s」が入っています' % (f, w))
+            continue
+        try:
+            fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
+        except Exception:
+            tobashita.append('%s … date が 2026-09-21 の形ではありません' % f)
+            continue
+        fm['hon'] = hon[:KOMARI_MOJI_MAX]
+        fm['grade'] = (fm.get('grade') or '').strip()
+        fm['slug'] = slug_of(f)
+        kiji.append(fm)
+    kiji.sort(key=lambda a: (a['d'], a['_file']), reverse=True)
+    return kiji, tobashita
+
+
+KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
+        <p class="komari-hi">{hi}{grade}</p>
+        <div class="komari-hon">{hon}</div>
+      </article>"""
+
+KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。
+      いちばん上の欄から、いま困っていることを送ってください。</p>"""
+
+
+def build_komari(komari):
+    if not komari:
+        return KOMARI_KARA
+    return '\n'.join(
+        KOMARI_T.format(slug=a['slug'], hi=a['d'].strftime('%Y年%-m月%-d日'),
+                        grade=('　' + esc_html(a['grade'])) if a['grade'] else '',
+                        hon=md_html(a['hon']))
+        for a in komari)
 
 
 # ══ 資料を、ページの中で開く ══════════════════════════════
@@ -2149,7 +2222,7 @@ def build_kyara_narabi(kyara):
 #     2026-09-21 夜、「伝えたい」が atsumaru.html#okuru を指したまま
 #     送るところがホームへ移り、行き先が消えかけました。
 IGI_MEN = (
-    ('gakkatsu', 'ちょっと聞きたい', '話す場は、LINE。',       ''),
+    ('gakkatsu', 'ちょっと聞きたい', 'いま困っていることを。',   'komari'),
     ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
     ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'jissen'),
     ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
@@ -2533,6 +2606,7 @@ def build_shin():
         raise Tomeru('出せる実践が1件もありません')
 
     ken = load_kenkyukai()
+    komari, tobashita_k = load_komari()
     # 絵は1ページに1回だけ埋めこみ、4つの内容は <use> で別の場所を切り出す
     e_naka = hiroba_naka(buhin)
     hero = ('<svg viewBox="0 0 %d %d" role="img" aria-label="校庭で学級活動・学校行事・'
@@ -2556,6 +2630,7 @@ def build_shin():
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
                        ('    <!--BUILD:BANSHO_IRI-->', build_bansho_iriguchi(jissen)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
+                       ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
                        ('    <!--BUILD:KENKYUKAI-->',
@@ -2627,7 +2702,7 @@ def build_shin():
         ]) + '\n'
         ngword_check(html, '公開用/' + f)
         pages[f] = html
-    return pages, hyo, kiji, jissen
+    return pages, hyo, kiji, jissen, komari, tobashita_k
 
 
 # ══════════════════════════════════════════════════════════
@@ -2781,7 +2856,7 @@ def main_tobira(check_only):
 
 def main_shin(check_only):
     try:
-        pages, hyo, kiji, jissen = build_shin()
+        pages, hyo, kiji, jissen, komari, tobashita_k = build_shin()
         warn = []
         for f in pages:
             warn += [w for w in tenken(pages[f]) if '要約' not in w]
@@ -2807,6 +2882,9 @@ def main_shin(check_only):
     print('  板書　　　　… %d件・%d枚（写真は bansho.html にだけ入れています）'
           % (len(bansho_aru(jissen)),
              sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))))
+    print('  困りごと　　… %d件（送られたら、そのまま出ます）' % len(komari))
+    for t in tobashita_k:
+        print('  とばした　　… %s' % t)
     print('  ニュース　　… %d件（上から%d件。のこりはページの中のふた）'
           % (len(kiji), min(len(kiji), NEWS_H_N)))
     print('  こよみ　　　… %d件を %dか月ぶんのますめに'

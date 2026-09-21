@@ -1867,6 +1867,27 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .okuru-hiroi::placeholder{color:var(--mute);opacity:.75}
 .okuru-yomi--sub{margin:0 0 8px;font-size:12.5px}
 .okuru-kazu{margin:6px 0 0;text-align:right;font-size:12px;color:var(--mute)}
+
+/* 困りごと（2026-09-21 夜）。送られた1件が、そのまま並びます */
+.komari-h{
+  margin:clamp(36px,5vw,60px) 0 14px;
+  font-family:var(--f-maru);font-weight:700;font-size:17px;letter-spacing:.04em;
+}
+.komari-fuda{
+  margin:0 0 14px;padding:16px 18px;background:#fff;
+  border:2.5px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);
+}
+.komari-hi{
+  margin:0 0 8px;font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;letter-spacing:.04em;color:var(--mute);
+}
+.komari-hon p{margin:0 0 .7em;font-size:15.5px;line-height:1.9}
+.komari-hon p:last-child{margin-bottom:0}
+.komari-hon h4{margin:.9em 0 .4em;font-size:15.5px}
+.komari-mada{
+  margin:0;padding:20px;text-align:center;font-size:14px;line-height:1.9;color:var(--mute);
+  border:2px dashed var(--rule);border-radius:16px;
+}
 /* 写真をえらぶ。押せる所を大きくとります */
 .okuru-shashin{
   display:grid;place-items:center;gap:4px;

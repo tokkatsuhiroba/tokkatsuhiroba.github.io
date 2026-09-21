@@ -101,6 +101,10 @@ function _webapp() {
 function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
+
+    // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
+    if (d.kind === 'komari') return _komari(d);
+
     var shashin = (d.e || []).slice(0, MAI_MAX);
     var pdfs    = (d.p || []).slice(0, 1);        // PDFは1つまで（2026-09-21 夜）
     if (!shashin.length && !pdfs.length) {
@@ -157,6 +161,59 @@ function doPost(e) {
   }
 }
 
+/* ══ 1の2. 困りごと ═══════════════════════════════════════
+   字だけです。送られたら、そのまま komari.html に出ます。
+   ★誰の目も通りません。知らせの［すぐ消す］で1押しで下ろせます。 */
+function _komari(d) {
+  var m = _arau_hon(d.m);
+  if (!m) return _kotae({ ok: false, riyu: '中身がありません' });
+  if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
+
+  var slug = _slug('komari');
+  var nose = { ok: false, riyu: '' };
+  try {
+    _github('src/komari/' + _kyou() + '_' + slug + '.md',
+            Utilities.base64Encode(_md_komari(d, m), Utilities.Charset.UTF_8),
+            '困りごとを1件のせる（' + slug + '）');
+    nose.ok = true;
+  } catch (err) {
+    nose.riyu = String(err);
+  }
+  _shiraseru_komari(slug, d, m, nose);
+  return _kotae({ ok: true, noseta: nose.ok });
+}
+
+function _md_komari(d, m) {
+  return [
+    '---',
+    'share: true',
+    'date: ' + _kyou(),
+    'grade: ' + (_arau(d.g) || '学年なし'),
+    '---',
+    '',
+    m
+  ].join('\n');
+}
+
+function _shiraseru_komari(slug, d, m, nose) {
+  var url = _webapp();
+  var honbun =
+    (nose.ok ? '困りごとが1件とどき、そのまま載せました。数分でページに出ます。\n'
+             : '困りごとが1件とどきましたが、載せられませんでした。\n' +
+               '　理由：' + (nose.riyu || '（不明）') + '\n') +
+    '\n' +
+    '　学年：' + (d.g || '（なし）') + '\n\n' +
+    '＜中身＞\n' + m + '\n\n' +
+    '★ 学校名・子どもの名前・同僚の名前が入っていたら、いますぐ下から消してください。\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&x=1\n\n' +
+           '（公開ページからは消えます。GitHubの履歴には残ります）\n'
+         : '（WEBAPP_URL が空なので、消すところを出せていません）');
+
+  var mail = _mail();
+  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】困りごとが1件とどきました', honbun);
+}
+
+
 /* サイト側は fetch で投げっぱなしなので、返す中身は使われません。
    それでも、あとで見たときに分かるように返しておきます。 */
 function _kotae(o) {
@@ -177,11 +234,11 @@ function _dataURI_pdf(s) {
 }
 
 /* フォルダ名。英小文字・数字・- だけ（build.py の検問に合わせています） */
-function _slug() {
+function _slug(atama) {
   var d = new Date();
   var hi = Utilities.formatDate(d, 'Asia/Tokyo', 'yyyyMMdd');
   var ran = Utilities.getUuid().slice(0, 6);
-  return 'bansho-' + hi + '-' + ran;
+  return (atama || 'bansho') + '-' + hi + '-' + ran;
 }
 
 function _folder(slug) {
@@ -286,21 +343,25 @@ function _noseru(slug, n) {
      履歴ごと消すには、手もとで git の作り直しが要ります。 */
 function doGet(e) {
   var slug = (e.parameter.v || '').trim();
-  if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
+  if (!/^(bansho|komari)-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
   if (e.parameter.x !== '1') {
     return _html('何もしていません。消すなら、メールの［すぐ消す］を押してください。');
   }
   var keshita = 0;
   try {
-    keshita += _kesu_folder('src/bansho/' + slug, slug);
-    keshita += _kesu_folder('src/shiryo/' + slug, slug);   // PDFから作った画像も
-    keshita += _kesu_md(slug);
+    if (slug.indexOf('komari-') === 0) {
+      keshita += _kesu_md(slug, 'src/komari');
+    } else {
+      keshita += _kesu_folder('src/bansho/' + slug, slug);
+      keshita += _kesu_folder('src/shiryo/' + slug, slug);   // PDFから作った画像も
+      keshita += _kesu_md(slug, 'src/jissen');
+    }
   } catch (err) {
     return _html('消せませんでした：' + String(err).slice(0, 200) +
-                 '<br><br>手で消すなら GitHub の src/bansho/' + slug + ' です。');
+                 '<br><br>手で消すなら GitHub の src/ の中です（' + slug + '）。');
   }
   if (!keshita) return _html('もう残っていませんでした。');
-  return _html('消しました（' + keshita + '件）。数分で板書のページから消えます。<br><br>' +
+  return _html('消しました（' + keshita + '件）。数分でページから消えます。<br><br>' +
                '<small>GitHub の履歴には残ります。Driveの写真も残っています。</small>');
 }
 
@@ -315,14 +376,14 @@ function _kesu_folder(michi, slug) {
   return n;
 }
 
-function _kesu_md(slug) {
-  var ichiran = _github_miru('src/jissen');
+function _kesu_md(slug, doko) {
+  var ichiran = _github_miru(doko);
   if (!ichiran) return 0;
   var n = 0;
   for (var i = 0; i < ichiran.length; i++) {
     var na = ichiran[i].name || '';
     if (na.slice(-3) === '.md' && na.indexOf('_' + slug + '.') >= 0) {
-      _github_kesu(ichiran[i].path, ichiran[i].sha, '板書の1件を消す（' + slug + '）');
+      _github_kesu(ichiran[i].path, ichiran[i].sha, '1件を消す（' + slug + '）');
       n++;
     }
   }
