@@ -103,6 +103,10 @@ jobs:
           mkdir -p _site
           cp 公開用/*.html _site/
           if [ -f 公開用/ogp.png ]; then cp 公開用/ogp.png _site/ogp.png; fi
+          # PDFを塗る道具（pdf.js）。PDFを選んだ人だけが取りに行きます。
+          # ページには入れていないので、ここで一緒に配らないと動きません。
+          if [ -d 公開用/pdfjs ]; then cp -r 公開用/pdfjs _site/pdfjs; fi
+          ls -l _site/pdfjs 2>/dev/null || echo '⚠ pdfjs がありません（PDFは塗れません）'
 
       - name: 押した先が欠けていないか数える
         run: |

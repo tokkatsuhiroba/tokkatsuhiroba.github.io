@@ -3543,6 +3543,7 @@ def main_shin(check_only):
     for f in pages:
         io.open(os.path.join(ROOT, '公開用', f), 'w',
                 encoding='utf-8', newline='\n').write(pages[f])
+    pdfjs_utsusu()
     print('')
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
     print('  公開用/ は GitHubに上げません（.gitignore）。上げるのは src/ と build.py。')
@@ -3550,6 +3551,33 @@ def main_shin(check_only):
           % len(PAGES))
     print('')
     return 0
+
+
+PDFJS = os.path.join(SRC, 'pdfjs')   # PDFを、送る人のブラウザの中で絵にする道具
+
+
+def pdfjs_utsusu():
+    """src/pdfjs/*.js を 公開用/pdfjs/ に写す。
+
+       ページの中に入れません。**PDFを選んだ人だけ**が取りに行くものなので、
+       埋めこむと、読むだけの人まで1.7MB 背負うことになります。
+       外のCDNからも読みません。学校のネットワークは外のCDNを止めている
+       ことがよくあり、止められるとPDFが送れなくなるためです。"""
+    import shutil
+    saki = os.path.join(ROOT, '公開用', 'pdfjs')
+    if not os.path.isdir(PDFJS):
+        raise Tomeru('src/pdfjs/ がありません。PDFを塗るところが動かなくなります')
+    os.makedirs(saki, exist_ok=True)
+    n = 0
+    for f in sorted(glob.glob(os.path.join(PDFJS, '*.js'))):
+        shutil.copyfile(f, os.path.join(saki, os.path.basename(f)))
+        n += 1
+    if n < 2:
+        raise Tomeru('src/pdfjs/ に .js が %d個しかありません（本体と裏方の2つが要ります）' % n)
+    print('  PDFの道具　… %d個を 公開用/pdfjs/ に写しました（%.1fMB。'
+          'ページには入れません）'
+          % (n, sum(os.path.getsize(x) for x in glob.glob(os.path.join(saki, '*.js')))
+             / 1024.0 / 1024.0))
 
 
 def main():
