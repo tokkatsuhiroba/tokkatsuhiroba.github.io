@@ -7,8 +7,8 @@
     <h1 class="hero-logo">TOKKATSU広場</h1>
     <p class="hero-copy"><!--BUILD:COPY--></p>
     <p class="hero-botan">
-      <a class="btn" href="{{FORM_JISSEN}}" target="_blank" rel="noopener noreferrer">実践を共有する<span class="btn-ya">↗</span></a>
-      <a class="btn btn--usu" href="#jissen">すぐ使える実践を見る<span class="btn-ya">→</span></a>
+      <a class="btn" href="#okuru">板書を送る<span class="btn-ya">→</span></a>
+      <a class="btn btn--usu" href="#bansho">みんなの板書を見る<span class="btn-ya">→</span></a>
     </p>
   </div>
 </header>
@@ -174,6 +174,7 @@
   <div class="uchi">
     <h2 class="midashi"><span class="en">LEARN</span><span class="ja">学ぶ</span></h2>
     <p class="yomi">困りごとから、いま必要なところへ。<br>学級会の学習過程と、根拠になる一次資料をこのページの中で確かめられます。</p>
+    <!--BUILD:BANSHO_IRI-->
 
     <div class="manabu-box">
       <h3 class="manabu-h">お悩み別の入口</h3>
@@ -305,7 +306,6 @@
     <h2 class="midashi"><span class="en">PRACTICE</span><span class="ja">すぐ使える実践</span></h2>
     <p class="yomi">明日の学級会にそのまま使えるものだけ。週案にそのまま書ける1行が付いています。<br>準備・流れ・板書まで、ぜんぶこのページの中で開きます。</p>
     <p class="yomi">厚いものだけではありません。<strong>「こんな議題が出ました」の1件</strong>も、同じ棚に並びます。札に<strong>議題</strong>と付いているものがそれです。</p>
-    <!--BUILD:BANSHO_IRI-->
     <!--BUILD:JISSEN_H-->
   </div>
 </section>
@@ -351,18 +351,18 @@
   <i class="kazari" data-k="gakkatsu" style="--y:34%;--w:112px;--d:.8s"></i>
   <i class="kazari kazari--migi" data-k="club" style="--y:56%;--w:104px;--d:.2s"></i>
   <div class="uchi">
-    <h2 class="midashi"><span class="en">JOIN</span><span class="ja">あなたの実践も、ここに載ります</span></h2>
+    <h2 class="midashi"><span class="en">JOIN</span><span class="ja">今週の板書を、ここに</span></h2>
     <p class="yomi">
-      <strong>送ってもらったものを、こちらが読んでから1件ずつ載せます。</strong><br>
-      その場ですぐ出る書きこみ欄ではありません。だから荒れません。<br>
-      載っているものは、全部だれかが選んだものです。
+      <strong>送ると、そのまま板書のページに出ます。</strong><br>
+      ログインは要りません。名前もメールも要りません。<br>
+      だから、いちばん大事なのは<strong>送る前のひと目</strong>です。
     </p>
 
     <ol class="nagare">
-      <li><span class="n">1</span><b>送る</b>フォームに書いて送ります。ログインは要りません。名前も要りません。</li>
-      <li><span class="n">2</span><b>読む</b>管理人（伊藤）が読みます。載せられないものは載せません。</li>
-      <li><span class="n">3</span><b>載る</b>「すぐ使える実践」に1件として出ます。ふつうは、その日のうちに。</li>
-      <li><span class="n">4</span><b>使われる</b>ほかの先生が持ち帰って、月曜の学級会で使います。</li>
+      <li><span class="n">1</span><b>見る</b>子どもの顔・名前・学校名が写っていないか、押す前に見てください。</li>
+      <li><span class="n">2</span><b>送る</b>写真をえらんで押します。ログインは要りません。</li>
+      <li><span class="n">3</span><b>出る</b>数分で「板書」のページに出ます。<strong>管理人の確認は入りません。</strong></li>
+      <li><span class="n">4</span><b>消す</b>まずいものが出たときは、管理人がその場で消します。</li>
     </ol>
 
     <!-- ══ サイトの中で、そのまま送る（2026-09-21）══════════════
@@ -370,7 +370,9 @@
          ファイル添付があるため、Googleが全員にログインを求めます。
          それでは「誰でも簡単に」になりません。だから入力欄を ここに置きます。
          ★開いただけでは、外へ1バイトも出ません。
-           写真を選んでも、まだ出ません。「送る」を押したときだけ出ます。 -->
+           写真を選んでも、まだ出ません。「送る」を押したときだけ出ます。
+         ★2026-09-21 夜：押したあとは 管理人を通さずに 板書のページへ出ます。
+           知らせは管理人に届き、［すぐ消す］で1押しで下ろせます。 -->
     <form class="okuru-f" id="okuru-f" novalidate>
       <p class="okuru-midashi">今週の板書を送る</p>
       <p class="okuru-yomi">写真だけで大丈夫です。名前もメールも要りません。</p>
@@ -385,9 +387,9 @@
       </div>
 
       <div class="okuru-g">
-        <label class="okuru-l" for="okuru-t">ひとこと<span class="okuru-nin">任意</span></label>
+        <label class="okuru-l" for="okuru-t">議題名<span class="okuru-nin">任意</span></label>
         <input class="okuru-i" type="text" id="okuru-t" name="t" maxlength="60"
-               placeholder="例：6年・学級会・お楽しみ会の話合い">
+               placeholder="例：たてわり班であそぶ会をしよう">
       </div>
 
       <div class="okuru-g">
@@ -399,21 +401,37 @@
         </select>
       </div>
 
-      <p class="okuru-kiwo"><b>送るまえに ひとつだけ</b>子どもの顔や名前、学校名が写っていないか見てください。写っていたら、こちらでは載せられません。</p>
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-m">概要・ポイント<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">書ける分だけで大丈夫です。空のままでも送れます。</p>
+        <textarea class="okuru-i okuru-hiroi" id="okuru-m" name="m" maxlength="1000" rows="10"
+                  placeholder="例：
+どんな声から出た議題か。
+
+話合いでつまずいたところ。
+
+次にやるなら、ここを直す。"></textarea>
+        <p class="okuru-kazu" id="okuru-kazu" aria-live="polite">0 / 1000字</p>
+      </div>
+
+      <p class="okuru-kiwo"><b>送るまえに かならず</b>子どもの顔や名前、学校名が写っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b>誰も間に入りません。</p>
 
       <p class="okuru-botan">
         <button class="btn" type="submit" id="okuru-b">送る<span class="btn-ya">→</span></button>
       </p>
       <p class="okuru-shirase" id="okuru-shirase" role="status" aria-live="polite"></p>
-      <p class="okuru-chu">開いただけでは、何も出ていきません。写真を選んでも、まだ出ません。<br><b>「送る」を押したときだけ</b>、管理人のところへ届きます。</p>
+      <p class="okuru-chu">開いただけでは、何も出ていきません。写真を選んでも、まだ出ません。<br><b>「送る」を押したときだけ</b>、送られて、そのまま載ります。</p>
     </form>
 
-    <div class="naka okuru-yobi" id="okuru-yobi" hidden>
-      <a class="btn" href="{{FORM_JISSEN}}" target="_blank" rel="noopener noreferrer">フォームで送る<span class="btn-ya">↗</span></a>
-    </div>
+    <!-- 受け口が止まっているときの言づて。外のフォームへは出しません（2026-09-21 夜）。
+         Googleフォームは裏で使うぶんには残しますが、表には1本も出しません。
+         ★ここは hidden ですが、.naka が display:flex なので CSS でも消しています。 -->
+    <p class="naka okuru-yobi" id="okuru-yobi" hidden>
+      いまは送るところを止めています。LINEオープンチャットへ直接あげてください。
+    </p>
     <p class="yomi" style="margin-top:26px;font-size:14px;color:var(--mute)">
       うまくいったことだけでなく、うまくいかなかったことも歓迎です。<br>
-      「これは載せないで」と書いてあれば、載せません。
+      下ろしてほしいものがあれば、LINEオープンチャットへひとこと。その場で消します。
     </p>
 
     <p class="yomi tsugi">
@@ -433,7 +451,7 @@
     <p><a href="#manabu">学習指導要領・資料を見る</a></p>
     <p><a href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">LINEオープンチャット「みんなの特活ひろば」を開く（外部）</a></p>
     <p class="chu">特別活動の情報が、溜まる場。LINE＝話す場／ここ＝溜まる場。</p>
-    <p class="chu">実践はフォームから送れます。読んでから1件ずつ載せています。アクセス解析は入れていません。</p>
+    <p class="chu">板書はこのページの中から送れます。送ると、そのまま載ります。アクセス解析は入れていません。</p>
     <p class="kanri">管理者：伊藤 優</p>
   </div>
 </footer>
@@ -542,27 +560,56 @@
       var mihon = document.getElementById('okuru-mihon');
       var shirase = document.getElementById('okuru-shirase');
       var botan = document.getElementById('okuru-b');
-      var MAI = 3, HEN = 1400, OMOSA = 0.72;
+      var MAI = 3, KB_MAX = 380;
+
+      /* ★ここで必ず上限に収めます（2026-09-21）。
+         受け口は 400KB を超えた写真を断りますが、返事は読めない（no-cors）ので、
+         画面には「送りました」と出たまま、どこにも残りませんでした。
+         本物の板書の写真は、1400px でも 400KB を超えます。
+         だから 質を落とし、それでもだめなら 小さくして、収まるまで試します。 */
+      var DAN = [[1400, .72], [1400, .60], [1200, .58], [1000, .55], [800, .50]];
+
+      var kaku = function(im, hen, omosa){
+        var w = im.width, h = im.height, r = Math.min(1, hen / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.round(w * r); c.height = Math.round(h * r);
+        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        return c.toDataURL('image/jpeg', omosa);
+      };
+      /* data URI の base64 部分から、おおよその KB を出します */
+      var nanKB = function(uri){
+        return (uri.length - uri.indexOf(',') - 1) * 3 / 4 / 1024;
+      };
+      var kotowaru = function(ji){ var e = new Error(ji); e.bansho = true; return e; };
 
       var chijimeru = function(file){
         return new Promise(function(ok, dame){
           var fr = new FileReader();
-          fr.onerror = function(){ dame(new Error('読めませんでした')); };
+          fr.onerror = function(){ dame(kotowaru('写真が読めませんでした。')); };
           fr.onload = function(){
             var im = new Image();
-            im.onerror = function(){ dame(new Error('画像ではないようです')); };
+            im.onerror = function(){ dame(kotowaru('画像ではないようです。')); };
             im.onload = function(){
-              var w = im.width, h = im.height, r = Math.min(1, HEN / Math.max(w, h));
-              var c = document.createElement('canvas');
-              c.width = Math.round(w * r); c.height = Math.round(h * r);
-              c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-              ok(c.toDataURL('image/jpeg', OMOSA));
+              for(var i = 0; i < DAN.length; i++){
+                var uri = kaku(im, DAN[i][0], DAN[i][1]);
+                if(nanKB(uri) <= KB_MAX) return ok(uri);
+              }
+              dame(kotowaru('写真を小さくしきれませんでした。'
+                          + 'カメラの設定を下げるか、1枚ずつ送ってみてください。'));
             };
             im.src = fr.result;
           };
           fr.readAsDataURL(file);
         });
       };
+
+      var mIn = document.getElementById('okuru-m');
+      var kazu = document.getElementById('okuru-kazu');
+      if(mIn && kazu){
+        mIn.addEventListener('input', function(){
+          kazu.textContent = mIn.value.length + ' / 1000字';
+        });
+      }
 
       eIn.addEventListener('change', function(){
         var n = eIn.files.length;
@@ -590,15 +637,18 @@
             body: JSON.stringify({
               kind: 'bansho', e: e,
               t: document.getElementById('okuru-t').value.slice(0, 60),
-              g: document.getElementById('okuru-g').value
+              g: document.getElementById('okuru-g').value,
+              m: document.getElementById('okuru-m').value.slice(0, 1000)
             })
           });
         }).then(function(){
           okuruF.reset(); mihon.textContent = '';
+          if(kazu) kazu.textContent = '0 / 1000字';
           shirase.textContent = '送りました。管理人が読んでから、板書のページに載ります。';
           botan.disabled = false;
-        })['catch'](function(){
-          shirase.textContent = 'うまく送れませんでした。LINEオープンチャットに直接あげてもらえると助かります。';
+        })['catch'](function(err){
+          shirase.textContent = (err && err.bansho) ? err.message
+            : 'うまく送れませんでした。LINEオープンチャットに直接あげてもらえると助かります。';
           botan.disabled = false;
         });
       });

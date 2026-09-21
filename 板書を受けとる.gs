@@ -68,8 +68,25 @@ function _p(k, moto) { return (P.getProperty(k) || moto || '').trim(); }
 /* 入れてもらうものを1つに減らすため、空のときは自分で決めます。
    ここで決められないのは GITHUB_TOKEN だけです（合言葉なので、
    人の手で入れてもらうしかありません）。 */
+/* ★ 匿名で開かれたとき、Session.getEffectiveUser().getEmail() は **空** を返します
+   （2026-09-21、メールが1通も来なくてここに行き当たりました）。
+   だから ADMIN_MAIL を先に控えておきます。控えるのが saisho_ni_ichido()。 */
 function _mail() {
   return _p('ADMIN_MAIL') || Session.getEffectiveUser().getEmail();
+}
+
+/* ══ 最初に1回だけ ════════════════════════════════════════
+   Apps Script のエディタで、この関数をえらんで ▶ を押してください。
+   あなたのアドレスを覚えます。**これをやらないと、メールは飛びません。**
+   （エディタから走らせたときだけ、Apps Script はアドレスを教えてくれます） */
+function saisho_ni_ichido() {
+  var m = Session.getEffectiveUser().getEmail();
+  if (!m) throw new Error('アドレスが取れませんでした。ログインを確かめてください');
+  P.setProperty('ADMIN_MAIL', m);
+  MailApp.sendEmail(m, '【TOKKATSU広場】板書の受け口、ここまで届いています',
+    'このメールが読めていれば、板書の知らせも届きます。\n\n' +
+    '　覚えたアドレス：' + m + '\n');
+  return m;
 }
 function _webapp() {
   var u = _p('WEBAPP_URL');
@@ -103,12 +120,21 @@ function doPost(e) {
       uri.push({ na: na, b64: Utilities.base64Encode(b.getBytes()) });
     }
 
-    // 押すまで、サイトには1枚も出ません。ここでやるのは知らせるところまで。
-    CacheService.getScriptCache().put(
-      slug, JSON.stringify({ uri: uri, t: d.t || '', g: d.g || '' }), 21600);
+    /* ★ 2026-09-21 夜、ここを変えました。
+       いままでは「管理人が［載せる］を押すまで、サイトには1枚も出ない」でした。
+       いまは **そのまま載せます**。誰の目も通りません。
+       そのかわり、知らせに［すぐ消す］を付けています。 */
+    var n = { uri: uri, t: d.t || '', g: d.g || '', m: d.m || '' };
+    var nose = { ok: false, riyu: '' };
+    try {
+      _noseru(slug, n);
+      nose.ok = true;
+    } catch (err2) {
+      nose.riyu = String(err2);   // 載せられなくても、写真はDriveに残っています
+    }
 
-    _shiraseru(slug, d, folder);
-    return _kotae({ ok: true });
+    _shiraseru(slug, d, folder, nose);
+    return _kotae({ ok: true, noseta: nose.ok });
 
   } catch (err) {
     return _kotae({ ok: false, riyu: String(err) });
@@ -174,52 +200,105 @@ function _uwamawatta(kyou, n) {
 
 /* ══ 2. 管理人に知らせる ══════════════════════════════════ */
 
-function _shiraseru(slug, d, folder) {
+function _shiraseru(slug, d, folder, nose) {
   var url = _webapp();
-  var mail = _mail();
-  if (!mail) return;
 
   var honbun =
-    '板書が1件とどきました。\n\n' +
-    '　ひとこと：' + (d.t || '（なし）') + '\n' +
+    (nose && nose.ok
+      ? '板書が1件とどき、そのまま載せました。数分で板書のページに出ます。\n'
+      : '板書が1件とどきましたが、載せられませんでした。写真はDriveに残っています。\n' +
+        '　理由：' + ((nose && nose.riyu) || '（不明）') + '\n') +
+    '\n' +
+    '　議題名　：' + (d.t || '（なし）') + '\n' +
     '　学年　　：' + (d.g || '（なし）') + '\n' +
     '　枚数　　：' + (d.e || []).length + '枚\n' +
     '　置き場　：' + folder.getUrl() + '\n\n' +
-    '★ 送る前に、子どもの顔・名前・学校名が写っていないか見てください。\n\n' +
+    '＜概要・ポイント＞\n' +
+    (d.m ? d.m : '（書かれていません）') + '\n\n' +
+    '★ 子どもの顔・名前・学校名が写っていたら、いますぐ下から消してください。\n\n' +
     (url
-      ? '載せる　　：' + url + '?v=' + slug + '&d=1\n' +
-        '載せない　：' + url + '?v=' + slug + '&d=0\n'
-      : '（WEBAPP_URL が空なので、ボタンは出していません）');
+      ? 'すぐ消す：' + url + '?v=' + slug + '&x=1\n\n' +
+        '（公開ページからは消えます。GitHubの履歴には残ります）\n'
+      : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
-  MailApp.sendEmail(mail, '【TOKKATSU広場】板書が1件とどきました', honbun);
+  var mail = _mail();
+  if (mail) {
+    MailApp.sendEmail(mail, '【TOKKATSU広場】板書が1件とどきました', honbun);
+    return;
+  }
+  /* アドレスが取れないときは、黙って消さずに、写真のとなりに置き手紙を残します。
+     ここが空のまま気づかないと、送ってくれた板書がどこにも出ません。 */
+  folder.createFile('★メールを出せませんでした.txt',
+    honbun + '\n\n' +
+    '───────────────\n' +
+    'ADMIN_MAIL が空です。Apps Script のエディタで saisho_ni_ichido() を\n' +
+    '1回だけ走らせてください。次からメールが届きます。\n',
+    MimeType.PLAIN_TEXT);
 }
 
 
-/* ══ 3. ［載せる］を押したとき ════════════════════════════ */
+/* ══ 3. 載せる／消す ══════════════════════════════════════ */
 
-function doGet(e) {
-  var slug = (e.parameter.v || '').trim();
-  var noseru = e.parameter.d === '1';
-  if (!slug) return _html('行き先がありません');
-
-  if (!noseru) return _html('載せませんでした。Driveの写真は残っています。');
-
-  var nokori = CacheService.getScriptCache().get(slug);
-  if (!nokori) return _html('時間が経ちすぎました（6時間まで）。Driveから手で置いてください。');
-  var n = JSON.parse(nokori);
-
+/* 写真と .md を GitHub に置きます。数分で板書のページに出ます。 */
+function _noseru(slug, n) {
   for (var i = 0; i < n.uri.length; i++) {
     _github('src/bansho/' + slug + '/' + n.uri[i].na, n.uri[i].b64,
             '板書を1枚ふやす（' + slug + '）');
   }
   if (MD_MO_TSUKURU) {
-    var md = _md(slug, n);
     _github('src/jissen/' + _kyou() + '_' + slug + '.md',
-            Utilities.base64Encode(md, Utilities.Charset.UTF_8),
+            Utilities.base64Encode(_md(slug, n), Utilities.Charset.UTF_8),
             '板書の1件を載せる（' + slug + '）');
   }
-  return _html('載せました。数分で板書のページに出ます。');
 }
+
+/* 知らせの［すぐ消す］。GitHub から、その1件ぶんを全部消します。
+   ★ 公開ページからは消えますが、**GitHub の履歴には残ります**。
+     履歴ごと消すには、手もとで git の作り直しが要ります。 */
+function doGet(e) {
+  var slug = (e.parameter.v || '').trim();
+  if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
+  if (e.parameter.x !== '1') {
+    return _html('何もしていません。消すなら、メールの［すぐ消す］を押してください。');
+  }
+  var keshita = 0;
+  try {
+    keshita += _kesu_folder('src/bansho/' + slug, slug);
+    keshita += _kesu_md(slug);
+  } catch (err) {
+    return _html('消せませんでした：' + String(err).slice(0, 200) +
+                 '<br><br>手で消すなら GitHub の src/bansho/' + slug + ' です。');
+  }
+  if (!keshita) return _html('もう残っていませんでした。');
+  return _html('消しました（' + keshita + '件）。数分で板書のページから消えます。<br><br>' +
+               '<small>GitHub の履歴には残ります。Driveの写真も残っています。</small>');
+}
+
+function _kesu_folder(michi, slug) {
+  var ichiran = _github_miru(michi);
+  if (!ichiran || !ichiran.length) return 0;
+  var n = 0;
+  for (var i = 0; i < ichiran.length; i++) {
+    _github_kesu(ichiran[i].path, ichiran[i].sha, '板書を1件消す（' + slug + '）');
+    n++;
+  }
+  return n;
+}
+
+function _kesu_md(slug) {
+  var ichiran = _github_miru('src/jissen');
+  if (!ichiran) return 0;
+  var n = 0;
+  for (var i = 0; i < ichiran.length; i++) {
+    var na = ichiran[i].name || '';
+    if (na.slice(-3) === '.md' && na.indexOf('_' + slug + '.') >= 0) {
+      _github_kesu(ichiran[i].path, ichiran[i].sha, '板書の1件を消す（' + slug + '）');
+      n++;
+    }
+  }
+  return n;
+}
+
 
 /* front matter は build.py の検問に合わせてあります（2026-09-21 実測で確認）。
    ここを触るときは build.py の kenmon_jissen() を見てください。
@@ -242,9 +321,27 @@ function _arau(s) {
     .trim();
 }
 
+/* 自由に書いてもらうところ。何行でも来ます。
+   build.py が読める記法は ## 見出し／- 箇条書き／1. 番号／空行で段落 です。
+   front matter を壊す形だけ落として、あとはそのまま通します。 */
+function _arau_hon(s) {
+  var gyo = String(s || '').replace(/\r\n?/g, '\n').split('\n');
+  var deru = [];
+  for (var i = 0; i < gyo.length; i++) {
+    var l = gyo[i].replace(/\s+$/, '');
+    if (/^\s*-{3,}\s*$/.test(l)) continue;   // --- は front matter の閉じと読まれます
+    l = l.replace(/^(効き目|自分の考え|返し|分野|kikime|kangae|kaeshi)\s*[:：]\s*/, '');
+    deru.push(l);
+  }
+  var hon = deru.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (hon.charAt(0) === '#') hon = hon.replace(/^#+\s*/, '');   // 本文は見出しで始められません
+  return hon;
+}
+
 function _md(slug, n) {
   var t = _arau(n.t);
   var g = _arau(n.g);
+  var m = _arau_hon(n.m);
   return [
     '---',
     'share: true',
@@ -258,7 +355,7 @@ function _md(slug, n) {
     'by: 送ってくださった先生',
     '---',
     '',
-    '送ってもらった板書です。'   // ひとことは title に入れました（ここに入れると二度出ます）
+    m || '送ってもらった板書です。'
   ].join('\n');
 }
 
@@ -266,14 +363,9 @@ function _md(slug, n) {
 /* ══ 4. GitHub に1つ置く ══════════════════════════════════ */
 
 function _github(michi, b64, riyu) {
-  var repo = _p('GITHUB_REPO', 'yuutennis657-beep/tokkatsu-hiroba');
   var eda = _p('GITHUB_BRANCH', 'main');
-  var token = _p('GITHUB_TOKEN');
-  if (!repo || !token) throw new Error('GITHUB_REPO か GITHUB_TOKEN がありません');
-
-  var url = 'https://api.github.com/repos/' + repo + '/contents/' +
-            encodeURI(michi).replace(/#/g, '%23');
-  var atama = { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' };
+  var url = _gh_url(michi);
+  var atama = _gh_atama();
 
   // 同じ名前がすでにあれば、上書きのために sha が要ります
   var sha = null;
@@ -291,6 +383,40 @@ function _github(michi, b64, riyu) {
   if (kotae.getResponseCode() >= 300) {
     throw new Error('GitHub が断りました：' + kotae.getContentText().slice(0, 200));
   }
+}
+
+/* フォルダの中身を見る（無ければ null）。消すときに sha が要ります。 */
+function _github_miru(michi) {
+  var kotae = UrlFetchApp.fetch(_gh_url(michi) + '?ref=' + _p('GITHUB_BRANCH', 'main'),
+    { headers: _gh_atama(), muteHttpExceptions: true });
+  if (kotae.getResponseCode() === 404) return null;
+  if (kotae.getResponseCode() >= 300) {
+    throw new Error('GitHub が断りました：' + kotae.getContentText().slice(0, 200));
+  }
+  var j = JSON.parse(kotae.getContentText());
+  return (j && j.length) ? j : (j && j.path ? [j] : null);
+}
+
+function _github_kesu(michi, sha, riyu) {
+  var kotae = UrlFetchApp.fetch(_gh_url(michi), {
+    method: 'delete', headers: _gh_atama(), contentType: 'application/json',
+    payload: JSON.stringify({ message: riyu, sha: sha,
+                              branch: _p('GITHUB_BRANCH', 'main') }),
+    muteHttpExceptions: true
+  });
+  if (kotae.getResponseCode() >= 300) {
+    throw new Error('GitHub が断りました：' + kotae.getContentText().slice(0, 200));
+  }
+}
+
+function _gh_url(michi) {
+  return 'https://api.github.com/repos/' + _p('GITHUB_REPO', 'yuutennis657-beep/tokkatsu-hiroba') +
+         '/contents/' + encodeURI(michi).replace(/#/g, '%23');
+}
+function _gh_atama() {
+  var token = _p('GITHUB_TOKEN');
+  if (!token) throw new Error('GITHUB_TOKEN がありません');
+  return { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' };
 }
 
 function _html(ji) {
