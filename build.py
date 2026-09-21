@@ -1803,7 +1803,110 @@ def load_kenkyukai(kyou=None):
             raise Tomeru('研究会「%s」に about_ja（中身の1行）がありません。'
                          '名前とURLだけ並べるのは、このサイトではやらないと'
                          '決めています（src/app.js の EVENTS）' % a['ja'])
+
+    # ★ここから下は、サイトから送られたぶん（2026-09-22）。
+    #   上の検問（raise）は通しません。送られた1件が変でも、
+    #   **サイト全体が出なくなってはいけない**ためです。飛ばして、理由を控えます。
+    okurareta, tobashita = load_nittei(kyou)
+    del NITTEI_TOBASHITA[:]
+    NITTEI_TOBASHITA.extend(tobashita)
+    out.extend(okurareta)
+    out.sort(key=lambda a: (a['d'], a['ja']))
     return out
+
+
+# ══════════════════════════════════════════════════════════
+# 3-2の2. サイトから送られた研究日程（2026-09-22）
+# ══════════════════════════════════════════════════════════
+#   これまで研究日程の出どころは src/app.js の EVENTS だけでした。
+#   手で書き足すしかないので、知っている人が居ても、その人からは載せられません。
+#   サイトの中の入力欄（#nittei）から送れるようにして、送られたぶんは
+#   src/nittei/*.md で受けます。app.js のほうは、これまでどおり手で書くぶんです。
+#   （二重管理に見えますが、出どころが「こちらの調べ」と「人からの知らせ」で
+#     別ものなので、混ぜないほうが、あとで直すときに分かります）
+#
+#   ★この節では Tomeru を投げません。1件のせいでサイトが止まらないためです。
+
+NITTEI_MOJI_MAX = 300     # 中身（何をやる会か、の説明）の上限
+NITTEI_HI_MAX   = 2       # 1件で受ける「当日」の数（2日開催まで）
+NITTEI_TOBASHITA = []     # 飛ばした理由。ビルドの終わりに出します
+
+
+def _nittei_hi(s):
+    """2026-10-02 → date。読めなければ None（止めません）。"""
+    try:
+        return datetime.date(*(int(x) for x in str(s).strip().split('-')))
+    except Exception:
+        return None
+
+
+def load_nittei(kyou=None):
+    """src/nittei/*.md を読む。戻りは load_kenkyukai() と同じ形の並びと、
+       飛ばした理由の並び。日が過ぎたものは、こよみに出しません。"""
+    kyou = kyou or datetime.date.today()
+    out, tobashita = [], []
+    for path in sorted(glob.glob(os.path.join(NITTEI, '*.md'))):
+        f = os.path.basename(path)
+        if f.startswith('_'):
+            continue                      # _つかいかた.md のような控えは読みません
+        try:
+            fm = parse_md(path)
+        except Tomeru as e:
+            tobashita.append('%s … %s' % (f, e))
+            continue
+        if (fm.get('share') or '').strip().lower() != 'true':
+            tobashita.append('%s … share: true が無いので出しません' % f)
+            continue
+
+        na   = (fm.get('title') or '').strip()
+        naka = fm['summary'].strip()
+        if not na:
+            tobashita.append('%s … title（会の名前）がありません' % f)
+            continue
+        # 原則③（単なるリンク集にしない）。ここでも同じ線で見ます。
+        # ただし止めずに、この1件だけ出しません。
+        if len(naka) < 10:
+            tobashita.append('%s … 中身の1行がありません（10字以上）' % f)
+            continue
+        w = ngword_aru(' '.join((na, naka, fm.get('org', ''),
+                                 fm.get('venue', ''), fm.get('place', ''),
+                                 fm.get('by', ''))))
+        if w:
+            tobashita.append('%s … 出してはいけない語「%s」が入っています' % (f, w))
+            continue
+
+        hiduke = [x for x in (_nittei_hi(d) for d in
+                              (fm.get('days') or '').split('|')) if x][:NITTEI_HI_MAX]
+        if not hiduke:
+            tobashita.append('%s … days が 2026-10-02 の形ではありません' % f)
+            continue
+        shime = _nittei_hi(fm.get('deadline', ''))
+
+        # 外へ出る道は、http(s) だけ通します（javascript: などを入れさせない）
+        url = (fm.get('url') or '').strip()
+        if url and not (url.startswith('https://') or url.startswith('http://')):
+            url = ''
+
+        deta = 0
+        for d, shurui in ([(x, '当日') for x in hiduke]
+                          + ([(shime, '申込〆切')] if shime else [])):
+            if (d - kyou).days < 0:
+                continue
+            deta += 1
+            out.append({'d': d, 'nokori': (d - kyou).days, 'shurui': shurui,
+                        'ja': na, 'seishiki': na,
+                        'org':   (fm.get('org') or '').strip(),
+                        'basho': (fm.get('place') or '').strip(),
+                        'venue': (fm.get('venue') or '').strip(),
+                        'naka':  naka[:NITTEI_MOJI_MAX],
+                        'moushikomi': (fm.get('apply') or '').strip(),
+                        'url': url,
+                        # ここから下は、送られたものだけが持ちます
+                        'okuri': True, 'by': (fm.get('by') or '').strip(),
+                        'slug': slug_of(path)})
+        if not deta:
+            tobashita.append('%s … 日が過ぎているので、こよみには出しません' % f)
+    return out, tobashita
 
 
 def ken_bu(a):
@@ -1950,6 +2053,15 @@ def build_koyomi(ken, kyou):
     return '    <div class="koyomi">\n' + naka + '\n' + hanrei + '\n    </div>'
 
 
+def ken_moto(a):
+    """送られた日程だけ、そう書きます。こちらで調べたぶんは空（＝行が出ません）。"""
+    if not a.get('okuri'):
+        return ''
+    return ('サイトから知らせてもらった日程です（提供：%s）。念のため、'
+            'お出かけの前に主催の案内をご確認ください。'
+            % (a.get('by') or '送ってくださった先生'))
+
+
 def build_kenkyukai(ken, kyara, buhin, kyou=None):
     kyou = kyou or datetime.date.today()
 
@@ -1965,7 +2077,11 @@ def build_kenkyukai(ken, kyara, buhin, kyou=None):
                              ('会　場', basho),
                              ('中　身', a['naka']),
                              ('主　催', a['org']),
-                             ('申込み', a['moushikomi']))
+                             ('申込み', a['moushikomi']),
+                             # 送られたものは、そう書きます（2026-09-22）。
+                             #   こちらで調べたぶんと、人から知らせてもらったぶんは
+                             #   確かさが違います。黙って混ぜません。
+                             ('出どころ', ken_moto(a)))
             if atai)
         soto = (KEN_SOTO.format(url=esc_html(a['url']),
                                 ji='申込み・くわしくは、この会のサイト')
@@ -2693,14 +2809,16 @@ HOME_FUDA = (
     # 送る の すぐ次が 見る。この2つで1組です（2026-09-22）
     ('bansho', 'b', 'kokuban',  '先生方から届いた実践が、そのまま並びます。'),
     ('ima',    'k', 'gyoji',    'つぎの研究会と、申込の締切。'),
+    # komari（困っている → 学ぶ、の順に並べます。2026-09-22）
+    ('komari', 'b', 'sensei',   '送られた困りごとが、そのまま並びます。'),
     # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
     ('manabu', 'k', 'club',     '学習過程と、こちらで用意した道具。'),
     # atsumaru
     ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
     ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),
-    # shiru
-    ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。'),
-    ('yotsu',  'k', 'jidokai',  '学活くん・行人・児童会ちゃん・クラブマン。'),
+    # shiru（2026-09-22：特活とは と 4つの内容 は同じページなので、1つにまとめました。
+    #        4つの内容は、この札から入った先にそのまま置いてあります）
+    ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
 )
 
 HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
@@ -2724,7 +2842,9 @@ def home_kazu(sid, sec, kiji, jissen, ken, komari):
     if sid == 'manabu':
         return '%d段階と資料%d件' % (kazoe(r'data-learn-detail='),
                                   kazoe(r'<li><a href="https?://[^"]*"[^>]*><span><b>'))
-    if sid == 'yotsu':
+    # 困りごとの数。2026-09-22 まで「4つの内容」の札に出していましたが、
+    # 帯を1つにまとめたので、困りごとの札の数になりました。
+    if sid in ('komari', 'yotsu'):
         return '悩み%d件' % len(komari)
     if sid == 'jissen':
         return '%d件' % len(jissen)
@@ -3377,8 +3497,12 @@ def main_shin(check_only):
         print('  とばした　　… %s' % t)
     print('  ニュース　　… %d件（上から%d件。のこりはページの中のふた）'
           % (len(kiji), min(len(kiji), NEWS_H_N)))
-    print('  こよみ　　　… %d件を %dか月ぶんのますめに'
-          % (len(load_kenkyukai()), KOYOMI_TSUKI_MAX))
+    ken_zen = load_kenkyukai()
+    print('  こよみ　　　… %d件を %dか月ぶんのますめに（うち %d件は、サイトから送られたぶん）'
+          % (len(ken_zen), KOYOMI_TSUKI_MAX,
+             sum(1 for a in ken_zen if a.get('okuri'))))
+    for t in NITTEI_TOBASHITA:
+        print('  とばした日程… %s' % t)
     print('  ほかの研究会… %d会（全国%d・都道府県%d・市%d）'
           % (len(KAI), sum(1 for k in KAI if k[0] == 'zen'),
              sum(1 for k in KAI if k[0] == 'ken'), sum(1 for k in KAI if k[0] == 'shi')))
