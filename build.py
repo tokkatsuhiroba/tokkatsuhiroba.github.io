@@ -1368,13 +1368,47 @@ class KoE:
     def nama(self, s):
         self.o.append(s)
 
-    def sora(self, kumo, hi=None):
-        self.o.append('<rect width="%d" height="%d" fill="#A9E1F5"/>' % (KO_E_W, KO_E_H))
+    def sora(self, kumo, hi=None, iro='#A9E1F5', hi_iro='#E8C547'):
+        """空。iro を変えると時間帯が変わります（夕方は黄 #E8C547）。"""
+        self.o.append('<rect width="%d" height="%d" fill="%s"/>' % (KO_E_W, KO_E_H, iro))
         if hi:
-            self.o.append('<circle cx="%g" cy="%g" r="54" fill="#E8C547"%s/>'
-                          % (hi[0], hi[1], SEN_ZOKUSEI))
+            self.o.append('<circle cx="%g" cy="%g" r="54" fill="%s"%s/>'
+                          % (hi[0], hi[1], hi_iro, SEN_ZOKUSEI))
         for x, y in kumo:
             self.oku('kumo', x, y, ashi=110)
+
+    def yama(self):
+        """奥の山なみ。1200幅の部品を2つならべて、頭だけ出します。
+           これが出ると「学校の外／まち」に見えます。"""
+        self.oku('yama', 600, -40, ashi=420)
+        self.oku('yama', 1800, -52, ashi=420)
+
+    def kabe(self, yuka=340, iro='#E8C547'):
+        """屋内。上が壁（地の色）、下が床。空は1ドットも出しません。"""
+        self.o.append('<rect width="%d" height="%d" fill="#FCFBF7"/>' % (KO_E_W, KO_E_H))
+        self.o.append('<path d="M0 %gH%dV%dH0Z" fill="%s"%s/>'
+                      % (yuka, KO_E_W, KO_E_H, iro, SEN_ZOKUSEI))
+
+    def mado(self, x, y, w=330, h=176):
+        """窓。外に空が見えます。屋内でも「学校の中」だと分かる目じるし。"""
+        self.o.append(
+            '<rect x="%g" y="%g" width="%g" height="%g" rx="8" fill="#A9E1F5"%s/>'
+            '<path d="M%g %gV%gM%g %gH%g" fill="none"%s/>'
+            '<path d="M%g %gH%g" fill="none"%s/>'
+            % (x, y, w, h, SEN_ZOKUSEI,
+               x + w / 2, y, y + h, x, y + h / 2, x + w, SEN_ZOKUSEI,
+               x - 14, y + h + 10, x + w + 14, SEN_ZOKUSEI))
+
+    def kami(self, x, y, n=3, w=74, h=96):
+        """壁に貼ってある紙。"""
+        for i in range(n):
+            self.o.append('<rect x="%g" y="%g" width="%g" height="%g" rx="4" '
+                          'fill="#FCFBF7"%s/><path d="M%g %gh%gM%g %gh%g" '
+                          'fill="none" stroke="#63625C" stroke-width="2.5" '
+                          'stroke-linecap="round"/>'
+                          % (x + i * (w + 16), y, w, h, SEN_ZOKUSEI,
+                             x + i * (w + 16) + 14, y + 30, w - 28,
+                             x + i * (w + 16) + 14, y + 52, w - 28))
 
     def jimen(self, niwa=True):
         self.o.append('<path d="%s" fill="#1F5C3F"%s/>' % (_OKA, SEN_ZOKUSEI))
@@ -1401,11 +1435,25 @@ class KoE:
                x + w / 2 - 30, y + h / 2, x + w / 2, y + h / 2, x + w / 2 + 30, y + h / 2))
 
 
+# ══ 場所を、ページごとに変える（2026-09-22 夜）═══════════
+#   はじめ5枚とも「校庭」で描きました。そろってはいるのですが、
+#   ページを移っても同じ景色なので、飛んだ気がしませんでした。
+#   そこで **場所そのものを変えます**。
+#       特活とは・4つの内容 … 山のふもとの校庭（いちばん引いた眺め）
+#       学ぶ・実践         … 教室の中（空を1ドットも出さない）
+#       ニュース・研究会    … まち（山と家。学校の外＝各地）
+#       板書               … ろうか（窓がならぶ。黒板が壁ぎわに立つ）
+#       困りごと           … 夕方の校門前（空が黄。帰りぎわ）
+#   ★地面の線（丘・芝・校庭）は、外を描く3枚だけで使い回します。
+#     屋内の2枚は kabe() で、床と壁にします。
+# ══════════════════════════════════════════════════════════
+
 # ══ ① 知る（特活とは・4つの内容）══════════════════════════
-#   4人のキャラクターが、それぞれの持ち場に立っている。
-#   「この4つが特別活動です」が、言葉なしで分かるようにします。
+#   場所 … 山のふもとの校庭。5枚のうち、いちばん引いた眺めです。
+#   4人のキャラクターが、それぞれの持ち場に立っています。
 def _e_shiru(k):
     k.sora(((250, 58), (1180, 38), (2010, 70)), hi=(1560, 56))
+    k.yama()
     k.jimen()
     k.ki((70, 1350, 2350))
     k.oku('kokuban', 360, 398)                      # 学級活動
@@ -1420,59 +1468,65 @@ def _e_shiru(k):
 
 
 # ══ ② 学ぶ（学ぶ・実践）══════════════════════════════════
-#   教室を白い面で切りとって置く（広場の学級活動と同じやり方）。
+#   場所 … 教室の中。空は窓の中にしか出しません。
 #   黒板が奥のかべ、子どもは左右にわかれて向かい合う（コの字）。
 def _e_manabu(k):
-    k.sora(((230, 46), (2160, 60)))
-    k.jimen(niwa=False)
-    k.ki((90, 2340))
-    k.nama('<path d="M434 196h1546a14 14 0 0 1 14 14v210H420V210a14 14 0 0 1 14-14z" '
-           'fill="#FCFBF7"%s/>' % SEN_ZOKUSEI)
-    k.oku('kokuban', 1060, 330)
-    k.oku('shihai', 1420, 336)
-    k.oku('ko-te', 620, 412, '#D2552A')
-    for i, x in enumerate((730, 822, 914)):
-        k.oku('ko-suwaru', x, 412, FUKU[i % 4])
-    for i, x in enumerate((1512, 1604, 1696)):
-        k.oku('ko-suwaru', x, 412, FUKU[(i + 2) % 4])
-    for i, x in enumerate((1006, 1098, 1210, 1302)):
-        k.oku('ko-ushiro', x, 382, FUKU[(i + 1) % 4])
-    k.oku('sensei', 1850, 412)
+    k.kabe(yuka=236)
+    k.mado(110, 40, 350, 176)
+    k.mado(1990, 40, 340, 176)
+    k.kami(1560, 54, 3)
+    k.nama('<path d="M0 320H%d" fill="none" stroke="#FCFBF7" stroke-width="5"/>'
+           % KO_E_W)
+    k.oku('kokuban', 1100, 392)
+    k.oku('shihai', 1420, 406)
+    # 黒板を見ている後ろ姿。黒板（930〜1270）には重ねません
+    for i, x in enumerate((700, 792, 1480, 1572)):
+        k.oku('ko-ushiro', x, 368, FUKU[i % 4])
+    k.oku('ko-te', 560, 414, '#D2552A')
+    for i, x in enumerate((670, 762, 854)):
+        k.oku('ko-suwaru', x, 414, FUKU[i % 4])
+    for i, x in enumerate((1640, 1732, 1824)):
+        k.oku('ko-suwaru', x, 414, FUKU[(i + 2) % 4])
+    k.oku('sensei', 1990, 414)
 
 
 # ══ ③ 集まる（ニュース・日本の研究会）════════════════════
-#   2026-09-22 に作りなおしました。
-#   はじめ「マイクの前に子どもが整列している集会」を描きましたが、
-#   それは **児童会活動の絵** で、このページの中身ではありませんでした
-#   （「伝わりにくい」）。このページに載っているのは
+#   場所 … まち。山なみと家がならびます（＝学校の外、各地）。
+#   2026-09-22 に2回 作りなおしました。
+#     1回め「マイクの前に子どもが整列」→ それは児童会活動の絵でした
+#     2回め 校庭のまま → 5枚とも同じ場所で、飛んだ気がしませんでした
+#   このページに載っているのは
 #       ・ニュース … 外から届いた知らせ
 #       ・日本の研究会 … 各地で、先生が集まって研究している
-#   の2つです。だから絵も2つに分けます。
-#       左 … 知らせが貼り出された掲示板を、子どもが見ている
-#       右 … のぼり旗の下に、先生が2〜3人ずつ集まって話している
-#   ★子どもを整列させない（集会に見える）
-#   ★右に立つのは先生だけ（研究会は大人が集まる場なので）
-#   ★木で3つのかたまりを仕切る（同じ場所ではなく「各地」に見せる）
+#   の2つなので、絵も「知らせの掲示板」と「各地ののぼり」に分けます。
+#   ★子どもを整列させない（集会＝児童会活動に見える）
+#   ★のぼりの下に立つのは先生だけ（研究会は大人が集まる場なので）
+#   ★家と木で3つのかたまりを仕切る（同じ町ではなく「各地」に見せる）
 def _e_atsumaru(k):
-    k.sora(((300, 44), (1340, 62), (2200, 38)), hi=(1750, 54))
-    k.jimen()
-    k.ki((120, 880, 1480, 2330))
+    k.sora(((520, 44), (1880, 38)), hi=(1300, 52))
+    k.yama()
+    k.jimen(niwa=False)
+    for x, base in ((190, 248), (1230, 242), (2300, 252)):
+        k.oku('ie', x, base, kage=96)
+    k.ki((660, 1760))
+    k.nama('<path d="M0 330C520 312 1140 346 1720 328S2180 312 2400 322V420H0Z" '
+           'fill="#FCFBF7"%s/>' % SEN_ZOKUSEI)          # まちの道
+    k.nama('<path d="M0 376C520 358 1140 392 1720 374S2180 358 2400 368" '
+           'fill="none" stroke="#E8C547" stroke-width="5"/>')
 
-    # ── 左：ニュース。掲示板に知らせが3枚。子どもが見上げている ──
-    k.oku('keijiban', 480, 398, kage=96)
-    k.oku('ko-ushiro', 370, 414, FUKU[0], kage=15)
-    k.oku('ko-ushiro', 580, 416, FUKU[1], kage=15)
-    k.oku('sensei', 680, 414, kage=17)
+    # ── 左：ニュース。知らせが3枚 貼られた掲示板を、子どもが見ている ──
+    k.oku('keijiban', 330, 400, kage=96)
+    k.oku('ko-ushiro', 215, 414, FUKU[0], kage=15)
+    k.oku('ko-ushiro', 440, 416, FUKU[1], kage=15)
 
     # ── 右：日本の研究会。のぼりの下に、先生のかたまりが3つ ──
-    #   （のぼり, 高さ, 色）と、そのまわりに立つ先生の (x, 高さ)
     for nobori, sensei in (
-            ((( 990, 386, '#D2552A'), (1046, 394, '#E8C547')),
-             ((1120, 408), (1172, 412))),
-            (((1600, 390, '#3A6EA5'), (1656, 398, '#D2552A')),
-             ((1730, 410), (1782, 414), (1834, 408))),
-            (((2080, 398, '#E8C547'), (2136, 406, '#3A6EA5')),
-             ((2210, 412), (2262, 416)))):
+            ((( 900, 386, '#D2552A'), ( 956, 394, '#E8C547')),
+             ((1030, 408), (1082, 412))),
+            (((1500, 390, '#3A6EA5'), (1556, 398, '#D2552A')),
+             ((1630, 410), (1682, 414), (1734, 408))),
+            (((2010, 398, '#E8C547'), (2066, 406, '#3A6EA5')),
+             ((2140, 412), (2192, 416)))):
         for x, base, iro in nobori:
             k.oku('nobori', x, base, iro, kage=20)
         for x, base in sensei:
@@ -1480,49 +1534,57 @@ def _e_atsumaru(k):
 
 
 # ══ ④ 板書 ═══════════════════════════════════════════════
-#   黒板が校庭にならんで、溜まっていく。前を子どもが見て歩く。
-#   （教室の白い面は使いません。「学ぶ」と同じ絵に見えてしまうため）
+#   場所 … ろうか。窓がならび、黒板が壁ぎわに立てかけてあります。
+#   「送られた板書が溜まっていく」ところなので、教室（学ぶ）ではなく、
+#   通りすがりに見る場所にしました。
 def _e_bansho(k):
-    k.sora(((340, 44), (1520, 36), (2210, 66)))
-    k.jimen()
-    k.ki((80, 2340))
-    for x in (500, 1180, 1860):
-        k.oku('kokuban', x, 372, kage=124)
-    for i, (x, n) in enumerate(((300, 'sensei'), (760, 'ko-ushiro'), (960, 'ko-te'),
-                                (1440, 'ko-ushiro'), (1640, 'ko-ushiro'),
-                                (2120, 'ko-te'), (2220, 'ko-ushiro'))):
-        k.oku(n, x, 412, None if n == 'sensei' else FUKU[i % 4], kage=15)
+    k.kabe(yuka=330)
+    for x in (700, 1390, 2080):                     # 窓は黒板と黒板のあいだ
+        k.mado(x, 44, 250, 140)
+    k.nama('<path d="M0 288H%d V330H0Z" fill="#3A6EA5"%s/>' % (KO_E_W, SEN_ZOKUSEI))
+    k.nama('<path d="M0 378H%d" fill="none" stroke="#FCFBF7" stroke-width="5"/>'
+           % KO_E_W)
+    for x in (390, 1080, 1770):
+        k.oku('kokuban', x, 380)
+    for i, (x, n) in enumerate(((160, 'sensei'), (640, 'ko-ushiro'), (830, 'ko-te'),
+                                (1330, 'ko-ushiro'), (1520, 'ko-ushiro'),
+                                (2020, 'ko-te'), (2230, 'ko-ushiro'))):
+        k.oku(n, x, 410, None if n == 'sensei' else FUKU[i % 4])
 
 
 # ══ ⑤ 困りごと ═══════════════════════════════════════════
-#   あちこちで、こどもと先生が話している。吹き出しの中は「…」だけ。
+#   場所 … 夕方の校門前。空だけ黄にして、帰りぎわにしました。
+#   「授業中に手を挙げる」のではなく「帰りぎわに、ちょっと聞きたい」。
 def _e_komari(k):
-    k.sora(((260, 64), (2130, 48)))
-    k.jimen()
-    k.ki((70, 1420, 2350))
-    for x, muki, kumi in ((300, 1, 'te'), (900, -1, 'futari'),
+    k.sora(((420, 62), (1960, 48)), hi=(1560, 128), iro='#E8C547', hi_iro='#D2552A')
+    k.jimen(niwa=False)     # 校庭（黄）は敷きません。空と同じ色で縞に見えるため
+    k.ki((120, 2320))
+    k.oku('mon', 640, 372, kage=118)
+    for x, muki, kumi in ((260, 1, 'te'), (900, -1, 'futari'),
                           (1500, 1, 'te'), (2060, -1, 'futari')):
         k.fuki(x, 186 if muki > 0 else 200, 196, 92, muki)
         if kumi == 'te':
-            k.oku('ko-te', x + 56, 404, '#D2552A', kage=16)
-            k.oku('sensei', x + 152, 406, kage=17)
+            k.oku('ko-te', x + 56, 404, '#D2552A', kage=22)
+            k.oku('sensei', x + 152, 406, kage=24)
         else:
-            k.oku('ko-tatsu', x + 58, 402, '#3A6EA5', kage=16)
-            k.oku('ko-te', x + 138, 404, '#E8C547', kage=16)
+            k.oku('ko-tatsu', x + 58, 402, '#3A6EA5', kage=22)
+            k.oku('ko-te', x + 138, 404, '#E8C547', kage=22)
 
 
 # （ファイル名, 絵を組む関数, 絵の説明, スマホ用の窓）
 #   窓は「その絵でいちばん見せたい所」を 880幅で切り出します。
 KO_E = {
-    'shiru.html':    (_e_shiru,    '校庭にならんだ黒板・入退場門・掲示板・たいこと、'
-                                   '4つの内容のキャラクター', '480 0 880 420'),
-    'manabu.html':   (_e_manabu,   '黒板を囲んで学級会をしている教室', '400 0 880 420'),
-    'atsumaru.html': (_e_atsumaru, '知らせが貼られた掲示板と、のぼり旗の下で'
-                                   '集まって話している先生たち', '320 0 880 420'),
-    'bansho.html':   (_e_bansho,   '校庭にならんだ3枚の黒板と、それを見ている子どもたち',
+    'shiru.html':    (_e_shiru,    '山のふもとの校庭。黒板・入退場門と万国旗・掲示板・'
+                                   'たいこと、4つの内容のキャラクター', '480 0 880 420'),
+    'manabu.html':   (_e_manabu,   '黒板を囲んで学級会をしている教室の中',
+                                   '400 0 880 420'),
+    'atsumaru.html': (_e_atsumaru, '山と家のならぶまち。知らせが貼られた掲示板と、'
+                                   'のぼり旗の下で集まって話している先生たち',
+                                   '160 0 880 420'),
+    'bansho.html':   (_e_bansho,   '窓のならぶろうかに、黒板が3枚 立ててある',
                                    '820 0 880 420'),
-    'komari.html':   (_e_komari,   'あちこちで話しているこどもと先生。頭の上に吹き出し',
-                                   '260 0 880 420'),
+    'komari.html':   (_e_komari,   '夕方の校門前で話している、こどもと先生。'
+                                   '頭の上に吹き出し', '260 0 880 420'),
 }
 
 
