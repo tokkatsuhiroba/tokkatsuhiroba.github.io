@@ -204,7 +204,6 @@ img,svg{max-width:100%}
 .foot{background:var(--ink);color:var(--bg);padding-block:clamp(40px,6vw,72px)}
 .foot a{color:var(--ki);font-weight:700}
 .foot p{margin:0 0 10px;font-size:14px;line-height:1.9}
-.foot .chu{color:#B9B8B4;font-size:12.5px}
 
 /* ── スマホ ──────────────────────────────────
    広場ぜんぶを375pxに押しこむと、子どもが10pxになって読めない。
