@@ -41,12 +41,23 @@ NEWS_N = 12    # ニュース節に出す数（古いものは自然に落ちる
 JISSEN = os.path.join(SRC, 'jissen')   # すぐ使える実践（1件＝1ファイル）
 GOODS  = os.path.join(SRC, 'goods')    # 学級会グッズ（1点＝1ファイル）
 SHIRYO = os.path.join(SRC, 'shiryo')   # 資料の画像（1件＝1フォルダ。ページの中に埋めこむ）
+BANSHO = os.path.join(SRC, 'bansho')   # 板書の写真（1件＝1フォルダ。板書のページにだけ埋めこむ）
 JISSEN_HOME_N = 2                      # ホームに出す実践の数
 
 # 資料をページの中に入れるときの上限。ここを外すと配れない重さになります。
 SHIRYO_KB_MAX  = 500.0   # 画像1枚
 SHIRYO_MB_MAX  = 8.0     # 資料1件（1フォルダ）
 SHIRYO_ZEN_MAX = 16.0    # 1ページに入る資料の合計
+#
+# ── 板書を「溜める」と決めた日のこと（2026-09-21）──────────
+#   上限が16MBなのは、配るためではなく **スマホで開いたときの重さ** です。
+#   だから溜めるなら、置き場所を分けるしかありません。
+#     ・板書の写真は bansho.html に **だけ** 埋めこむ
+#     ・実践の札からは「板書を見る →」で、そのページへ渡す
+#   こうすると manabu.html は軽いまま、板書だけが太っていきます。
+#   天井が近づいたら年度で割ります（bansho-2026.html → bansho-2027.html）。
+#   そのとき慌てないよう、build の最後に「いま何MB・あと何枚」を出します。
+BANSHO_NOKORI_KB = 120.0  # 残り枚数を見つもるときの、板書1枚の目安（実測して直してよい）
 SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
 
 # ══ ページの分け方（2026-09-21に決めなおし）════════════════
@@ -69,14 +80,23 @@ PAGES = (
      ('manabu', 'jissen')),
     ('atsumaru.html', '集まる', 'ニュース、各地の研究会、実践を送る。',
      ('news', 'kai', 'okuru')),
+    # 板書（2026-09-21 新設）。帯の8つには入れません。
+    #   入口は「学ぶ」の実践の節の中だけ。溜まった写真を並べて見るためのページです。
+    ('bansho.html',   '板書',   '送ってもらった板書の写真を、溜めていきます。',
+     ('bansho',)),
 )
 HOME = PAGES[0][0]
+
+# 親のページ（帯に出ないページだけ）。頭のところに「← 学ぶ」を出すために使います。
+#   帯で今どこにいるかが出ないぶん、ここで戻り道を見せます。
+OYA = {'bansho.html': ('manabu.html', 'jissen', '実践')}
 # 節の名前。ホームの札と、ページの中の見出しで使い回します
 SETSU_NA = {
     'ima':    '研究日程', 'news':   'ニュース',
     'about':  '特活とは',   'manabu': '学ぶ',
     'yotsu':  '4つの内容',  'jissen': '実践',
     'kai':    '日本の研究会', 'okuru': '送る',
+    'bansho': '板書',
 }
 
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
@@ -445,9 +465,24 @@ def kenmon_jissen(fm, goods):
             raise Tomeru('%s：「%s」の欄は配る用に出せません（優アンテナの欄）。' % (f, ran))
         if re.search(r'^\s*%s\s*[:：]' % re.escape(ran), fm['_body_raw'], re.M):
             raise Tomeru('%s：本文に「%s：」の行があります（優アンテナの欄）。' % (f, ran))
-    for k in ('date', 'title', 'grade', 'scene', 'time'):
+    # 実践か、議題か（2026-09-21）。箱は1つ、厚みだけがちがいます。
+    #   jissen … 準備・流れ・板書・つまずき まで書いてあるもの
+    #   gidai  … 「こんな議題が出ました」の1件。ひとことだけで足ります
+    # 議題は、書く人のハードルをわざと下げるための型です。
+    # だから「かかる時間」は聞きません（議題に時間は無い）。
+    fm['kind'] = (fm.get('kind') or 'jissen').strip()
+    if fm['kind'] not in ('jissen', 'gidai'):
+        raise Tomeru('%s：kind は jissen（実践）か gidai（議題）のどちらかです（%s）'
+                     % (f, fm['kind']))
+    iru = ['date', 'title', 'grade', 'scene']
+    if fm['kind'] == 'jissen':
+        iru.append('time')
+    for k in iru:
         if not fm.get(k):
             raise Tomeru('%s：%s が空です' % (f, k))
+    # 議題には「かかる時間」がありません。欄そのものは、いつでもあることにします
+    # （出すときに空なら、ただ出ません）
+    fm['time'] = fm.get('time', '') or ''
     # 4つの内容のどれか。ここが無いと、どのカードにも集まりません
     aru = [n for n, _ in naiyo_ichiran()]
     fm['naiyo'] = fm.get('naiyo', '').strip()
@@ -483,6 +518,21 @@ def kenmon_jissen(fm, goods):
                 raise Tomeru('%s：shiryo の URL は https:// にしてください（%s）' % (f, oki))
             fm['shiryo_list'].append((midashi, 'soto', oki))
             continue
+        # 索引（2026-09-21）。**押せません。**「どこで手に入るか」を書くだけ。
+        #   研究会や個人が作った資料は、書面の許可が無いと置けません。
+        #   置けないものを「探せる」形にするのが索引です。ここが原則3
+        #   （単なるリンク集にしない）を守る要なので、**説明を必ず書かせます**。
+        #     shiryo: 全国大会の紀要|索引:全国特活研のサイト「過去の大会」から
+        if oki.startswith('索引:') or oki.startswith('索引：'):
+            setsumei = oki[3:].strip()
+            if len(setsumei) < 6:
+                raise Tomeru('%s：索引は「どこで手に入るか」を書いてください（いまは「%s」）。'
+                             '見出しだけ並べると、ただのリンク集になります' % (f, setsumei))
+            if re.search(r'https?://', setsumei):
+                raise Tomeru('%s：索引の説明にURLを入れないでください（%s）。'
+                             'URLを出すなら「見出し|https://…」の形にしてください' % (f, setsumei))
+            fm['shiryo_list'].append((midashi, 'sakuin', setsumei))
+            continue
         if not re.match(r'^[a-z0-9-]+$', oki):
             raise Tomeru('%s：shiryo の置き場「%s」は、src/shiryo/ のフォルダ名'
                          '（英小文字・数字・-）か、https:// のURLにしてください' % (f, oki))
@@ -492,6 +542,20 @@ def kenmon_jissen(fm, goods):
             raise Tomeru('%s：shiryo の「%s」が src/shiryo/ にありません（あるのは %s）'
                          % (f, oki, '、'.join(aru) or '無し'))
         fm['shiryo_list'].append((midashi, 'naka', oki))
+
+    # 板書の写真（2026-09-21）。ここに書いたフォルダの画像は、
+    # **bansho.html にだけ**埋めこみます。この実践の札には「板書を見る →」が出ます。
+    # 同じ画像を2ページに埋めると、重さが倍になるためです。
+    fm['bansho'] = (fm.get('bansho') or '').strip()
+    if fm['bansho']:
+        if not re.match(r'^[a-z0-9-]+$', fm['bansho']):
+            raise Tomeru('%s：bansho は src/bansho/ のフォルダ名（英小文字・数字・-）で'
+                         '書いてください（%s）' % (f, fm['bansho']))
+        if not os.path.isdir(os.path.join(BANSHO, fm['bansho'])):
+            aru = sorted(os.path.basename(x) for x in glob.glob(os.path.join(BANSHO, '*'))
+                         if os.path.isdir(x))
+            raise Tomeru('%s：bansho の「%s」が src/bansho/ にありません（あるのは %s）'
+                         % (f, fm['bansho'], '、'.join(aru) or '無し'))
 
     ids = [g.strip() for g in fm.get('goods', '').split(',') if g.strip()]
     for g in ids:
@@ -562,12 +626,21 @@ def gazou_size(b, f):
 
 
 # 1ページに入れた資料の合計（ビルドのはじめに0に戻す）
-_SHIRYO_GOUKEI = {'b': 0}
+# ページごとの帳面。どのページが、いま何バイト抱えているか。
+#   2026-09-21：前は1つの数でした。板書を別のページに分けたので、
+#   ページごとに数えないと、板書の重さが実践の側の上限を食ってしまいます。
+_GOUKEI = {}
 
 
-def shiryo_yomu(oki):
-    """src/shiryo/◯◯/ の画像を、名前の順に読む。戻りは [(data URI, 横, 縦)]。"""
-    tokoro = os.path.join(SHIRYO, oki)
+def shiryo_yomu(oki, moto=None, page='manabu.html'):
+    """置き場の画像を、名前の順に読む。戻りは [(data URI, 横, 縦)]。
+
+       moto … src/shiryo か src/bansho（省略すると src/shiryo）
+       page … どのページに埋めこむか。上限はページごとに数えます。
+    """
+    moto = moto or SHIRYO
+    na = 'src/' + os.path.basename(moto)
+    tokoro = os.path.join(moto, oki)
     import base64
     mai, goukei = [], 0
     for p in sorted(glob.glob(os.path.join(tokoro, '*'))):
@@ -577,23 +650,25 @@ def shiryo_yomu(oki):
         b = io.open(p, 'rb').read()
         kb = len(b) / 1024.0
         if kb > SHIRYO_KB_MAX:
-            raise Tomeru('src/shiryo/%s/%s が %.0fKB あります（上限 %.0fKB）。'
+            raise Tomeru('%s/%s/%s が %.0fKB あります（上限 %.0fKB）。'
                          '横1000pxくらいのWebPにしてください'
-                         % (oki, os.path.basename(p), kb, SHIRYO_KB_MAX))
+                         % (na, oki, os.path.basename(p), kb, SHIRYO_KB_MAX))
         goukei += len(b)
-        w, h = gazou_size(b, 'src/shiryo/%s/%s' % (oki, os.path.basename(p)))
+        w, h = gazou_size(b, '%s/%s/%s' % (na, oki, os.path.basename(p)))
         mai.append(('data:%s;base64,%s' % (SHIRYO_MIME[e], base64.b64encode(b).decode()), w, h))
     if not mai:
-        raise Tomeru('src/shiryo/%s/ に画像がありません（.webp か .png）' % oki)
+        raise Tomeru('%s/%s/ に画像がありません（.webp か .png）' % (na, oki))
     mb = goukei / 1024.0 / 1024.0
     if mb > SHIRYO_MB_MAX:
-        raise Tomeru('src/shiryo/%s/ が合わせて %.1fMB あります（上限 %.0fMB）。'
-                     'ページが重くなるので、要るページだけにしてください' % (oki, mb, SHIRYO_MB_MAX))
-    _SHIRYO_GOUKEI['b'] += goukei
-    zen = _SHIRYO_GOUKEI['b'] / 1024.0 / 1024.0
+        raise Tomeru('%s/%s/ が合わせて %.1fMB あります（上限 %.0fMB）。'
+                     'ページが重くなるので、要るページだけにしてください' % (na, oki, mb, SHIRYO_MB_MAX))
+    _GOUKEI[page] = _GOUKEI.get(page, 0) + goukei
+    zen = _GOUKEI[page] / 1024.0 / 1024.0
     if zen > SHIRYO_ZEN_MAX:
-        raise Tomeru('1ページに入れた資料が合わせて %.1fMB になりました（上限 %.0fMB）。'
-                     '配るには重すぎます' % (zen, SHIRYO_ZEN_MAX))
+        raise Tomeru('%s に入れた画像が合わせて %.1fMB になりました（上限 %.0fMB）。'
+                     'スマホで開くには重すぎます。'
+                     '板書なら、年度で分けるときが来ています（bansho-2026.html のように）'
+                     % (page, zen, SHIRYO_ZEN_MAX))
     return mai
 
 
@@ -609,9 +684,9 @@ SHIRYO_MADO = """        <details class="hiraku shiryo-hiraku">
 """
 
 
-def shiryo_mado(midashi, oki, alt):
+def shiryo_mado(midashi, oki, alt, moto=None, page='manabu.html'):
     """資料1件ぶんの「ページの中で開く窓」。"""
-    mai = shiryo_yomu(oki)
+    mai = shiryo_yomu(oki, moto, page)
     g = []
     for i, (uri, w, h) in enumerate(mai):
         g.append('              <figure><img src="%s" alt="%s %dページめ" '
@@ -696,7 +771,11 @@ def build_jissen(kiji, goods):
         sh, mado = [], []
         for m, kind, v in a.get('shiryo_list', []):
             if kind == 'naka':
-                mado.append(shiryo_mado(m, v, a['title']))
+                mado.append(shiryo_mado(m, v, a['title'], page='公開用/index.html'))
+            elif kind == 'sakuin':
+                # 索引は押せません。どこで手に入るかを書くだけです
+                sh.append('        <span class="sakuin"><b>%s</b>%s</span>'
+                          % (esc_html(m), esc_html(v)))
             else:
                 sh.append('        <a class="btn" href="%s" target="_blank" '
                           'rel="noopener noreferrer">%s（外部）</a>'
@@ -1179,7 +1258,7 @@ IIKAE_SIMPLE = [
 
 
 def build(css=CSS, out_name='公開用/index.html'):
-    _SHIRYO_GOUKEI['b'] = 0
+    _GOUKEI.clear()
     kiji, tobashita = load_news()
     goods = load_goods()
     jissen, tobashita_j = load_jissen(goods)
@@ -1813,8 +1892,8 @@ def tsunagu(ue, nokori_html, n):
 #   前は一覧の行で、押すと本体サイトの「まなぶ」タブへ飛んでいました。
 #   いまは 準備・流れ・板書・つまずき まで、ここで開きます。
 #   JSは1行も使いません（<details> だけ）。だから何も送信しません。
-JFUDA = """      <article class="fuda" id="j-{slug}">
-        <p class="fuda-me"><a class="fuda-tag t--{nid}" href="#naiyo-{nid}">{naiyo}</a>{scene}・{grade}・{time}</p>
+JFUDA = """      <article class="fuda{kcls}" id="j-{slug}">
+        <p class="fuda-me"><a class="fuda-tag t--{nid}" href="#naiyo-{nid}">{naiyo}</a>{kindtag}{meta}</p>
         <h3 class="fuda-h">{title}</h3>
         <p class="fuda-lead">{lead}</p>
 {more}{setb}{weekly}        <p class="fuda-by">提供：{by}</p>
@@ -1840,8 +1919,20 @@ JFUDA_SHU = """        <p class="shuan"><span class="shuan-l">週案に貼る1�
 JFUDA_SHIRYO = """        <p class="fuda-shiryo"><b>持ち帰れる資料</b>{items}</p>
 """
 
+# 板書への渡り。写真そのものは **板書のページにだけ** 入っています。
+#   同じ画像を2ページに埋めると重さが倍になるので、ここはリンク1本です。
+#   飛び先は同じCSS・同じ帯・戻り道あり（2026-09-21に決めた条件）。
+JFUDA_BANSHO = """        <p class="fuda-bansho"><a class="bansho-b" href="#b-{slug}">板書の写真を見る（{n}枚）<i>→</i></a></p>
+"""
+
 
 JISSEN_UE_N = 2   # 実践を、上から何枚だけ出しておくか（のこりはページの中のふた）
+
+
+def bansho_kazu(oki):
+    """板書のフォルダに画像が何枚あるかだけ数える（読みこみません）。"""
+    return len([x for x in glob.glob(os.path.join(BANSHO, oki, '*'))
+                if os.path.splitext(x)[1].lower() in SHIRYO_MIME])
 
 
 def build_jissen_hiroba(jissen, goods):
@@ -1859,16 +1950,27 @@ def build_jissen_hiroba(jissen, goods):
         for m, kind, v in a.get('shiryo_list', []):
             if kind == 'naka':
                 mado.append(shiryo_mado(m, v, a['title']))
+            elif kind == 'sakuin':
+                # 索引。押せる見た目にしません（押しても何も起きない、を作らない）
+                sh.append('<span class="shiryo-s"><b>%s</b>%s<i>索引</i></span>'
+                          % (esc_html(m), esc_html(v)))
             else:
                 sh.append('<a class="shiryo-b" href="%s" target="_blank" '
                           'rel="noopener noreferrer">%s<i>外部</i></a>'
                           % (esc_html(v), esc_html(m)))
         shb = ''.join(mado) + (JFUDA_SHIRYO.format(items=''.join(sh)) if sh else '')
+        # 板書の写真があれば、板書のページへ渡します（写真はあちらにだけ入っています）
+        ban = (JFUDA_BANSHO.format(slug=a['slug'], n=bansho_kazu(a['bansho']))
+               if a.get('bansho') else '')
+        gidai = (a['kind'] == 'gidai')
+        meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
+                                     esc_html(a['time'])) if x)
         fuda.append(JFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
-            scene=esc_html(a['scene']), grade=esc_html(a['grade']),
-            time=esc_html(a['time']), title=esc_html(a['title']), lead=inline_md(a['lead']),
-            more=more, setb=setb + shb, weekly=shu, by=esc_html(a['by'])))
+            kcls=' fuda--gidai' if gidai else '',
+            kindtag='<span class="fuda-kind">議題</span>' if gidai else '',
+            meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
+            more=more, setb=setb + shb + ban, weekly=shu, by=esc_html(a['by'])))
     # 2026-09-21：札をぜんぶ縦に並べると、ここだけでスマホ5画面ありました。
     #   上から JISSEN_UE_N 枚だけ出して、のこりはこのページの中のふたへ。
     #   4つの内容から #j-◯◯ で飛んできたときは、akeru() がふたを先に開きます。
@@ -1878,6 +1980,63 @@ def build_jissen_hiroba(jissen, goods):
         return honbun
     naka = '      <div class="tefuda">\n' + '\n'.join(ato) + '\n      </div>'
     return tsunagu(honbun, naka, len(ato))
+
+
+# ══ 板書（2026-09-21 新設。「溜める」と決めたので、置き場を分けました）══
+#   写真は **このページにだけ** 入ります。実践の札からは、リンク1本で渡ります。
+#   ここに溜まるいっぽうなので、build の最後に「いま何MB・あと何枚」を出します。
+BFUDA = """      <article class="bfuda" id="b-{slug}">
+        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{meta}</p>
+        <h3 class="bfuda-h">{title}</h3>
+        <div class="bfuda-mado">
+{gazou}
+        </div>
+        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><a class="bansho-b" href="#j-{slug}">この実践を読む<i>→</i></a></p>
+      </article>"""
+
+
+def bansho_aru(jissen):
+    """板書の写真がある実践だけ、新しい順に。"""
+    return [a for a in jissen if a.get('bansho')]
+
+
+def build_bansho(jissen):
+    """板書のページの中身。写真の実体は、ここにだけ入ります。"""
+    aru = bansho_aru(jissen)
+    if not aru:
+        # 0件のときに、空の棚を押せる形で出さない（正直に書く）
+        return ('    <p class="karappo">まだ1枚もありません。'
+                '送っていただいた板書の写真を、1枚ずつここに溜めていきます。<br>'
+                '黒板だけが写っているもの（子どもの顔・名前が写っていないもの）を'
+                'お願いしています。</p>')
+    fuda = []
+    for a in aru:
+        mai = shiryo_yomu(a['bansho'], BANSHO, 'bansho.html')
+        g = []
+        for i, (uri, w, h) in enumerate(mai):
+            g.append('          <figure><img src="%s" alt="%s の板書 %d枚め" '
+                     'width="%d" height="%d" loading="lazy" decoding="async">'
+                     '<figcaption>%d / %d</figcaption></figure>'
+                     % (uri, esc_html(a['title']), i + 1, w, h, i + 1, len(mai)))
+        meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
+                                     ja_md(a['d'])) if x)
+        fuda.append(BFUDA.format(
+            slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
+            meta=meta, title=esc_html(a['title']), gazou='\n'.join(g),
+            by=esc_html(a['by'])))
+    return '    <div class="bantana">\n' + '\n'.join(fuda) + '\n    </div>'
+
+
+def build_bansho_iriguchi(jissen):
+    """「学ぶ」の実践の節に置く、板書のページへの入口。
+       0件のときはリンクにしません（押しても何も無い、を作らないため）。"""
+    n = len(bansho_aru(jissen))
+    if not n:
+        return ('    <p class="bansho-iri bansho-iri--mada">'
+                '<b>板書の写真</b>準備中です。届いたぶんから、板書だけのページに溜めていきます。</p>')
+    mai = sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))
+    return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#bansho">'
+            '板書の写真だけを並べて見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
 
 
 NEWS_H_N = 5      # ニュースを、上から何件だけ出しておくか（のこりはふたの中）
@@ -1964,11 +2123,11 @@ def build_kyara_narabi(kyara):
 #     色も行き先ごとなので、同じ色がとなり合って見えます。
 #     ばらばらに並べると、帯を2段にしたとき色が飛び飛びになります。
 HOME_FUDA = (
+    # ★並びは「明日すぐ使う順」。ページごとのまとまりより、使う順を先にします。
+    #   研究日程 → 学ぶ・実践 → ニュース・研究会・送る → 特活とは・4つの内容
+    #   （2026-09-21。いちばん下の2つは「読みもの」なので、いちばん後ろ）
     # index（このページ自身）
     ('ima',    'k', 'gyoji',    'つぎの研究会と、申込の締切。'),
-    # shiru
-    ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。'),
-    ('yotsu',  'k', 'jidokai',  '学活くん・行人・児童会ちゃん・クラブマン。'),
     # manabu
     ('manabu', 'b', 'kokuban',  '①から⑤が、ひと回りして①に戻る。'),
     ('jissen', 'k', 'club',     '週案にそのまま書ける1行が付いています。'),
@@ -1976,6 +2135,9 @@ HOME_FUDA = (
     ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
     ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),
     ('okuru',  'b', 'ko-te',    '送ると、ふつうはその日のうちに載ります。'),
+    # shiru
+    ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。'),
+    ('yotsu',  'k', 'jidokai',  '学活くん・行人・児童会ちゃん・クラブマン。'),
 )
 
 HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
@@ -2181,11 +2343,23 @@ def build_obi(ima_file, doko):
 
 KO_T = """<header class="ko" id="ue">
   <div class="uchi">
-    <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a></p>
+    <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a>{oya}</p>
     <h1 class="ko-h">{na}</h1>
     <p class="ko-yo">{yo}</p>
   </div>
 </header>"""
+
+# 帯に出ないページの、親への戻り道。帯で「いまどこ」が出ないぶんを、ここで補います。
+KO_OYA = """<a class="ko-oya" href="{saki}#{sid}">{na}</a>"""
+
+
+def ko_atama(f, yo):
+    """ページの頭。親があるページには、親への戻り道も出します。"""
+    oya = ''
+    if f in OYA:
+        saki, sid, na = OYA[f]
+        oya = KO_OYA.format(saki=saki, sid=sid, na=esc_html(na))
+    return KO_T.format(home=HOME, oya=oya, na=esc_html(page_na(f)), yo=esc_html(yo))
 
 
 def page_na(f):
@@ -2259,7 +2433,7 @@ def tsunagi_naosu(html, ima_file, doko, tsune):
 
 
 def build_shin():
-    _SHIRYO_GOUKEI['b'] = 0
+    _GOUKEI.clear()
     buhin, hyo = load_buhin()
     kyara = load_kyara()
     kiji, _ = load_news()
@@ -2295,6 +2469,8 @@ def build_shin():
                        ('      <!--BUILD:NAYAMI-->', build_nayami()),
                        ('    <!--BUILD:KYARA-->',  build_kyara_narabi(kyara)),
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
+                       ('    <!--BUILD:BANSHO_IRI-->', build_bansho_iriguchi(jissen)),
+                       ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
                        ('    <!--BUILD:KENKYUKAI-->',
@@ -2350,7 +2526,7 @@ def build_shin():
             naka_html = '\n\n'.join([home_html]
                                     + [sec[s] for s in setsu] + [gaiyo_html])
         else:
-            atama = KO_T.format(home=HOME, na=esc_html(page_na(f)), yo=esc_html(yo))
+            atama = ko_atama(f, yo)
             naka_html, saki = '\n\n'.join(sec[s] for s in setsu), setsu[0]
         p = '\n'.join(['<a class="skip" href="#%s">本文へ進む</a>' % saki,
                        atama, build_obi(f, doko), naka_html, foot, shikake])
@@ -2537,7 +2713,11 @@ def main_shin(check_only):
                      for nid, ja in naiyo_ichiran()))
     print('  悩み　　　　… %d件（うち %d件が学習過程につながっています）'
           % (len(NAYAMI), sum(1 for x in NAYAMI if x[2])))
-    print('  実践　　　　… %d件（ぜんぶ、中身までこのページに）' % len(jissen))
+    print('  実践　　　　… %d件（うち議題が%d件。ぜんぶ、中身までこのページに）'
+          % (len(jissen), sum(1 for a in jissen if a['kind'] == 'gidai')))
+    print('  板書　　　　… %d件・%d枚（写真は bansho.html にだけ入れています）'
+          % (len(bansho_aru(jissen)),
+             sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))))
     print('  ニュース　　… %d件（上から%d件。のこりはページの中のふた）'
           % (len(kiji), min(len(kiji), NEWS_H_N)))
     print('  こよみ　　　… %d件を %dか月ぶんのますめに'
@@ -2552,6 +2732,20 @@ def main_shin(check_only):
         print('　　%-14s %-8s %s%s'
               % (f, na, omo, ('　' + '・'.join(SETSU_NA[s] for s in setsu)) if setsu else
                  '　8つの札'))
+    # ── 板書の残り（2026-09-21）────────────────────────
+    #   溜めると決めたので、**止まる前に教える**ほうを作ります。
+    #   検問は16MBで止めますが、止まってから気づくのでは遅い。
+    tsukatta = _GOUKEI.get('bansho.html', 0) / 1024.0 / 1024.0
+    nokori = SHIRYO_ZEN_MAX - tsukatta
+    mai = int(nokori * 1024.0 / BANSHO_NOKORI_KB)
+    print('  板書の残り　… %.1fMB / %.0fMB を使いました。'
+          'あと %d枚ぶん（1枚 %.0fKB として）' % (tsukatta, SHIRYO_ZEN_MAX, mai,
+                                                  BANSHO_NOKORI_KB))
+    if tsukatta > SHIRYO_ZEN_MAX * 0.7:
+        warn.append('板書のページが %.1fMB になりました（上限 %.0fMB）。'
+                    'そろそろ年度で分けるときです。'
+                    'PAGES に bansho-2027.html を足して、新しいぶんをそちらへ。'
+                    % (tsukatta, SHIRYO_ZEN_MAX))
     for w in warn:
         print('  ⚠ %s' % w)
     if check_only:

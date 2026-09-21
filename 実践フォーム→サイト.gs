@@ -56,6 +56,7 @@ var NAIYO = [
  *   出してよいお名前・学校名／ご連絡先（メールアドレスなど）
  */
 var TOI = {
+  shurui : '送るのは',        // 2026-09-21：実践か、議題か。無ければ実践あつかい
   title  : '題名',
   lead   : '概要',
   scene  : '場面',
@@ -316,16 +317,27 @@ function tsukuru_(a, id) {
   s.push('title: ' + ichigyo_(a.title));
   s.push('grade: ' + ichigyo_(a.grade || '全学年'));
   s.push('naiyo: ' + naiyo_(a.scene));
+  // 議題は、実践と同じ棚に並びます。ちがうのは厚みだけ。
+  //   ・札に「議題」と小さく出ます
+  //   ・「かかる時間」は書きません（議題に時間は無い）
+  // 2026-09-21：フォームの1問め「送るのは、どちらですか」で分かれます。
+  // その問いがまだ無いフォームからは shurui が空で来るので、実践になります。
+  var gidai = String(a.shurui || '').indexOf('議題') >= 0;
+  if (gidai) s.push('kind: gidai');
   s.push('scene: ' + ichigyo_(a.scene || '学級活動(1)'));
-  s.push('time: ' + ichigyo_(a.time || '45分'));
+  if (!gidai) s.push('time: ' + ichigyo_(a.time || '45分'));
   if (a.weekly) s.push('weekly: ' + ichigyo_(a.weekly));
   s.push('by: ' + teikyo_(a));
   s.push('---');
   s.push(a.lead || '');
-  if (a.junbi)     { s.push(''); s.push('## 準備するもの'); s.push(kajo_(a.junbi)); }
-  if (a.nagare)    { s.push(''); s.push('## 流れ');         s.push(banme_(a.nagare)); }
-  if (a.bansho)    { s.push(''); s.push('## 板書');         s.push(a.bansho); }
-  if (a.tsumazuki) { s.push(''); s.push('## つまずき');     s.push(kajo_(a.tsumazuki)); }
+  // 議題は、ひとことだけで終わります。
+  // うまくいったかどうかは書きません（「こんな議題が出ました」の陳列にとどめる）。
+  if (!gidai) {
+    if (a.junbi)     { s.push(''); s.push('## 準備するもの'); s.push(kajo_(a.junbi)); }
+    if (a.nagare)    { s.push(''); s.push('## 流れ');         s.push(banme_(a.nagare)); }
+    if (a.bansho)    { s.push(''); s.push('## 板書');         s.push(a.bansho); }
+    if (a.tsumazuki) { s.push(''); s.push('## つまずき');     s.push(kajo_(a.tsumazuki)); }
+  }
   return s.join('\n') + '\n';
 }
 

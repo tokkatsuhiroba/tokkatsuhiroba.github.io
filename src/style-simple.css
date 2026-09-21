@@ -580,3 +580,11 @@ html[data-w="pc"] .cta .pick{grid-template-columns:1fr 1fr;max-width:560px;margi
 .shiryo-mado figure{margin:0}
 .shiryo-mado img{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--rule)}
 .shiryo-mado figcaption{margin-top:4px;text-align:center;font-size:11px;color:var(--mute)}
+
+/* 索引。押せません。どこで手に入るかを書くだけの行です。 */
+.sakuin{
+  display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  padding:8px 12px;border:1px dashed var(--rule,#E5E4E4);
+  font-size:13.5px;line-height:1.8;
+}
+.sakuin b{font-weight:700}

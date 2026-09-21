@@ -186,16 +186,35 @@ function 実践フォームを作る_() {
   form.setAllowResponseEdits(true);   // 実践は後から直したくなるので、編集できるようにする
   form.setProgressBar(true);
 
+  // ── 0. 実践か、議題か（2026-09-21）──
+  //   議題ボックスを、実践と同じ箱に入れると決めました。ちがうのは厚みだけです。
+  //   実践は「準備・流れ・つまずき」まで書ける人しか送れません。
+  //   議題は、題名とひとことだけで送れます。**送る人のハードルを下げるための問い**です。
+  //   ★この問いの題に「送るのは」が入っていること。
+  //     実践フォーム→サイト.gs の TOI が、その字で見つけています。
+  var shurui = form.addMultipleChoiceItem();
+  shurui.setTitle('送るのは、どちらですか')
+        .setHelpText('議題なら、題名とひとことだけで大丈夫です。' +
+                     '下の「かかる時間」「流れ」は空のままで送れます。')
+        .setChoices([
+          shurui.createChoice('実践（準備・流れ・板書まで書けます）'),
+          shurui.createChoice('議題だけ（こんな議題が出ました、の1件）')
+        ])
+        .setRequired(true);
+
   // ── 1. 題名（md の title）──
   form.addTextItem()
       .setTitle('実践の題名')
-      .setHelpText('何をしたかが一目で分かるように。例：「計画委員会を10分で回す（学級会の前日）」')
+      .setHelpText('何をしたかが一目で分かるように。例：「計画委員会を10分で回す（学級会の前日）」\n' +
+                   '議題を送る方は、議題をそのまま。例：「たてわり班であそぶ会をしよう」')
       .setRequired(true);
 
   // ── 2. ひとこと（md の最初の段落）──
   form.addParagraphTextItem()
       .setTitle('ひとこと（2〜3行）')
-      .setHelpText('これをやると何が変わるかを書いてください。一覧に出る文になります。')
+      .setHelpText('これをやると何が変わるかを書いてください。一覧に出る文になります。\n' +
+                   '議題を送る方は、どんな声から出た議題かを2〜3行で。' +
+                   'うまくいったかどうかは書かなくて構いません。')
       .setRequired(true);
 
   // ── 3. 場面（md の scene）──
@@ -239,7 +258,7 @@ function 実践フォームを作る_() {
         time.createChoice('何日かに分ける')
       ])
       .showOtherOption(true)
-      .setRequired(true);
+      .setRequired(false);   // 議題には時間がありません（2026-09-21）
 
   // ── 6. 週案の1行（md の weekly）──
   form.addTextItem()
@@ -257,8 +276,9 @@ function 実践フォームを作る_() {
   // ── 8. 流れ（md の ## 流れ）──
   form.addParagraphTextItem()
       .setTitle('流れ')
-      .setHelpText('1行に1つずつ、順番に。何分かかるかも書いていただけると助かります。')
-      .setRequired(true);
+      .setHelpText('1行に1つずつ、順番に。何分かかるかも書いていただけると助かります。\n' +
+                   '議題だけを送る方は、空のままで大丈夫です。')
+      .setRequired(false);   // 議題には流れがありません（2026-09-21）
 
   // ── 9. 板書（md の ## 板書）──
   form.addParagraphTextItem()
