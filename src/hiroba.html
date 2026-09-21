@@ -374,15 +374,21 @@
       </div>
 
       <div class="okuru-g">
-        <label class="okuru-l" for="komari-g">学年<span class="okuru-nin">任意</span></label>
-        <select class="okuru-i" id="komari-g">
-          <option value="">えらばない</option>
-          <option>1〜2年</option><option>3〜4年</option>
-          <option>5〜6年</option><option>中学校</option>
-        </select>
+        <span class="okuru-l" id="komari-gn-l">学年<span class="okuru-nin">任意</span></span>
+        <p class="okuru-yomi okuru-yomi--sub">押すと入ります。いくつでも押せます。もう一度押すと外れます。</p>
+        <div class="okuru-nen" id="komari-gn" role="group" aria-labelledby="komari-gn-l">
+          <button type="button" class="okuru-nen-b" aria-pressed="false">1年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">2年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">3年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">4年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">5年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">6年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">中学校</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">全学年</button>
+        </div>
       </div>
 
-      <p class="okuru-kiwo"><b>送るまえに かならず</b>学校名・子どもの名前・同僚の名前が入っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b>誰も間に入りません。</p>
+      <p class="okuru-kiwo"><b>送るまえに かならず</b>学校名・子どもの名前・同僚の名前が入っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b></p>
 
       <p class="okuru-botan">
         <button class="btn" type="submit" id="komari-b">送る<span class="btn-ya">→</span></button>
@@ -486,22 +492,32 @@
       </div>
 
       <div class="okuru-g">
-        <label class="okuru-l" for="okuru-t">議題名<span class="okuru-nin">任意</span></label>
+        <label class="okuru-l" for="okuru-t">議題名・題材名・行事名<span class="okuru-nin">任意</span></label>
         <input class="okuru-i" type="text" id="okuru-t" name="t" maxlength="60"
-               placeholder="例：たてわり班であそぶ会をしよう">
+               placeholder="例：たてわり班であそぶ会をしよう／よりよい食事のとり方／運動会">
+      </div>
+
+      <!-- 学年（2026-09-22 直し）。前は 1〜2年／3〜4年 のまとめ売りでした。
+           実践は「5年でやった」ものなので、まとめられると書けません。
+           1年ずつ押せる札にして、**いくつでも押せる**ようにします
+           （5年と6年でやった、も そのまま言えます）。 -->
+      <div class="okuru-g">
+        <span class="okuru-l" id="okuru-gn-l">学年<span class="okuru-nin">任意</span></span>
+        <p class="okuru-yomi okuru-yomi--sub">押すと入ります。いくつでも押せます。もう一度押すと外れます。</p>
+        <div class="okuru-nen" id="okuru-gn" role="group" aria-labelledby="okuru-gn-l">
+          <button type="button" class="okuru-nen-b" aria-pressed="false">1年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">2年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">3年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">4年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">5年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">6年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">中学校</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">全学年</button>
+        </div>
       </div>
 
       <div class="okuru-g">
-        <label class="okuru-l" for="okuru-g">学年<span class="okuru-nin">任意</span></label>
-        <select class="okuru-i" id="okuru-g" name="g">
-          <option value="">えらばない</option>
-          <option>1〜2年</option><option>3〜4年</option>
-          <option>5〜6年</option><option>中学校</option>
-        </select>
-      </div>
-
-      <div class="okuru-g">
-        <label class="okuru-l" for="okuru-m">概要・ポイント<span class="okuru-nin">任意</span></label>
+        <label class="okuru-l" for="okuru-m">実践内容<span class="okuru-nin">任意</span></label>
         <p class="okuru-yomi okuru-yomi--sub">書ける分だけで大丈夫です。空のままでも送れます。</p>
         <textarea class="okuru-i okuru-hiroi" id="okuru-m" name="m" maxlength="1000" rows="10"
                   placeholder="例：
@@ -536,7 +552,7 @@
           どちらでも、お名前は管理人にだけ届きます。</span>
       </p>
 
-      <p class="okuru-kiwo"><b>送るまえに かならず</b>子どもの顔や名前、学校名が写っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b>誰も間に入りません。</p>
+      <p class="okuru-kiwo"><b>送るまえに かならず</b>子どもの顔や名前、学校名が写っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b></p>
 
       <p class="okuru-botan">
         <button class="btn" type="submit" id="okuru-b">送る<span class="btn-ya">→</span></button>
@@ -676,6 +692,39 @@
          URLが入れば、ログイン無しで送れるようになります）        */
   var OKURU_URL = 'https://script.google.com/macros/s/AKfycbwb0xkl5HpPDX2WqSov42N8L2FkAVD6ZYx5sbbs_7r332mmsRYY8_VYDyfD29yqKHCH/exec';
 
+  /* ══ 学年の札（2026-09-22）══════════════════════════════
+     前は 1〜2年／3〜4年 のまとめ売りの選びでした。実践は「5年でやった」
+     ものなので、まとめられると書けません。1年ずつ押せる札にして、
+     **いくつでも押せる**ようにします（5年と6年でやった、も言えます）。
+     押したものを「・」でつないで送ります。受け口の grade は もともと
+     字の列なので、そのまま入ります。
+     ★「全学年」と 1年ずつは、同時に立ちません。どちらかを押すと
+       もう一方は外れます（「全学年と5年」は、意味が二重になるため）。 */
+  function nen_fuda(id){
+    var bako = document.getElementById(id);
+    var b = bako ? [].slice.call(bako.querySelectorAll('.okuru-nen-b')) : [];
+    var osu = function(x, on){ x.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+    b.forEach(function(x){
+      x.addEventListener('click', function(){
+        var ima = x.getAttribute('aria-pressed') === 'true';
+        var zen = x.textContent === '全学年';
+        if(!ima){
+          b.forEach(function(y){
+            if(zen !== (y.textContent === '全学年')) osu(y, false);
+          });
+        }
+        osu(x, !ima);
+      });
+    });
+    return {
+      yomu: function(){
+        return b.filter(function(x){ return x.getAttribute('aria-pressed') === 'true'; })
+                .map(function(x){ return x.textContent; }).join('・');
+      },
+      kesu: function(){ b.forEach(function(x){ osu(x, false); }); }
+    };
+  }
+
   var okuruF = document.getElementById('okuru-f');
   if(okuruF){
     if(!OKURU_URL){
@@ -729,6 +778,8 @@
           fr.readAsDataURL(file);
         });
       };
+
+      var gakunen = nen_fuda('okuru-gn'), nen = gakunen.yomu, nen_kesu = gakunen.kesu;
 
       var mIn = document.getElementById('okuru-m');
       var kazu = document.getElementById('okuru-kazu');
@@ -809,7 +860,7 @@
               kind: 'bansho', e: e, p: p,
               n:  nIn.value,                                   /* 6つの内容 */
               t:  document.getElementById('okuru-t').value.slice(0, 60),
-              g:  document.getElementById('okuru-g').value,
+              g:  nen(),                                       /* 押された学年 */
               m:  document.getElementById('okuru-m').value.slice(0, 1000),
               na: naIn.value.trim().slice(0, 40),              /* お名前（必須） */
               sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
@@ -817,7 +868,7 @@
             })
           });
         }).then(function(){
-          okuruF.reset(); mihon.textContent = '';
+          okuruF.reset(); mihon.textContent = ''; nen_kesu();
           if(kazu) kazu.textContent = '0 / 1000字';
           shirase.textContent = '送りました。数分で「板書」のページに出ます。';
           botan.disabled = false;
@@ -843,7 +894,7 @@
   var komariF = document.getElementById('komari-f');
   if(komariF && OKURU_URL){
     var kM = document.getElementById('komari-m');
-    var kG = document.getElementById('komari-g');
+    var kGn = nen_fuda('komari-gn');
     var kKazu = document.getElementById('komari-kazu');
     var kShirase = document.getElementById('komari-shirase');
     var kBotan = document.getElementById('komari-b');
@@ -862,9 +913,9 @@
         method: 'POST',
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kG.value })
+        body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kGn.yomu() })
       }).then(function(){
-        komariF.reset(); kKazu.textContent = '0 / 1000字';
+        komariF.reset(); kGn.kesu(); kKazu.textContent = '0 / 1000字';
         kShirase.textContent = '送りました。数分で、この下に出ます。';
         kBotan.disabled = false;
       })['catch'](function(err){
