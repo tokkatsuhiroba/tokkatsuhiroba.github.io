@@ -2065,6 +2065,9 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .ko-e{display:block;width:100%;margin-top:clamp(14px,2vw,26px)}
 .ko-e svg{display:block;width:100%;height:auto}
 .ko-e--semai{display:none}
+/* 屋内の絵（教室・ろうか）は、頭の地も壁の色にします。
+   空色のままだと、水色の帯のすぐ下に白い壁が来て、絵が貼り紙に見えます。 */
+.ko--uchi{background:var(--bg)}
 @media (max-width:719px){
   .ko{padding-block:20px 0}
   .ko-e--hiro{display:none}

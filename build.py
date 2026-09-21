@@ -1601,18 +1601,22 @@ def _e_komari(k):
 
 # （ファイル名, 絵を組む関数, 絵の説明, スマホ用の窓）
 #   窓は「その絵でいちばん見せたい所」を 880幅で切り出します。
+# （絵を組む関数, 絵の説明, スマホ用の窓, 屋内かどうか）
+#   ★屋内の絵は、頭の地を空色ではなく壁の色にします。そうしないと
+#     水色の帯のすぐ下に白い壁が来て、絵が貼り紙に見えます（実機で確認）。
 KO_E = {
     'shiru.html':    (_e_shiru,    '山のふもとの校庭。黒板・入退場門と万国旗・掲示板・'
-                                   'たいこと、4つの内容のキャラクター', '480 0 880 420'),
+                                   'たいこと、4つの内容のキャラクター',
+                                   '480 0 880 420', False),
     'manabu.html':   (_e_manabu,   '黒板を囲んで学級会をしている教室の中',
-                                   '400 0 880 420'),
+                                   '400 0 880 420', True),
     'atsumaru.html': (_e_atsumaru, '山と家のならぶまち。知らせが貼られた掲示板と、'
                                    'のぼり旗の下で集まって話している先生たち',
-                                   '160 0 880 420'),
+                                   '160 0 880 420', False),
     'bansho.html':   (_e_bansho,   '窓のならぶろうかに、黒板が3枚 立ててある',
-                                   '820 0 880 420'),
+                                   '820 0 880 420', True),
     'komari.html':   (_e_komari,   '夕方の校門前で話している、こどもと先生。'
-                                   '頭の上に吹き出し', '260 0 880 420'),
+                                   '頭の上に吹き出し', '260 0 880 420', False),
 }
 
 
@@ -2841,7 +2845,7 @@ def build_obi(ima_file, doko):
             '</nav>')
 
 
-KO_T = """<header class="ko" id="ue">
+KO_T = """<header class="ko{uchi}" id="ue">
   <div class="uchi">
     <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a>{oya}</p>
     <h1 class="ko-h">{na}</h1>
@@ -2872,8 +2876,8 @@ def ko_atama(f, yo):
         raise Tomeru('%s の頭に置く絵が KO_E にありません。'
                      'ページを足したら、絵も1枚足してください' % f)
     e = KO_E_T.format(w=KO_E_W, h=KO_E_H, mado=KO_E[f][2], yo=esc_html(KO_E[f][1]))
-    return KO_T.format(home=HOME, oya=oya, na=esc_html(page_na(f)),
-                       yo=esc_html(yo), e=e)
+    return KO_T.format(home=HOME, oya=oya, na=esc_html(page_na(f)), yo=esc_html(yo),
+                       e=e, uchi=' ko--uchi' if KO_E[f][3] else '')
 
 
 def page_na(f):
