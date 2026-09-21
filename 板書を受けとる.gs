@@ -668,6 +668,11 @@ function _md(slug, n) {
     'okuri: true',
     'kind: gidai',
     'date: ' + _kyou(),
+    /* 届いた時こく（2026-09-22）。並べるためだけに使います。
+       日づけだけだと、同じ日に2件 届いたときに順が決まりません
+       （名前のうしろ6文字はでたらめなので、くじ引きになります）。
+       build.py の load_jissen() が、ここを見て新しい順に並べます。 */
+    'todoita: ' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm'),
     'title: ' + (t || (n.uri.length ? '送ってもらった板書' : '送ってもらった資料')),
     'grade: ' + (g || '学年なし'),
     'naiyo: ' + naiyo[0],

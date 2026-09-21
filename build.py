@@ -528,6 +528,10 @@ def kenmon_jissen(fm, goods):
         fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
     except Exception:
         raise Tomeru('%s：date は 2026-09-21 の形で書いてください（%s）' % (f, fm['date']))
+    # 届いた時こく。サイトから送られたものだけが持ちます（板書を受けとる.gs が書く）。
+    #   「2026-09-22 17:33」の形。読めなければ、その日の0時として扱います。
+    #   ★ここでは止めません。1件の書き方のせいでサイト全体が出なくなるためです。
+    fm['todoita'] = todoita_yomu(fm.get('todoita'), fm['d'])
     # 資料（指導案・スライド・板書など）。1行に「見出し|置き場」をカンマで並べる。
     #   shiryo: 指導案|ichiren-no-katsudo,  授業スライド|https://…
     #
@@ -607,6 +611,18 @@ def kenmon_jissen(fm, goods):
     return True, None
 
 
+def todoita_yomu(s, hi):
+    """「2026-09-22 17:33」→ datetime。無ければ、その日の0時。
+       ★止めません。並べるためだけに使う値なので、読めなければ0時あつかいです。"""
+    if s:
+        for katachi in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+            try:
+                return datetime.datetime.strptime(str(s).strip(), katachi)
+            except ValueError:
+                pass
+    return datetime.datetime.combine(hi, datetime.time.min)
+
+
 def load_jissen(goods):
     kiji, tobashita = [], []
     for p in sorted(glob.glob(os.path.join(JISSEN, '*.md'))):
@@ -618,7 +634,15 @@ def load_jissen(goods):
             kiji.append(fm)
         else:
             tobashita.append(riyuu)
-    kiji.sort(key=lambda a: (a['d'], a['_file']), reverse=True)
+    # ── 並び（2026-09-22 直し）─────────────────────────────
+    #   前は (日づけ, ファイル名) の逆順でした。ところが届いたものの名前は
+    #   bansho-20260922-9af344 のように **でたらめな6文字** で終わります。
+    #   同じ日に2件 届くと、名前の順＝くじ引きになり、新しいほうが下に
+    #   出ることがありました（実測：02:33 に届いたものが、01:00 のものの下）。
+    #   だから **届いた時こく（todoita）** で並べます。
+    #   こちらで用意した道具には todoita がありません。その日の0時として
+    #   扱うので、道具どうしの並びは、これまでと変わりません。
+    kiji.sort(key=lambda a: (a['todoita'], a['_file']), reverse=True)
     seen = set()
     for a in kiji:
         if a['slug'] in seen:

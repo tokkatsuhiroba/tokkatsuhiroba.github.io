@@ -118,7 +118,6 @@
           <button class="btn" type="submit" id="nt-b">知らせる<span class="btn-ya">→</span></button>
         </p>
         <p class="okuru-shirase" id="nt-shirase" role="status" aria-live="polite"></p>
-        <p class="okuru-chu">開いただけでは、何も出ていきません。<b>「知らせる」を押したときだけ</b>、送られて、そのまま載ります。</p>
       </form>
 
       <!-- 送れたら、ここが出ます（2026-09-22）─────────────────
@@ -557,7 +556,6 @@
         <button class="btn" type="submit" id="komari-b">送る<span class="btn-ya">→</span></button>
       </p>
       <p class="okuru-shirase" id="komari-shirase" role="status" aria-live="polite"></p>
-      <p class="okuru-chu">開いただけでは、何も出ていきません。<br><b>「送る」を押したときだけ</b>、送られて、そのまま載ります。</p>
     </form>
 
     <!--BUILD:KOMARI_MIRU-->
@@ -669,7 +667,7 @@
       </div>
 
       <div class="okuru-g">
-        <label class="okuru-l" for="okuru-t">議題名・題材名・行事名<span class="okuru-nin">任意</span></label>
+        <label class="okuru-l" for="okuru-t">議題名・題材名・行事名・タイトル<span class="okuru-hissu">必須</span></label>
         <input class="okuru-i" type="text" id="okuru-t" name="t" maxlength="60"
                placeholder="例：たてわり班であそぶ会をしよう／よりよい食事のとり方／運動会">
       </div>
@@ -694,8 +692,8 @@
       </div>
 
       <div class="okuru-g">
-        <label class="okuru-l" for="okuru-m">実践内容<span class="okuru-nin">任意</span></label>
-        <p class="okuru-yomi okuru-yomi--sub">書ける分だけで大丈夫です。空のままでも送れます。</p>
+        <label class="okuru-l" for="okuru-m">実践内容<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">ひとことでも大丈夫です。長く書く必要はありません。</p>
         <textarea class="okuru-i okuru-hiroi" id="okuru-m" name="m" maxlength="1000" rows="10"
                   placeholder="例：
 どんな声から出た議題か。
@@ -736,7 +734,6 @@
         <button class="btn" type="submit" id="okuru-b">送る<span class="btn-ya">→</span></button>
       </p>
       <p class="okuru-shirase" id="okuru-shirase" role="status" aria-live="polite"></p>
-      <p class="okuru-chu">開いただけでは、何も出ていきません。写真を選んでも、まだ出ません。<br><b>「送る」を押したときだけ</b>、送られて、そのまま載ります。</p>
     </form>
 
     <!-- 送るところの、すぐ下に「見るところ」を置きます（2026-09-22 依頼）。
@@ -1357,10 +1354,21 @@
           if(naiyo.moto) naiyo.moto.scrollIntoView({block:'center'});
           return;
         }
-        if(!naIn.value.trim()){
-          shirase.textContent = 'お名前を書いてください。出すかどうかは、下のチェックで選べます。';
-          naIn.focus();
-          naIn.scrollIntoView({block:'center'});
+        /* 2026-09-22：題と実践内容も必須にしました（依頼）。
+           写真だけ送られても、あとから探せる言葉が1つも無いためです。 */
+        var tIn = document.getElementById('okuru-t');
+        var mIn2 = document.getElementById('okuru-m');
+        var tarinai = !tIn.value.trim()
+          ? [tIn, '議題名・題材名・行事名・タイトルを書いてください。あとで探すときの手がかりになります。']
+          : (!mIn2.value.trim()
+             ? [mIn2, '実践内容を書いてください。ひとことでも大丈夫です。']
+             : (!naIn.value.trim()
+                ? [naIn, 'お名前を書いてください。出すかどうかは、下のチェックで選べます。']
+                : null));
+        if(tarinai){
+          shirase.textContent = tarinai[1];
+          tarinai[0].focus();
+          tarinai[0].scrollIntoView({block:'center'});
           return;
         }
         /* PDFを選んだのに、ページが1枚も出ていない＝ひらけなかった、ということ。
