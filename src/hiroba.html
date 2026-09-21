@@ -611,6 +611,17 @@
           <input type="file" id="okuru-e" name="e" accept="image/*,application/pdf" multiple>
         </label>
         <p class="okuru-mihon" id="okuru-mihon" aria-live="polite"></p>
+
+        <!-- 隠す（2026-09-22）。送る前に、こちらのブラウザの中で塗ります。
+             ★塗ったものが送られます。元の写真は1バイトも出ていきません。
+             ★モザイクではなく、黒でぬりつぶします。モザイクは粗さが足りないと
+               元の字（名前）が読めてしまうことがあるためです。 -->
+        <div class="kakusu" id="okuru-kakusu" hidden>
+          <p class="kakusu-yomi"><b>隠したいところを、指でなぞってください。</b>
+            なぞった四角が、黒くぬりつぶされます。<br>
+            <b>ぬったものが送られます。</b>元の写真は、どこにも出ていきません。</p>
+          <div id="okuru-kakusu-l"></div>
+        </div>
       </div>
 
       <!-- 内容（2026-09-22）。学習指導要領の6つで聞いて、サイトの4つに寄せます。
@@ -913,11 +924,22 @@
          だから 質を落とし、それでもだめなら 小さくして、収まるまで試します。 */
       var DAN = [[1400, .72], [1400, .60], [1200, .58], [1000, .55], [800, .50]];
 
-      var kaku = function(im, hen, omosa){
+      var kaku = function(im, hen, omosa, shikaku){
         var w = im.width, h = im.height, r = Math.min(1, hen / Math.max(w, h));
         var c = document.createElement('canvas');
         c.width = Math.round(w * r); c.height = Math.round(h * r);
-        c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+        var ctx = c.getContext('2d');
+        ctx.drawImage(im, 0, 0, c.width, c.height);
+        /* 隠すところ（0〜1で持っているので、どの大きさに縮めても同じ所が塗れます）。
+           ★縮める前ではなく、縮めたあとの canvas に塗ります。順番を逆にすると、
+             質を落とす段でにじんで、ふちから中身が透けます。 */
+        if(shikaku && shikaku.length){
+          ctx.fillStyle = '#000';
+          shikaku.forEach(function(k){
+            ctx.fillRect(Math.floor(k.x * c.width), Math.floor(k.y * c.height),
+                         Math.ceil(k.w * c.width), Math.ceil(k.h * c.height));
+          });
+        }
         return c.toDataURL('image/jpeg', omosa);
       };
       /* data URI の base64 部分から、おおよその KB を出します */
@@ -935,7 +957,7 @@
             im.onerror = function(){ dame(kotowaru('画像ではないようです。')); };
             im.onload = function(){
               for(var i = 0; i < DAN.length; i++){
-                var uri = kaku(im, DAN[i][0], DAN[i][1]);
+                var uri = kaku(im, DAN[i][0], DAN[i][1], nuri_no(file));
                 if(nanKB(uri) <= KB_MAX) return ok(uri);
               }
               dame(kotowaru('写真を小さくしきれませんでした。'
@@ -983,10 +1005,130 @@
         return { e: e, p: p };
       };
 
+      /* ══ 隠す（2026-09-22）══════════════════════════════
+         送る前に、**このブラウザの中だけ**で塗ります。塗ったものが送られ、
+         元の写真は1バイトも出ていきません。送ってから消すのでは遅いためです
+         （送られた写真は Drive と、公開のリポジトリの両方に残ります）。
+
+         ★四角は 0〜1 の割合で持ちます。あとで 1400px にも 800px にも
+           縮めますが、割合なら どの大きさでも同じ所が塗れます。
+         ★塗るのは「縮めたあと」です（→ kaku）。
+         ★モザイクにはしません。粗さが足りないと元の字が読めることがあり、
+           隠したつもりが隠れていない、がいちばん困るためです。        */
+      var kakusuBako = document.getElementById('okuru-kakusu');
+      var kakusuList = document.getElementById('okuru-kakusu-l');
+      var KAKUSU_HABA = 900;   /* 塗る面の幅。表示はCSSが100%にします */
+      var KAKUSU_SAI = .012;   /* これより小さい四角は、押しまちがいとみなします */
+      var nuri = [];
+
+      function nuri_no(file){
+        for(var i = 0; i < nuri.length; i++){
+          if(nuri[i].file === file) return nuri[i].shikaku;
+        }
+        return null;
+      }
+      function shikaku_tsukuru(a, b){
+        return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y),
+                 w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) };
+      }
+      function nuri_egaku(n){
+        var c = n.canvas, ctx = c.getContext('2d');
+        ctx.drawImage(n.im, 0, 0, c.width, c.height);
+        ctx.fillStyle = '#000';
+        n.shikaku.forEach(function(k){
+          ctx.fillRect(k.x * c.width, k.y * c.height, k.w * c.width, k.h * c.height);
+        });
+        if(n.ima){   /* なぞっている最中のもの。ふちを白くして、分かるようにします */
+          ctx.fillRect(n.ima.x * c.width, n.ima.y * c.height,
+                       n.ima.w * c.width, n.ima.h * c.height);
+          ctx.strokeStyle = '#FCFBF7'; ctx.lineWidth = 3;
+          ctx.strokeRect(n.ima.x * c.width, n.ima.y * c.height,
+                         n.ima.w * c.width, n.ima.h * c.height);
+        }
+      }
+      function nuri_kazu(n){
+        n.kazu.textContent = n.shikaku.length
+          ? (n.shikaku.length + 'か所 ぬりました') : 'まだ ぬっていません';
+        n.modosu.disabled = n.zen.disabled = !n.shikaku.length;
+      }
+      function nuri_ten(ev, c){
+        var r = c.getBoundingClientRect();
+        return { x: Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)),
+                 y: Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)) };
+      }
+      function nuri_hitotsu(file){
+        var waku = document.createElement('figure');
+        waku.className = 'kakusu-1';
+        waku.innerHTML =
+          '<canvas class="kakusu-c"></canvas>'
+        + '<figcaption class="kakusu-b">'
+        +   '<span class="kakusu-kazu" aria-live="polite">まだ ぬっていません</span>'
+        +   '<button type="button" class="kakusu-x kakusu-modosu">ひとつ戻す</button>'
+        +   '<button type="button" class="kakusu-x kakusu-zen">ぜんぶ消す</button>'
+        + '</figcaption>';
+        var n = { file: file, shikaku: [], ima: null, hajime: null,
+                  canvas: waku.querySelector('.kakusu-c'),
+                  kazu:   waku.querySelector('.kakusu-kazu'),
+                  modosu: waku.querySelector('.kakusu-modosu'),
+                  zen:    waku.querySelector('.kakusu-zen') };
+        n.canvas.setAttribute('aria-label', file.name + ' … 隠したいところを なぞる');
+        var fr = new FileReader();
+        fr.onload = function(){
+          var im = new Image();
+          im.onload = function(){
+            n.im = im;
+            n.canvas.width  = Math.min(KAKUSU_HABA, im.width);
+            n.canvas.height = Math.round(n.canvas.width * im.height / im.width);
+            nuri_egaku(n);
+          };
+          im.src = fr.result;
+        };
+        fr.readAsDataURL(file);
+
+        n.canvas.addEventListener('pointerdown', function(ev){
+          if(!n.im) return;
+          ev.preventDefault();
+          n.hajime = nuri_ten(ev, n.canvas);
+          n.canvas.setPointerCapture(ev.pointerId);
+        });
+        n.canvas.addEventListener('pointermove', function(ev){
+          if(!n.hajime) return;
+          n.ima = shikaku_tsukuru(n.hajime, nuri_ten(ev, n.canvas));
+          nuri_egaku(n);
+        });
+        var oeru = function(ev){
+          if(!n.hajime) return;
+          var k = shikaku_tsukuru(n.hajime, nuri_ten(ev, n.canvas));
+          n.hajime = null; n.ima = null;
+          if(k.w > KAKUSU_SAI && k.h > KAKUSU_SAI) n.shikaku.push(k);
+          nuri_egaku(n); nuri_kazu(n);
+        };
+        n.canvas.addEventListener('pointerup', oeru);
+        n.canvas.addEventListener('pointercancel', oeru);
+
+        n.modosu.addEventListener('click', function(){
+          n.shikaku.pop(); nuri_egaku(n); nuri_kazu(n);
+        });
+        n.zen.addEventListener('click', function(){
+          n.shikaku = []; nuri_egaku(n); nuri_kazu(n);
+        });
+        nuri_kazu(n);
+        nuri.push(n);
+        kakusuList.appendChild(waku);
+      }
+      function nuri_naraberu(shashin){
+        nuri = [];
+        kakusuList.innerHTML = '';
+        shashin.forEach(nuri_hitotsu);
+        kakusuBako.hidden = !shashin.length;
+      }
+      function nuri_kesu(){ nuri_naraberu([]); }
+
       eIn.addEventListener('change', function(){
         var w = wakeru(), n = eIn.files.length, ji = [];
         if(w.e.length) ji.push('写真' + w.e.length + '枚');
         if(w.p.length) ji.push('PDF1つ');
+        nuri_naraberu(w.e);
         if(!n){ mihon.textContent = ''; return; }
         mihon.textContent = ji.join('と') + 'をえらびました'
           + (n > w.e.length + w.p.length ? '（写真3枚・PDF1つまでです）' : '');
@@ -1039,7 +1181,7 @@
             })
           });
         }).then(function(){
-          okuruF.reset(); mihon.textContent = ''; nen_kesu(); naiyo.kesu();
+          okuruF.reset(); mihon.textContent = ''; nen_kesu(); nuri_kesu(); naiyo.kesu();
           if(kazu) kazu.textContent = '0 / 1000字';
           shirase.textContent = '送りました。数分で「板書」のページに出ます。';
           botan.disabled = false;

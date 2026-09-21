@@ -2363,3 +2363,46 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (max-width:719px){
   .nt-line-botan .btn{flex:1 1 100%}
 }
+
+/* ══ 隠す（2026-09-22）════════════════════════════════════
+   送る前に、そのブラウザの中だけで黒くぬります。
+   ★canvas は touch-action:none。これが無いと、スマホでなぞったときに
+     ページごと動いて、1本も線が引けません。
+   ★指でなぞる面なので、幅いっぱいに出します（小さいと狙えません）。 */
+.kakusu{
+  margin:12px 0 0;padding:14px;
+  background:var(--men-sora);border:2px solid var(--ink);border-radius:14px;
+}
+.kakusu[hidden]{display:none}
+.kakusu-yomi{margin:0 0 12px;font-size:13px;line-height:1.85;color:var(--ink)}
+.kakusu-yomi b{color:var(--accent)}
+.kakusu-1{margin:0 0 14px}
+.kakusu-1:last-child{margin-bottom:0}
+.kakusu-c{
+  display:block;width:100%;height:auto;
+  background:var(--bg);border:2px solid var(--ink);border-radius:10px;
+  touch-action:none;cursor:crosshair;
+}
+.kakusu-b{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 0;
+}
+.kakusu-kazu{
+  flex:1 1 100%;font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;color:var(--mute);
+}
+.kakusu-x{
+  min-height:40px;padding:8px 14px;
+  background:var(--bg);color:var(--ink);
+  border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--f-maru);font-weight:700;font-size:13px;cursor:pointer;
+}
+.kakusu-x:hover{background:var(--men-ki)}
+.kakusu-x:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.kakusu-x[disabled]{opacity:.4;cursor:default}
+
+/* 困りごとの「提供」。名乗ってくださった人だけ、小さく出ます。
+   名乗らないのが既定なので、無い札のほうが多くて当たり前です。 */
+.komari-by{
+  margin:12px 0 0;font-size:12.5px;color:var(--mute);text-align:end;
+}
+.komari-by::before{content:"提供："}
