@@ -35,6 +35,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 履歴ぜんぶ。届いた実践の「並び」に使います（2026-09-22）。
+          #   受け口が todoita: を書けていないものは、git に入った時こくで
+          #   代わりにします（build.py の git_todoita）。浅い取りこみだと
+          #   その時こくが取れず、新しいものが下に沈みます。
+          #   ★いまの .git は 11MB です。ぜんぶ取っても数秒です。
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:

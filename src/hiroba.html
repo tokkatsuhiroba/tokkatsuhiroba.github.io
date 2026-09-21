@@ -1551,7 +1551,7 @@
     ctx.font = '400 29px ' + GA_HON;
     var honG = hon ? ga_oru(ctx, hon, naka) : [];
     /* 入りきらないぶんは切る。切ったことは、画面の中で正直に言う */
-    var ashi = 178;
+    var ashi = 212;     /* 提供・見出し・（リンクをタップしてね）・URL のぶん */
     var kiru = Math.floor((GA_TAKASA_MAX - y - ashi) / 54);
     var kitta = false;
     if(honG.length > kiru && kiru > 3){ honG = honG.slice(0, kiru); kitta = true; }
@@ -1655,10 +1655,18 @@
     ctx.fillStyle = '#63625C'; ctx.font = '500 25px ' + GA_HON;
     ctx.fillText(by || '', GA_P, fy + 22);
     ctx.fillStyle = '#1C1C1A'; ctx.font = '900 27px ' + GA_JI;
-    ctx.fillText('この実践は、ここに溢めています', GA_P, fy + 62);
-    ctx.font = '500 24px ' + GA_HON;
+    ctx.fillText('この実践は、ここに溜めています', GA_P, fy + 62);
+    /* （リンクをタップしてね）2026-09-22 夜 依頼。
+       ★絵の中の字なので、ほんとうは「押せるもの」ではありません。
+         いまのスマホは、写真の中の字を読みとって押せるようにしてくれます
+         （iPhoneのライブテキスト／Androidのレンズ）。そこを当てにした一言です。
+       ★読みとれない機種のために、共有のときは **URLそのもの** も
+         いっしょに渡します（→ ga_hozon）。そちらは、かならず押せます。 */
+    ctx.fillStyle = '#63625C'; ctx.font = '700 23px ' + GA_JI;
+    ctx.fillText('（リンクをタップしてね）', GA_P, fy + 98);
+    ctx.fillStyle = '#1C1C1A'; ctx.font = '500 24px ' + GA_HON;
     var u = ga_oru(ctx, url, naka);
-    ga_kaku(ctx, u, GA_P, fy + 104, 34);
+    ga_kaku(ctx, u, GA_P, fy + 136, 34);
     return c;
   }
 
@@ -1686,7 +1694,13 @@
         /* スマホで送れるなら、共有を開きます（保存も、その中にあります）。
            ただの保存だと、iPhoneでは「ファイル」に入るだけで送るまでが遠い。 */
         if(navigator.canShare && navigator.canShare({files: [f]})){
-          return navigator.share({files: [f]})['catch'](function(){})
+          /* 絵といっしょに、URLそのものも渡します。絵の中のURLは
+             読みとれない機種もありますが、こちらは かならず押せます。 */
+          var dai = ga_moji(fuda.querySelector('.bfuda-h')) || '実践';
+          var nimotsu = {files: [f],
+                         text: dai + '\n' + (botan.getAttribute('data-url') || '')};
+          if(!navigator.canShare(nimotsu)) nimotsu = {files: [f]};
+          return navigator.share(nimotsu)['catch'](function(){})
                  .then(function(){ owari(''); });
         }
         var u = URL.createObjectURL(b);

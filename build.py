@@ -544,6 +544,7 @@ def kenmon_jissen(fm, goods):
     # 届いた時こく。サイトから送られたものだけが持ちます（板書を受けとる.gs が書く）。
     #   「2026-09-22 17:33」の形。読めなければ、その日の0時として扱います。
     #   ★ここでは止めません。1件の書き方のせいでサイト全体が出なくなるためです。
+    fm['todoita_aru'] = bool((fm.get('todoita') or '').strip())
     fm['todoita'] = todoita_yomu(fm.get('todoita'), fm['d'])
     # 資料（指導案・スライド・板書など）。1行に「見出し|置き場」をカンマで並べる。
     #   shiryo: 指導案|ichiren-no-katsudo,  授業スライド|https://…
@@ -624,6 +625,49 @@ def kenmon_jissen(fm, goods):
     return True, None
 
 
+_GIT_TODOITA = {}
+
+
+def git_todoita():
+    """src/jissen/*.md が **git に入った時こく** を、ファイル名 → datetime で返す。
+
+       なぜ要るのか（2026-09-22 夜）
+         届いたものの時こくは、受け口（板書を受けとる.gs）が todoita: に
+         書きます。ところが受け口は Apps Script 側にあって、こちらを直しても
+         **貼り直すまで古いまま** です。その間に届いたものは todoita を
+         持たず、その日の0時あつかいで いちばん下に沈みます（実測）。
+       そこで、todoita が無いものは git に入った時こくで代わりにします。
+       送られた1件は、受け口が届いたその場で commit するので、
+       git の時こく ≒ 届いた時こく です。
+
+       ★取れなくても止めません（履歴の浅い取りこみ・gitが無い所でも動きます）。
+       ★こちらで用意した道具には使いません（→ load_jissen）。道具は
+         date: の日づけが意味を持つので、書いた日で並べかえたくありません。"""
+    if _GIT_TODOITA:
+        return _GIT_TODOITA
+    _GIT_TODOITA['_'] = None          # 2度 走らせない（取れなくても、ここで止める）
+    try:
+        import subprocess
+        out = subprocess.run(
+            ['git', '-c', 'core.quotepath=false',
+             'log', '--diff-filter=A', '--reverse', '--date=iso-strict',
+             '--format=%x00%ad', '--name-only', '--', 'src/jissen/'],
+            cwd=ROOT, capture_output=True, text=True, timeout=20).stdout
+    except Exception:
+        return _GIT_TODOITA
+    hi = None
+    for gyo in out.split('\n'):
+        if gyo.startswith('\x00'):
+            try:
+                hi = datetime.datetime.fromisoformat(gyo[1:].strip()).replace(tzinfo=None)
+            except ValueError:
+                hi = None
+        elif gyo.strip() and hi:
+            na = os.path.basename(gyo.strip())
+            _GIT_TODOITA.setdefault(na, hi)     # 最初に入ったときだけ
+    return _GIT_TODOITA
+
+
 def todoita_yomu(s, hi):
     """「2026-09-22 17:33」→ datetime。無ければ、その日の0時。
        ★止めません。並べるためだけに使う値なので、読めなければ0時あつかいです。"""
@@ -655,6 +699,14 @@ def load_jissen(goods):
     #   だから **届いた時こく（todoita）** で並べます。
     #   こちらで用意した道具には todoita がありません。その日の0時として
     #   扱うので、道具どうしの並びは、これまでと変わりません。
+    # todoita を持っていない「届いたもの」は、git に入った時こくで補います。
+    #   受け口を貼り直すまでのあいだに届いたものが、下に沈まないように。
+    gt = git_todoita()
+    for a in kiji:
+        if a.get('okuri') and not a.get('todoita_aru'):
+            t = gt.get(os.path.basename(a['_file']))
+            if t:
+                a['todoita'] = t
     kiji.sort(key=lambda a: (a['todoita'], a['_file']), reverse=True)
     seen = set()
     for a in kiji:
