@@ -2419,12 +2419,14 @@ BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
         </div>
 """
 
-BFUDA_MORE = """        <details class="hiraku">
-          <summary><span class="a">くわしく</span><span class="b">とじる</span></summary>
-          <div class="fuda-naka">
+# 中身は、ふたに入れずに**そのまま**出します（2026-09-22）。
+#   「わざわざ『この実践を読む』を押したくない」という話から。
+#   押す場所を1つも作らない、が答えです。届くものは短いので、
+#   開いた時点で ぜんぶ読めます（写真も、書いてもらったことも）。
+#   ★長い1件が来たら、ここだけ考え直します。いまは0.5画面ぶんです。
+BFUDA_MORE = """        <div class="bfuda-naka">
 {body}
-          </div>
-        </details>
+        </div>
 """
 
 # 写真1枚ぶん。図と、その下の［大きく見る］。

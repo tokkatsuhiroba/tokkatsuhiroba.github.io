@@ -2263,3 +2263,39 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (prefers-reduced-motion:reduce){
   .hfuda:active .hfuda-e,.igi-h:active .e{animation:none}
 }
+
+/* みんなの実践の中身。ふたに入れず、そのまま出します（2026-09-22）。
+   押す場所を作らないのが目的なので、見出しも本文も札の中にそのまま置きます。 */
+.bfuda-naka{margin:14px 0 0}
+.bfuda-naka h4{
+  margin:20px 0 8px;font-family:var(--f-maru);font-weight:700;font-size:16px;
+  letter-spacing:.05em;padding-inline-start:12px;
+  border-inline-start:6px solid var(--ki);
+}
+.bfuda-naka p{margin:0 0 12px;font-size:15px;line-height:1.95}
+.bfuda-naka ul,.bfuda-naka ol{margin:0 0 14px;padding-inline-start:1.5em}
+.bfuda-naka li{margin:0 0 7px;font-size:15px;line-height:1.9}
+.bfuda-naka > :last-child{margin-bottom:0}
+
+/* ══ 学年の札（2026-09-22）════════════════════════════════
+   前は 1〜2年／3〜4年 のまとめ売りの選びでした。実践は「5年でやった」
+   ものなので、まとめられると書けません。1年ずつ押せる札にしました。
+
+   ★押されているかどうかは、色だけで伝えません（ベタ塗り＝形で分かる）。
+     サイトのほかの「いまここ」の出し方（帯の obi-ima）とそろえています。
+   ★1つ44px以上。指で押しても となりに当たりません。            */
+.okuru-nen{display:flex;flex-wrap:wrap;gap:8px}
+.okuru-nen-b{
+  min-height:44px;padding:9px 16px;
+  background:var(--bg);color:var(--ink);
+  border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--f-maru);font-weight:700;font-size:14.5px;letter-spacing:.04em;
+  cursor:pointer;transition:transform .12s ease,background .12s ease;
+}
+.okuru-nen-b:hover{background:var(--men-ki)}
+.okuru-nen-b:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.okuru-nen-b:active{transform:translateY(1px)}
+.okuru-nen-b[aria-pressed="true"]{
+  background:var(--ink);color:var(--bg);box-shadow:3px 3px 0 var(--rule);
+}
+.okuru-nen-b[aria-pressed="true"]:hover{background:var(--ink)}
