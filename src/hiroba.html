@@ -7,8 +7,8 @@
     <h1 class="hero-logo">TOKKATSU広場</h1>
     <p class="hero-copy"><!--BUILD:COPY--></p>
     <p class="hero-botan">
-      <a class="btn" href="#okuru">板書を送る<span class="btn-ya">→</span></a>
-      <a class="btn btn--usu" href="#bansho">みんなの板書を見る<span class="btn-ya">→</span></a>
+      <a class="btn" href="#okuru">実践を送る<span class="btn-ya">→</span></a>
+      <a class="btn btn--usu" href="#bansho">みんなの実践を見る<span class="btn-ya">→</span></a>
     </p>
   </div>
 </header>
@@ -411,9 +411,10 @@
   <i class="kazari" data-k="gakkatsu" style="--y:34%;--w:112px;--d:.8s"></i>
   <i class="kazari kazari--migi" data-k="club" style="--y:56%;--w:104px;--d:.2s"></i>
   <div class="uchi">
-    <h2 class="midashi"><span class="en">JOIN</span><span class="ja">今週の板書を、ここに</span></h2>
+    <h2 class="midashi"><span class="en">JOIN</span><span class="ja">あなたの実践を、ここに</span></h2>
     <p class="yomi">
-      <strong>送ると、そのまま板書のページに出ます。</strong><br>
+      板書の写真1枚でも、指導案のPDFでも。<br>
+      <strong>送ると、そのまま出ます。</strong><br>
       ログインは要りません。名前もメールも要りません。<br>
       だから、いちばん大事なのは<strong>送る前のひと目</strong>です。
     </p>
@@ -428,7 +429,7 @@
          ★2026-09-21 夜：押したあとは 管理人を通さずに 板書のページへ出ます。
            知らせは管理人に届き、［すぐ消す］で1押しで下ろせます。 -->
     <form class="okuru-f" id="okuru-f" novalidate>
-      <p class="okuru-midashi">板書・資料を送る</p>
+      <p class="okuru-midashi">実践を送る</p>
       <p class="okuru-yomi">写真1枚だけで大丈夫です。名前もメールも要りません。</p>
 
       <div class="okuru-g">
@@ -732,8 +733,14 @@
           shirase.textContent = '送りました。数分で「板書」のページに出ます。';
           botan.disabled = false;
         })['catch'](function(err){
+          /* ★ 2026-09-22：前はどの失敗も「うまく送れませんでした」の一言でした。
+             no-cors なので受け口の返事は読めません。読めるのは
+             **こちら側で何が起きたか**だけ。それすら出していませんでした。
+             出せるものは出します（電波が切れた／写真が読めない、の区別がつく）。 */
           shirase.textContent = (err && err.bansho) ? err.message
-            : 'うまく送れませんでした。LINEオープンチャットに直接あげてもらえると助かります。';
+            : ('うまく送れませんでした（' + ((err && (err.message || err.name)) || '理由不明')
+               + '）。電波のいいところで、もう一度ためしてください。'
+               + 'それでもだめなら、LINEオープンチャットに直接あげてもらえると助かります。');
           botan.disabled = false;
         });
       });
@@ -771,8 +778,10 @@
         komariF.reset(); kKazu.textContent = '0 / 1000字';
         kShirase.textContent = '送りました。数分で、この下に出ます。';
         kBotan.disabled = false;
-      })['catch'](function(){
-        kShirase.textContent = 'うまく送れませんでした。LINEオープンチャットに直接どうぞ。';
+      })['catch'](function(err){
+        kShirase.textContent = 'うまく送れませんでした（'
+          + ((err && (err.message || err.name)) || '理由不明')
+          + '）。電波のいいところで、もう一度ためしてください。';
         kBotan.disabled = false;
       });
     });
