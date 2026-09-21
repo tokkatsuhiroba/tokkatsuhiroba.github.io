@@ -1996,3 +1996,35 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hkumo{animation:none;display:none}
   .hero-e svg{animation:none}
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ページのいちばん下（夜の地）
+   押せるものは、ページの中と同じ「丸いボタン＋ベタ影」にそろえます。
+   ただし地が墨なので、ふちと影は墨ではなく地の色（--bg）で出します。
+   ══════════════════════════════════════════════════════════════ */
+.foot-koe{
+  margin:0 0 clamp(20px,3vw,30px);
+  font-family:var(--f-te);font-size:16px;line-height:2;
+}
+.foot-botan{
+  display:flex;flex-wrap:wrap;gap:14px;
+  margin:0 0 clamp(22px,3vw,32px);
+}
+/* .foot a（黄の字）より強く書かないと、字の色が勝てません */
+.foot .btn--yoru{
+  background:transparent;color:var(--bg);
+  border:2.5px solid var(--bg);border-radius:999px;
+  box-shadow:4px 4px 0 rgba(252,251,247,.34);
+}
+.foot .btn--yoru:hover,.foot .btn--yoru:focus-visible{
+  transform:translate(-2px,-2px);
+  box-shadow:6px 6px 0 rgba(252,251,247,.34);
+}
+/* 塗りのほうは黄。墨の字で 10:1 出ます（地に白抜きの朱では 4.0:1 しか出ません） */
+.foot .btn--nuri{background:var(--ki);color:var(--ink);border-color:var(--bg)}
+.foot .btn--yoru:focus-visible{outline:3px solid var(--bg);outline-offset:3px}
+
+@media (max-width:719px){
+  .foot-botan{gap:11px}
+  .foot-botan .btn{width:100%;justify-content:space-between;font-size:14.5px;padding:12px 20px}
+}
