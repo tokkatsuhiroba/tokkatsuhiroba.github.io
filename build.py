@@ -83,9 +83,11 @@ PAGES = (
      ('manabu', 'jissen')),
     ('atsumaru.html', '集まる', 'ニュース、各地の研究会。',
      ('news', 'kai')),
-    # 板書（2026-09-21 新設）。帯の8つには入れません。
-    #   入口は「学ぶ」の実践の節の中だけ。溜まった写真を並べて見るためのページです。
-    ('bansho.html',   '板書',   '送ってもらった板書の写真を、溜めていきます。',
+    # みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。
+    #   **このサイトの主役です。**だから帯の8つに入れました。
+    #   かわりに「すぐ使える道具」を外しています（学ぶ と同じページなので、
+    #   学ぶ の札から届きます）。帯は8つ＝スマホで2段4列、を崩しません。
+    ('bansho.html',   'みんなの実践', '送ってもらった実践が、そのまま並びます。',
      ('bansho',)),
     # 困りごと（2026-09-21 夜 新設）。帯の8つには入れません。
     #   入口は ホームの「ちょっと聞きたい」の札です。
@@ -96,15 +98,20 @@ HOME = PAGES[0][0]
 
 # 親のページ（帯に出ないページだけ）。頭のところに「← 学ぶ」を出すために使います。
 #   帯で今どこにいるかが出ないぶん、ここで戻り道を見せます。
-OYA = {'bansho.html': ('manabu.html', 'jissen', '実践'),
-       'komari.html': ('index.html', 'igi', 'ホーム')}
+#   2026-09-22：みんなの実践は帯に出したので、ここから外しました
+#   （帯が「いまどこ」を出すので、親への戻り道が二重になります）。
+OYA = {'komari.html': ('index.html', 'igi', 'ホーム')}
 # 節の名前。ホームの札と、ページの中の見出しで使い回します
 SETSU_NA = {
     'ima':    '研究日程', 'news':   'ニュース',
     'about':  '特活とは',   'manabu': '学ぶ',
-    'yotsu':  '4つの内容',  'jissen': '実践',
+    'yotsu':  '4つの内容',  'jissen': 'すぐ使える道具',
     'kai':    '日本の研究会', 'okuru': '実践を送る',
-    'bansho': '板書', 'komari': '困りごと', 'kiku': 'ちょっと聞きたい',
+    # 2026-09-22：ここがこのサイトの主役です。
+    #   「板書」は狭すぎました（いまは写真もPDFも議題も届きます）。
+    #   ファイル名（bansho.html）と front matter の bansho: は、そのままです。
+    #   URLは読まれないので変えません。配ったリンクも生きます。
+    'bansho': 'みんなの実践', 'komari': '困りごと', 'kiku': 'ちょっと聞きたい',
 }
 
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
@@ -499,6 +506,13 @@ def kenmon_jissen(fm, goods):
     # 議題には「かかる時間」がありません。欄そのものは、いつでもあることにします
     # （出すときに空なら、ただ出ません）
     fm['time'] = fm.get('time', '') or ''
+    # ── 棚を2つに分ける目じるし（2026-09-22）────────────────
+    #   okuri: true  … 先生方から**届いた**もの → 「みんなの実践」（このサイトの主役）
+    #   書かなければ … こちらで**用意した**もの → 「すぐ使える道具」
+    #   受け口（板書を受けとる.gs）が、届いたものに必ず okuri: true を付けます。
+    #   ★ここを分けないと、「届いた実践はあちらです」と書いた道具箱の中に、
+    #     その届いた実践が並びます（実際そうなっていたので分けました）。
+    fm['okuri'] = str(fm.get('okuri', '')).strip().lower() == 'true'
     # 4つの内容のどれか。ここが無いと、どのカードにも集まりません
     aru = [n for n, _ in naiyo_ichiran()]
     fm['naiyo'] = fm.get('naiyo', '').strip()
@@ -2223,10 +2237,18 @@ def yotsu_atsume(nid, ja, nayami, jissen):
     if jissen:
         aji.append('実践%d件' % len(jissen))
         naka.append('              <p class="naiyo-h">この内容の実践<i>%d</i></p>' % len(jissen))
+        # 行き先は、その実践が **どちらの棚にいるか** で変わります（2026-09-22）。
+        #   届いたもの   → みんなの実践（#b-◯◯）
+        #   用意したもの → すぐ使える道具（#j-◯◯）
+        # ここが「6つで選んでもらったものが、4つのカードにつながる」ところです。
         naka.append('              <ul class="naiyo-jissen">\n'
-                    + '\n'.join('                <li><a href="#j-%s"><span>%s</span>'
-                                '<span class="d">↓</span></a></li>'
-                                % (a['slug'], esc_html(a['title'])) for a in jissen)
+                    + '\n'.join('                <li><a href="#%s-%s"><span>%s</span>'
+                                # 矢印は →。この一覧から行く先は、どれも別のページです
+                                # （みんなの実践／すぐ使える道具）。↓ だと同じページに
+                                # 見えて、押した人が迷います。
+                                '<span class="d">→</span></a></li>'
+                                % ('b' if a.get('okuri') else 'j',
+                                   a['slug'], esc_html(a['title'])) for a in jissen)
                     + '\n              </ul>')
     else:
         naka.append('              <p class="naiyo-nai">この内容の実践は、まだ1件もありません。'
@@ -2306,7 +2328,7 @@ JFUDA_SHIRYO = """        <p class="fuda-shiryo"><b>持ち帰れる資料</b>{it
 # 板書への渡り。写真そのものは **板書のページにだけ** 入っています。
 #   同じ画像を2ページに埋めると重さが倍になるので、ここはリンク1本です。
 #   飛び先は同じCSS・同じ帯・戻り道あり（2026-09-21に決めた条件）。
-JFUDA_BANSHO = """        <p class="fuda-bansho"><a class="bansho-b" href="#b-{slug}">板書の写真を見る（{n}枚）<i>→</i></a></p>
+JFUDA_BANSHO = """        <p class="fuda-bansho"><a class="bansho-b" href="#b-{slug}">写真を大きく見る（{n}枚）<i>→</i></a></p>
 """
 
 
@@ -2321,7 +2343,7 @@ def bansho_kazu(oki):
 
 def build_jissen_hiroba(jissen, goods):
     fuda = []
-    for a in jissen:
+    for a in youi_shita(jissen):
         more = JFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         # グッズは、まだ配れないものが多い。リンクにはしないで、状態を字で出す
         items = []
@@ -2358,6 +2380,12 @@ def build_jissen_hiroba(jissen, goods):
     # 2026-09-21：札をぜんぶ縦に並べると、ここだけでスマホ5画面ありました。
     #   上から JISSEN_UE_N 枚だけ出して、のこりはこのページの中のふたへ。
     #   4つの内容から #j-◯◯ で飛んできたときは、akeru() がふたを先に開きます。
+    if not fuda:
+        # 用意したものが1つも無いとき。空の棚を押せる形で出しません
+        return ('    <p class="karappo">道具は、いま用意しているところです。'
+                '学級会グッズ・映像資料・よく出る困りごとに効く手だてを、'
+                '1つずつここに置いていきます。<br>'
+                '<b>先生方から届いた実践は「みんなの実践」にあります。</b></p>')
     ue, ato = fuda[:JISSEN_UE_N], fuda[JISSEN_UE_N:]
     honbun = '    <div class="tefuda">\n' + '\n'.join(ue) + '\n    </div>'
     if not ato:
@@ -2375,14 +2403,29 @@ def build_jissen_hiroba(jissen, goods):
 #   黒板は横長なので、効くのは高さではなく **幅** でした。だから札の外まで広げます。
 #   それでもスマホでは字が読めないので、1枚ずつ［大きく見る］を付けます。
 #   ★開く先は、同じページの中にある同じ画像です。外へは1バイトも出ません。
+# 「みんなの実践」の1件。
+#   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
+#   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
+#   **1件ぶんを、ここで丸ごと出します。**
 BFUDA = """      <article class="bfuda" id="b-{slug}">
-        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{meta}</p>
+        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
-        <div class="bfuda-mado bfuda-mado--hiro">
+        <p class="bfuda-lead">{lead}</p>
+{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span></p>
+      </article>"""
+
+BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
 {gazou}
         </div>
-        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><a class="bansho-b" href="#j-{slug}">この実践を読む<i>→</i></a></p>
-      </article>"""
+"""
+
+BFUDA_MORE = """        <details class="hiraku">
+          <summary><span class="a">くわしく</span><span class="b">とじる</span></summary>
+          <div class="fuda-naka">
+{body}
+          </div>
+        </details>
+"""
 
 # 写真1枚ぶん。図と、その下の［大きく見る］。
 #   ボタンは figure の中に置きます。押されたら、同じ figure の <img> を大きく出します。
@@ -2392,8 +2435,15 @@ GAZOU = """              <figure class="shot"><img src="{uri}" alt="{alt}" width
 
 
 def bansho_aru(jissen):
-    """板書の写真がある実践だけ、新しい順に。"""
-    return [a for a in jissen if a.get('bansho')]
+    """「みんなの実践」に並べるもの＝**届いたもの全部**、新しい順に。
+       2026-09-22：前は「板書の写真があるものだけ」でした。それだと
+       PDFだけ・議題だけで送ってくださったものが、どこにも出ませんでした。"""
+    return [a for a in jissen if a.get('okuri')]
+
+
+def youi_shita(jissen):
+    """「すぐ使える道具」に並べるもの＝こちらで用意したもの。"""
+    return [a for a in jissen if not a.get('okuri')]
 
 
 def build_bansho(jissen):
@@ -2401,22 +2451,30 @@ def build_bansho(jissen):
     aru = bansho_aru(jissen)
     if not aru:
         # 0件のときに、空の棚を押せる形で出さない（正直に書く）
-        return ('    <p class="karappo">まだ1枚もありません。'
-                '送っていただいた板書の写真を、1枚ずつここに溜めていきます。<br>'
-                '黒板だけが写っているもの（子どもの顔・名前が写っていないもの）を'
+        return ('    <p class="karappo">まだ1件もありません。'
+                '送っていただいた実践を、1件ずつここに溜めていきます。<br>'
+                '黒板や資料だけが写っているもの（子どもの顔・名前が写っていないもの）を'
                 'お願いしています。</p>')
     fuda = []
     for a in aru:
-        mai = shiryo_yomu(a['bansho'], BANSHO, 'bansho.html')
-        g = [GAZOU.format(uri=uri, alt=esc_html('%s の板書 %d枚め' % (a['title'], i + 1)),
+        # 写真が無い件（PDFだけ・議題だけ）も並べます。窓は出しません。
+        mai = shiryo_yomu(a['bansho'], BANSHO, 'bansho.html') if a.get('bansho') else []
+        g = [GAZOU.format(uri=uri, alt=esc_html('%s の写真 %d枚め' % (a['title'], i + 1)),
                           w=w, h=h, i=i + 1, n=len(mai))
              for i, (uri, w, h) in enumerate(mai)]
+        mado = BFUDA_MADO.format(gazou='\n'.join(g)) if g else ''
+        # 送ってもらった資料（PDFを画像にしたもの）も、ここで開きます
+        sh = ''.join(shiryo_mado(m, v, a['title'], page='bansho.html')
+                     for m, kind, v in a.get('shiryo_list', []) if kind == 'naka')
+        more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
                                      ja_md(a['d'])) if x)
         fuda.append(BFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
-            meta=meta, title=esc_html(a['title']), gazou='\n'.join(g),
-            by=esc_html(a['by'])))
+            kindtag=('<span class="fuda-kind">議題</span>'
+                     if a['kind'] == 'gidai' else ''),
+            meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
+            mado=mado, shiryo=sh, more=more, by=esc_html(a['by'])))
     return '    <div class="bantana">\n' + '\n'.join(fuda) + '\n    </div>'
 
 
@@ -2426,10 +2484,10 @@ def build_bansho_iriguchi(jissen):
     n = len(bansho_aru(jissen))
     if not n:
         return ('    <p class="bansho-iri bansho-iri--mada">'
-                '<b>板書の写真</b>準備中です。届いたぶんから、板書だけのページに溜めていきます。</p>')
+                '<b>みんなの実践</b>まだ1件もありません。届いたぶんから、そちらに溜めていきます。</p>')
     mai = sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))
     return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#bansho">'
-            '板書の写真だけを並べて見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
+            'みんなの実践を見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
 
 
 def build_komari_miru(komari):
@@ -2604,10 +2662,11 @@ HOME_FUDA = (
     #   （2026-09-21。いちばん下の2つは「読みもの」なので、いちばん後ろ）
     # index（このページ自身）。板書を送るところが、いちばん上です
     ('okuru',  'b', 'ko-te',    '写真もPDFも、送るとそのまま出ます。'),
+    # 送る の すぐ次が 見る。この2つで1組です（2026-09-22）
+    ('bansho', 'b', 'kokuban',  '先生方から届いた実践が、そのまま並びます。'),
     ('ima',    'k', 'gyoji',    'つぎの研究会と、申込の締切。'),
-    # manabu
-    ('manabu', 'b', 'kokuban',  '①から⑤が、ひと回りして①に戻る。'),
-    ('jissen', 'k', 'club',     '週案にそのまま書ける1行が付いています。'),
+    # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
+    ('manabu', 'k', 'club',     '学習過程と、こちらで用意した道具。'),
     # atsumaru
     ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
     ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),
@@ -2647,6 +2706,11 @@ def home_kazu(sid, sec, kiji, jissen, ken, komari):
         # 送るところの札には「いくつ届いたか」を出します。
         # （手順の数を出していましたが、手順の箇条書きをやめたので 0 になりました）
         return '%d件とどいた' % len(bansho_aru(jissen))
+    if sid == 'bansho':
+        # みんなの実践。届いた件数と、その中の写真の枚数（2026-09-22）
+        aru = bansho_aru(jissen)
+        return '%d件・%d枚' % (aru and len(aru) or 0,
+                              sum(bansho_kazu(a['bansho']) for a in aru))
     raise Tomeru('ホームの札 %s に、数の出し方がありません' % sid)
 
 
