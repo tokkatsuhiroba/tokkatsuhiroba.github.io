@@ -398,7 +398,19 @@
     el.scrollIntoView({block:'start', behavior:'auto'});
   }
   window.addEventListener('hashchange', hashDe);
-  if(location.hash) setTimeout(hashDe, 0);
+
+  /* ── 前は1枚ものでした（index.html だけ）──────────────────
+     ブックマークや、人に送ったURLが #jissen のような形で残っています。
+     このページに無い行き先で来た人を、いまその節がいるページへ送ります。
+     飛び先は同じ見た目・同じ帯なので、出された感じにはなりません。 */
+  var SAKI = {{SAKI}};
+  if(location.hash){
+    var furui = location.hash.slice(1);
+    if(furui && !document.getElementById(furui) && SAKI[furui]){
+      location.replace(SAKI[furui] + location.hash);
+    }
+    setTimeout(hashDe, 0);
+  }
 
   function setCycle(n){
     document.querySelectorAll('[data-learn-step]').forEach(function(button){

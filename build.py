@@ -2127,6 +2127,13 @@ def build_shin():
 
     for k, v in LINKS.items():
         body = body.replace('{{%s}}' % k, v)
+    # 前は1枚ものだったころの行き先（#jissen など）を、いまのページへ送る表。
+    # ページを分けるまえに配ったURLを、生かしたままにするためです。
+    if '{{SAKI}}' not in body:
+        raise Tomeru('src/hiroba.html の仕掛けに {{SAKI}} がありません'
+                     '（古い行き先を、いまのページへ送れなくなります）')
+    body = body.replace('{{SAKI}}', '{%s}' % ','.join(
+        '"%s":"%s"' % (s, f) for f, _, _, ss in PAGES for s in ss))
     nokori = re.findall(r'\{\{([A-Z_]+)\}\}', body)
     if nokori:
         raise Tomeru('src/hiroba.html に、LINKS に無い目じるしがあります： %s'
@@ -2369,9 +2376,9 @@ def main_shin(check_only):
                 encoding='utf-8', newline='\n').write(pages[f])
     print('')
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
-    print('  つぎ： GitHub の yuutennis657-beep/tokkatsu-hiroba に')
-    print('  　　　 %s を、同じ場所にまとめて上げる'
-          % '・'.join(f for f, _, _, _ in PAGES))
+    print('  公開用/ は GitHubに上げません（.gitignore）。上げるのは src/ と build.py。')
+    print('  push すると Actions が同じように組み立てて、%d枚とも Pages へ出します。'
+          % len(PAGES))
     print('')
     return 0
 

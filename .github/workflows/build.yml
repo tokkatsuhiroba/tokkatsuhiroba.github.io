@@ -4,7 +4,11 @@
 #     ↓
 #   python3 build.py         ← 検問はここで働く。止まれば公開もされない
 #     ↓
-#   公開用/index.html を GitHub Pages へ
+#   公開用/*.html を GitHub Pages へ
+#
+# ★ 2026-09-21から、出来上がりは4枚です（ホーム・知る・学ぶ・集まる）。
+#    index.html だけを上げると、押した先が全部404になります。
+#    何枚になっても取りこぼさないよう、ここでは *.html をまとめて写します。
 #
 # ★ src/_ngword.txt はリポジトリに置きません（同僚の名前などが入るため）。
 #    Actions の Secret「NGWORD」から、ビルドの直前に書き出します。
@@ -48,8 +52,29 @@ jobs:
       - name: 公開するものだけを取り出す
         run: |
           mkdir -p _site
-          cp 公開用/index.html _site/index.html
+          cp 公開用/*.html _site/
           if [ -f 公開用/ogp.png ]; then cp 公開用/ogp.png _site/ogp.png; fi
+
+      - name: 押した先が欠けていないか数える
+        run: |
+          python3 - <<'PY'
+          import glob, os, re, sys
+          aru = sorted(os.path.basename(p) for p in glob.glob('_site/*.html'))
+          print('公開するページ … ' + '、'.join(aru))
+          if 'index.html' not in aru:
+              sys.exit('✕ index.html がありません')
+          nai = set()
+          for p in glob.glob('_site/*.html'):
+              s = open(p, encoding='utf-8').read()
+              for h in re.findall('href="([^"#]+[.]html)', s):
+                  if '://' in h:      # 外のサイトは、ここでは数えません
+                      continue
+                  if h not in aru:
+                      nai.add(h)
+          if nai:
+              sys.exit('✕ 押した先が足りません … ' + '、'.join(sorted(nai)))
+          print('★ 押した先は、ぜんぶそろっています')
+          PY
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
