@@ -622,7 +622,30 @@ def gazou_size(b, f):
             return ((n & 0x3fff) + 1, ((n >> 14) & 0x3fff) + 1)
     if b[:8] == b'\x89PNG\r\n\x1a\n':
         return (int.from_bytes(b[16:20], 'big'), int.from_bytes(b[20:24], 'big'))
-    raise Tomeru('%s：大きさが読めませんでした（WebP か PNG にしてください）' % f)
+    # JPEG（2026-09-21 追加）。板書は送り手のブラウザが JPEG にして送ってきます。
+    # 頭から目印（0xFFxx）をたどって、大きさが書いてある区画（SOF）を1つ見つけます。
+    if b[:2] == b'\xff\xd8':
+        i, n = 2, len(b)
+        while i + 9 < n:
+            if b[i] != 0xFF:            # 目印でなければ1つ進む
+                i += 1
+                continue
+            m = b[i + 1]
+            if m == 0xFF:               # 詰めもの
+                i += 1
+                continue
+            if m == 0x01 or 0xD0 <= m <= 0xD8:   # 長さを持たない目印
+                i += 2
+                continue
+            if m == 0xD9 or m == 0xDA:  # 終わり／画そのもの。ここから先に大きさは無い
+                break
+            naga = int.from_bytes(b[i + 2:i + 4], 'big')
+            # SOF0〜SOF15（0xC4 DHT・0xC8・0xCC DAC は仲間ではない）
+            if 0xC0 <= m <= 0xCF and m not in (0xC4, 0xC8, 0xCC):
+                return (int.from_bytes(b[i + 7:i + 9], 'big'),
+                        int.from_bytes(b[i + 5:i + 7], 'big'))
+            i += 2 + naga
+    raise Tomeru('%s：大きさが読めませんでした（WebP・PNG・JPEG のどれかにしてください）' % f)
 
 
 # 1ページに入れた資料の合計（ビルドのはじめに0に戻す）

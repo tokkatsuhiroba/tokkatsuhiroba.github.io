@@ -41,8 +41,9 @@
  * ★ 置き場所について（tokkatu-78 が作っている板書のページに合わせるところ）
  *   写真は  src/bansho/<フォルダ名>/01.jpg 02.jpg …  に置きます。
  *   フォルダ名は英小文字・数字・- だけ（build.py がそう検問しています）。
- *   板書のページに出すために **.md が要るかどうか**は、向こうの作りが
- *   固まってから合わせてください。要るなら MD_MO_TSUKURU を true にします。
+ *   ★ 写真だけ置いても、板書のページには出ません（2026-09-21 実測）。
+ *     build.py は写真のフォルダを直接は見ず、src/jissen/*.md の bansho: から
+ *     辿ります。だから .md も一緒に作ります（MD_MO_TSUKURU = true）。
  */
 
 /* ══ 0. 設定 ══════════════════════════════════════════════ */
@@ -51,7 +52,7 @@ var P = PropertiesService.getScriptProperties();
 
 var MAI_MAX      = 3;        // 1回に受けとる枚数
 var KB_MAX       = 400;      // 写真1枚の上限（これを超えたら断る）
-var MD_MO_TSUKURU = false;   // 板書のページが .md を要るなら true
+var MD_MO_TSUKURU = true;    // 写真だけ置いても出ません。.md が要ります（2026-09-21 確認）
 
 /* ── 1日に受けとる上限（2026-09-21）────────────────────────
    URLは公開なので、誰でも送れます。それが狙いですが、裏返すと
@@ -213,30 +214,51 @@ function doGet(e) {
   }
   if (MD_MO_TSUKURU) {
     var md = _md(slug, n);
-    _github('src/jissen/' + slug + '.md',
+    _github('src/jissen/' + _kyou() + '_' + slug + '.md',
             Utilities.base64Encode(md, Utilities.Charset.UTF_8),
             '板書の1件を載せる（' + slug + '）');
   }
   return _html('載せました。数分で板書のページに出ます。');
 }
 
-/* ★ ここの front matter は、build.py が読む形に合わせてください。
-     tokkatu-78 が作っている板書のページが固まってから見直すところです。 */
+/* front matter は build.py の検問に合わせてあります（2026-09-21 実測で確認）。
+   ここを触るときは build.py の kenmon_jissen() を見てください。
+     share: true … これが無いと **丸ごと飛ばされます**（ここで1度つまずきました）
+     naiyo     … gakkyu / gyoji / jidokai / club のどれか。gakkatsu は無い
+     kind      … gidai なので time は要りません
+   送り手は学年も内容も選びません。だから naiyo と scene は既定値です。
+   ちがっていたら、あとから .md を手で直してください。 */
+function _kyou() {
+  return Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
+}
+
+/* front matter と本文に入れてはいけない形を落とします。
+   1件の .md が検問に当たると、サイト全体のビルドが止まるためです。 */
+function _arau(s) {
+  return String(s || '')
+    .replace(/[\r\n]+/g, ' ')                                   // 改行（front matter が壊れる）
+    .replace(/^[#\-\s]+/, '')                                    // 行頭の # と -（見出し・--- 扱い）
+    .replace(/^(効き目|自分の考え|返し|分野|kikime|kangae|kaeshi)\s*[:：]\s*/, '')  // 優アンテナの欄
+    .trim();
+}
+
 function _md(slug, n) {
-  var hi = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
+  var t = _arau(n.t);
+  var g = _arau(n.g);
   return [
     '---',
+    'share: true',
     'kind: gidai',
-    'date: ' + hi,
-    'title: ' + (n.t || '板書'),
-    'grade: ' + (n.g || '答えにくい'),
-    'scene: 学級会',
-    'naiyo: gakkatsu',
+    'date: ' + _kyou(),
+    'title: ' + (t || '送ってもらった板書'),
+    'grade: ' + (g || '学年なし'),
+    'naiyo: gakkyu',
+    'scene: 学級活動(1)',
     'bansho: ' + slug,
-    'by: 匿名',
+    'by: 送ってくださった先生',
     '---',
     '',
-    (n.t || '送ってもらった板書です。')
+    '送ってもらった板書です。'   // ひとことは title に入れました（ここに入れると二度出ます）
   ].join('\n');
 }
 
