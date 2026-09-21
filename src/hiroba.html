@@ -878,6 +878,96 @@
          URLが入れば、ログイン無しで送れるようになります）        */
   var OKURU_URL = 'https://script.google.com/macros/s/AKfycbwb0xkl5HpPDX2WqSov42N8L2FkAVD6ZYx5sbbs_7r332mmsRYY8_VYDyfD29yqKHCH/exec';
 
+  /* ══ 合いことば（2026-09-22 夜）══════════════════════════
+     送った人だけが、あとから自分の1件を消せるようにするしくみです。
+     ログインは要りません。
+
+       ① 送るとき、ここで**長いでたらめな合いことば**を1つ作る
+       ② 送るのは、その**ハッシュ**だけ（合いことばそのものは送らない）
+       ③ 合いことばは、この端末の中（localStorage）にだけ残る
+       ④ 消すときは合いことばを添える。受け口はハッシュと突き合わせる
+
+     ★ハッシュは公開の .md に書かれますが、そこから合いことばは出せません
+       （128ビットのでたらめ＋SHA-256）。だから、見えていても消せません。
+     ★弱点：端末を変える・履歴を消すと、自分の1件を触れなくなります
+       （消えはしません。触れなくなるだけです）。だから送ったあとに
+       合いことばを画面に出して、控えられるようにします。
+     ★localStorage が使えない所（プライベート窓など）でも、送ることは
+       できます。そのときは「あとから消せない」だけです。       */
+  var AIKOTOBA_KAGI = 'tokkatsu-aikotoba';
+
+  /* 送ったあとに、合いことばを1度だけ見せます。
+     ★見せないと、端末を変えたときに自分の1件を触れなくなります。
+     ★閉じるまで残します（自分で押して閉じてもらう）。 */
+  function aikotoba_miseru(ji, shimaeta){
+    var furui = document.getElementById('aikotoba-mado');
+    if(furui) furui.remove();
+    var m = document.createElement('div');
+    m.className = 'aiko';
+    m.id = 'aikotoba-mado';
+    m.setAttribute('role', 'status');
+    m.innerHTML =
+      '<p class="aiko-h">この1件の 合いことば</p>'
+    + '<p class="aiko-ji"><code></code></p>'
+    + '<p class="aiko-yo"></p>'
+    + '<p class="aiko-te">'
+    +   '<button type="button" class="bansho-b" data-aiko-utsusu>うつす</button>'
+    +   '<button type="button" class="bansho-b" data-aiko-tojiru>とじる</button>'
+    + '</p>';
+    m.querySelector('code').textContent = ji;
+    m.querySelector('.aiko-yo').textContent = shimaeta
+      ? 'この端末には、もう控えてあります。端末を変えることがあるなら、'
+      + 'これをメモか自分あてのメールに残しておいてください。'
+      + 'あとで この1件を消すときに使います。'
+      : '★この端末には控えられませんでした（プライベート窓などでは残りません）。'
+      + 'これを控えておかないと、あとから この1件を消せなくなります。';
+    m.addEventListener('click', function(ev){
+      if(ev.target.closest('[data-aiko-tojiru]')) return m.remove();
+      if(ev.target.closest('[data-aiko-utsusu]')){
+        var b = ev.target.closest('[data-aiko-utsusu]');
+        (navigator.clipboard ? navigator.clipboard.writeText(ji)
+                             : Promise.reject())
+          .then(function(){ b.textContent = 'うつしました'; })
+          ['catch'](function(){ b.textContent = '長く押してえらんでください'; });
+      }
+    });
+    document.body.appendChild(m);
+  }
+
+
+  function aikotoba_tsukuru(){
+    var b = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(b);
+    var ji = '';
+    for(var i = 0; i < b.length; i++) ji += ('0' + b[i].toString(16)).slice(-2);
+    return ji;
+  }
+
+  function aikotoba_hash(s){
+    if(!(window.crypto && crypto.subtle)) return Promise.resolve('');
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
+      .then(function(b){
+        var u = new Uint8Array(b), ji = '';
+        for(var i = 0; i < u.length; i++) ji += ('0' + u[i].toString(16)).slice(-2);
+        return ji;
+      })['catch'](function(){ return ''; });
+  }
+
+  function aikotoba_yomu(){
+    try{
+      return JSON.parse(localStorage.getItem(AIKOTOBA_KAGI) || '[]') || [];
+    }catch(e){ return []; }
+  }
+
+  function aikotoba_shimau(hitotsu){
+    try{
+      var a = aikotoba_yomu();
+      a.unshift(hitotsu);
+      localStorage.setItem(AIKOTOBA_KAGI, JSON.stringify(a.slice(0, 200)));
+      return true;
+    }catch(e){ return false; }   /* しまえなくても、送るのは止めません */
+  }
+
   /* ══ 学年の札（2026-09-22）══════════════════════════════
      前は 1〜2年／3〜4年 のまとめ売りの選びでした。実践は「5年でやった」
      ものなので、まとめられると書けません。1年ずつ押せる札にして、
@@ -1401,6 +1491,9 @@
         shirase.textContent = '小さくしています…';
         /* ★PDFは、塗ったページから**組み直したもの**を送ります。
              元のPDFは1バイトも出ていきません。 */
+        /* 合いことばを1つ作って、ハッシュだけを添えます（2026-09-22 夜）。
+           これが無いと、あとから自分の1件を消せません。 */
+        var aikotoba = aikotoba_tsukuru(), nushi = '';
         var pdf_okuru = w.p.length
           ? Promise.resolve().then(function(){
               /* 受け口は data URI で受けます（板書を受けとる.gs の _dataURI_pdf）。
@@ -1408,8 +1501,14 @@
               return 'data:application/pdf;base64,' + pdf_b64(pdf_kumu(pdf_pages()));
             })
           : null;
-        Promise.all(w.e.map(chijimeru).concat(pdf_okuru ? [pdf_okuru] : []))
+        Promise.all([aikotoba_hash(aikotoba)]
+                    .concat(w.e.map(chijimeru))
+                    .concat(pdf_okuru ? [pdf_okuru] : []))
         .then(function(zen){
+          nushi = zen[0];          /* ★外がわで var してあります。ここで var を
+                                      書くと、送れたあとの「しまう」ところから
+                                      見えません（2026-09-22 実測で踏みました） */
+          zen = zen.slice(1);
           var e = zen.slice(0, w.e.length), p = zen.slice(w.e.length);
           shirase.textContent = '送っています…';
           return fetch(OKURU_URL, {
@@ -1423,6 +1522,7 @@
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
             body: JSON.stringify({
               kind: 'bansho', e: e, p: p,   /* p … 組み直したPDF（base64） */
+              nushi: nushi,                 /* 合いことばのハッシュ（本体は送らない） */
               n:  naiyo.yomu(),                                /* 6つの内容（1つだけ） */
               t:  document.getElementById('okuru-t').value.slice(0, 60),
               g:  nen(),                                       /* 押された学年 */
@@ -1438,9 +1538,13 @@
             })
           });
         }).then(function(){
+          var dai = document.getElementById('okuru-t').value.trim();
+          var shimaeta = nushi && aikotoba_shimau(
+            {k: aikotoba, n: nushi, t: dai, d: new Date().toISOString().slice(0, 10)});
           okuruF.reset(); mihon.textContent = ''; nen_kesu(); nuri_kesu(); naiyo.kesu();
           if(kazu) kazu.textContent = '0 / 1000字';
-          shirase.textContent = '送りました。数分で「板書」のページに出ます。';
+          shirase.textContent = '送りました。数分で「みんなの実践」に出ます。';
+          aikotoba_miseru(aikotoba, shimaeta);
           botan.disabled = false;
         })['catch'](function(err){
           /* ★ 2026-09-22：前はどの失敗も「うまく送れませんでした」の一言でした。
@@ -1878,20 +1982,29 @@
       }
       kBotan.disabled = true;
       kShirase.textContent = '送っています…';
-      fetch(OKURU_URL, {
+      /* 実践と同じ合いことば。あとから自分の1件を消すための関門です */
+      var kAi = aikotoba_tsukuru();
+      aikotoba_hash(kAi).then(function(kNushi){
+      return fetch(OKURU_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kGn.yomu(),
+        body: JSON.stringify({ kind: 'komari', nushi: kNushi,
+                               m: m.slice(0, 1000), g: kGn.yomu(),
                                n: kN.yomu(), t: kT.value.trim().slice(0, 60),
                                /* 名前は任意。出すかどうかは、印を入れた人だけ */
                                na: kNa.value.trim().slice(0, 40),
                                sh: kSh.value.trim().slice(0, 60),
                                ko: kKo.checked ? 1 : 0 })
       }).then(function(){
+        var shimaeta = kNushi && aikotoba_shimau(
+          {k: kAi, n: kNushi, t: kT.value.trim() || '困りごと',
+           d: new Date().toISOString().slice(0, 10)});
         komariF.reset(); kGn.kesu(); kN.kesu(); kKazu.textContent = '0 / 1000字';
         kShirase.textContent = '送りました。数分で、この下に出ます。';
+        aikotoba_miseru(kAi, shimaeta);
         kBotan.disabled = false;
+      });
       })['catch'](function(err){
         kShirase.textContent = 'うまく送れませんでした（'
           + ((err && (err.message || err.name)) || '理由不明')

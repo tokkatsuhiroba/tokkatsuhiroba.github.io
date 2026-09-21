@@ -66,6 +66,52 @@ var HI_MAX = 40;
 
 function _p(k, moto) { return (P.getProperty(k) || moto || '').trim(); }
 
+/* ══ 0の2. あいことば（2026-09-22 夜）════════════════════════
+   ここを入れるまで、消すところは **誰でも押せました**。
+   ウェブアプリのURLは公開ページのソースに書いてあり（書かないと送れない）、
+   消す先の名前も id="b-bansho-…" としてページに出ています。
+   つまり、ソースを見た人なら誰でも どの1件でも消せる状態でした。
+
+   直し方は「合いことば」です。ログインは要りません。
+     ・送るとき、送る人のブラウザが長いでたらめな合いことばを1つ作る
+     ・**そのハッシュだけ**を投稿にくっつけて送る（合いことばは送らない）
+     ・合いことばは、その人のブラウザの中にだけ残る
+     ・消す／なおすときは合いことばを添える。こちらはハッシュと
+       突き合わせて、合った人だけ通す
+     ・管理人のあいことば（KANRI_KEY）は、ぜんぶにきく
+
+   ★KANRI_KEY が無ければ、初めて要るときに自分で作って控えます。
+     入れてもらう設定を1つも増やさないためです。作った合いことばは、
+     そのときの知らせのメールに1度だけ出します。                    */
+function _kanri_key() {
+  var k = _p('KANRI_KEY');
+  if (!k) {
+    k = Utilities.getUuid().replace(/-/g, '');
+    P.setProperty('KANRI_KEY', k);
+  }
+  return k;
+}
+
+/* 合いことば → ハッシュ（16進の字）。同じ字からは いつも同じ答えが出ます。
+   逆に、ハッシュから合いことばは出せません。だから公開の .md に
+   書いてあっても、そこから消せるようにはなりません。 */
+function _hash(s) {
+  var b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+                                  String(s), Utilities.Charset.UTF_8);
+  var ji = '';
+  for (var i = 0; i < b.length; i++) {
+    ji += ('0' + (b[i] & 0xFF).toString(16)).slice(-2);
+  }
+  return ji;
+}
+
+/* 送られてきたハッシュが、本物の形をしているか。
+   でたらめな字を .md に書きこませないための関門です。 */
+function _nushi_arau(s) {
+  s = String(s || '').trim().toLowerCase();
+  return /^[0-9a-f]{64}$/.test(s) ? s : '';
+}
+
 /* 入れてもらうものを1つに減らすため、空のときは自分で決めます。
    ここで決められないのは GITHUB_TOKEN だけです（合言葉なので、
    人の手で入れてもらうしかありません）。 */
@@ -148,7 +194,10 @@ function doPost(e) {
        いまは **そのまま載せます**。誰の目も通りません。
        そのかわり、知らせに［すぐ消す］を付けています。 */
     var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '',
-              n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko };
+              n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,
+              /* 送った人の合いことばの**ハッシュ**。合いことばそのものは
+                 こちらには来ません（来ないほうが安全です）。 */
+              nushi: _nushi_arau(d.nushi) };
     var nose = { ok: false, riyu: '' };
     try {
       _noseru(slug, n);
@@ -206,6 +255,8 @@ function _md_komari(d, m) {
     '---',
     'share: true',
     'date: ' + _kyou(),
+    /* 送った人の合いことばのハッシュ。消すときの関門になります（→ doGet） */
+    'nushi: ' + _nushi_arau(d.nushi),
     /* 議題名があれば、それが札の言葉。無ければ本文の1行目から作ります
        （2026-09-22。実践と同じ項目にしたので、同じものが題になります） */
     'title: ' + (_arau(d.t) || _mijikaku(m)),
@@ -246,7 +297,7 @@ function _shiraseru_komari(slug, d, m, nose) {
     '　所属　：' + (d.sh || '（なし）') + '\n\n' +
     '＜中身＞\n' + m + '\n\n' +
     '★ 学校名・子どもの名前・同僚の名前が入っていたら、いますぐ下から消してください。\n\n' +
-    (url ? 'すぐ消す：' + url + '?v=' + slug + '&x=1\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&k=' + _kanri_key() + '\n\n' +
            '（公開ページからは消えます。GitHubの履歴には残ります）\n'
          : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
@@ -319,6 +370,7 @@ function _md_nittei(d, na, m) {
     /* 名前は、出してよいと押した人だけ出ます。
        押していなければ空にして、サイト側が「送ってくださった先生」と出します。 */
     'by: ' + (Number(d.ko) === 1 ? _arau(d.by) : ''),
+    'nushi: ' + _nushi_arau(d.nushi),
     '---',
     '',
     m.slice(0, NITTEI_MOJI_MAX)
@@ -357,7 +409,7 @@ function _shiraseru_nittei(slug, d, na, m, nose) {
     '　（パソコンのLINEでは開きません。下の文をコピーして貼ってください）\n\n' +
     '＜貼る文＞\n' + bun + '\n' +
     '───────────────────────────\n\n' +
-    (url ? 'すぐ消す：' + url + '?v=' + slug + '&x=1\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&k=' + _kanri_key() + '\n\n' +
            '（公開ページからは消えます。GitHubの履歴には残ります）\n'
          : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
@@ -485,7 +537,7 @@ function _shiraseru(slug, d, folder, nose) {
     (d.m ? d.m : '（書かれていません）') + '\n\n' +
     '★ 子どもの顔・名前・学校名が写っていたら、いますぐ下から消してください。\n\n' +
     (url
-      ? 'すぐ消す：' + url + '?v=' + slug + '&x=1\n\n' +
+      ? 'すぐ消す：' + url + '?v=' + slug + '&k=' + _kanri_key() + '\n\n' +
         '（公開ページからは消えます。GitHubの履歴には残ります）\n'
       : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
@@ -531,9 +583,37 @@ function _noseru(slug, n) {
      履歴ごと消すには、手もとで git の作り直しが要ります。 */
 function doGet(e) {
   var slug = (e.parameter.v || '').trim();
+  var key  = String(e.parameter.k || '').trim();
   if (!/^(bansho|komari|nittei)-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
+
+  /* ★ここが無いと、URLを知った人が誰でも消せます（2026-09-22 夜に入れました）。
+       通るのは次の2つだけです。
+         ・管理人のあいことば
+         ・その1件を送った人の合いことば（ハッシュが .md のものと合う） */
+  var kanri = (key && key === _kanri_key());
+  if (!kanri) {
+    var nushi = _nushi_yomu(slug);
+    if (!nushi) {
+      return _html('この1件には合いことばが付いていません。'
+                 + '<br><br>管理人のリンクからなら消せます。');
+    }
+    if (!key || _hash(key) !== nushi) {
+      return _html('合いことばが ちがいます。<br><br>'
+                 + '送ったときと<b>同じ端末・同じブラウザ</b>から消してください。'
+                 + '（合いことばは、その中にだけ残っています）');
+    }
+  }
+
+  /* 押すまでは、何もしません。メールを読む道具がリンクを先に開いてしまっても、
+     ここで止まります（2026-09-22 夜。前は x=1 を最初から付けていました）。 */
   if (e.parameter.x !== '1') {
-    return _html('何もしていません。消すなら、メールの［すぐ消す］を押してください。');
+    var mata = ScriptApp.getService().getUrl()
+             + '?v=' + encodeURIComponent(slug) + '&k=' + encodeURIComponent(key) + '&x=1';
+    return _html('この1件を消しますか。<br><small>' + slug + '</small><br><br>'
+               + '<a href="' + mata + '" style="display:inline-block;padding:14px 26px;'
+               + 'background:#D2552A;color:#fff;border-radius:999px;text-decoration:none;'
+               + 'font-weight:700">消す</a>'
+               + '<br><br><small>公開ページからは消えます。GitHubの履歴には残ります。</small>');
   }
   var keshita = 0;
   try {
@@ -553,6 +633,35 @@ function doGet(e) {
   if (!keshita) return _html('もう残っていませんでした。');
   return _html('消しました（' + keshita + '件）。数分でページから消えます。<br><br>' +
                '<small>GitHub の履歴には残ります。Driveの写真も残っています。</small>');
+}
+
+/* その1件の .md から、合いことばのハッシュ（nushi:）を読みます。
+   無ければ空。★受け口を貼り直す前に届いたものは、これを持っていません。
+   その1件は、管理人のあいことばでしか消せません（それでよい、と決めました）。 */
+function _nushi_yomu(slug) {
+  var doko = slug.indexOf('komari-') === 0 ? 'src/komari'
+           : slug.indexOf('nittei-') === 0 ? 'src/nittei' : 'src/jissen';
+  var ichiran = _github_miru(doko);
+  if (!ichiran) return '';
+  for (var i = 0; i < ichiran.length; i++) {
+    var na = ichiran[i].name || '';
+    if (na.slice(-3) === '.md' && na.indexOf('_' + slug + '.') >= 0) {
+      var hon = _github_yomu(ichiran[i].path);
+      var m = hon && hon.match(/^nushi:\s*([0-9a-f]{64})\s*$/m);
+      return m ? m[1] : '';
+    }
+  }
+  return '';
+}
+
+function _github_yomu(michi) {
+  var kotae = UrlFetchApp.fetch(_gh_url(michi) + '?ref=' + _p('GITHUB_BRANCH', 'main'),
+    { headers: _gh_atama(), muteHttpExceptions: true });
+  if (kotae.getResponseCode() !== 200) return '';
+  var j = JSON.parse(kotae.getContentText());
+  if (!j || !j.content) return '';
+  return Utilities.newBlob(Utilities.base64Decode(j.content.replace(/\n/g, '')))
+                  .getDataAsString('UTF-8');
 }
 
 function _kesu_folder(michi, slug) {
@@ -678,6 +787,7 @@ function _md(slug, n) {
     'naiyo: ' + naiyo[0],
     'scene: ' + naiyo[1]
   ];
+  if (n.nushi)      gyo.push('nushi: ' + n.nushi);
   if (n.uri.length) gyo.push('bansho: ' + slug);
   if (n.pdf)        gyo.push('shiryo: 送ってもらった資料|' + slug);
   gyo.push('by: ' + _by(n));

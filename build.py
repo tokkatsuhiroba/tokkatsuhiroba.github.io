@@ -544,6 +544,13 @@ def kenmon_jissen(fm, goods):
     # 届いた時こく。サイトから送られたものだけが持ちます（板書を受けとる.gs が書く）。
     #   「2026-09-22 17:33」の形。読めなければ、その日の0時として扱います。
     #   ★ここでは止めません。1件の書き方のせいでサイト全体が出なくなるためです。
+    # 送った人の合いことばの**ハッシュ**（2026-09-22 夜）。
+    #   これは公開されますが、ここから合いことばは出せません
+    #   （128ビットのでたらめ＋SHA-256）。札に付けておくと、送った本人の
+    #   ブラウザが「これは自分のだ」と見分けられます。
+    fm['nushi'] = (fm.get('nushi') or '').strip().lower()
+    if fm['nushi'] and not re.match(r'^[0-9a-f]{64}$', fm['nushi']):
+        fm['nushi'] = ''        # 形がちがうものは、無いものとして扱います（止めません）
     fm['todoita_aru'] = bool((fm.get('todoita') or '').strip())
     fm['todoita'] = todoita_yomu(fm.get('todoita'), fm['d'])
     # 資料（指導案・スライド・板書など）。1行に「見出し|置き場」をカンマで並べる。
@@ -2643,7 +2650,7 @@ def build_jissen_hiroba(jissen, goods):
 #   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
-BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}">
+BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi}>
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
@@ -2721,6 +2728,7 @@ def build_bansho(jissen):
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
             toki=a['todoita'].strftime('%Y%m%d%H%M'),
             nen=' '.join(nen_bunkai(a['grade'])),
+            nushi=(' data-nushi="%s"' % a['nushi']) if a.get('nushi') else '',
             oshi=('        <p class="bfuda-oshi">%s</p>\n' % inline_md(a['oshi'])
                   if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'

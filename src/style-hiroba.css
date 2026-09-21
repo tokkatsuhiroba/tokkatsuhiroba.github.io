@@ -2537,3 +2537,28 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .bfuda-naka p,.bfuda-naka li{font-size:14px;line-height:1.9}
   .bfuda-oshi{font-size:15.5px;padding-inline-start:12px}
 }
+
+/* ══ 合いことばの窓（2026-09-22 夜）════════════════════════
+   送ったあと、1度だけ出ます。控えておかないと、端末を変えたときに
+   自分の1件を触れなくなるためです（消えはしません。触れなくなるだけ）。 */
+.aiko{
+  position:fixed;z-index:95;
+  inset-inline:16px;bottom:16px;margin-inline:auto;max-width:520px;
+  padding:16px 18px;
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
+  box-shadow:6px 6px 0 var(--ink);
+}
+.aiko-h{
+  margin:0 0 8px;font-family:var(--f-maru);font-weight:700;
+  font-size:14px;letter-spacing:.04em;
+}
+.aiko-ji{margin:0 0 10px}
+.aiko-ji code{
+  display:block;padding:10px 12px;
+  background:var(--men-ki);border:2px solid var(--ink);border-radius:10px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:14px;line-height:1.6;word-break:break-all;user-select:all;
+}
+.aiko-yo{margin:0 0 12px;font-size:12.5px;line-height:1.8;color:var(--mute)}
+.aiko-te{display:flex;gap:10px;margin:0;flex-wrap:wrap}
+.aiko-te .bansho-b{font-size:13px}
