@@ -84,6 +84,11 @@ SETSU_NA = {
 LINKS = {
     'FORM_IKEN'  : 'https://forms.gle/Qkmej386gxQavi8z6',   # 困りごと・意見（2026-09-21 専用フォームに差しかえ）
     'FORM_JISSEN': 'https://forms.gle/fnWnivr61t2BA6tR7',   # 実践・板書の提供（同上）
+    # 話す場。このサイトは「溜まる場」で、話は ぜんぶこちらです。
+    # 2026-09-21：新版に切りかえたとき、リンクが1本も無くなっていました。
+    #   名前は5か所に出るのに、押せる所がどこにも無い状態でした。
+    'LINE_OC'    : 'https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA'
+                   '?utm_source=invitation&utm_medium=link_copy&utm_campaign=default',
     'SITE_URL'   : SITE_URL,
 }
 
@@ -1920,18 +1925,25 @@ def build_kyara_narabi(kyara):
 #   数は、その場で数えたものだけを出します（手で書いた数は置きません。
 #   足したのに数が古い、が起きないため）。
 #   （節のid, 絵のたね, 絵の名前, 短い1行）
+#   ★並び順は「行き先のページごと」にまとめてあります。
+#     色も行き先ごとなので、同じ色がとなり合って見えます。
+#     ばらばらに並べると、帯を2段にしたとき色が飛び飛びになります。
 HOME_FUDA = (
+    # index（このページ自身）
     ('ima',    'k', 'gyoji',    'つぎの研究会と、申込の締切。'),
-    ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
+    # shiru
     ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。'),
-    ('manabu', 'b', 'kokuban',  '①から⑤が、ひと回りして①に戻る。'),
     ('yotsu',  'k', 'jidokai',  '学活くん・行人・児童会ちゃん・クラブマン。'),
+    # manabu
+    ('manabu', 'b', 'kokuban',  '①から⑤が、ひと回りして①に戻る。'),
     ('jissen', 'k', 'club',     '週案にそのまま書ける1行が付いています。'),
+    # atsumaru
+    ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
     ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),
     ('okuru',  'b', 'ko-te',    '送ると、ふつうはその日のうちに載ります。'),
 )
 
-HOME_T = """      <a class="hfuda hf--{sid}" href="{saki}">
+HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
         <span class="hfuda-e" aria-hidden="true"><svg viewBox="0 0 {w} {h}" focusable="false"><use href="#ill-{tane}-{na}"/></svg></span>
         <b class="hfuda-h">{midashi}</b>
         <span class="hfuda-yo">{yo}</span>
@@ -1975,7 +1987,8 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
         w, h, _ = hako[na]
         tsukatta.add((tane, na))
         fuda.append(HOME_T.format(
-            sid=sid, saki='%s#%s' % (doko[sid], sid), tane=tane, na=na, w=w, h=h,
+            page=doko[sid].replace('.html', ''),
+            saki='%s#%s' % (doko[sid], sid), tane=tane, na=na, w=w, h=h,
             midashi=esc_html(SETSU_NA[sid]), yo=esc_html(yo),
             kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken))))
     honbun = ('<section class="sec sec--ki" id="ichiran">\n'
@@ -1995,7 +2008,7 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
 #   ★ ここに書く中身は、ぜんぶ節そのものから抜いています。
 #     手で写さないこと（節を直したのに概要が古い、が起きます）。
 
-GFUDA = """      <div class="gfuda gf--{sid}">
+GFUDA = """      <div class="gfuda p--{page}">
         <div class="atama" aria-hidden="true" inert>
 {atama}
         </div>
@@ -2064,7 +2077,8 @@ def build_gaiyo(sec, doko):
         if sid == 'ima':      # こよみは、この上に本物が出ているので要りません
             continue
         fuda.append(GFUDA.format(
-            sid=sid, saki='%s#%s' % (doko[sid], sid),
+            page=doko[sid].replace('.html', ''),
+            saki='%s#%s' % (doko[sid], sid),
             midashi=esc_html(SETSU_NA[sid]),
             atama=build_atama(sec[sid])))
     return ('<section class="sec" id="gaiyo">\n'
@@ -2115,8 +2129,8 @@ def build_obi(ima_file, doko):
     for sid, _, _, _ in HOME_FUDA:
         saki = doko[sid]
         ima = (saki == ima_file)
-        gyo.append('      <li><a class="obi-s obi--%s%s" href="%s"%s>%s</a></li>'
-                   % (sid, ' obi-ima' if ima else '',
+        gyo.append('      <li><a class="obi-s p--%s%s" href="%s"%s>%s</a></li>'
+                   % (saki.replace('.html', ''), ' obi-ima' if ima else '',
                       '#%s' % sid if ima else '%s#%s' % (saki, sid),
                       ' aria-current="page"' if ima else '',
                       esc_html(SETSU_NA[sid])))

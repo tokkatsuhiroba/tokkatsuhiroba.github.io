@@ -26,6 +26,7 @@
   --men-ki:#FBF2D8;
   --men-sora:#EAF5FA;
   --men-midori:#EDF5EC;
+  --men-hada:#F7E3D9;      /* 4つめの面。行き先の色分けで使います */
 
   /* 書体は役ごとに変える。温かさは丸ゴシックと硬筆、読みやすさはUD書体。
        maru … 見出し・ボタン（Zen Maru Gothic＝丸ゴシック）
@@ -119,11 +120,6 @@ img,svg{max-width:100%}
   text-align:center;pointer-events:none;padding-inline:var(--pad);
 }
 .hero-koe .btn{pointer-events:auto;margin-top:clamp(18px,3vh,30px)}
-.hero-shita{
-  position:absolute;z-index:2;left:50%;bottom:14px;transform:translateX(-50%);
-  margin:0;font-family:var(--f-en);font-size:12px;font-weight:700;letter-spacing:.2em;color:var(--ink);
-  background:var(--bg);border:2px solid var(--ink);padding:5px 14px;
-}
 .hero-logo{
   margin:0;font-family:var(--f-maru);font-weight:900;
   font-size:clamp(30px,6.2vw,72px);letter-spacing:.10em;line-height:1.25;text-indent:.10em;
@@ -702,16 +698,9 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
   .obi-l a{transition:none}
 }
 
-/* スマホでは行き先が画面の外に続く。続きがあることを、右のふちのぼかしで見せる
-   （字で「よこに動かせます」と書くと、帯が2段になって本文が押し下がるため） */
-@media (max-width:719px){
-  .obi-uchi{position:relative}
-  .obi-uchi::after{
-    content:"";position:absolute;inset-block:0;inset-inline-end:0;width:34px;
-    pointer-events:none;
-    background:linear-gradient(to right,rgba(252,251,247,0) 0%,var(--bg) 78%);
-  }
-}
+/* 2026-09-21：帯を2段4列にして、横にスクロールしなくなりました。
+   「続きがある」を見せていた右ふちのぼかしは、もう要りません
+   （残すと、右はしの札に黒いにじみが乗って見えます）。 */
 
 /* ══════════════════════════════════════════════════════════════
    こよみ（左）＋ 一覧（右）　2026-09-21 に追加
@@ -1354,10 +1343,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   border:2px solid var(--ink);border-radius:999px;
   font-family:var(--f-maru);font-weight:700;font-size:12px;letter-spacing:.04em;
 }
-/* 節ごとに、その節の面の色を敷く（絵と色で、どこ行きかが分かる） */
-.hf--about,.hf--yotsu  {background:var(--men-sora)}
-.hf--manabu,.hf--jissen{background:var(--men-midori)}
-.hf--ima,.hf--news,.hf--kai,.hf--okuru{background:var(--men-ki)}
+/* 行き先のページの色を敷く（絵と色で、どこ行きかが分かる） */
+.hfuda{background:var(--p-iro,var(--bg))}
 
 @media (max-width:1023px){
   .hban{grid-template-columns:repeat(2,1fr)}
@@ -1479,10 +1466,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   content:"";position:absolute;left:0;right:0;bottom:0;height:58px;
   background:linear-gradient(to bottom,transparent,var(--mi-ji,var(--bg)));
 }
-/* 窓の地は、その節がほんとうに使っている色に */
-.gf--about .atama {--mi-ji:var(--men-sora)}
-.gf--jissen .atama{--mi-ji:var(--men-midori)}
-.gf--manabu .atama,.gf--okuru .atama{--mi-ji:var(--men-ki)}
+/* 窓の地も、行き先のページの色 */
+.gfuda .atama{--mi-ji:var(--p-iro,var(--bg))}
 
 .gfuda-a{
   display:flex;align-items:baseline;gap:10px;
@@ -1565,15 +1550,20 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    色は、その行き先のページごと。＝同じ色は、同じページに着きます。
    色だけで伝えないため、いまいる所はベタ塗り（形でも分かる）にします。
    ══════════════════════════════════════════════════════════════ */
+/* ── 色の決まりは1つだけ：同じ色は、同じページに着く ──────────
+   ページごとに色を決め、帯・8つの札・中身をざっと の3か所で同じ色を使います。
+   並び順も行き先ごとにまとめてあるので、同じ色がとなり合って見えます。
+   色だけで伝えないため、いまいる所はベタ塗り（形でも分かる）にします。 */
+.p--index   {--p-iro:var(--men-ki)}
+.p--shiru   {--p-iro:var(--men-sora)}
+.p--manabu  {--p-iro:var(--men-midori)}
+.p--atsumaru{--p-iro:var(--men-hada)}
+
 .obi-s{position:relative}
-/* 行き先のページごとの色（広い画面では、下に細い線で） */
-.obi--about,.obi--yotsu  {--obi-iro:var(--men-sora)}
-.obi--manabu,.obi--jissen{--obi-iro:var(--men-midori)}
-.obi--ima,.obi--news,.obi--kai,.obi--okuru{--obi-iro:var(--men-ki)}
 @media (min-width:720px){
   .obi-l a.obi-s::after{
     content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;
-    border-radius:2px;background:var(--obi-iro);
+    border-radius:2px;background:var(--p-iro,transparent);
   }
   .obi-l a.obi-ima::after{background:var(--bg);opacity:.5}
 }
@@ -1596,11 +1586,17 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .obi-l a{
     width:100%;min-height:33px;padding:5px 4px;justify-content:center;
     text-align:center;font-size:11.5px;letter-spacing:0;line-height:1.3;
-    border-width:2px;background:var(--obi-iro);border-color:var(--obi-iro);
+    border-width:2px;background:var(--p-iro,var(--bg));border-color:var(--p-iro,var(--rule));
   }
   .obi-l a.obi-ima{background:var(--ink);border-color:var(--ink);color:var(--bg)}
   .obi-l a:hover,.obi-l a:focus-visible{border-color:var(--ink)}
   /* 帯が2段になったぶん、飛んだ先を止める位置も下げる */
   .sec,.foot{scroll-margin-top:96px}
   .hyo--ken .gyo{scroll-margin-top:104px}
+}
+
+/* 足もとの、いちばん下。だれが作っているかを、はっきり出す */
+.kanri{
+  margin:16px 0 0;padding-top:14px;border-top:1px solid rgba(252,251,247,.25);
+  font-family:var(--f-maru);font-weight:700;font-size:13.5px;letter-spacing:.06em;
 }
