@@ -680,6 +680,9 @@ def load_komari():
             tobashita.append('%s … naiyo が「%s」です（%s のどれか）'
                              % (f, fm['naiyo'], '／'.join(aru)))
             continue
+        # 場面（学級活動(1) など）。実践と同じ項目にしたので、送られた時点で入ります。
+        # 古い1件には無いので、空でも通します。
+        fm['scene'] = (fm.get('scene') or '').strip()
         fm['saki'] = (fm.get('saki') or '').strip()
         if fm['saki'] and fm['saki'] not in '12345':
             tobashita.append('%s … saki が「%s」です（1〜5 か、空）' % (f, fm['saki']))
@@ -699,10 +702,13 @@ def mijikaku(hon, n=26):
     return gyo if len(gyo) <= n else gyo[:n] + '…'
 
 
+# 内容のふだは、実践の札と同じ見た目（.bfuda-tag t--◯◯）にします。
+# 同じ内容の困りと実践が、同じ色のふだで並ぶようにするためです。
 KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
-        <p class="komari-hi">{hi}{grade}</p>
+        <p class="komari-hi">{tag}{hi}{grade}</p>
         <div class="komari-hon">{hon}</div>
       </article>"""
+KOMARI_TAG = '<span class="bfuda-tag t--{nid}">{ja}</span>　'
 
 KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。<br>
       ホームの <a href="#kiku">ちょっと聞きたい</a> から、いま困っていることを送ってください。</p>"""
@@ -713,6 +719,9 @@ def build_komari(komari):
         return KOMARI_KARA
     return '\n'.join(
         KOMARI_T.format(slug=a['slug'], hi=a['d'].strftime('%Y年%-m月%-d日'),
+                        tag=(KOMARI_TAG.format(nid=a['naiyo'],
+                                               ja=esc_html(a['scene'] or naiyo_ja(a['naiyo'])))
+                             if a['naiyo'] else ''),
                         grade=('　' + esc_html(a['grade'])) if a['grade'] else '',
                         hon=md_html(a['hon']))
         for a in komari)

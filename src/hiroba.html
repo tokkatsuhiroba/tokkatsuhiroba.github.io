@@ -371,6 +371,31 @@
         <p class="okuru-kazu" id="komari-kazu" aria-live="polite">0 / 1000字</p>
       </div>
 
+      <!-- 内容と議題名は、実践を送るときと**同じ項目・同じ言葉**にしてあります
+           （2026-09-22）。同じ内容の札に、困りと実践が並ぶようにするためです。
+           ★選べる6つと、カードの4つは別です。学級活動(1)(2)(3)はぜんぶ
+             「学級活動」のカードへ入ります（変換は Apps Script の _naiyo）。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="komari-n">内容<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">選んだ内容の<b>カード</b>に集まります。<br>
+          その内容の<b>実践</b>と、同じところに並びます。</p>
+        <select class="okuru-i" id="komari-n" name="n" required>
+          <option value="">えらんでください</option>
+          <option value="gakkyu1">学級活動(1)　話合い活動・係活動</option>
+          <option value="gakkyu2">学級活動(2)　日常の生活・健康安全</option>
+          <option value="gakkyu3">学級活動(3)　キャリア形成・自己実現</option>
+          <option value="gyoji">学校行事</option>
+          <option value="jidokai">児童会活動</option>
+          <option value="club">クラブ活動</option>
+        </select>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="komari-t">議題名・題材名・行事名<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="komari-t" name="t" maxlength="60"
+               placeholder="例：たてわり班であそぶ会をしよう／よりよい食事のとり方／運動会">
+      </div>
+
       <div class="okuru-g">
         <span class="okuru-l" id="komari-gn-l">学年<span class="okuru-nin">任意</span></span>
         <p class="okuru-yomi okuru-yomi--sub">押すと入ります。いくつでも押せます。もう一度押すと外れます。</p>
@@ -892,6 +917,8 @@
   var komariF = document.getElementById('komari-f');
   if(komariF && OKURU_URL){
     var kM = document.getElementById('komari-m');
+    var kN = document.getElementById('komari-n');
+    var kT = document.getElementById('komari-t');
     var kGn = nen_fuda('komari-gn');
     var kKazu = document.getElementById('komari-kazu');
     var kShirase = document.getElementById('komari-shirase');
@@ -905,13 +932,15 @@
       ev.preventDefault();
       var m = kM.value.trim();
       if(!m){ kShirase.textContent = '困っていることを書いてください。'; return; }
+      if(!kN.value){ kShirase.textContent = '内容をえらんでください。'; kN.focus(); return; }
       kBotan.disabled = true;
       kShirase.textContent = '送っています…';
       fetch(OKURU_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kGn.yomu() })
+        body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kGn.yomu(),
+                               n: kN.value, t: kT.value.trim().slice(0, 60) })
       }).then(function(){
         komariF.reset(); kGn.kesu(); kKazu.textContent = '0 / 1000字';
         kShirase.textContent = '送りました。数分で、この下に出ます。';
