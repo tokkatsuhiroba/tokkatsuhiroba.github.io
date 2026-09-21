@@ -144,7 +144,8 @@ function doPost(e) {
        いままでは「管理人が［載せる］を押すまで、サイトには1枚も出ない」でした。
        いまは **そのまま載せます**。誰の目も通りません。
        そのかわり、知らせに［すぐ消す］を付けています。 */
-    var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '' };
+    var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '',
+              n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko };
     var nose = { ok: false, riyu: '' };
     try {
       _noseru(slug, n);
@@ -183,12 +184,33 @@ function _komari(d) {
   return _kotae({ ok: true, noseta: nose.ok });
 }
 
+/* 札に出す短い言葉。本文の1行目を、文の切れ目で切ります。
+   ★これは「たたき台」です。長すぎたり、個別すぎたりしたら、
+     あとから .md の title: を手で直してください。 */
+function _mijikaku(hon, n) {
+  n = n || 26;
+  var gyo = String(hon).split('\n')[0].replace(/^[#\-・\s　]+/, '').trim();
+  var ku = ['。', '？', '?', '！', '!'];
+  for (var i = 0; i < ku.length; i++) {
+    var j = gyo.indexOf(ku[i]);
+    if (j > 0 && j <= n) return gyo.slice(0, j);
+  }
+  return gyo.length <= n ? gyo : gyo.slice(0, n) + '…';
+}
+
 function _md_komari(d, m) {
   return [
     '---',
     'share: true',
     'date: ' + _kyou(),
+    'title: ' + _mijikaku(m),
     'grade: ' + (_arau(d.g) || '学年なし'),
+    /* ここから下の2つは、あとから人が足す欄です（いまは空）。
+         naiyo: gakkyu … 4つの内容のカードにも並びます
+         saki: 2       … 押せる札になり、学習過程の②が開きます
+                         ＝ この悩みに答えが付いた、という印 */
+    'naiyo: ',
+    'saki: ',
     '---',
     '',
     m
@@ -288,8 +310,16 @@ function _shiraseru(slug, d, folder, nose) {
       : '板書が1件とどきましたが、載せられませんでした。写真はDriveに残っています。\n' +
         '　理由：' + ((nose && nose.riyu) || '（不明）') + '\n') +
     '\n' +
+    '　内容　　：' + _naiyo(d.n)[1] + '（カードは「'
+      + { gakkyu: '学級活動', gyoji: '学校行事',
+          jidokai: '児童会活動', club: 'クラブ活動' }[_naiyo(d.n)[0]] + '」へ）\n' +
     '　議題名　：' + (d.t || '（なし）') + '\n' +
     '　学年　　：' + (d.g || '（なし）') + '\n' +
+    /* ★お名前は、サイトに出ていなくても ここには必ず出します。
+       「出さない」を選んだ人の名前も、管理人には届いている、という約束です。 */
+    '　お名前　：' + (d.na || '（なし）')
+      + (d.ko ? '　← サイトにも出しています' : '　← サイトには出していません') + '\n' +
+    '　所属　　：' + (d.sh || '（なし）') + '\n' +
     '　枚数　　：' + (d.e || []).length + '枚' +
       ((d.p || []).length ? '／PDF1つ' : '') + '\n' +
     '　置き場　：' + folder.getUrl() + '\n\n' +
@@ -429,10 +459,45 @@ function _arau_hon(s) {
   return hon;
 }
 
+/* ══ 内容：フォームの6つ → サイトの4つ（2026-09-22）══════════
+   学習指導要領は 学級活動(1)(2)(3)・学校行事・児童会活動・クラブ活動 の6つ。
+   サイトのカードは 学級活動・学校行事・児童会活動・クラブ活動 の4つです。
+   だから **(1)(2)(3) は ぜんぶ「学級活動」のカードに集まります。**
+   選んだ6つのほうは scene に残るので、札には (1)(2)(3) まで出ます。
+   ★左の合言葉は src/hiroba.html の <option value="…"> と同じにしてください。
+   ★naiyo に書けるのは gakkyu / gyoji / jidokai / club の4つだけです。
+     ほかを書くと build.py が止まり、サイトが更新されません。 */
+var NAIYO6 = {
+  gakkyu1: ['gakkyu',  '学級活動(1)'],
+  gakkyu2: ['gakkyu',  '学級活動(2)'],
+  gakkyu3: ['gakkyu',  '学級活動(3)'],
+  gyoji:   ['gyoji',   '学校行事'],
+  jidokai: ['jidokai', '児童会活動'],
+  club:    ['club',    'クラブ活動']
+};
+
+function _naiyo(kotae) {
+  /* 選ばれていない・知らない合言葉のときは、いちばん多いところへ置きます。
+     ここで落とすと、せっかく送ってもらったものが消えるためです。 */
+  return NAIYO6[String(kotae || '')] || NAIYO6.gakkyu1;
+}
+
+/* 「提供：」に出す名前。
+   ★名前を書いてもらうことと、サイトに出すことは別です（2026-09-22）。
+     出すのは、本人が「名前を出してよい」に印を入れたときだけ。
+     印が無ければ、名前は管理人へのお知らせにだけ残ります。 */
+function _by(n) {
+  if (!n.ko || !String(n.na || '').trim()) return '送ってくださった先生';
+  var na = _arau(n.na);
+  var sh = _arau(n.sh);
+  return sh ? (na + '（' + sh + '）') : na;
+}
+
 function _md(slug, n) {
   var t = _arau(n.t);
   var g = _arau(n.g);
   var m = _arau_hon(n.m);
+  var naiyo = _naiyo(n.n);
   var gyo = [
     '---',
     'share: true',
@@ -440,12 +505,12 @@ function _md(slug, n) {
     'date: ' + _kyou(),
     'title: ' + (t || (n.uri.length ? '送ってもらった板書' : '送ってもらった資料')),
     'grade: ' + (g || '学年なし'),
-    'naiyo: gakkyu',
-    'scene: 学級活動(1)'
+    'naiyo: ' + naiyo[0],
+    'scene: ' + naiyo[1]
   ];
   if (n.uri.length) gyo.push('bansho: ' + slug);
   if (n.pdf)        gyo.push('shiryo: 送ってもらった資料|' + slug);
-  gyo.push('by: 送ってくださった先生');
+  gyo.push('by: ' + _by(n));
   gyo.push('---');
   gyo.push('');
   gyo.push(m || (n.uri.length ? '送ってもらった板書です。' : '送ってもらった資料です。'));

@@ -177,9 +177,16 @@
     <!--BUILD:BANSHO_IRI-->
 
     <div class="manabu-box">
-      <h3 class="manabu-h">お悩み別の入口</h3>
-      <p class="manabu-note">いま困っていることを押すと、下の5段階のうち、読むところが開きます。<br>ここに出るのは学級活動の悩みです。ほかの3つの内容の悩みは、<a href="#yotsu">4つの内容</a>のカードの中にあります。</p>
+      <h3 class="manabu-h">みんなから届いた悩み</h3>
+      <p class="manabu-note">
+        ここに並んでいるのは、<strong>送られてきた困りごと</strong>です。こちらで先に用意したものではありません。<br>
+        <b>実線の札</b>は、答えが見つかったもの。押すと、下の5段階のうち読むところが開きます。<br>
+        <b>破線の札</b>は、<strong>まだ答えがないもの</strong>。押すと本文が読めます。答えが見つかったら、実線に変わります。
+      </p>
       <!--BUILD:NAYAMI-->
+      <p class="manabu-note" style="margin-top:14px">
+        あなたの困りごとも <a href="#komari">ちょっと聞きたい</a> から送れます。ログインは要りません。
+      </p>
     </div>
 
     <div class="manabu-box manabu-katei">
@@ -303,25 +310,35 @@
   <i class="kazari" data-k="club" style="--y:28%;--w:116px;--d:.3s"></i>
   <i class="kazari kazari--migi" data-b="ki" style="--y:46%;--w:104px;--d:1.4s"></i>
   <div class="uchi">
-    <h2 class="midashi"><span class="en">PRACTICE</span><span class="ja">すぐ使える実践</span></h2>
-    <p class="yomi">明日の学級会にそのまま使えるものだけ。週案にそのまま書ける1行が付いています。<br>準備・流れ・板書まで、ぜんぶこのページの中で開きます。</p>
-    <p class="yomi">厚いものだけではありません。<strong>「こんな議題が出ました」の1件</strong>も、同じ棚に並びます。札に<strong>議題</strong>と付いているものがそれです。</p>
+    <h2 class="midashi"><span class="en">TOOLS</span><span class="ja">すぐ使える道具</span></h2>
+    <p class="yomi">
+      ここは<strong>こちらで用意したもの</strong>です。学級会グッズ、映像資料、<br>
+      よく出る困りごとに効く手だて。<strong>持ち帰って、明日そのまま使えるもの</strong>だけを置きます。
+    </p>
+    <p class="yomi">
+      先生方から届いた実践は、こちらではなく <strong>「みんなの実践」</strong>にあります。<br>
+      あちらが本物の持ち寄り、ここが道具箱です。
+    </p>
     <!--BUILD:JISSEN_H-->
   </div>
 </section>
 
-<!-- 板書（2026-09-21 新設）。帯には出しません。入口は、この上の実践の節だけです。
+<!-- みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。**このサイトの主役です。**
+     もとの名前は「板書」でした。届くものが 写真・PDF・議題・概要 まで広がったので、
+     「板書」では狭くなりました。ファイル名（bansho.html）と front matter の
+     bansho: は、そのままにしてあります（URLは読まれないので、配った先が生きます）。
      写真の実体は、このページにだけ入っています（同じ画像を2ページに埋めないため）。 -->
 <section class="sec sec--ki" id="bansho">
   <i class="kazari" data-b="kokuban" style="--y:24%;--w:126px;--d:.2s"></i>
   <i class="kazari kazari--migi" data-k="gakkatsu" style="--y:50%;--w:106px;--d:1.3s"></i>
   <div class="uchi">
-    <h2 class="midashi"><span class="en">BLACKBOARD</span><span class="ja">板書</span></h2>
+    <h2 class="midashi"><span class="en">SHARED</span><span class="ja">みんなの実践</span></h2>
     <p class="yomi">
-      送っていただいた板書の写真を、消さずに<strong>溜めていきます</strong>。<br>
-      載せるのは<strong>黒板だけが写ったもの</strong>です。子どもの顔・名前・作品が写っているものは受けとりません。
+      先生方から送っていただいたものを、消さずに<strong>溜めていきます</strong>。<br>
+      ここが<strong>この広場の主役</strong>です。板書の写真1枚でも、指導案のPDFでも、議題ひとつでも。
     </p>
     <p class="yomi">
+      載せるのは<strong>黒板や資料だけが写ったもの</strong>です。子どもの顔・名前・作品が写っているものは受けとりません。<br>
       写真はこのページの中に入っています。<strong>押しても外にはつながりません。</strong><br>
       「これは下ろしてほしい」というご連絡があれば、その週のうちに外します。
     </p>
@@ -333,19 +350,18 @@
      入口は ホームの「ちょっと聞きたい」の札です。
      ★送られた1件は、誰の目も通らずにここへ出ます。板書と同じ決めごとです。
        出してはいけない語が入っていた1件だけは、出しません（ビルドは止めません）。 -->
-<section class="sec sec--sora" id="komari">
+<section class="sec sec--sora" id="kiku">
   <i class="kazari" data-k="gakkatsu" style="--y:22%;--w:112px;--d:.3s"></i>
   <i class="kazari kazari--migi" data-k="jidokai" style="--y:54%;--w:104px;--d:1.2s"></i>
   <div class="uchi">
     <h2 class="midashi"><span class="en">ASK</span><span class="ja">ちょっと聞きたい</span></h2>
     <p class="yomi">
       いま困っていることを、そのまま書いてください。<br>
-      ログインは要りません。名前もメールも要りません。<strong>送ると、数分でこの下に出ます。</strong>
+      ログインは要りません。名前もメールも要りません。<strong>送ると、数分で出ます。</strong>
     </p>
     <p class="yomi">
-      ここは<strong>溜める場</strong>です。答えが早いのは
-      <strong>LINEオープンチャット「みんなの特活ひろば」</strong>のほうです。
-      あちらには505人がいて、その日のうちに誰かが答えてくれます。
+      <strong>この悩みは、みんなで溜めたものです。</strong>こちらで先に用意したものではありません。<br>
+      答えが見つかったものから、<a href="#manabu">学ぶ</a>の入口で押せる札になっていきます。
     </p>
 
     <form class="okuru-f" id="komari-f" novalidate>
@@ -380,9 +396,26 @@
       <p class="okuru-chu">開いただけでは、何も出ていきません。<br><b>「送る」を押したときだけ</b>、送られて、そのまま載ります。</p>
     </form>
 
-    <h3 class="komari-h">届いている困りごと</h3>
+    <!--BUILD:KOMARI_MIRU-->
+  </div>
+</section>
+
+<!-- 届いている困りごと（一覧）。送る欄はホームに置いたので、ここは並べるだけです。
+     2026-09-22：悩みは、こちらで先に用意したものではなく、ここに溜まったものです。 -->
+<section class="sec sec--sora" id="komari">
+  <i class="kazari" data-k="jidokai" style="--y:20%;--w:106px;--d:.7s"></i>
+  <div class="uchi">
+    <h2 class="midashi"><span class="en">VOICES</span><span class="ja">届いている困りごと</span></h2>
+    <p class="yomi">
+      送られてきたものを、そのまま並べています。<br>
+      答えが見つかったものは、<a href="#manabu">学ぶ</a>の入口で<strong>押せる札</strong>になります。
+    </p>
     <!--BUILD:KOMARI-->
 
+    <p class="yomi tsugi">
+      あなたの困りごとも <a href="#kiku">ちょっと聞きたい</a> から送れます。<br>
+      <strong>答えが早いのはLINEのほう</strong>です。505人が読んでいます。
+    </p>
     <div class="naka">
       <a class="btn btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">LINEで聞いてみる<span class="btn-ya">↗</span></a>
     </div>
@@ -427,7 +460,8 @@
            知らせは管理人に届き、［すぐ消す］で1押しで下ろせます。 -->
     <form class="okuru-f" id="okuru-f" novalidate>
       <p class="okuru-midashi">実践を送る</p>
-      <p class="okuru-yomi">写真1枚だけで大丈夫です。名前もメールも要りません。</p>
+      <p class="okuru-yomi">写真1枚だけで大丈夫です。ログインもメールも要りません。<br>
+        <b>内容とお名前だけ</b>、書いてください。名前をサイトに出すかどうかは、下で選べます。</p>
 
       <div class="okuru-g">
         <label class="okuru-shashin" for="okuru-e">
@@ -436,6 +470,24 @@
           <input type="file" id="okuru-e" name="e" accept="image/*,application/pdf" multiple>
         </label>
         <p class="okuru-mihon" id="okuru-mihon" aria-live="polite"></p>
+      </div>
+
+      <!-- 内容（2026-09-22）。学習指導要領の6つで聞いて、サイトの4つに寄せます。
+           学級活動(1)(2)(3) は、ぜんぶ「学級活動」のカードに集まります。
+           選んだ6つのほうは scene に残るので、札には (1)(2)(3) まで出ます。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-n">内容<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">選んだ内容の<b>カード</b>に集まります。<br>
+          学級活動(1)(2)(3)は、ぜんぶ<b>「学級活動」</b>のカードへ。</p>
+        <select class="okuru-i" id="okuru-n" name="n" required>
+          <option value="">えらんでください</option>
+          <option value="gakkyu1">学級活動(1)　話合い活動・係活動</option>
+          <option value="gakkyu2">学級活動(2)　日常の生活・健康安全</option>
+          <option value="gakkyu3">学級活動(3)　キャリア形成・自己実現</option>
+          <option value="gyoji">学校行事</option>
+          <option value="jidokai">児童会活動</option>
+          <option value="club">クラブ活動</option>
+        </select>
       </div>
 
       <div class="okuru-g">
@@ -465,6 +517,29 @@
 次にやるなら、ここを直す。"></textarea>
         <p class="okuru-kazu" id="okuru-kazu" aria-live="polite">0 / 1000字</p>
       </div>
+
+      <!-- お名前（2026-09-22）。必須にしました。
+           ★書いてもらうことと、サイトに出すことは別です。
+             出すかどうかは、下のチェックで本人が決めます。
+             チェックが無ければ「提供：送ってくださった先生」のままです。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-na">お名前<span class="okuru-hissu">必須</span></label>
+        <input class="okuru-i" type="text" id="okuru-na" name="na" maxlength="40"
+               autocomplete="name" placeholder="例：伊藤 優">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-sh">所属<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="okuru-sh" name="sh" maxlength="60"
+               placeholder="例：◯◯市立◯◯小学校">
+      </div>
+
+      <p class="okuru-check">
+        <label for="okuru-ko"><input type="checkbox" id="okuru-ko" name="ko">
+          <span>サイトに<b>名前を出してよい</b></span></label>
+        <span class="okuru-check-chu">入れなければ「提供：送ってくださった先生」と出ます。<br>
+          どちらでも、お名前は管理人にだけ届きます。</span>
+      </p>
 
       <p class="okuru-kiwo"><b>送るまえに かならず</b>子どもの顔や名前、学校名が写っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b>誰も間に入りません。</p>
 
@@ -708,6 +783,19 @@
         if(!w.e.length && !w.p.length){
           shirase.textContent = '写真かPDFを1つえらんでください。'; return;
         }
+        /* 必須の2つ（2026-09-22）。novalidate なので、ここで自分で見ます。
+           書いていないところへ連れていって、そこを光らせます。 */
+        var nIn = document.getElementById('okuru-n');
+        var naIn = document.getElementById('okuru-na');
+        var tarinai = !nIn.value ? nIn : (!naIn.value.trim() ? naIn : null);
+        if(tarinai){
+          shirase.textContent = (tarinai === nIn)
+            ? '内容をえらんでください（4つの内容のどこに集めるかが決まります）。'
+            : 'お名前を書いてください。出すかどうかは、下のチェックで選べます。';
+          tarinai.focus();
+          if(tarinai.scrollIntoView) tarinai.scrollIntoView({block:'center'});
+          return;
+        }
         botan.disabled = true;
         shirase.textContent = '小さくしています…';
         Promise.all(w.e.map(chijimeru).concat(w.p.map(yomu_nama))).then(function(zen){
@@ -724,9 +812,13 @@
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
             body: JSON.stringify({
               kind: 'bansho', e: e, p: p,
-              t: document.getElementById('okuru-t').value.slice(0, 60),
-              g: document.getElementById('okuru-g').value,
-              m: document.getElementById('okuru-m').value.slice(0, 1000)
+              n:  nIn.value,                                   /* 6つの内容 */
+              t:  document.getElementById('okuru-t').value.slice(0, 60),
+              g:  document.getElementById('okuru-g').value,
+              m:  document.getElementById('okuru-m').value.slice(0, 1000),
+              na: naIn.value.trim().slice(0, 40),              /* お名前（必須） */
+              sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
+              ko: document.getElementById('okuru-ko').checked ? 1 : 0
             })
           });
         }).then(function(){
@@ -849,6 +941,97 @@
       frame.innerHTML = '<iframe src="https://www.youtube.com/embed/' + id + '?rel=0&modestbranding=1" title="' + title.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
       box.replaceChild(frame, button);
     });
+  });
+})();
+
+/* ══ 写真を大きく見る（2026-09-22）════════════════════════
+   板書は横長です。札の幅で頭打ちになり、スマホでは字が読めません。
+   ［大きく見る］で、ページの上に1枚だけかぶせて出します。
+
+   ★出すのは、**いまこのページの中にある同じ画像**です。
+     取りに行きません。外へは1バイトも出ません。
+   ★iPhoneのSafariは、写真や図を全画面にする命令（requestFullscreen）を
+     受けつけません（動画だけです）。だからその命令は使わず、
+     自前のかぶせで作っています。どの端末でも同じように開きます。
+   ★「画面に合わせる」＝ぜんぶ見える大きさ。
+     「大きく」＝もとの大きさ。はみ出したぶんは指で動かせます。
+     横長の黒板は、こちらにしないと字が読めません。            */
+(function(){
+  'use strict';
+  var zen = null, img = null, modoru = null;
+
+  function tsukuru(){
+    zen = document.createElement('div');
+    zen.className = 'zen';
+    zen.hidden = true;
+    zen.setAttribute('role', 'dialog');
+    zen.setAttribute('aria-modal', 'true');
+    zen.setAttribute('aria-label', '写真を大きく見る');
+    zen.innerHTML =
+      '<div class="zen-naka"><img alt=""></div>' +
+      '<div class="zen-te">' +
+        '<button class="zen-b" type="button" data-zen-te="fit" aria-pressed="true">画面に合わせる</button>' +
+        '<button class="zen-b" type="button" data-zen-te="ookiku" aria-pressed="false">大きく</button>' +
+        '<button class="zen-b zen-tojiru" type="button" data-zen-te="tojiru">とじる</button>' +
+      '</div>';
+    document.body.appendChild(zen);
+    img = zen.querySelector('img');
+    zen.addEventListener('click', function(ev){
+      var b = ev.target.closest && ev.target.closest('[data-zen-te]');
+      if(!b){ if(ev.target === zen) tojiru(); return; }
+      var te = b.getAttribute('data-zen-te');
+      if(te === 'tojiru') return tojiru();
+      ookiku(te === 'ookiku');
+    });
+  }
+
+  function ookiku(on){
+    zen.classList.toggle('zen--ookiku', on);
+    zen.querySelector('[data-zen-te="fit"]').setAttribute('aria-pressed', on ? 'false' : 'true');
+    zen.querySelector('[data-zen-te="ookiku"]').setAttribute('aria-pressed', on ? 'true' : 'false');
+    var naka = zen.querySelector('.zen-naka');
+    /* 「大きく」にしたら、まんなかから見せます（左上だと黒板の端から始まります） */
+    if(on) naka.scrollLeft = (naka.scrollWidth - naka.clientWidth) / 2;
+  }
+
+  function hiraku(moto){
+    if(!zen) tsukuru();
+    img.src = moto.currentSrc || moto.src;
+    img.alt = moto.alt || '';
+    zen.hidden = false;
+    /* 画面よりずっと幅がある写真（＝横長の黒板をスマホで見るとき）は、
+       はじめから「大きく」で開きます。「画面に合わせる」で開くと、
+       1400pxの板書が 359×107 にしかならず、字が1つも読めないためです。
+       ★naturalWidth は、まだ読みこんでいない画像では 0 です
+         （ふたの中の資料は loading="lazy" なので、ここでつまずきました）。
+         build.py が width= を必ず書いているので、そちらを控えにします。 */
+    var haba = moto.naturalWidth || parseInt(moto.getAttribute('width'), 10) || 0;
+    ookiku(haba > window.innerWidth * 1.5);
+    document.documentElement.style.overflow = 'hidden';
+    zen.querySelector('.zen-tojiru').focus();
+  }
+
+  function tojiru(){
+    if(!zen || zen.hidden) return;
+    zen.hidden = true;
+    img.removeAttribute('src');          /* 同じ絵を二重に持たない */
+    document.documentElement.style.overflow = '';
+    if(modoru && modoru.focus) modoru.focus();
+    modoru = null;
+  }
+
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('[data-zen]');
+    if(!b) return;
+    var fig = b.closest('figure');
+    var moto = fig && fig.querySelector('img');
+    if(!moto) return;
+    modoru = b;
+    hiraku(moto);
+  });
+
+  document.addEventListener('keydown', function(ev){
+    if(ev.key === 'Escape') tojiru();
   });
 })();
 </script>
