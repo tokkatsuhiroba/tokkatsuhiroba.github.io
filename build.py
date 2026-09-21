@@ -684,6 +684,9 @@ def load_komari():
         # 場面（学級活動(1) など）。実践と同じ項目にしたので、送られた時点で入ります。
         # 古い1件には無いので、空でも通します。
         fm['scene'] = (fm.get('scene') or '').strip()
+        # 提供（2026-09-22）。名前は任意で、送った人が「出してよい」に
+        # 印を入れたときだけ入ります。無ければ、札には何も出ません。
+        fm['by'] = (fm.get('by') or '').strip()
         fm['saki'] = (fm.get('saki') or '').strip()
         if fm['saki'] and fm['saki'] not in '12345':
             tobashita.append('%s … saki が「%s」です（1〜5 か、空）' % (f, fm['saki']))
@@ -708,7 +711,11 @@ def mijikaku(hon, n=26):
 KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
         <p class="komari-hi">{tag}{hi}{grade}</p>
         <div class="komari-hon">{hon}</div>
-      </article>"""
+{by}      </article>"""
+# 名乗ってくださった人だけ、下に小さく出します。
+# 名乗らないのが既定なので、無い札のほうが多くて当たり前です。
+KOMARI_BY = """        <p class="komari-by">{by}</p>
+"""
 KOMARI_TAG = '<span class="bfuda-tag t--{nid}">{ja}</span>　'
 
 KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。<br>
@@ -724,6 +731,7 @@ def build_komari(komari):
                                                ja=esc_html(a['scene'] or naiyo_ja(a['naiyo'])))
                              if a['naiyo'] else ''),
                         grade=('　' + esc_html(a['grade'])) if a['grade'] else '',
+                        by=(KOMARI_BY.format(by=esc_html(a['by'])) if a['by'] else ''),
                         hon=md_html(a['hon']))
         for a in komari)
 

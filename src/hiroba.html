@@ -528,6 +528,29 @@
         </div>
       </div>
 
+      <!-- お名前（2026-09-22）。実践を送るときと同じ形ですが、**必須にしません**。
+           実践を出すのは「うまくいったことを差し出す」、困りごとを書くのは
+           「うまくいっていないと打ち明ける」ことです。後者で名前を要ると、
+           正直な困りごとが出てこなくなります。だから任意のままにします。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="komari-na">お名前<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="komari-na" name="na" maxlength="40"
+               autocomplete="name" placeholder="例：伊藤 優">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="komari-sh">所属<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="komari-sh" name="sh" maxlength="60"
+               placeholder="例：◯◯市立◯◯小学校">
+      </div>
+
+      <p class="okuru-check">
+        <label for="komari-ko"><input type="checkbox" id="komari-ko" name="ko">
+          <span>サイトに<b>名前を出してよい</b></span></label>
+        <span class="okuru-check-chu">入れなければ、名前は<b>どこにも出ません</b>。<br>
+          書かなくても送れます。書いた場合、お名前は管理人にだけ届きます。</span>
+      </p>
+
       <p class="okuru-kiwo"><b>送るまえに かならず</b>学校名・子どもの名前・同僚の名前が入っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b></p>
 
       <p class="okuru-botan">
@@ -1208,6 +1231,9 @@
   if(komariF && OKURU_URL){
     var kM = document.getElementById('komari-m');
     var kN = hitotsu_fuda('komari-nn');
+    var kNa = document.getElementById('komari-na');
+    var kSh = document.getElementById('komari-sh');
+    var kKo = document.getElementById('komari-ko');
     var kT = document.getElementById('komari-t');
     var kGn = nen_fuda('komari-gn');
     var kKazu = document.getElementById('komari-kazu');
@@ -1235,7 +1261,11 @@
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: JSON.stringify({ kind: 'komari', m: m.slice(0, 1000), g: kGn.yomu(),
-                               n: kN.yomu(), t: kT.value.trim().slice(0, 60) })
+                               n: kN.yomu(), t: kT.value.trim().slice(0, 60),
+                               /* 名前は任意。出すかどうかは、印を入れた人だけ */
+                               na: kNa.value.trim().slice(0, 40),
+                               sh: kSh.value.trim().slice(0, 60),
+                               ko: kKo.checked ? 1 : 0 })
       }).then(function(){
         komariF.reset(); kGn.kesu(); kN.kesu(); kKazu.textContent = '0 / 1000字';
         kShirase.textContent = '送りました。数分で、この下に出ます。';
