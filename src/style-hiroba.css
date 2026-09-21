@@ -1946,6 +1946,9 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:15.5px;line-height:1.85;
 }
 .igi-bun b{font-weight:700;border-bottom:3px solid var(--ki);padding-bottom:1px}
+/* 1文＝1行。狭い画面で1行に入りきらないときも、語の切れ目でしか折りません
+   （auto-phrase が無いブラウザでも、行が増えるだけで壊れません） */
+.igi-bun span{display:block;word-break:auto-phrase;text-wrap:pretty}
 .igi-l{
   list-style:none;margin:20px auto 0;padding:0;max-width:720px;
   display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;

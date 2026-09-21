@@ -43,6 +43,7 @@ GOODS  = os.path.join(SRC, 'goods')    # 学級会グッズ（1点＝1ファイ�
 SHIRYO = os.path.join(SRC, 'shiryo')   # 資料の画像（1件＝1フォルダ。ページの中に埋めこむ）
 BANSHO = os.path.join(SRC, 'bansho')   # 板書の写真（1件＝1フォルダ。板書のページにだけ埋めこむ）
 KOMARI = os.path.join(SRC, 'komari')   # 困りごと（1件＝1ファイル。送られたら、そのまま出ます）
+NITTEI = os.path.join(SRC, 'nittei')   # 送られた研究日程（1件＝1ファイル。手で足すぶんは src/app.js の EVENTS）
 JISSEN_HOME_N = 2                      # ホームに出す実践の数
 
 # 資料をページの中に入れるときの上限。ここを外すと配れない重さになります。
@@ -2655,11 +2656,16 @@ def build_igi(kyara):
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">WHY</span>'
             '<span class="ja">このサイトは、なに</span></h2>\n'
-            '    <p class="igi-bun">日本の特別活動の<b>情報交流</b>を高めるための'
-            'サイトです。LINEオープンチャット'
-            '<b>「みんなの特活ひろば（仮）」</b>と連携しています。'
-            '<br>あちらで話し、ここで<b>確かめて、持ち帰る</b>。'
-            'そのためにお使いください。</p>\n'
+            # 1文＝1行。<span> を1つずつ立てて、行の折れ目を文の切れ目に
+            # そろえます（2026-09-22）。<br> だと、画面が狭いときに文の
+            # 途中でも折れて「みんなの特／活ひろば」のように割れます。
+            '    <p class="igi-bun">'
+            '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
+            '<span>LINEオープンチャット<b>「みんなの特活ひろば（仮）」</b>と'
+            '連携しています。</span>'
+            '<span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span>'
+            '<span>そのためにお使いください。</span>'
+            '</p>\n'
             '    <ul class="igi-l">\n' + '\n'.join(men) + '\n    </ul>\n'
             # ★ここは切り分けたあとに作るので、{{◯◯}} は置きかわりません。
             #   LINKS から直に入れます。
