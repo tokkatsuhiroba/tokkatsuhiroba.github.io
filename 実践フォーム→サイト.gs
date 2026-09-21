@@ -195,6 +195,61 @@ function lineTameshi() {
 }
 
 
+/* ══ 6-2. グループで受けとる（要るときだけ）══════════════
+ *
+ * 公式アカウントを **ふつうのグループトーク** に入れて、そこへ知らせを送れます。
+ * （オープンチャットには入れられません。LINEの決まりです）
+ *
+ * 送り先（グループのID）は、外からは分かりません。
+ * そこで、**グループの中で合いことばを1回書いてもらう**ことで覚えます。
+ *
+ *   1. LINE Developers の Webhook URL に、このウェブアプリのURLを入れて、ONにする
+ *   2. 公式アカウントをグループに招待する
+ *   3. そのグループで「ここにしらせて」と書く
+ *   4. 「ここに知らせます」と返ってきたら、覚えました
+ *   5. **Webhook を OFF に戻してよい**（覚えたIDは残ります）
+ *
+ * ★4で覚えたあとは、5でOFFにしてください。
+ *   ONのままだと、このURLを知った人が送り先を書きかえられます。
+ *   （Apps Script は LINE の署名を確かめられないので、これが守りになります）
+ *   送り先を消したいときは、スクリプト プロパティの LINE_TO を消します。
+ */
+
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    (body.events || []).forEach(function (ev) {
+      var moto = ev.source || {};
+      var saki = moto.groupId || moto.roomId || moto.userId;
+      var kotoba = (ev.message && ev.message.text ? ev.message.text : '').trim();
+      var ai = P.getProperty('AIKOTOBA') || 'ここにしらせて';
+      if (saki && ev.type === 'message' && kotoba.indexOf(ai) >= 0) {
+        P.setProperty('LINE_TO', saki);
+        kotaeru_(ev.replyToken,
+                 'ここに知らせます。実践が届いたら、このトークに［載せる］［載せない］が出ます。\n' +
+                 'LINE Developers の Webhook は、もうOFFに戻して大丈夫です。');
+      }
+    });
+  } catch (err) {
+    Logger.log('doPost: ' + err);
+  }
+  return ContentService.createTextOutput('ok');
+}
+
+
+function kotaeru_(replyToken, text) {
+  var token = P.getProperty('LINE_TOKEN');
+  if (!token || !replyToken) return;
+  UrlFetchApp.fetch('https://api.line.me/v2/bot/message/reply', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify({ replyToken: replyToken, messages: [{ type: 'text', text: text }] }),
+    muteHttpExceptions: true
+  });
+}
+
+
 /* ══ 2. ボタンを押したとき ════════════════════════════════ */
 
 function doGet(e) {
