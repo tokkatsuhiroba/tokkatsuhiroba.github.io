@@ -368,14 +368,14 @@
          ★2026-09-21 夜：押したあとは 管理人を通さずに 板書のページへ出ます。
            知らせは管理人に届き、［すぐ消す］で1押しで下ろせます。 -->
     <form class="okuru-f" id="okuru-f" novalidate>
-      <p class="okuru-midashi">今週の板書を送る</p>
-      <p class="okuru-yomi">写真だけで大丈夫です。名前もメールも要りません。</p>
+      <p class="okuru-midashi">板書・資料を送る</p>
+      <p class="okuru-yomi">写真1枚だけで大丈夫です。名前もメールも要りません。</p>
 
       <div class="okuru-g">
         <label class="okuru-shashin" for="okuru-e">
-          <span class="okuru-shashin-ji">板書の写真をえらぶ</span>
-          <span class="okuru-shashin-chu">3枚まで／その場で撮ってもOK</span>
-          <input type="file" id="okuru-e" name="e" accept="image/*" multiple>
+          <span class="okuru-shashin-ji">写真・PDFをえらぶ</span>
+          <span class="okuru-shashin-chu">写真3枚まで／PDF1つまで／その場で撮ってもOK</span>
+          <input type="file" id="okuru-e" name="e" accept="image/*,application/pdf" multiple>
         </label>
         <p class="okuru-mihon" id="okuru-mihon" aria-live="polite"></p>
       </div>
@@ -605,19 +605,50 @@
         });
       }
 
+      /* PDFは、そのまま送ります（縮めません）。
+         GitHubに置いたあと、Actions が1ページ＝1枚の画像に変えて、
+         HTMLの中に入れます。PDFのままでは外の閲覧器につながるためです。 */
+      var PDF_MB = 8;
+      var yomu_nama = function(file){
+        return new Promise(function(ok, dame){
+          if(file.size > PDF_MB * 1024 * 1024){
+            return dame(kotowaru('PDFが大きすぎます（' + PDF_MB + 'MBまで）。'));
+          }
+          var fr = new FileReader();
+          fr.onerror = function(){ dame(kotowaru('PDFが読めませんでした。')); };
+          fr.onload = function(){ ok(fr.result); };
+          fr.readAsDataURL(file);
+        });
+      };
+      var pdf_ka = function(f){ return /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name); };
+      var wakeru = function(){
+        var e = [], p = [];
+        [].slice.call(eIn.files).forEach(function(f){
+          if(pdf_ka(f)){ if(p.length < 1) p.push(f); }
+          else if(e.length < MAI){ e.push(f); }
+        });
+        return { e: e, p: p };
+      };
+
       eIn.addEventListener('change', function(){
-        var n = eIn.files.length;
-        mihon.textContent = n ? (n > MAI ? MAI + '枚まで送れます（いまは' + n + '枚えらんでいます）'
-                                         : n + '枚えらびました') : '';
+        var w = wakeru(), n = eIn.files.length, ji = [];
+        if(w.e.length) ji.push('写真' + w.e.length + '枚');
+        if(w.p.length) ji.push('PDF1つ');
+        if(!n){ mihon.textContent = ''; return; }
+        mihon.textContent = ji.join('と') + 'をえらびました'
+          + (n > w.e.length + w.p.length ? '（写真3枚・PDF1つまでです）' : '');
       });
 
       okuruF.addEventListener('submit', function(ev){
         ev.preventDefault();
-        var fs = [].slice.call(eIn.files, 0, MAI);
-        if(!fs.length){ shirase.textContent = '写真を1枚えらんでください。'; return; }
+        var w = wakeru();
+        if(!w.e.length && !w.p.length){
+          shirase.textContent = '写真かPDFを1つえらんでください。'; return;
+        }
         botan.disabled = true;
         shirase.textContent = '小さくしています…';
-        Promise.all(fs.map(chijimeru)).then(function(e){
+        Promise.all(w.e.map(chijimeru).concat(w.p.map(yomu_nama))).then(function(zen){
+          var e = zen.slice(0, w.e.length), p = zen.slice(w.e.length);
           shirase.textContent = '送っています…';
           return fetch(OKURU_URL, {
             method: 'POST',
@@ -629,7 +660,7 @@
             /* text/plain にすると、前置きの問い合わせ（preflight）が飛びません */
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
             body: JSON.stringify({
-              kind: 'bansho', e: e,
+              kind: 'bansho', e: e, p: p,
               t: document.getElementById('okuru-t').value.slice(0, 60),
               g: document.getElementById('okuru-g').value,
               m: document.getElementById('okuru-m').value.slice(0, 1000)
@@ -638,7 +669,7 @@
         }).then(function(){
           okuruF.reset(); mihon.textContent = '';
           if(kazu) kazu.textContent = '0 / 1000字';
-          shirase.textContent = '送りました。管理人が読んでから、板書のページに載ります。';
+          shirase.textContent = '送りました。数分で「板書」のページに出ます。';
           botan.disabled = false;
         })['catch'](function(err){
           shirase.textContent = (err && err.bansho) ? err.message

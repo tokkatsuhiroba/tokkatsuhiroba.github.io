@@ -52,6 +52,7 @@ var P = PropertiesService.getScriptProperties();
 
 var MAI_MAX      = 3;        // 1回に受けとる枚数
 var KB_MAX       = 400;      // 写真1枚の上限（これを超えたら断る）
+var PDF_MB_MAX   = 8;        // PDF1つの上限。GitHubに置いたあと Actions が画像にします
 var MD_MO_TSUKURU = true;    // 写真だけ置いても出ません。.md が要ります（2026-09-21 確認）
 
 /* ── 1日に受けとる上限（2026-09-21）────────────────────────
@@ -101,13 +102,16 @@ function doPost(e) {
   try {
     var d = JSON.parse(e.postData.contents);
     var shashin = (d.e || []).slice(0, MAI_MAX);
-    if (!shashin.length) return _kotae({ ok: false, riyu: '写真がありません' });
+    var pdfs    = (d.p || []).slice(0, 1);        // PDFは1つまで（2026-09-21 夜）
+    if (!shashin.length && !pdfs.length) {
+      return _kotae({ ok: false, riyu: '写真もPDFもありません' });
+    }
 
     if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
 
     var slug = _slug();
     var folder = _folder(slug);
-    var uri = [];
+    var uri = [], pdf = null;
 
     for (var i = 0; i < shashin.length; i++) {
       var b = _dataURI(shashin[i]);
@@ -120,11 +124,23 @@ function doPost(e) {
       uri.push({ na: na, b64: Utilities.base64Encode(b.getBytes()) });
     }
 
+    /* PDFは縮めずにそのまま。GitHubに置いたあと、Actions が
+       1ページ＝1枚の画像に変えて、HTMLの中に入れます。 */
+    if (pdfs.length) {
+      var pb = _dataURI_pdf(pdfs[0]);
+      if (!pb) return _kotae({ ok: false, riyu: 'PDFの形が読めません' });
+      if (pb.getBytes().length > PDF_MB_MAX * 1024 * 1024) {
+        return _kotae({ ok: false, riyu: 'PDFが大きすぎます（' + PDF_MB_MAX + 'MBまで）' });
+      }
+      folder.createFile(pb.setName('shiryo.pdf'));
+      pdf = Utilities.base64Encode(pb.getBytes());
+    }
+
     /* ★ 2026-09-21 夜、ここを変えました。
        いままでは「管理人が［載せる］を押すまで、サイトには1枚も出ない」でした。
        いまは **そのまま載せます**。誰の目も通りません。
        そのかわり、知らせに［すぐ消す］を付けています。 */
-    var n = { uri: uri, t: d.t || '', g: d.g || '', m: d.m || '' };
+    var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '' };
     var nose = { ok: false, riyu: '' };
     try {
       _noseru(slug, n);
@@ -152,6 +168,12 @@ function _dataURI(s) {
   var m = String(s).match(/^data:(image\/[a-z+]+);base64,(.+)$/);
   if (!m) return null;
   return Utilities.newBlob(Utilities.base64Decode(m[2]), m[1]);
+}
+
+function _dataURI_pdf(s) {
+  var m = String(s).match(/^data:application\/pdf;base64,(.+)$/);
+  if (!m) return null;
+  return Utilities.newBlob(Utilities.base64Decode(m[1]), 'application/pdf');
 }
 
 /* フォルダ名。英小文字・数字・- だけ（build.py の検問に合わせています） */
@@ -211,7 +233,8 @@ function _shiraseru(slug, d, folder, nose) {
     '\n' +
     '　議題名　：' + (d.t || '（なし）') + '\n' +
     '　学年　　：' + (d.g || '（なし）') + '\n' +
-    '　枚数　　：' + (d.e || []).length + '枚\n' +
+    '　枚数　　：' + (d.e || []).length + '枚' +
+      ((d.p || []).length ? '／PDF1つ' : '') + '\n' +
     '　置き場　：' + folder.getUrl() + '\n\n' +
     '＜概要・ポイント＞\n' +
     (d.m ? d.m : '（書かれていません）') + '\n\n' +
@@ -245,6 +268,12 @@ function _noseru(slug, n) {
     _github('src/bansho/' + slug + '/' + n.uri[i].na, n.uri[i].b64,
             '板書を1枚ふやす（' + slug + '）');
   }
+  /* PDFは src/shiryo/<slug>/ に置きます。Actions がここを見て画像に変え、
+     元のPDFは消します（.github/workflows/build.yml の「送られたPDFを画像にする」）。 */
+  if (n.pdf) {
+    _github('src/shiryo/' + slug + '/shiryo.pdf', n.pdf,
+            '資料を1つふやす（' + slug + '）');
+  }
   if (MD_MO_TSUKURU) {
     _github('src/jissen/' + _kyou() + '_' + slug + '.md',
             Utilities.base64Encode(_md(slug, n), Utilities.Charset.UTF_8),
@@ -264,6 +293,7 @@ function doGet(e) {
   var keshita = 0;
   try {
     keshita += _kesu_folder('src/bansho/' + slug, slug);
+    keshita += _kesu_folder('src/shiryo/' + slug, slug);   // PDFから作った画像も
     keshita += _kesu_md(slug);
   } catch (err) {
     return _html('消せませんでした：' + String(err).slice(0, 200) +
@@ -342,21 +372,23 @@ function _md(slug, n) {
   var t = _arau(n.t);
   var g = _arau(n.g);
   var m = _arau_hon(n.m);
-  return [
+  var gyo = [
     '---',
     'share: true',
     'kind: gidai',
     'date: ' + _kyou(),
-    'title: ' + (t || '送ってもらった板書'),
+    'title: ' + (t || (n.uri.length ? '送ってもらった板書' : '送ってもらった資料')),
     'grade: ' + (g || '学年なし'),
     'naiyo: gakkyu',
-    'scene: 学級活動(1)',
-    'bansho: ' + slug,
-    'by: 送ってくださった先生',
-    '---',
-    '',
-    m || '送ってもらった板書です。'
-  ].join('\n');
+    'scene: 学級活動(1)'
+  ];
+  if (n.uri.length) gyo.push('bansho: ' + slug);
+  if (n.pdf)        gyo.push('shiryo: 送ってもらった資料|' + slug);
+  gyo.push('by: 送ってくださった先生');
+  gyo.push('---');
+  gyo.push('');
+  gyo.push(m || (n.uri.length ? '送ってもらった板書です。' : '送ってもらった資料です。'));
+  return gyo.join('\n');
 }
 
 
