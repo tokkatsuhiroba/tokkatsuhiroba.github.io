@@ -1260,3 +1260,96 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (max-width:719px){
   .shiryo-mado{max-height:70vh;padding:10px;gap:10px}
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ホーム＋3ページ（2026-09-21）
+
+   縦1枚をやめて、index（ホーム）／知る／学ぶ／集まる の4枚にしました。
+   決めごとも直しました ── 別ページへ飛ぶのは可。ただし飛び先の
+   見た目を変えない。だから **CSSは1つのまま**で、帯もどのページでも
+   同じ位置に同じ4つを出します。いまいるページには印を付けます。
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── いま見ているページ。色だけでなく、形（ベタ）でも分かるようにする ── */
+.obi-l a.obi-ima{
+  background:var(--ink);border-color:var(--ink);color:var(--bg);
+}
+.obi-l a.obi-ima:hover,.obi-l a.obi-ima:focus-visible{background:var(--ink)}
+
+/* ── ホーム以外のページの頭。広場の絵は出さず、名前と戻り道だけ ── */
+.ko{
+  background:var(--men-ki);border-bottom:2.5px solid var(--ink);
+  padding-block:clamp(26px,4vw,48px);
+}
+.ko-modoru{margin:0 0 10px}
+.ko-modoru a{
+  display:inline-flex;align-items:center;gap:8px;min-height:40px;
+  font-family:var(--f-maru);font-weight:700;font-size:13.5px;letter-spacing:.04em;
+  color:var(--ink);text-decoration:none;
+}
+.ko-modoru a::before{content:"←";font-family:var(--f-en);font-size:15px}
+.ko-modoru a:hover{text-decoration:underline}
+.ko-h{
+  margin:0;font-family:var(--f-maru);font-weight:900;
+  font-size:clamp(30px,5.4vw,52px);line-height:1.35;letter-spacing:.08em;
+}
+.ko-yo{margin:10px 0 0;font-size:15px;line-height:1.9;color:var(--mute)}
+.ko-naka{
+  margin:14px 0 0;font-family:var(--f-en);font-weight:500;
+  font-size:12.5px;letter-spacing:.14em;color:var(--mute);
+}
+
+/* ── ホームの8枚。絵・名前・1行・いまの数 ── */
+.hban{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:clamp(14px,2vw,22px);margin-top:clamp(26px,3.4vw,40px);
+}
+.hfuda{
+  display:grid;grid-template-rows:auto auto 1fr auto;
+  padding:clamp(16px,1.8vw,22px) clamp(14px,1.6vw,20px) clamp(14px,1.6vw,18px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);color:var(--ink);text-decoration:none;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.hfuda:hover,.hfuda:focus-visible{
+  transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink);
+}
+.hfuda-e{display:block;height:74px;margin-bottom:10px}
+.hfuda-e svg{display:block;width:auto;height:100%}
+.hfuda-h{
+  font-family:var(--f-maru);font-weight:700;font-size:17px;line-height:1.5;
+  letter-spacing:.04em;
+}
+.hfuda-yo{
+  display:block;margin-top:7px;font-size:13px;line-height:1.8;color:var(--mute);
+}
+.hfuda-kazu{
+  justify-self:start;margin-top:12px;padding:3px 11px;
+  border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--f-maru);font-weight:700;font-size:12px;letter-spacing:.04em;
+}
+/* 節ごとに、その節の面の色を敷く（絵と色で、どこ行きかが分かる） */
+.hf--about,.hf--yotsu  {background:var(--men-sora)}
+.hf--manabu,.hf--jissen{background:var(--men-midori)}
+.hf--ima,.hf--news,.hf--kai,.hf--okuru{background:var(--men-ki)}
+
+@media (max-width:1023px){
+  .hban{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:719px){
+  .ko{padding-block:22px 26px}
+  .ko-h{letter-spacing:.06em}
+  /* スマホは1列。札を横に寝かせて、絵・名前・1行・数を1行ずつ読ませる
+     （2列のままだと、絵64pxを引いた残りが84pxしかなく、字が折れます） */
+  .hban{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  .hfuda{
+    grid-template-columns:64px 1fr;grid-template-rows:auto auto auto;
+    column-gap:14px;border-radius:16px;box-shadow:5px 5px 0 var(--ink);
+    padding:14px 14px 15px;
+  }
+  .hfuda-e{grid-row:1 / span 3;height:64px;margin:0;align-self:center}
+  .hfuda-e svg{width:100%;height:auto;max-height:64px}
+  .hfuda-h{font-size:15.5px}
+  .hfuda-yo{margin-top:4px;font-size:12.5px}
+  .hfuda-kazu{margin-top:8px}
+}

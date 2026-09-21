@@ -49,6 +49,36 @@ SHIRYO_MB_MAX  = 8.0     # 資料1件（1フォルダ）
 SHIRYO_ZEN_MAX = 16.0    # 1ページに入る資料の合計
 SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
 
+# ══ ページの分け方（2026-09-21に決めなおし）════════════════
+#   もとは「index.html 1つだけ。外部ファイルを作らない」でした。
+#   スマホで縦31画面あり、長すぎるという話から、決めごとのほうを直しました。
+#   　　× 別ページへ飛ばさない
+#   　　○ 飛んでよい。ただし飛び先の見た目を変えない
+#   　　　（同じCSS・同じ帯が同じ位置・いまどこにいるかと戻り道が見える）
+#   ページを分けるのは「節」の単位。1件ぶんの中身（実践の準備・流れ・板書、
+#   のこり◯件、原文）は、いままでどおりページの中の <details> で開きます。
+#
+#   （ファイル名, ページの名前, 添えの1行, 入れる節のid）
+PAGES = (
+    ('index.html',    'TOKKATSU広場', '', ()),
+    ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。',
+     ('about', 'yotsu')),
+    ('manabu.html',   '学ぶ',   '学級会の学習過程と、明日そのまま使える実践。',
+     ('manabu', 'jissen')),
+    ('atsumaru.html', '集まる', '研究会のこよみ、ニュース、各地の会、実践を送る。',
+     ('ima', 'news', 'kai', 'okuru')),
+)
+HOME = PAGES[0][0]
+# 帯（どのページでも同じ位置に、同じ4つ）。旧・本体の OBI とは別ものです
+PAGE_OBI = tuple((f, na) for f, na, _, _ in PAGES)
+# 節の名前。ホームの札と、ページの中の見出しで使い回します
+SETSU_NA = {
+    'ima':    'カレンダー', 'news':   'ニュース',
+    'about':  '特活とは',   'manabu': '学ぶ',
+    'yotsu':  '4つの内容',  'jissen': '実践',
+    'kai':    '日本の研究会', 'okuru': '送る',
+}
+
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
 # src/body.html の {{FORM_IKEN}} のような目じるしが、ビルド時にこれに置きかわる。
 LINKS = {
@@ -1860,6 +1890,198 @@ def build_kyara_narabi(kyara):
             + '\n    </ul>')
 
 
+# ══ ホーム（2026-09-21に新設）════════════════════════════
+#   全部の項目を、短く・面白そうに1枚にまとめる入口。
+#   数は、その場で数えたものだけを出します（手で書いた数は置きません。
+#   足したのに数が古い、が起きないため）。
+#   （節のid, 絵のたね, 絵の名前, 短い1行）
+HOME_FUDA = (
+    ('ima',    'k', 'gyoji',    'つぎの研究会と、申込の締切。'),
+    ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
+    ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。'),
+    ('manabu', 'b', 'kokuban',  '①から⑤が、ひと回りして①に戻る。'),
+    ('yotsu',  'k', 'jidokai',  '学活くん・行人・児童会ちゃん・クラブマン。'),
+    ('jissen', 'k', 'club',     '週案にそのまま書ける1行が付いています。'),
+    ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),
+    ('okuru',  'b', 'ko-te',    '送ると、ふつうはその日のうちに載ります。'),
+)
+
+HOME_T = """      <a class="hfuda hf--{sid}" href="{saki}">
+        <span class="hfuda-e" aria-hidden="true"><svg viewBox="0 0 {w} {h}" focusable="false"><use href="#ill-{tane}-{na}"/></svg></span>
+        <b class="hfuda-h">{midashi}</b>
+        <span class="hfuda-yo">{yo}</span>
+        <span class="hfuda-kazu">{kazu}</span>
+      </a>"""
+
+
+def home_kazu(sid, sec, kiji, jissen, ken):
+    """札に出す数。その場で数えたものだけを出します。"""
+    def kazoe(pat):
+        return len(re.findall(pat, sec.get(sid, '')))
+    if sid == 'ima':
+        return '%d件' % len(ken)
+    if sid == 'news':
+        return '%d件' % len(kiji)
+    if sid == 'about':
+        return '話が%dつ' % kazoe(r'class="manabu-box"')
+    if sid == 'manabu':
+        return '%d段階と資料%d件' % (kazoe(r'data-learn-detail='),
+                                  kazoe(r'<li><a href="https?://[^"]*"[^>]*><span><b>'))
+    if sid == 'yotsu':
+        return '悩み%d件' % len(NAYAMI)
+    if sid == 'jissen':
+        return '%d件' % len(jissen)
+    if sid == 'kai':
+        return '%d会' % len(KAI)
+    if sid == 'okuru':
+        return '%dつの手順' % kazoe(r'<li><span class="n">')
+    raise Tomeru('ホームの札 %s に、数の出し方がありません' % sid)
+
+
+def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
+    """ホームの8枚。使った絵の名前も返します（defs に入れるため）。"""
+    fuda, tsukatta = [], set()
+    for sid, tane, na, yo in HOME_FUDA:
+        hako = kyara if tane == 'k' else buhin
+        if na not in hako:
+            raise Tomeru('ホームの札 %s が %s.svg を呼んでいますが、その絵がありません' % (sid, na))
+        if sid not in doko:
+            raise Tomeru('ホームの札 %s に当たる節が、どのページにもありません' % sid)
+        w, h, _ = hako[na]
+        tsukatta.add((tane, na))
+        fuda.append(HOME_T.format(
+            sid=sid, saki='%s#%s' % (doko[sid], sid), tane=tane, na=na, w=w, h=h,
+            midashi=esc_html(SETSU_NA[sid]), yo=esc_html(yo),
+            kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken))))
+    honbun = ('<section class="sec sec--ki" id="ichiran">\n'
+              '  <div class="uchi">\n'
+              '    <h2 class="midashi"><span class="en">CONTENTS</span>'
+              '<span class="ja">ぜんぶで、8つ</span></h2>\n'
+              '    <p class="yomi">押すと、そのページがひらきます。'
+              '見た目も帯もそのままなので、いつでもここへ戻れます。</p>\n'
+              '    <div class="hban">\n' + '\n'.join(fuda) + '\n    </div>\n'
+              '  </div>\n'
+              '</section>')
+    return honbun, tsukatta
+
+
+# ══ 組み上がった1枚を、ページごとに切り分ける ══════════════
+
+def wakeru(body):
+    """src/hiroba.html から組んだ body を、部品ごとに切り出す。"""
+    def hiku(pat, na):
+        m = re.search(pat, body, re.S)
+        if not m:
+            raise Tomeru('組んだページから「%s」を切り出せませんでした。'
+                         'src/hiroba.html の形が変わっていないか見てください' % na)
+        return m.group(0)
+    hero = hiku(r'<header class="hero".*?</header>', '頭の絵')
+    foot = hiku(r'<footer class="foot".*?</footer>', '足もと')
+    shikake = hiku(r'<script>.*?</script>', '仕掛け')
+    sec = {}
+    for m in re.finditer(r'<section class="[^"]*" id="([a-z]+)">.*?\n</section>', body, re.S):
+        sec[m.group(1)] = m.group(0)
+    motome = set(s for _, _, _, ss in PAGES for s in ss)
+    nai = motome - set(sec)
+    if nai:
+        raise Tomeru('PAGES が %s という節を入れようとしていますが、'
+                     'src/hiroba.html にその節がありません' % '、'.join(sorted(nai)))
+    amari = set(sec) - motome
+    if amari:
+        raise Tomeru('src/hiroba.html の節 %s が、PAGES のどのページにも入っていません。'
+                     'どこかのページに入れるか、節ごと消してください' % '、'.join(sorted(amari)))
+    return hero, sec, foot, shikake
+
+
+def build_obi(ima_file):
+    """帯。どのページでも同じ4つを、同じ位置に。いまいるページに印をつける。"""
+    gyo = []
+    for f, na in PAGE_OBI:
+        ima = (f == ima_file)
+        # ロゴと同じ字を2つ並べない。ホームだけ、帯では「ホーム」と出す
+        gyo.append('      <li><a href="%s"%s>%s</a></li>'
+                   % (f, ' class="obi-ima" aria-current="page"' if ima else '',
+                      esc_html('ホーム' if f == HOME else na)))
+    return ('<nav class="obi" aria-label="TOKKATSU広場の4つのページ">\n'
+            '  <div class="obi-uchi">\n'
+            '    <a class="obi-na" href="%s">TOKKATSU広場</a>\n'
+            '    <ul class="obi-l">\n' % HOME
+            + '\n'.join(gyo) + '\n'
+            '    </ul>\n'
+            '  </div>\n'
+            '</nav>')
+
+
+KO_T = """<header class="ko" id="ue">
+  <div class="uchi">
+    <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a></p>
+    <h1 class="ko-h">{na}</h1>
+    <p class="ko-yo">{yo}</p>
+    <p class="ko-naka">{naka}</p>
+  </div>
+</header>"""
+
+
+def head_de(f, na):
+    """頭は1つの型を使い回し、題と自分のURLだけをページごとに差しかえます。"""
+    head = rd('src/head-hiroba.html')
+    dai = 'TOKKATSU広場' if f == HOME else '%s｜TOKKATSU広場' % na
+    head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
+    if f != HOME:
+        head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))
+        head = head.replace('content="TOKKATSU広場｜特別活動の情報が、溜まる場。"',
+                            'content="%s｜TOKKATSU広場"' % esc_html(na), 1)
+    return head
+
+
+def tsukau_e(html):
+    """そのページが実際に呼んでいる絵の名前だけを拾う。"""
+    return set(m.groups() for m in re.finditer(r'href="#ill-([kb])-([a-z0-9-]+)"', html))
+
+
+def build_tane(html, e_naka, buhin, kyara):
+    """ページが呼んでいる絵だけを、そのページの defs に入れる。
+       呼んでいない絵は入りません（ページごとに軽くなります）。"""
+    g = []
+    if 'href="#ill-hiroba"' in html:
+        g.append('<g id="ill-hiroba">%s</g>' % e_naka)
+    # 絵の中にも地紋の <defs> があるので、いちばん外がわ（末尾）にだけ足します
+    g.append(kazari_defs(tsukau_e(html), buhin, kyara))
+    tane = ('<svg class="tane" aria-hidden="true" focusable="false" width="0" height="0" '
+            'style="position:absolute"><defs>%s</defs></svg>' % ''.join(g))
+    # 呼んでいるのに入っていない絵が1つでもあれば、止める
+    aru = set(re.findall(r'<g id="(ill-[^"]+)">', tane))
+    yobu = set(re.findall(r'href="#(ill-[^"]+)"', html))
+    nai = yobu - aru
+    if nai:
+        raise Tomeru('ページが #%s を呼んでいますが、そのページの絵の入れ物に入っていません'
+                     % '、#'.join(sorted(nai)))
+    return tane
+
+
+def tsunagi_naosu(html, ima_file, doko, tsune):
+    """<a href="#◯◯"> の行き先が別のページになったぶんを、書きかえる。
+       SVG の <use href="#ill-…"> は触りません（<a> だけを見ます）。"""
+    machigai = []
+
+    def hen(m):
+        mae, x, ato = m.groups()
+        if not x or x in tsune:
+            return m.group(0)
+        saki = doko.get(x)
+        if saki is None:
+            machigai.append(x)
+            return m.group(0)
+        return m.group(0) if saki == ima_file else '%s%s#%s%s' % (mae, saki, x, ato)
+
+    out = re.sub(r'(<a\b[^>]*?\shref=")#([^"]*)(")', hen, html)
+    if machigai:
+        raise Tomeru('%s の中に、行き先の無いリンク #%s があります。'
+                     'その id を持つ節が、どのページにもありません'
+                     % (ima_file, '、#'.join(sorted(set(machigai)))))
+    return out
+
+
 def build_shin():
     _SHIRYO_GOUKEI['b'] = 0
     buhin, hyo = load_buhin()
@@ -1875,11 +2097,9 @@ def build_shin():
     if not jissen:
         raise Tomeru('出せる実践が1件もありません')
 
-    # 絵は1回だけ埋めこみ、4つの内容は <use> で別の場所を切り出す
-    naka = hiroba_naka(buhin)
-    tane = ('<svg class="tane" aria-hidden="true" focusable="false" width="0" height="0" '
-            'style="position:absolute">'
-            '<defs><g id="ill-hiroba">%s</g></defs></svg>' % naka)
+    ken = load_kenkyukai()
+    # 絵は1ページに1回だけ埋めこみ、4つの内容は <use> で別の場所を切り出す
+    e_naka = hiroba_naka(buhin)
     hero = ('<svg viewBox="0 0 %d %d" role="img" aria-label="校庭で学級活動・学校行事・'
             '児童会活動・クラブ活動をしている学校の広場のイラスト">'
             '<use href="#ill-hiroba"/></svg>' % (HIROBA_W, HIROBA_H))
@@ -1898,17 +2118,12 @@ def build_shin():
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
                        ('    <!--BUILD:KENKYUKAI-->',
-                        build_kenkyukai(load_kenkyukai(), kyara, buhin))):
+                        build_kenkyukai(ken, kyara, buhin))):
         if mark not in body:
             raise Tomeru('src/hiroba.html に目じるし %s がありません' % mark.strip())
         body = body.replace(mark, html)
 
-    body, tsukatta = build_kazari(body, buhin, kyara)
-    # 4人と旗は、カレンダーや4つの内容でも使うので、いつも入れておきます
-    tsukatta |= set([('k', n) for n, _, _, _ in KYARA_MEN] + [('b', 'hata')])
-    # 絵の中にも地紋の <defs> があるので、いちばん外がわ（末尾）にだけ足します
-    tane = tane.replace('</defs></svg>',
-                        kazari_defs(tsukatta, buhin, kyara) + '</defs></svg>')
+    body, _ = build_kazari(body, buhin, kyara)
 
     for k, v in LINKS.items():
         body = body.replace('{{%s}}' % k, v)
@@ -1920,13 +2135,41 @@ def build_shin():
     if nokori_mark:
         raise Tomeru('差しこまれていない目じるしが残っています： %s' % '、'.join(nokori_mark))
 
-    html = '\n'.join([
-        '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>',
-        rd('src/head-hiroba.html'), '<style>', rd(CSS_H), '</style>', '</head>',
-        '<body>', tane, body, '</body>', '</html>',
-    ]) + '\n'
-    ngword_check(html, '公開用/hiroba.html')
-    return html, hyo, kiji, jissen
+    # ── ここから、1枚をページごとに切り分けます ──────────────
+    hero, sec, foot, shikake = wakeru(body)
+
+    # どの id が、どのページに載るか。これで <a href="#◯◯"> を張りなおします
+    doko = {}
+    for f, _, _, setsu in PAGES:
+        for s in setsu:
+            for i in re.findall(r'\sid="([^"]+)"', sec[s]):
+                doko[i] = f
+    # 頭と足もとは、どのページにも同じものが載ります（張りかえません）
+    tsune = set(re.findall(r'\sid="([^"]+)"', hero + foot)) | {'ue'}
+
+    home_html, home_e = build_home(doko, sec, buhin, kyara, kiji, jissen, ken)
+    for i in re.findall(r'\sid="([^"]+)"', home_html):
+        doko[i] = HOME
+
+    pages = {}
+    for f, na, yo, setsu in PAGES:
+        if f == HOME:
+            atama, naka_html, saki = hero, home_html, 'ichiran'
+        else:
+            atama = KO_T.format(home=HOME, na=esc_html(na), yo=esc_html(yo),
+                                naka='　'.join(SETSU_NA[s] for s in setsu))
+            naka_html, saki = '\n\n'.join(sec[s] for s in setsu), setsu[0]
+        p = '\n'.join(['<a class="skip" href="#%s">本文へ進む</a>' % saki,
+                       atama, build_obi(f), naka_html, foot, shikake])
+        p = tsunagi_naosu(p, f, doko, tsune)
+        html = '\n'.join([
+            '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>',
+            head_de(f, na), '<style>', rd(CSS_H), '</style>', '</head>',
+            '<body>', build_tane(p, e_naka, buhin, kyara), p, '</body>', '</html>',
+        ]) + '\n'
+        ngword_check(html, '公開用/' + f)
+        pages[f] = html
+    return pages, hyo, kiji, jissen
 
 
 # ══════════════════════════════════════════════════════════
@@ -2080,19 +2323,19 @@ def main_tobira(check_only):
 
 def main_shin(check_only):
     try:
-        html, hyo, kiji, jissen = build_shin()
-        warn = tenken(html)
-        warn = [w for w in warn if '要約' not in w]
+        pages, hyo, kiji, jissen = build_shin()
+        warn = []
+        for f in pages:
+            warn += [w for w in tenken(pages[f]) if '要約' not in w]
     except Tomeru as e:
         print('')
         print('  ✕ ビルドを止めました')
         print('     %s' % e)
         print('')
         return 1
-    kb = len(html.encode('utf-8')) / 1024.0
     print('')
-    print('  新版（縦スクロール1枚）')
-    print('  広場　　　　… 部品%d種・図形%d個を1回だけ埋めこみ、5か所で使い回し'
+    print('  新版（ホーム＋%dページ）' % (len(PAGES) - 1))
+    print('  広場　　　　… 部品%d種・図形%d個。ページごとに、呼んだ絵だけを埋めこみ'
           % (len(hyo), sum(h[3] for h in hyo)))
     print('  4つの内容　… %s'
           % '、'.join('%s（悩み%d・実践%d）'
@@ -2109,17 +2352,26 @@ def main_shin(check_only):
     print('  ほかの研究会… %d会（全国%d・都道府県%d・市%d）'
           % (len(KAI), sum(1 for k in KAI if k[0] == 'zen'),
              sum(1 for k in KAI if k[0] == 'ken'), sum(1 for k in KAI if k[0] == 'shi')))
-    print('  出来上がり　… 公開用/index.html  %.1fMB' % (kb / 1024.0))
+    print('  出来上がり　…')
+    for f, na, _, setsu in PAGES:
+        kb = len(pages[f].encode('utf-8')) / 1024.0
+        omo = ('%.1fMB' % (kb / 1024.0)) if kb >= 1024 else ('%.0fKB' % kb)
+        print('　　%-14s %-8s %s%s'
+              % (f, na, omo, ('　' + '・'.join(SETSU_NA[s] for s in setsu)) if setsu else
+                 '　8つの札'))
     for w in warn:
         print('  ⚠ %s' % w)
     if check_only:
         print('\n  --check なので書いていません。\n')
         return 0
-    io.open(OUT, 'w', encoding='utf-8', newline='\n').write(html)
+    for f in pages:
+        io.open(os.path.join(ROOT, '公開用', f), 'w',
+                encoding='utf-8', newline='\n').write(pages[f])
     print('')
-    print('  書きました。見る場所も、公開する場所も 公開用/index.html の1つだけです。')
+    print('  書きました。入口は 公開用/index.html（ホーム）です。')
     print('  つぎ： GitHub の yuutennis657-beep/tokkatsu-hiroba に')
-    print('  　　　 index.html のまま上げる')
+    print('  　　　 %s を、同じ場所にまとめて上げる'
+          % '・'.join(f for f, _, _, _ in PAGES))
     print('')
     return 0
 
