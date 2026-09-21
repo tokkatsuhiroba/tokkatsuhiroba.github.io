@@ -580,7 +580,12 @@
           shirase.textContent = '送っています…';
           return fetch(OKURU_URL, {
             method: 'POST',
-            /* text/plain にすると、Apps Script へ前置きの問い合わせが飛びません */
+            /* no-cors にしないと、届いているのに CORS で弾かれ、
+               「うまく送れませんでした」と出ます（Apps Script は
+               Access-Control-Allow-Origin を返せないため）。
+               返事は読めなくなりますが、送れたかどうかは分かります。 */
+            mode: 'no-cors',
+            /* text/plain にすると、前置きの問い合わせ（preflight）が飛びません */
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
             body: JSON.stringify({
               kind: 'bansho', e: e,

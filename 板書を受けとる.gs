@@ -53,6 +53,15 @@ var MAI_MAX      = 3;        // 1回に受けとる枚数
 var KB_MAX       = 400;      // 写真1枚の上限（これを超えたら断る）
 var MD_MO_TSUKURU = false;   // 板書のページが .md を要るなら true
 
+/* ── 1日に受けとる上限（2026-09-21）────────────────────────
+   URLは公開なので、誰でも送れます。それが狙いですが、裏返すと
+   誰でも送れます。いたずらが続くと、Driveと受信箱が埋まります。
+   ★ふつうの先生が1日に40件も送ることはありません。
+     つまり これに当たるのは、いたずらのときだけです。
+   上限に当たったら、その回は保存もメールもしません。
+   知らせは1日1通だけ出します（同じ知らせで受信箱を埋めないため）。 */
+var HI_MAX = 40;
+
 function _p(k, moto) { return (P.getProperty(k) || moto || '').trim(); }
 
 /* 入れてもらうものを1つに減らすため、空のときは自分で決めます。
@@ -75,6 +84,8 @@ function doPost(e) {
     var d = JSON.parse(e.postData.contents);
     var shashin = (d.e || []).slice(0, MAI_MAX);
     if (!shashin.length) return _kotae({ ok: false, riyu: '写真がありません' });
+
+    if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
 
     var slug = _slug();
     var folder = _folder(slug);
@@ -129,6 +140,34 @@ function _folder(slug) {
     ? DriveApp.getFolderById(_p('DRIVE_FOLDER'))
     : DriveApp.getRootFolder();
   return oya.createFolder(slug);
+}
+
+
+/* 今日は何件めか。上限までなら true、越えたら false。
+   数えるあいだは鍵をかけます（同時に届いても二重に数えないため）。 */
+function _kazoeru() {
+  var kyou = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyyMMdd');
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(10000); } catch (e) { return true; }   // 鍵が取れない日は通す
+  try {
+    var key = 'kazu_' + kyou;
+    var n = parseInt(P.getProperty(key) || '0', 10) + 1;
+    P.setProperty(key, String(n));
+    if (n === HI_MAX + 1) _uwamawatta(kyou, n);   // 知らせるのは、越えた1回だけ
+    return n <= HI_MAX;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function _uwamawatta(kyou, n) {
+  var mail = _mail();
+  if (!mail) return;
+  MailApp.sendEmail(mail, '【TOKKATSU広場】板書の受けとりを、今日はここで止めました',
+    kyou + ' に ' + HI_MAX + '件を受けとったので、今日はこれ以上 受けとりません。\n\n' +
+    'ふつうの使い方では当たらない数です。いたずらが続いているなら、\n' +
+    'Apps Script でデプロイを作り直すと、URLが変わって止まります。\n' +
+    '（作り直したら、src/hiroba.html の OKURU_URL も差しかえてください）\n');
 }
 
 
