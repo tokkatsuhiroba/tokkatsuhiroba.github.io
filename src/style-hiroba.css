@@ -2436,3 +2436,47 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .naiyo-saki-gyo a:hover,.naiyo-saki-gyo a:focus-visible{text-decoration:underline}
 .naiyo-saki-gyo .d{margin-inline-start:6px;font-family:var(--f-en)}
+
+/* ══ みんなの実践を さがす帯（2026-09-22 夜）════════════════
+   届いたものが増えるほど、上から順に見るのが しんどくなります。
+   ★押すところは、学年・内容の札とまったく同じ形（.okuru-nen-b）です。
+     新しい見た目を1つも増やさずに、できることだけ増やします。
+   ★JavaScript が動かない人には、build.py が hidden のままにします。 */
+.sagasu{
+  display:grid;gap:12px;margin:0 0 clamp(20px,3vw,30px);
+  padding:clamp(14px,2vw,18px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
+  box-shadow:4px 4px 0 var(--rule);
+}
+.sagasu[hidden]{display:none}
+.sagasu-gyo{display:grid;gap:7px}
+.sagasu-l{
+  font-family:var(--f-maru);font-weight:700;font-size:13px;letter-spacing:.06em;
+  color:var(--mute);
+}
+.sagasu-i{
+  width:100%;min-height:50px;padding:12px 14px;
+  background:#fff;color:var(--ink);
+  border:2px solid var(--ink);border-radius:12px;
+  font-family:var(--f-hon);font-size:16px;  /* 16px未満にしない。iPhoneが寄るため */
+}
+.sagasu-i:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+/* 札の中の「いま何件」。押されているときは、地が墨になるので白ぬきにします */
+.sagasu-b-kazu{
+  margin-inline-start:7px;padding:1px 7px;border-radius:999px;
+  background:var(--rule);color:var(--mute);font-size:11.5px;
+}
+.okuru-nen-b[aria-pressed="true"] .sagasu-b-kazu{
+  background:var(--bg);color:var(--ink);
+}
+.sagasu-kazu{
+  margin:2px 0 0;font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;letter-spacing:.04em;color:var(--mute);
+}
+.sagasu-nai[hidden]{display:none}
+@media (min-width:720px){
+  /* PCは、さがす欄を広くとって、札を右に流します */
+  .sagasu{grid-template-columns:1fr auto;align-items:start}
+  .sagasu-gyo:first-child{grid-column:1 / -1}
+  .sagasu-kazu{grid-column:1 / -1}
+}

@@ -1436,6 +1436,84 @@
     }
   }
 
+  /* ══ みんなの実践を、絞る・並べかえる・さがす（2026-09-22 夜）══
+     届いたものが増えるほど、上から順に見るのが しんどくなります。
+     ★ぜんぶ、このページの中だけで動きます。何も出ていきません。
+     ★字を1つも書かなくても使えます（押すだけで絞れる）。
+     ★JavaScript が動かない人には、帯そのものを出しません。押しても
+       何も起きない押しボタンを、画面に置かないためです。
+       （build.py が hidden で出し、ここで外します）                */
+  var sgObi = document.getElementById('sagasu');
+  var sgTana = document.getElementById('bantana');
+  if(sgObi && sgTana){
+    sgObi.hidden = false;
+    var sgJi   = document.getElementById('sagasu-ji');
+    var sgKazu = document.getElementById('sagasu-kazu');
+    var sgN    = document.getElementById('sagasu-n');
+    var sgJun  = document.getElementById('sagasu-j');
+    var sgFuda = [].slice.call(sgTana.querySelectorAll('.bfuda'));
+    var sgNai = '', sgJun_ima = 'atarashii';
+
+    /* さがす用の字は、1件につき1回だけ作ります（押すたびに作り直さない）。
+       ★<details> の中も textContent には入ります。閉じていても さがせます。 */
+    sgFuda.forEach(function(f){
+      f._ji = (f.textContent || '').replace(/\s+/g, '').toLowerCase();
+      f._toki = f.getAttribute('data-toki') || '';
+    });
+
+    var sgKara = document.createElement('p');
+    sgKara.className = 'karappo sagasu-nai';
+    sgKara.hidden = true;
+    sgTana.parentNode.insertBefore(sgKara, sgTana.nextSibling);
+
+    function sg_osu(bako, atai, na){
+      [].slice.call(bako.querySelectorAll('.okuru-nen-b')).forEach(function(b){
+        b.setAttribute('aria-pressed', b.getAttribute(na) === atai ? 'true' : 'false');
+      });
+    }
+
+    function sg_utsusu(){
+      var ji = (sgJi.value || '').replace(/\s+/g, '').toLowerCase();
+      var nokotta = sgFuda.filter(function(f){
+        if(sgNai && f.getAttribute('data-naiyo') !== sgNai) return false;
+        if(ji && f._ji.indexOf(ji) < 0) return false;
+        return true;
+      });
+      /* 並べかえ … いまの順のまま入れ直します（DOMごと動かす） */
+      nokotta.sort(function(a, b){
+        return sgJun_ima === 'furui' ? (a._toki < b._toki ? -1 : 1)
+                                     : (a._toki > b._toki ? -1 : 1);
+      });
+      sgFuda.forEach(function(f){ f.hidden = nokotta.indexOf(f) < 0; });
+      nokotta.forEach(function(f){ sgTana.appendChild(f); });
+
+      sgKazu.textContent = nokotta.length + '件'
+        + (nokotta.length === sgFuda.length ? '' : '（ぜんぶで' + sgFuda.length + '件）');
+      sgKara.hidden = !!nokotta.length;
+      if(!nokotta.length){
+        sgKara.textContent = ji
+          ? ('「' + sgJi.value.trim() + '」に当たるものは、ありませんでした。'
+             + '字を短くするか、内容の札を「ぜんぶ」に戻してみてください。')
+          : 'この内容は、まだ1件もありません。';
+      }
+    }
+
+    sgN.addEventListener('click', function(ev){
+      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
+      sgNai = b.getAttribute('data-n') || '';
+      sg_osu(sgN, sgNai, 'data-n'); sg_utsusu();
+    });
+    sgJun.addEventListener('click', function(ev){
+      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
+      sgJun_ima = b.getAttribute('data-j');
+      sg_osu(sgJun, sgJun_ima, 'data-j'); sg_utsusu();
+    });
+    sgJi.addEventListener('input', sg_utsusu);
+    /* さがしている途中で Enter を押しても、ページごと送らない */
+    sgJi.addEventListener('keydown', function(ev){ if(ev.key === 'Enter') ev.preventDefault(); });
+    sg_utsusu();
+  }
+
   /* ══ この実践を画像で保存（2026-09-22 夜）══════════════════
      1件ぶんを、1枚の絵にします。開かなくても、その1枚で実践が分かります。
      あとは、その画像を好きな所（LINEでも、学年の共有でも）へ送れます。

@@ -2615,7 +2615,7 @@ def build_jissen_hiroba(jissen, goods):
 #   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
-BFUDA = """      <article class="bfuda" id="b-{slug}">
+BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
         <p class="bfuda-lead">{lead}</p>
@@ -2691,12 +2691,59 @@ def build_bansho(jissen):
         ima = SITE_URL + 'bansho.html#b-' + a['slug']
         fuda.append(BFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
+            toki=a['todoita'].strftime('%Y%m%d%H%M'),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             mado=mado, shiryo=sh, more=more, by=esc_html(a['by']),
             ima=esc_html(ima)))
-    return '    <div class="bantana">\n' + '\n'.join(fuda) + '\n    </div>'
+    return sagasu_obi(aru) + '\n    <div class="bantana" id="bantana">\n' \
+           + '\n'.join(fuda) + '\n    </div>'
+
+
+# ══ 絞りこみ・並べかえ・さがす（2026-09-22 夜 依頼）════════════
+#   届いたものが増えるほど、上から順に見るのが しんどくなります。
+#   ★押すところは、サイトのほかの札（学年・内容）と同じ形にそろえます。
+#   ★どれが効いているかは、色だけでなく **ベタ塗り（形）** でも分かります。
+#   ★字を1つも書かなくても使えます（押すだけで絞れる）。
+#   ★JavaScript が動かない人には、この帯を出しません（→ 下の hidden）。
+#     押しても何も起きない押しボタンを、画面に置かないためです。
+SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
+      <div class="sagasu-gyo">
+        <label class="sagasu-l" for="sagasu-ji">さがす</label>
+        <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
+               placeholder="題・中身・学年・提供者から（例：たてわり）">
+      </div>
+      <div class="sagasu-gyo">
+        <span class="sagasu-l" id="sagasu-n-l">内容</span>
+        <div class="okuru-nen" role="group" aria-labelledby="sagasu-n-l" id="sagasu-n">
+          <button type="button" class="okuru-nen-b" data-n="" aria-pressed="true">ぜんぶ</button>
+{naiyo}        </div>
+      </div>
+      <div class="sagasu-gyo">
+        <span class="sagasu-l" id="sagasu-j-l">並び</span>
+        <div class="okuru-nen" role="group" aria-labelledby="sagasu-j-l" id="sagasu-j">
+          <button type="button" class="okuru-nen-b" data-j="atarashii" aria-pressed="true">新しい順</button>
+          <button type="button" class="okuru-nen-b" data-j="furui" aria-pressed="false">古い順</button>
+        </div>
+      </div>
+      <p class="sagasu-kazu" id="sagasu-kazu" role="status" aria-live="polite"></p>
+    </div>"""
+
+
+def sagasu_obi(aru):
+    """内容の札は、**いま届いているものにある内容だけ**出します。
+       1件も無い内容の札を出すと、押したとたんに0件になるためです。"""
+    aru_n = [n for n in aru]
+    gyo = []
+    for nid, ja in naiyo_ichiran():
+        kazu = sum(1 for a in aru_n if a['naiyo'] == nid)
+        if not kazu:
+            continue
+        gyo.append('          <button type="button" class="okuru-nen-b" data-n="%s" '
+                   'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
+                   % (nid, esc_html(ja), kazu))
+    return SAGASU_OBI.format(naiyo=''.join(gyo))
 
 
 def build_bansho_iriguchi(jissen):
