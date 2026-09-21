@@ -59,18 +59,18 @@ SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
 #   のこり◯件、原文）は、いままでどおりページの中の <details> で開きます。
 #
 #   （ファイル名, ページの名前, 添えの1行, 入れる節のid）
+#   2026-09-21 追記：こよみは、ホームに置きます（「つぎ、いつ」は入口で
+#   見たいものなので）。だから ima だけ index.html に入っています。
 PAGES = (
-    ('index.html',    'TOKKATSU広場', '', ()),
+    ('index.html',    'TOKKATSU広場', '', ('ima',)),
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。',
      ('about', 'yotsu')),
     ('manabu.html',   '学ぶ',   '学級会の学習過程と、明日そのまま使える実践。',
      ('manabu', 'jissen')),
-    ('atsumaru.html', '集まる', '研究会のこよみ、ニュース、各地の会、実践を送る。',
-     ('ima', 'news', 'kai', 'okuru')),
+    ('atsumaru.html', '集まる', 'ニュース、各地の研究会、実践を送る。',
+     ('news', 'kai', 'okuru')),
 )
 HOME = PAGES[0][0]
-# 帯（どのページでも同じ位置に、同じ4つ）。旧・本体の OBI とは別ものです
-PAGE_OBI = tuple((f, na) for f, na, _, _ in PAGES)
 # 節の名前。ホームの札と、ページの中の見出しで使い回します
 SETSU_NA = {
     'ima':    'カレンダー', 'news':   'ニュース',
@@ -1373,8 +1373,24 @@ def build_koyomi(ken, kyou):
         '        <li><i class="maru maru--club">4</i>クラブ部</li>\n'
         '        <li><i class="maru maru--shime">5</i>申込〆切（点線）</li>\n'
         '      </ul>\n'
-        '      <p class="koyomi-chu">色のついた日を押すと、右の一覧のその1件にとびます。</p>')
-    return '    <div class="koyomi">\n' + '\n'.join(out) + '\n' + hanrei + '\n    </div>'
+        '      <p class="koyomi-chu">色のついた日を押すと、下の一覧のその1件にとびます。</p>')
+    # 2026-09-21：月を縦に積むと、それだけで画面何枚ぶんにもなりました。
+    #   よこに並べて、1月ずつスライドさせます（スワイプでも、‹ › でも動きます）。
+    ue = ('      <div class="koyomi-ue">\n'
+          '        <p class="koyomi-hint">よこにスライド</p>\n'
+          '        <p class="koyomi-okuri">\n'
+          '          <button type="button" class="tsuki-b" data-tsuki="-1"'
+          ' aria-label="前の月を見る">‹</button>\n'
+          '          <button type="button" class="tsuki-b" data-tsuki="1"'
+          ' aria-label="次の月を見る">›</button>\n'
+          '        </p>\n'
+          '      </div>')
+    ban = ('      <div class="tsuki-ban" tabindex="0" role="group"'
+           ' aria-label="研究会のこよみ。%dか月ぶんを、よこにスライドして見ます">\n'
+           % len(out)
+           + '\n'.join(out) + '\n      </div>')
+    return ('    <div class="koyomi">\n' + ue + '\n' + ban + '\n'
+            + hanrei + '\n    </div>')
 
 
 def build_kenkyukai(ken, kyara, buhin, kyou=None):
@@ -1965,6 +1981,73 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
     return honbun, tsukatta
 
 
+# ══ ホームの「中身を、ざっと」（2026-09-21に追加）════════════
+#   札を押すまで中身が分からない、という話から足しました。
+#   ★ ここに書く中身は、ぜんぶ節そのものから抜いています。
+#     手で写さないこと（節を直したのに概要が古い、が起きます）。
+
+GFUDA = """      <a class="gfuda gf--{sid}" href="{saki}">
+        <b class="gfuda-h">{midashi}</b>
+        <ul class="gfuda-l">
+{gyo}
+        </ul>
+        <span class="gfuda-go">{iku}</span>
+      </a>"""
+
+
+def _nuku(html, pat, n=4):
+    """節の中から、見出しになっている字だけを抜く。"""
+    out = []
+    for m in re.finditer(pat, html, re.S):
+        t = re.sub(r'<[^>]+>', '', m.group(1)).strip()
+        t = re.sub(r'\s+', ' ', t)
+        if t and t not in out:
+            out.append(t)
+    if not out:
+        raise Tomeru('ホームの概要が、節から中身を1つも抜けませんでした（%s）' % pat)
+    return out[:n]
+
+
+def build_gaiyo(sec, doko, kiji, jissen):
+    naka = {
+        # 「特活とは」… 4つの箱の見出し
+        'about':  _nuku(sec['about'], r'<h3 class="manabu-h">(.*?)</h3>'),
+        # 「学ぶ」… 5段階の名前
+        'manabu': _nuku(sec['manabu'], r'<summary><span class="no">\d</span>'
+                                       r'<span class="sh"><b>(.*?)</b>', 5),
+        # 「4つの内容」… 4人の名前と、受けもつ内容
+        'yotsu':  ['%s　%s' % (na, naiyo) for _, na, naiyo, _ in KYARA_MEN],
+        # 「送る」… 4つの手順
+        'okuru':  _nuku(sec['okuru'], r'<li><span class="n">\d</span><b>(.*?)</b>'),
+        # ニュースと実践は、いま載っているものそのもの
+        'news':   [a.get('home') or a['title'] for a in kiji[:3]],
+        'jissen': [a['title'] for a in jissen[:3]],
+        # 研究会は、範囲ごとの数
+        'kai':    ['全国の会　%d' % sum(1 for k in KAI if k[0] == 'zen'),
+                   '都道府県の会　%d' % sum(1 for k in KAI if k[0] == 'ken'),
+                   '市の会　%d' % sum(1 for k in KAI if k[0] == 'shi')],
+    }
+    fuda = []
+    for sid, _, _, _ in HOME_FUDA:
+        if sid not in naka:       # こよみは、この下に本物が出ているので要りません
+            continue
+        saki = '%s#%s' % (doko[sid], sid)
+        iku = '%s を開く' % dict((f, na) for f, na, _, _ in PAGES)[doko[sid]]
+        fuda.append(GFUDA.format(
+            sid=sid, saki=saki, midashi=esc_html(SETSU_NA[sid]),
+            iku=esc_html(iku),
+            gyo='\n'.join('          <li>%s</li>' % esc_html(t) for t in naka[sid])))
+    return ('<section class="sec" id="gaiyo">\n'
+            '  <div class="uchi">\n'
+            '    <h2 class="midashi"><span class="en">SUMMARY</span>'
+            '<span class="ja">中身を、ざっと</span></h2>\n'
+            '    <p class="yomi">どのページに何があるか、押すまえに見られます。'
+            'ここに出ているのは、そのページの中身そのものです。</p>\n'
+            '    <div class="gban">\n' + '\n'.join(fuda) + '\n    </div>\n'
+            '  </div>\n'
+            '</section>')
+
+
 # ══ 組み上がった1枚を、ページごとに切り分ける ══════════════
 
 def wakeru(body):
@@ -1993,16 +2076,20 @@ def wakeru(body):
     return hero, sec, foot, shikake
 
 
-def build_obi(ima_file):
-    """帯。どのページでも同じ4つを、同じ位置に。いまいるページに印をつける。"""
+def build_obi(ima_file, doko):
+    """帯。どのページでも同じ位置に、同じ8つ。
+       2026-09-21：いちど4つ（ページ名）にしましたが、ホームの札8つと
+       数がちがって分かりにくい、という話になったので8つに戻しました。
+       行き先はページをまたぎます。いまのページにある項目には印をつけます。"""
     gyo = []
-    for f, na in PAGE_OBI:
-        ima = (f == ima_file)
-        # ロゴと同じ字を2つ並べない。ホームだけ、帯では「ホーム」と出す
+    for sid, _, _, _ in HOME_FUDA:
+        saki = doko[sid]
+        ima = (saki == ima_file)
         gyo.append('      <li><a href="%s"%s>%s</a></li>'
-                   % (f, ' class="obi-ima" aria-current="page"' if ima else '',
-                      esc_html('ホーム' if f == HOME else na)))
-    return ('<nav class="obi" aria-label="TOKKATSU広場の4つのページ">\n'
+                   % ('#%s' % sid if ima else '%s#%s' % (saki, sid),
+                      ' class="obi-ima" aria-current="page"' if ima else '',
+                      esc_html(SETSU_NA[sid])))
+    return ('<nav class="obi" aria-label="TOKKATSU広場の中の、8つの行き先">\n'
             '  <div class="obi-uchi">\n'
             '    <a class="obi-na" href="%s">TOKKATSU広場</a>\n'
             '    <ul class="obi-l">\n' % HOME
@@ -2158,16 +2245,23 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
+    gaiyo_html = build_gaiyo(sec, doko, kiji, jissen)
+    for i in re.findall(r'\sid="([^"]+)"', gaiyo_html):
+        doko[i] = HOME
+
     pages = {}
     for f, na, yo, setsu in PAGES:
         if f == HOME:
-            atama, naka_html, saki = hero, home_html, 'ichiran'
+            # ホームの並び … 8つの札 → こよみ → 中身をざっと
+            atama, saki = hero, 'ichiran'
+            naka_html = '\n\n'.join([home_html]
+                                    + [sec[s] for s in setsu] + [gaiyo_html])
         else:
             atama = KO_T.format(home=HOME, na=esc_html(na), yo=esc_html(yo),
                                 naka='　'.join(SETSU_NA[s] for s in setsu))
             naka_html, saki = '\n\n'.join(sec[s] for s in setsu), setsu[0]
         p = '\n'.join(['<a class="skip" href="#%s">本文へ進む</a>' % saki,
-                       atama, build_obi(f), naka_html, foot, shikake])
+                       atama, build_obi(f, doko), naka_html, foot, shikake])
         p = tsunagi_naosu(p, f, doko, tsune)
         html = '\n'.join([
             '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>',

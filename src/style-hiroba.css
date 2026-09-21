@@ -202,10 +202,19 @@ img,svg{max-width:100%}
 @media (max-width:719px){
   .hero-e--hiro{display:none}
   .hero-e--semai{display:block}
-  /* スマホでは min-height を持たせない。持たせると justify-content:flex-end が
-     「言葉の下・絵の上」に空を足す（375×812で実測150px。LINEの内蔵ブラウザで
-     いちばん目につく空白がこれ）。高さは padding-top＋絵の高さで自然に決める。 */
-  .hero{min-height:0}
+  /* スマホの空は、言葉の高さで決める（2026-09-21 直し）。
+     min-height を外しても、まだ空が余っていました。原因は2つあって、
+     ① .hero-koe が position:absolute なので、空の高さに関われない
+     ② .hero の padding-top が 30vh 固定で、言葉の高さ（実測154px）より
+        100pxほど大きい。背の高い端末ほど、空だけが伸びる。
+     そこで、スマホでは絶対配置をやめて、言葉を絵の上にふつうに積みます。
+     こうすると空は「余白＋言葉＋余白」ちょうどになり、端末の高さに
+     つられて伸びません。 */
+  .hero{min-height:0;padding-top:0}
+  .hero-koe{
+    position:static;order:-1;        /* 絵より先に置く（DOMでは絵が先のため） */
+    padding-block:clamp(24px,4.5vh,40px) clamp(20px,3.5vh,34px);
+  }
   .midashi .ja{letter-spacing:.1em}
   .hyo a,.hyo .gyo{grid-template-columns:1fr;gap:4px}
   .hyo .d{justify-self:start}
@@ -1352,4 +1361,97 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hfuda-h{font-size:15.5px}
   .hfuda-yo{margin-top:4px;font-size:12.5px}
   .hfuda-kazu{margin-top:8px}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   こよみを、よこにスライドさせる（2026-09-21）
+
+   4か月ぶんを縦に積むと、それだけで画面3枚ぶんありました。
+   広場で「縦にめっちゃ長い」「月ごとに横にスライド式とかどうですか？」
+   という声をもらい、よこ並べに直したところです。
+   スワイプでも ‹ › でも動きます。JSは scrollBy を呼ぶだけです。
+   ══════════════════════════════════════════════════════════════ */
+.koyomi-ue{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:4px;
+}
+.koyomi-hint{
+  margin:0;font-family:var(--f-maru);font-weight:700;font-size:12px;
+  letter-spacing:.04em;color:var(--mute);
+}
+.koyomi-hint::after{content:"　→"}
+.koyomi-okuri{margin:0;display:flex;gap:8px}
+.tsuki-b{
+  width:38px;height:38px;display:grid;place-items:center;
+  background:var(--bg);color:var(--ink);
+  border:2.5px solid var(--ink);border-radius:50%;
+  font-family:var(--f-en);font-size:20px;line-height:1;cursor:pointer;
+  transition:transform .14s ease,background .14s ease;
+}
+.tsuki-b:hover,.tsuki-b:focus-visible{background:var(--men-ki);transform:scale(1.08)}
+.tsuki-b[disabled]{opacity:.3;cursor:default;transform:none;background:var(--bg)}
+
+.tsuki-ban{
+  display:grid;grid-auto-flow:column;grid-auto-columns:100%;
+  gap:clamp(14px,2vw,20px);
+  overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  /* 指でつかむ所が要るので、ふちに少しだけ余白を残す */
+  padding-bottom:2px;
+}
+.tsuki-ban::-webkit-scrollbar{display:none}
+.tsuki-ban:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+.tsuki{scroll-snap-align:center;min-width:0}
+@media (prefers-reduced-motion:reduce){.tsuki-ban{scroll-behavior:auto}}
+
+/* ══ ホームの「中身を、ざっと」 ══════════════════════════════
+   札を押すまで中身が分からない、という話から足したところ。
+   中に出ている字は、ぜんぶ節そのものから抜いています。 */
+.gban{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:clamp(14px,2vw,20px);margin-top:clamp(24px,3vw,34px);
+}
+.gfuda{
+  display:grid;grid-template-rows:auto 1fr auto;
+  padding:clamp(16px,1.8vw,22px) clamp(15px,1.7vw,20px) clamp(14px,1.6vw,18px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
+  box-shadow:5px 5px 0 var(--ink);color:var(--ink);text-decoration:none;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.gfuda:hover,.gfuda:focus-visible{
+  transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);
+}
+.gfuda-h{
+  font-family:var(--f-maru);font-weight:700;font-size:16px;letter-spacing:.04em;
+  padding-bottom:9px;border-bottom:2px solid var(--rule);
+}
+.gfuda-l{
+  list-style:none;margin:10px 0 0;padding:0;
+  display:grid;gap:5px;font-size:13px;line-height:1.7;color:var(--mute);
+}
+.gfuda-l li{
+  display:grid;grid-template-columns:auto 1fr;gap:7px;align-items:start;
+}
+.gfuda-l li::before{
+  content:"";width:6px;height:6px;margin-top:8px;border-radius:50%;
+  background:var(--ink);opacity:.35;
+}
+.gfuda-go{
+  margin-top:13px;font-family:var(--f-maru);font-weight:700;font-size:12.5px;
+  letter-spacing:.04em;color:var(--accent);
+}
+.gfuda-go::after{content:"　→"}
+/* 行き先のページごとに、札と同じ色をつける */
+.gf--about,.gf--yotsu  {background:var(--men-sora)}
+.gf--manabu,.gf--jissen{background:var(--men-midori)}
+.gf--news,.gf--kai,.gf--okuru{background:var(--men-ki)}
+
+@media (max-width:1023px){
+  .gban{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:719px){
+  .koyomi-hint{font-size:11.5px}
+  .gban{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink);padding:15px 14px 16px}
 }

@@ -412,6 +412,33 @@
     setTimeout(hashDe, 0);
   }
 
+  /* ── こよみを、月ごとによこへ送る（2026-09-21）──────────────
+     スワイプと ‹ › の両方で動きます。やっているのは scrollBy だけで、
+     何も送信しません。JSが動かない場面でも、指でスライドはできます。 */
+  var koyomiBan = document.querySelector('.tsuki-ban');
+  if(koyomiBan){
+    var tsukiHaba = function(){
+      var t = koyomiBan.querySelector('.tsuki');
+      return t ? t.getBoundingClientRect().width + 18 : koyomiBan.clientWidth;
+    };
+    var okuriNaosu = function(){
+      var ue = koyomiBan.scrollLeft;
+      var hashi = koyomiBan.scrollWidth - koyomiBan.clientWidth - 1;
+      document.querySelectorAll('.tsuki-b').forEach(function(b){
+        b.disabled = (b.dataset.tsuki === '-1') ? (ue <= 1) : (ue >= hashi);
+      });
+    };
+    document.querySelectorAll('.tsuki-b').forEach(function(b){
+      b.addEventListener('click', function(){
+        koyomiBan.scrollBy({left: tsukiHaba() * Number(b.dataset.tsuki),
+                            behavior: reduced ? 'auto' : 'smooth'});
+      });
+    });
+    koyomiBan.addEventListener('scroll', okuriNaosu, {passive:true});
+    window.addEventListener('resize', okuriNaosu);
+    okuriNaosu();
+  }
+
   function setCycle(n){
     document.querySelectorAll('[data-learn-step]').forEach(function(button){
       button.classList.toggle('is-on', button.dataset.learnStep === String(n));
