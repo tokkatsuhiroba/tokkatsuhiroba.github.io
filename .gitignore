@@ -36,3 +36,9 @@ tokkatsu-hiroba-news*.html
 .DS_Store
 __pycache__/
 .claude/
+
+# 出来上がりをリポジトリの根に置かない（Actions が作って Pages へ出します）
+/index.html
+/hiroba.html
+/index-simple.html
+/storage.js
