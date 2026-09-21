@@ -1,0 +1,40 @@
+<svg viewBox="0 0 420 260" xmlns="http://www.w3.org/2000/svg">
+<title>机がコの字に並んでいるイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<g fill="#1F5C3F">
+<rect x="39" y="37" width="77" height="53" rx="4"/>
+<rect x="125" y="37" width="77" height="53" rx="4"/>
+<rect x="211" y="37" width="77" height="53" rx="4"/>
+<rect x="297" y="37" width="77" height="53" rx="4"/>
+<rect x="31" y="99" width="67" height="55" rx="4"/>
+<rect x="31" y="163" width="67" height="55" rx="4"/>
+<rect x="31" y="221" width="67" height="31" rx="4"/>
+<rect x="322" y="99" width="67" height="55" rx="4"/>
+<rect x="322" y="163" width="67" height="55" rx="4"/>
+<rect x="322" y="221" width="67" height="31" rx="4"/>
+</g>
+<g fill="#FCFBF7">
+<rect x="31" y="27" width="77" height="53" rx="4"/>
+<rect x="117" y="27" width="77" height="53" rx="4"/>
+<rect x="203" y="27" width="77" height="53" rx="4"/>
+<rect x="289" y="27" width="77" height="53" rx="4"/>
+<rect x="21" y="89" width="67" height="55" rx="4"/>
+<rect x="21" y="153" width="67" height="55" rx="4"/>
+<rect x="21" y="211" width="67" height="31" rx="4"/>
+<rect x="312" y="89" width="67" height="55" rx="4"/>
+<rect x="312" y="153" width="67" height="55" rx="4"/>
+<rect x="312" y="211" width="67" height="31" rx="4"/>
+</g>
+<g fill="#E8C547">
+<circle cx="50" cy="117" r="5"/>
+<circle cx="50" cy="181" r="5"/>
+<circle cx="350" cy="117" r="5"/>
+<circle cx="350" cy="181" r="5"/>
+<circle cx="70" cy="54" r="5"/>
+<circle cx="156" cy="54" r="5"/>
+<circle cx="242" cy="54" r="5"/>
+<circle cx="328" cy="54" r="5"/>
+</g>
+<path d="M31 252H98M322 252H389" fill="none"/>
+</g>
+</svg>

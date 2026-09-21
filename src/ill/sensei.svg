@@ -1,0 +1,20 @@
+<svg viewBox="0 0 52 108" xmlns="http://www.w3.org/2000/svg">
+<title>立っている先生のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<rect x="7" y="43" width="7.5" height="20" rx="3.75" fill="#F6D8B8" transform="rotate(10 10.75 45)"/>
+<rect x="37.5" y="43" width="7.5" height="20" rx="3.75" fill="#F6D8B8" transform="rotate(-10 41.25 45)"/>
+<rect x="16" y="76" width="9" height="22" rx="4.5" fill="#F6D8B8"/>
+<rect x="28" y="76" width="9" height="22" rx="4.5" fill="#F6D8B8"/>
+<path d="M13.5 92H23C24.7 92 26 93.3 26 95V97C26 98.7 24.7 100 23 100H13.5C11.8 100 10.5 98.7 10.5 97V95C10.5 93.3 11.8 92 13.5 92Z" fill="#FCFBF7"/>
+<path d="M29 92H38.5C40.2 92 41.5 93.3 41.5 95V97C41.5 98.7 40.2 100 38.5 100H29C27.3 100 26 98.7 26 97V95C26 93.3 27.3 92 29 92Z" fill="#FCFBF7"/>
+<path d="M26 36C18 36 12 41 12 48V80H40V48C40 41 34 36 26 36Z" fill="#3A6EA5"/>
+<path d="M26 43V75" fill="none" stroke="#FCFBF7"/>
+<path d="M35 55H50V76H35Z" fill="#E8C547"/>
+<path d="M42.5 57V74" fill="none"/>
+<circle cx="26" cy="20" r="15" fill="#F6D8B8"/>
+<path d="M11.6 17C12.9 9.4 18.8 5 26 5S39.1 9.4 40.4 17C36.8 13.4 32 11.5 26 11.5S15.2 13.4 11.6 17Z" fill="#1C1C1A" stroke="none"/>
+<circle cx="20.5" cy="21" r="1.9" fill="#1C1C1A" stroke="none"/>
+<circle cx="31.5" cy="21" r="1.9" fill="#1C1C1A" stroke="none"/>
+<path d="M22 26C23 29.4 29 29.4 30 26C29 27.2 23 27.2 22 26Z" fill="#1C1C1A" stroke="none"/>
+</g>
+</svg>

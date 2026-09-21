@@ -1,0 +1,11 @@
+<svg viewBox="0 0 150 220" xmlns="http://www.w3.org/2000/svg">
+<title>木のイラスト</title>
+<g stroke-linecap="round" stroke-linejoin="round">
+<path d="M65 126L62 212H88L85 126Z" fill="#1F5C3F" stroke="#1C1C1A" stroke-width="2.5"/>
+<path d="M75 151L48 117" fill="none" stroke="#1F5C3F" stroke-width="2.5"/>
+<path d="M76 169L106 129" fill="none" stroke="#1F5C3F" stroke-width="2.5"/>
+<path d="M75 7C95 7 109 18 115 35C133 39 143 54 140 72C148 87 143 106 129 115C129 135 113 148 94 147C82 160 61 160 49 147C29 149 14 135 14 117C0 106 1 84 12 72C9 54 20 39 37 34C45 18 57 7 75 7Z" fill="#2FBA68" stroke="#1C1C1A" stroke-width="2.5"/>
+<path d="M40 70C51 58 63 55 75 56M111 71C101 60 91 56 79 56M45 108C57 98 65 95 75 96M105 109C95 99 87 96 77 96" fill="none" stroke="#1F5C3F" stroke-width="2.5"/>
+<path d="M50 212H100" fill="none" stroke="#1C1C1A" stroke-width="2.5"/>
+</g>
+</svg>

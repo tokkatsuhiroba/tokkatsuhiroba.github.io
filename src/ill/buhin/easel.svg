@@ -1,0 +1,14 @@
+<svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
+<title>図工クラブのイーゼルのイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M76 18H85L126 212H114L80 52Z" fill="#1F5C3F"/>
+<path d="M76 18H84L48 212H36Z" fill="#1F5C3F"/>
+<path d="M77 91H85L92 212H80Z" fill="#1F5C3F"/>
+<path d="M31 30H129V151H31Z" fill="#FCFBF7"/>
+<path d="M44 43H116V136H44Z" fill="#FCFBF7"/>
+<path d="M51 113C59 91 67 89 76 103C84 86 94 88 109 114Z" fill="#A9E1F5"/>
+<path d="M58 65C58 56 67 53 73 59C80 51 91 56 89 66C99 68 98 81 88 83C84 92 71 89 70 81C60 83 53 73 58 65Z" fill="#D2552A"/>
+<path d="M25 145H135V157H25Z" fill="#1F5C3F"/>
+<path d="M24 212H136" fill="none"/>
+</g>
+</svg>

@@ -1,0 +1,7 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+<title>ふきだしのイラスト</title>
+<path d="M18 23H74C83 23 90 30 90 39V61C90 70 83 77 74 77H48L30 94L33 77C24 76 18 69 18 61Z" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M47 46H102V78C102 86 95 93 87 93H78L63 106L65 93H47C39 93 32 86 32 78V77H74C83 77 90 70 90 61V46Z" fill="#1F5C3F" stroke="#1C1C1A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M31 42H72M31 53H64" fill="none" stroke="#1F5C3F" stroke-width="3" stroke-linecap="round"/>
+<path d="M51 67H80M51 78H88" fill="none" stroke="#FCFBF7" stroke-width="3" stroke-linecap="round"/>
+</svg>

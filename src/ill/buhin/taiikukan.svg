@@ -1,0 +1,25 @@
+<svg viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg">
+<title>体育館のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<rect x="40" y="190" width="520" height="252" rx="4" fill="#FCFBF7"/>
+<path d="M18 192L300 46L582 192L559 226L300 91L41 226Z" fill="#3A6EA5"/>
+<path d="M79 207L300 94L521 207Z" fill="#FCFBF7"/>
+<g fill="#A9E1F5">
+<rect x="70" y="235" width="48" height="72" rx="12"/>
+<rect x="132" y="235" width="48" height="72" rx="12"/>
+<rect x="194" y="235" width="48" height="72" rx="12"/>
+<rect x="358" y="235" width="48" height="72" rx="12"/>
+<rect x="420" y="235" width="48" height="72" rx="12"/>
+<rect x="482" y="235" width="48" height="72" rx="12"/>
+</g>
+<circle cx="300" cy="168" r="32" fill="#E8C547"/>
+<path d="M300 168V148M300 168L317 178" fill="none"/>
+<path d="M245 322H355V442H245Z" fill="#3A6EA5"/>
+<path d="M300 323V442" fill="none"/>
+<circle cx="282" cy="382" r="4" fill="#E8C547"/>
+<circle cx="318" cy="382" r="4" fill="#E8C547"/>
+<path d="M73 349H184V442H73Z" fill="#1F5C3F"/>
+<path d="M416 349H527V442H416Z" fill="#1F5C3F"/>
+<path d="M0 442H600" fill="none"/>
+</g>
+</svg>

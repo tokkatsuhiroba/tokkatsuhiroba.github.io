@@ -1,0 +1,31 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+<title>卒業式の体育館のイラスト</title>
+<rect x="3" y="3" width="234" height="234" rx="20" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="194" cy="43" r="17" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4"/>
+<path d="M194 27V59M178 43H210M183 32L205 54M205 32L183 54" fill="none" stroke="#C98B5E" stroke-width="4" stroke-linecap="round"/>
+<path d="M179 58L142 112L197 94L211 59Z" fill="#C98B5E" opacity=".15"/>
+<path d="M3 105L120 91L237 105V217C237 228 228 237 217 237H23C12 237 3 228 3 217Z" fill="#3A6EA5" opacity=".12"/>
+<path d="M4 105L120 91L236 105M23 237L67 99M217 237L173 99M74 237L94 94M166 237L146 94" fill="none" stroke="#3A6EA5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<g fill="#3A6EA5" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M18 137H67V155H18Z"/><path d="M173 137H222V155H173Z"/>
+<path d="M10 174H61V193H10Z"/><path d="M179 174H230V193H179Z"/>
+</g>
+<g fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round">
+<path d="M27 155V172M58 155V172M182 155V172M213 155V172"/>
+<path d="M20 193V215M51 193V215M189 193V215M220 193V215"/>
+</g>
+<circle cx="116" cy="124" r="14" fill="#1C1C1A"/>
+<circle cx="116" cy="126" r="9" fill="#FCFBF7"/>
+<circle cx="112.5" cy="124.5" r="1.5" fill="#1C1C1A"/>
+<circle cx="119.5" cy="124.5" r="1.5" fill="#1C1C1A"/>
+<path d="M113 129Q116 132 119 129" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M98 143C103 137 110 134 116 134C124 134 133 138 138 145L143 178H91Z" fill="#3A6EA5" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<path d="M98 146L82 169M137 147L151 168" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M88 153L155 164L153 174L86 163Z" fill="#C98B5E" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<path d="M92 154L87 163M155 165L151 174" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M103 178L96 205M130 178L138 205M96 205H84M138 205H150" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<g stroke="#1C1C1A" stroke-width="4">
+<circle cx="69" cy="204" r="8" fill="#C98B5E"/><circle cx="91" cy="219" r="8" fill="#C98B5E"/>
+<circle cx="163" cy="214" r="9" fill="#C98B5E"/><circle cx="183" cy="199" r="8" fill="#C98B5E"/>
+</g>
+</svg>

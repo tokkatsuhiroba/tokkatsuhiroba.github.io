@@ -1,0 +1,10 @@
+<svg viewBox="0 0 80 170" xmlns="http://www.w3.org/2000/svg">
+<title>集会のマイクスタンドのイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<rect x="23" y="14" width="39" height="16" rx="8" fill="#FCFBF7" transform="rotate(-18 42.5 22)"/>
+<path d="M28 28L39 38V132" fill="none"/>
+<circle cx="39" cy="132" r="5" fill="#1C1C1A"/>
+<path d="M39 137V162M36 135L10 162M42 135L70 162" fill="none"/>
+<path d="M5 162H15M34 162H44M65 162H75" fill="none"/>
+</g>
+</svg>

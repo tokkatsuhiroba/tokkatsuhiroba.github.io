@@ -1,0 +1,1262 @@
+/* ══════════════════════════════════════════════════════════════
+   特活広場｜新版（縦スクロール1枚）
+   2026-09-21 に1から書き直し。src/style.css（本体）とは別物です。
+
+   参照元 recruit.asuzacgroup.jp を実測して採った構造：
+     内寸 960px ／ 角丸 0 ／ 影なし ／ 節の下余白 110〜155px
+     見出しは大きく・字間 .15em ／ 色は「全面ベタの帯」にだけ使う
+   色はこのサイトの絵（部品23種）と同じ9色を使います。
+   ══════════════════════════════════════════════════════════════ */
+
+:root{
+  /* 絵と同じ9色。ここが本体 style.css とそろっている必要があります */
+  --bg:#FCFBF7;
+  --ink:#1C1C1A;
+  --mute:#63625C;
+  --rule:#E3E2DC;
+  --accent:#1F5C3F;
+  --sora:#A9E1F5;
+  --midori:#2FBA68;
+  --shu:#D2552A;
+  --ki:#E8C547;
+  --kon:#3A6EA5;
+  --hada:#F6D8B8;
+
+  /* 帯に使う淡い面（上の色を地に薄めた値） */
+  --men-ki:#FBF2D8;
+  --men-sora:#EAF5FA;
+  --men-midori:#EDF5EC;
+
+  /* 書体は役ごとに変える。温かさは丸ゴシックと硬筆、読みやすさはUD書体。
+       maru … 見出し・ボタン（Zen Maru Gothic＝丸ゴシック）
+       te   … 言葉・語りかけ（Klee One＝硬筆。手で書いた感じ）
+       en   … 英字の小見出し（Jost）
+       hon  … 本文（BIZ UDPGothic＝UD書体。読みやすさは譲らない）   */
+  --f-maru:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif;
+  --f-te:"Klee One","BIZ UDPMincho","Hiragino Mincho ProN",serif;
+  --f-en:"Jost","BIZ UDPGothic",sans-serif;
+  --f-hon:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
+
+  --uchi:960px;                     /* 内寸。参照元と同じ */
+  --pad:clamp(20px,4vw,40px);
+  --aki:clamp(72px,9vw,140px);      /* 節と節のあいだ。参照元は110〜155px */
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--f-hon);
+  font-size:16px;line-height:1.9;letter-spacing:.03em;
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation:none!important;transition:none!important}
+}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+img,svg{max-width:100%}
+
+.skip{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.skip:focus{
+  width:auto;height:auto;clip:auto;inset-inline-start:12px;top:10px;z-index:40;
+  background:var(--bg);border:2px solid var(--ink);padding:8px 14px;font-size:14px;
+}
+
+/* ── 節の骨 ────────────────────────────────── */
+.uchi{max-width:var(--uchi);margin:0 auto;padding-inline:var(--pad)}
+.sec{padding-block:var(--aki)}
+.sec--ki   {background:var(--men-ki)}
+.sec--sora {background:var(--men-sora)}
+.sec--midori{background:var(--men-midori)}
+
+/* 見出し。参照元は 44px・weight700・字間 .15em・行間1.6 */
+.midashi{margin:0 0 8px;text-align:center}
+.midashi .en{
+  display:block;font-family:var(--f-en);
+  font-size:13.5px;font-weight:700;letter-spacing:.26em;color:var(--mute);
+  margin-bottom:10px;
+}
+.midashi .ja{
+  display:block;
+  font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(26px,4.4vw,44px);letter-spacing:.12em;line-height:1.6;
+  text-indent:.15em;
+}
+.yomi{
+  max-width:640px;margin:0 auto clamp(32px,5vw,64px);
+  text-align:center;font-family:var(--f-te);font-weight:400;
+  font-size:clamp(15px,1.6vw,17.5px);line-height:2.1;color:var(--ink);
+}
+
+/* ── ヒーロー ────────────────────────────────
+   絵は下にそろえ、その上に空をのばす。
+   こうしないと、1行が木や校舎に重なって読めない。 */
+.hero{
+  position:relative;background:var(--sora);overflow:hidden;
+  min-height:clamp(460px,78svh,820px);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  /* 言葉のぶんの空は必ず確保する。画面が低いと絵が上がってきて、
+     ロゴと1行が校舎に重なるため（2026-09-21 実測） */
+  padding-top:clamp(190px,30vh,300px);
+  border-bottom:2px solid var(--ink);
+}
+.hero-e{display:block;width:100%;height:auto}
+.hero-e--semai{display:none}          /* スマホだけ、絵を寄って切り出す */
+.hero-e svg{display:block;width:100%;height:auto}
+.hero-koe{
+  position:absolute;z-index:2;inset-inline-start:0;top:clamp(20px,4vh,56px);width:100%;
+  text-align:center;pointer-events:none;padding-inline:var(--pad);
+}
+.hero-koe .btn{pointer-events:auto;margin-top:clamp(18px,3vh,30px)}
+.hero-shita{
+  position:absolute;z-index:2;left:50%;bottom:14px;transform:translateX(-50%);
+  margin:0;font-family:var(--f-en);font-size:12px;font-weight:700;letter-spacing:.2em;color:var(--ink);
+  background:var(--bg);border:2px solid var(--ink);padding:5px 14px;
+}
+.hero-logo{
+  margin:0;font-family:var(--f-maru);font-weight:900;
+  font-size:clamp(30px,6.2vw,72px);letter-spacing:.10em;line-height:1.25;text-indent:.10em;
+}
+.hero-copy{
+  margin:14px 0 0;font-family:var(--f-te);font-weight:600;
+  font-size:clamp(15px,2.2vw,23px);letter-spacing:.10em;
+}
+.hero-copy span{display:inline-block;animation:deru .5s ease both;animation-delay:calc(var(--i)*.04s)}
+@keyframes deru{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hero-copy span{opacity:1}}
+
+/* ── ボタン（参照元は角丸0・ベタ） ───────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:14px;
+  min-height:56px;padding:12px 26px;
+  background:var(--shu);color:var(--bg);
+  text-decoration:none;font-family:var(--f-maru);font-weight:700;
+  font-size:16px;letter-spacing:.08em;
+  border:0;transition:transform .18s ease;
+}
+.btn:hover,.btn:focus-visible{transform:translateY(-2px)}
+.btn--wa{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.btn-ya{font-size:20px;line-height:1}
+.naka{display:flex;justify-content:center;margin-top:clamp(28px,4vw,52px)}
+
+/* ── 4つの内容（参照元の「事業・仕事を知る」にあたる） ──
+   絵を切り出した帯 ＋ 見出し ＋ 1行。押すと本体のタブへ。 */
+.yotsu{display:grid;gap:clamp(20px,3vw,34px)}
+@media (min-width:720px){.yotsu{grid-template-columns:1fr 1fr}}
+.naiyo{
+  display:block;text-decoration:none;color:var(--ink);
+  background:var(--bg);border:2px solid var(--ink);
+  transition:transform .2s ease;
+}
+.naiyo:hover,.naiyo:focus-visible{transform:translateY(-4px)}
+.naiyo-e{line-height:0;border-bottom:2px solid var(--ink);background:var(--sora)}
+.naiyo-e svg{display:block;width:100%;height:auto}
+.naiyo-t{padding:18px clamp(16px,2.4vw,26px) 22px}
+.naiyo-t .ban{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--f-en);font-size:12px;font-weight:700;letter-spacing:.16em;color:var(--mute);
+}
+.naiyo-t .ban i{width:11px;height:11px;border-radius:50%;border:2px solid var(--ink)}
+.naiyo-t h3{
+  margin:6px 0 6px;font-size:clamp(19px,2.2vw,25px);letter-spacing:.05em;line-height:1.5;
+  font-family:var(--f-maru);font-weight:700;
+}
+.naiyo-t p{margin:0;font-size:14.5px;line-height:1.9;color:var(--mute)}
+.n-gakkyu .ban i{background:var(--accent)}
+.n-gyoji  .ban i{background:var(--shu)}
+.n-jidokai .ban i{background:var(--kon)}
+.n-club   .ban i{background:var(--ki)}
+
+/* ── 一覧（実践・グッズ・ニュース） ── */
+.hyo{display:grid;gap:0;border-top:1px solid var(--rule)}
+.hyo a,.hyo .gyo{
+  display:grid;grid-template-columns:1fr auto;gap:14px;align-items:baseline;
+  padding:18px 4px;border-bottom:1px solid var(--rule);
+  text-decoration:none;color:var(--ink);
+}
+.hyo a:hover .t{text-decoration:underline;text-underline-offset:4px}
+.hyo .t{font-family:var(--f-maru);font-size:16px;font-weight:500;line-height:1.75}
+.hyo .sub{display:block;font-size:12.5px;font-weight:400;color:var(--mute);margin-top:3px}
+.hyo .d{flex:none;font-size:12px;color:var(--mute);white-space:nowrap}
+.hyo--ken .nokori{
+  flex:none;font-family:var(--f-en);font-size:11px;font-weight:700;color:var(--mute);
+  white-space:nowrap;
+}
+.hyo--ken .nokori b{
+  font-family:var(--f-maru);font-size:26px;font-weight:700;color:var(--shu);
+  margin-inline-end:2px;
+}
+.hyo--ken .gyo{align-items:center}
+
+/* ── 足もと ── */
+.foot{background:var(--ink);color:var(--bg);padding-block:clamp(40px,6vw,72px)}
+.foot a{color:var(--ki);font-weight:700}
+.foot p{margin:0 0 10px;font-size:14px;line-height:1.9}
+.foot .chu{color:#B9B8B4;font-size:12.5px}
+
+/* ── スマホ ──────────────────────────────────
+   広場ぜんぶを375pxに押しこむと、子どもが10pxになって読めない。
+   ヒーローは「寄った1か所」を出し、4つの内容のカードで細部を見せる。 */
+@media (max-width:719px){
+  .hero-e--hiro{display:none}
+  .hero-e--semai{display:block}
+  /* スマホでは min-height を持たせない。持たせると justify-content:flex-end が
+     「言葉の下・絵の上」に空を足す（375×812で実測150px。LINEの内蔵ブラウザで
+     いちばん目につく空白がこれ）。高さは padding-top＋絵の高さで自然に決める。 */
+  .hero{min-height:0}
+  .midashi .ja{letter-spacing:.1em}
+  .hyo a,.hyo .gyo{grid-template-columns:1fr;gap:4px}
+  .hyo .d{justify-self:start}
+  .naka{flex-direction:column;align-items:stretch}
+  .naka .btn{justify-content:center}
+}
+
+/* ── 送ったものが、どうなるか（JOIN節の流れ） ──
+   「送ったのに何も起きない」と思われたら、誰も送りません。 */
+.nagare{
+  list-style:none;margin:0 auto clamp(28px,4vw,48px);padding:0;
+  max-width:760px;display:grid;gap:14px;
+}
+@media (min-width:760px){.nagare{grid-template-columns:repeat(4,1fr);gap:16px}}
+.nagare li{
+  margin:0;padding:18px 16px 20px;
+  background:var(--bg);border:2px solid var(--ink);
+  font-size:14px;line-height:1.85;color:var(--mute);
+}
+.nagare .n{
+  display:block;font-family:var(--f-en);font-size:28px;font-weight:700;
+  line-height:1;color:var(--shu);margin-bottom:8px;
+}
+.nagare b{
+  display:block;font-family:var(--f-maru);font-size:17px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;margin-bottom:6px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   楽しさの層（2026-09-21 に追加）
+   ここから下は「読めること」を壊さずに、見た目を楽しくするためだけの層です。
+   　・節のまわりに、4人のキャラクターが立つ
+   　・色の帯の下ふちを波にする
+   　・一覧を、線ではなく「ふちどり＋ベタ影」のカードにする
+   影と角丸は、参照元（recruit.asuzacgroup.jp）には無い要素です。
+   絵のほうの線（2.5px・角は丸）にそろえるために、あえて入れています。
+   ══════════════════════════════════════════════════════════════ */
+
+.sec{position:relative}
+
+/* ── 色の帯の、下のふちを波にする ──
+   波は「次の節の上ぶち」に、前の節の色で描きます。
+   こうしないと、色の帯どうしが となりあったとき、あとの節に隠れます。 */
+.foot{position:relative}
+.sec--ki     + .sec,.sec--ki     + .foot{--nami-ue:var(--men-ki)}
+.sec--sora   + .sec,.sec--sora   + .foot{--nami-ue:var(--men-sora)}
+.sec--midori + .sec,.sec--midori + .foot{--nami-ue:var(--men-midori)}
+.sec + .sec::before,.sec + .foot::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:12px;pointer-events:none;
+  background:radial-gradient(circle 12px at 12px 0,var(--nami-ue,transparent) 99%,transparent 100%)
+             repeat-x 0 0/24px 12px;
+}
+
+/* ── まわりに立つキャラクター ──
+   本文の欄（960px）の外側にだけ置きます。ここが取れない幅では、出しません。
+   ＝ 字とぶつかることは、仕組みのうえで起きません。 */
+.kazari{
+  position:absolute;top:var(--y,12%);width:var(--w,104px);z-index:2;
+  left:calc(50% - (var(--uchi) / 2) - var(--w) - 20px);
+  line-height:0;pointer-events:none;
+  animation:uku 5s ease-in-out infinite;animation-delay:var(--d,0s);
+}
+.kazari--migi{left:auto;right:calc(50% - (var(--uchi) / 2) - var(--w) - 20px)}
+.kazari svg{display:block;width:100%;height:auto}
+@keyframes uku{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media (max-width:1259px){.kazari{display:none}}
+
+/* ── 見出し（英字を丸い札に、下に3つの点） ── */
+.midashi .en{
+  display:inline-block;margin-bottom:14px;padding:4px 16px;
+  background:var(--bg);color:var(--ink);
+  border:2.5px solid var(--ink);border-radius:999px;
+}
+.midashi::after{
+  content:"";display:block;width:64px;height:10px;margin:14px auto 0;
+  background:
+    radial-gradient(circle 5px at 5px 5px,var(--shu) 99%,transparent 100%) no-repeat,
+    radial-gradient(circle 5px at 32px 5px,var(--midori) 99%,transparent 100%) no-repeat,
+    radial-gradient(circle 5px at 59px 5px,var(--kon) 99%,transparent 100%) no-repeat;
+}
+
+/* ── ボタン（丸くして、ベタ影を落とす） ── */
+.btn{border:2.5px solid var(--ink);border-radius:999px;box-shadow:4px 4px 0 var(--ink)}
+.btn:hover,.btn:focus-visible{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink)}
+.btn--wa{background:var(--bg);color:var(--accent);border-color:var(--ink)}
+
+/* ── 研究会カレンダー（線の一覧 → カードの一覧） ── */
+.hyo--ken{display:grid;gap:14px;border-top:0}
+.hyo--ken .gyo{
+  grid-template-columns:auto auto 1fr auto;gap:16px;align-items:center;
+  padding:14px 20px;background:var(--bg);
+  border:2.5px solid var(--ink);border-radius:18px;
+  box-shadow:5px 5px 0 var(--ink);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.hyo--ken a.gyo:hover,.hyo--ken a.gyo:focus-visible{
+  transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);
+}
+.hyo--ken a:hover .t{text-decoration:none}
+/* 日付（枠のいちばん左）。「10/2」と曜日だけ。
+   長い日付は、目には出さず 読み上げ用にだけ持たせています。 */
+.hyo--ken .hizuke{
+  display:grid;justify-items:center;gap:1px;
+  min-width:54px;padding-inline-end:15px;
+  border-inline-end:2px solid var(--rule);
+  font-family:var(--f-maru);line-height:1.1;
+}
+.hyo--ken .hizuke b{font-size:23px;font-weight:700;color:var(--ink)}
+.hyo--ken .hizuke i{font-size:11.5px;font-style:normal;font-weight:700;color:var(--mute)}
+.hyo--ken .kao{
+  width:56px;height:56px;border-radius:50%;overflow:hidden;
+  border:2.5px solid var(--ink);background:var(--bg);
+  display:grid;place-items:center;
+}
+.hyo--ken .kao svg{width:100%;height:100%}
+.kao--gyoji   {background:#F7E3D9}
+.kao--gakkatsu{background:#E3EEE6}
+.kao--jidokai {background:#E1EAF3}
+.kao--club    {background:#FBF0CE}
+.hyo--ken .nokori{display:inline-flex;align-items:baseline;gap:2px;line-height:1}
+/* いちばん近い1件だけ、朱のふだにする（色だけでなく「いちばん上」でも分かります） */
+.gyo--tsugi{box-shadow:5px 5px 0 var(--shu)}
+.gyo--tsugi .nokori{
+  padding:5px 14px;background:var(--shu);color:var(--bg);
+  border:2.5px solid var(--ink);border-radius:999px;
+}
+.gyo--tsugi .nokori b{color:var(--bg)}
+
+/* ── 4人ならび（特別活動って、なに の節） ── */
+.yomi--na{margin-bottom:18px}
+.kyara{
+  list-style:none;margin:0 auto;padding:0;max-width:720px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:center;
+}
+.hitori{
+  padding:14px 6px 12px;background:var(--bg);
+  border:2.5px solid var(--ink);border-radius:18px;box-shadow:4px 4px 0 var(--ink);
+}
+.hitori .e{display:block;line-height:0}
+.hitori .e svg{width:auto;height:86px}
+.hitori b{
+  display:block;margin-top:8px;font-family:var(--f-maru);font-weight:700;
+  font-size:15.5px;letter-spacing:.04em;
+}
+.hitori .yaku{display:block;font-size:12px;color:var(--mute);line-height:1.6}
+.h--gakkatsu{background:#E3EEE6}
+.h--gyoji   {background:#F7E3D9}
+.h--jidokai {background:#E1EAF3}
+.h--club    {background:#FBF0CE}
+
+/* ── 4つの内容（カードの角を丸め、絵の上に案内役を立たせる） ── */
+.naiyo{position:relative;border-width:2.5px;border-radius:20px;box-shadow:6px 6px 0 var(--ink)}
+.naiyo:hover,.naiyo:focus-visible{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink)}
+.naiyo-e{position:relative;border-bottom-width:2.5px}
+.naiyo-e svg{border-radius:17px 17px 0 0}
+.naiyo-kao{position:absolute;right:16px;bottom:-10px;width:66px;line-height:0;z-index:2}
+.naiyo-kao svg{display:block;width:100%;height:auto;border-radius:0}
+.naiyo-t .na{margin:0 0 8px;font-size:13px;color:var(--mute)}
+.naiyo-t .na b{font-family:var(--f-maru);font-size:14.5px;color:var(--ink)}
+
+/* ── 送ったものが、どうなるか（番号を丸いふだにする） ── */
+.nagare li{border-width:2.5px;border-radius:18px;box-shadow:5px 5px 0 var(--ink)}
+.nagare .n{
+  width:42px;height:42px;margin-bottom:10px;
+  display:grid;place-items:center;font-size:20px;line-height:1;
+  color:var(--bg);background:var(--shu);
+  border:2.5px solid var(--ink);border-radius:50%;
+}
+.nagare li:nth-child(2) .n{background:var(--ki);color:var(--ink)}
+.nagare li:nth-child(3) .n{background:var(--kon)}
+.nagare li:nth-child(4) .n{background:var(--accent)}
+
+/* ── スマホ（960pxの外が無いので、キャラクターは4人ならびだけになります） ── */
+@media (max-width:719px){
+  .hyo--ken .gyo{grid-template-columns:auto auto 1fr;gap:10px;padding:14px 14px}
+  .hyo--ken .nokori{grid-column:3;justify-self:start;margin-top:6px}
+  .hyo--ken .gyo .kao{align-self:start;width:48px;height:48px}
+  .hyo--ken .hizuke{min-width:42px;padding-inline-end:10px;align-self:start}
+  .hyo--ken .hizuke b{font-size:19px}
+  .kyara{grid-template-columns:repeat(2,1fr)}
+  .naiyo-kao{width:56px;right:12px}
+}
+
+/* ── ニュース・実践の一覧（行の頭に、丸い印をつける） ──
+   色は飾りです。意味は右はしの「実践」「外部」の字のほうで分けています。 */
+.hyo:not(.hyo--ken) .t{position:relative;padding-inline-start:22px}
+.hyo:not(.hyo--ken) .t::before{
+  content:"";position:absolute;inset-inline-start:0;top:.55em;
+  width:11px;height:11px;border-radius:50%;
+  border:2.5px solid var(--ink);background:var(--shu);
+}
+.sec--midori .hyo .t::before{background:var(--accent)}
+.hyo:not(.hyo--ken) a{border-radius:12px;transition:background .15s ease}
+.hyo:not(.hyo--ken) a:hover{background:var(--bg)}
+
+/* 困りごとの行き先（LINE）。受け口を消すだけだと、困っている人の行き場が消える */
+.yomi.tsugi{
+  margin-top:clamp(30px,4vw,52px);padding:clamp(18px,2.4vw,26px);
+  background:var(--bg);border:2px solid var(--ink);
+  font-size:14.5px;line-height:1.95;max-width:720px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   このページの中で開く層（2026-09-21 に追加）
+
+   直したこと：4つの内容・実践の行・「ぜんぶ見る」の3か所が、
+   本体サイト（別デザインの「まなぶ」タブ）へ飛んでいました。
+   押した人は「別のサイトへ出された」と感じます。だから飛ばすのをやめ、
+   ぜんぶ ここで開く形にしました。JSは使いません（<details> だけ）。
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 開くふた（実践のくわしく・のこり◯件）。見た目はボタンと同じ札 ── */
+.hiraku>summary,.motto>summary{
+  display:inline-flex;align-items:center;gap:10px;
+  cursor:pointer;list-style:none;
+  min-height:52px;padding:10px 24px;
+  background:var(--bg);color:var(--accent);
+  font-family:var(--f-maru);font-weight:700;font-size:15px;letter-spacing:.06em;
+  border:2.5px solid var(--ink);border-radius:999px;box-shadow:4px 4px 0 var(--ink);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.hiraku>summary::-webkit-details-marker,
+.motto>summary::-webkit-details-marker{display:none}
+.hiraku>summary::after,.motto>summary::after{
+  content:"＋";font-family:var(--f-en);font-size:17px;line-height:1;
+}
+.hiraku[open]>summary::after,.motto[open]>summary::after{content:"−"}
+.hiraku>summary:hover,.motto>summary:hover,
+.hiraku>summary:focus-visible,.motto>summary:focus-visible{
+  transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--ink);
+}
+.hiraku>summary .b,.motto>summary .b{display:none}
+.hiraku[open]>summary .a,.motto[open]>summary .a{display:none}
+.hiraku[open]>summary .b,.motto[open]>summary .b{display:inline}
+
+/* ── のこりを、このページで開く（前は「ぜんぶ見る→」で外へ出ていました） ── */
+.motto{margin-top:clamp(22px,3vw,34px);text-align:center}
+.motto .hyo{text-align:start;margin-top:18px}
+.motto .hyo--ken{margin-top:20px}
+/* ふたの中に、札（実践）や会の板をそのまま入れるとき。
+   ふた自身は真ん中ぞろえなので、中身は左ぞろえに戻します。 */
+.motto .tefuda,.motto .kaiban{text-align:start;margin-top:clamp(18px,2.6vw,28px)}
+
+/* ── 節の中を「顔だけ」にする（2026-09-21）────────────────
+   スマホで縦31画面ありました。別ページには分けません
+   （飛ばさない・見た目を変えない）。話の見出しと1行はそのまま残し、
+   中身だけを、この場で開くふたの中に入れます。
+   ふたは .hiraku と同じ札。ここでは置き場所だけ足します。 */
+.hako{margin-top:2px}
+.hako[open]{margin-bottom:6px}
+.hako[open]>summary{margin-bottom:clamp(18px,2.4vw,24px)}
+/* ふたの上にある「1行」は、閉じているときだけ下を空ける */
+.manabu-box>.manabu-note+.hako{margin-top:0}
+
+/* ── すぐ使える実践（中身まで、この1枚の中に） ── */
+.tefuda{display:grid;gap:clamp(18px,2.6vw,28px)}
+.fuda{
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:clamp(20px,2.6vw,30px) clamp(18px,2.4vw,30px) clamp(20px,2.4vw,28px);
+}
+.fuda-me{
+  margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:12.5px;line-height:1.7;color:var(--mute);letter-spacing:.04em;
+}
+.fuda-tag{
+  font-family:var(--f-maru);font-size:12px;font-weight:700;letter-spacing:.08em;
+  color:var(--bg);background:var(--accent);
+  border:2.5px solid var(--ink);border-radius:999px;padding:2px 13px;
+}
+.fuda-h{
+  margin:12px 0 10px;font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(18px,2.1vw,24px);letter-spacing:.05em;line-height:1.6;
+}
+.fuda-lead{margin:0;font-size:15px;line-height:1.95}
+.fuda .hiraku{margin-top:18px}
+.fuda-naka{margin-top:4px}
+.fuda-naka h4{
+  margin:22px 0 8px;font-family:var(--f-maru);font-weight:700;font-size:16px;
+  letter-spacing:.05em;padding-inline-start:12px;
+  border-inline-start:6px solid var(--ki);
+}
+.fuda-naka p{margin:0 0 12px;font-size:15px;line-height:1.95}
+.fuda-naka ul,.fuda-naka ol{margin:0 0 14px;padding-inline-start:1.5em}
+.fuda-naka li{margin:0 0 7px;font-size:15px;line-height:1.9}
+
+/* 週案に貼る1行。押して書き写せるよう、ひと続きで選べるようにする */
+.shuan{
+  margin:18px 0 0;padding:14px 18px;display:grid;gap:6px;
+  background:var(--men-ki);border:2.5px solid var(--ink);border-radius:16px;
+}
+.shuan-l{
+  font-family:var(--f-maru);font-weight:700;font-size:12.5px;
+  letter-spacing:.08em;color:var(--mute);
+}
+.shuan-t{font-size:15px;line-height:1.85;user-select:all;-webkit-user-select:all}
+
+.fuda-set{
+  margin:16px 0 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  font-size:13.5px;line-height:1.8;
+}
+.fuda-set b{font-family:var(--f-maru);font-size:13px;letter-spacing:.06em}
+.gone{
+  display:inline-flex;align-items:baseline;gap:7px;padding:3px 13px;
+  background:var(--bg);border:2px solid var(--rule);border-radius:999px;font-size:13px;
+}
+.gone i{font-style:normal;font-size:11.5px;color:var(--mute)}
+.fuda-by{margin:16px 0 0;font-size:12.5px;color:var(--mute)}
+
+/* ── 4つの内容：押せるのは「このページの中」だけ ──
+   行き先が無いカードは、押せる見た目にしません（押しても何も起きない、を作らない） */
+.naiyo{transition:transform .2s ease,box-shadow .2s ease}
+a.naiyo:hover,a.naiyo:focus-visible{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink)}
+div.naiyo:hover{transform:none;box-shadow:6px 6px 0 var(--ink)}
+.naiyo-t .naiyo-saki{
+  margin:12px 0 0;font-family:var(--f-maru);font-weight:700;
+  font-size:13.5px;letter-spacing:.04em;color:var(--accent);
+}
+a.naiyo .naiyo-t .naiyo-saki::after{content:"　↓"}
+div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
+
+/* ── 足もと（別ページだと分かるように、小さく添える） ── */
+.foot .chu2{display:inline-block;color:#B9B8B4;font-size:12.5px}
+
+@media (max-width:719px){
+  /* ふたの字は、2行に折らない（折ると ＋ が横にはみ出て、押す場所が分からなくなる） */
+  .hiraku>summary,.motto>summary{
+    width:100%;justify-content:center;text-align:center;
+    padding:10px 14px;gap:8px;font-size:14px;
+  }
+  .motto .hyo{margin-top:16px}
+}
+
+/* 持ち帰れる資料（指導案・スライドなど）。
+   ★埋めこみません。押すと別のタブで開くリンクです。
+   埋めこむと、ページを開いただけで外部に通信が飛びます。 */
+.fuda-shiryo{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fuda-shiryo b{
+  flex:none;font-family:var(--f-maru);font-size:12.5px;font-weight:700;
+  letter-spacing:.08em;color:var(--mute);margin-inline-end:4px;
+}
+.shiryo-b{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;min-height:40px;
+  background:var(--bg);border:2px solid var(--accent);color:var(--accent);
+  text-decoration:none;font-family:var(--f-maru);font-size:13.5px;font-weight:700;
+}
+.shiryo-b i{font-style:normal;font-size:11px;color:var(--mute);font-weight:400}
+.shiryo-b:hover,.shiryo-b:focus-visible{background:var(--accent);color:var(--bg)}
+.shiryo-b:hover i,.shiryo-b:focus-visible i{color:var(--bg)}
+
+/* ══════════════════════════════════════════════════════════════
+   ほかの研究会（2026-09-21 に追加）
+
+   参照元は 全特活「全国各地の研究会」の並び。あちらは各サイトの
+   画面写真を並べていますが、ここでは写真を置きません。
+     ・写しの中に子どもの顔が入る（このサイトは顔を載せないと決めた）
+     ・よその会の画面はよその会のもの
+     ・1ファイル配布なので、14枚ぶんの画像は容量が破裂する
+   代わりに「範囲・対象・何が置いてあるか」を字で出します。
+   それが分かるほうが、写真より選べます。
+   ══════════════════════════════════════════════════════════════ */
+
+.kaiban{display:grid;gap:clamp(14px,2vw,20px)}
+@media (min-width:720px){.kaiban{grid-template-columns:1fr 1fr}}
+.kai{
+  display:grid;gap:8px;align-content:start;
+  padding:clamp(16px,2vw,22px) clamp(16px,2vw,22px) clamp(14px,1.8vw,18px);
+  background:var(--bg);color:var(--ink);text-decoration:none;
+  border:2.5px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.kai:hover,.kai:focus-visible{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink)}
+.kai-ue{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* 範囲の札。色だけでなく「全国／県／市」の字でも分かるようにする */
+.kai-han{
+  font-family:var(--f-maru);font-weight:700;font-size:12px;letter-spacing:.08em;
+  padding:2px 12px;border:2.5px solid var(--ink);border-radius:999px;color:var(--bg);
+}
+.han--zen{background:var(--shu)}
+.han--ken{background:var(--kon)}
+.han--shi{background:var(--accent)}
+.kai-muke{font-size:12px;color:var(--mute)}
+.kai-soto{
+  margin-inline-start:auto;font-family:var(--f-en);font-size:11px;font-weight:700;
+  letter-spacing:.12em;color:var(--mute);
+  border:2px solid var(--rule);border-radius:999px;padding:2px 10px;
+}
+.kai-na{
+  font-family:var(--f-maru);font-weight:700;font-size:17px;
+  letter-spacing:.03em;line-height:1.6;
+}
+.kai:hover .kai-na{text-decoration:underline;text-underline-offset:4px}
+.kai-yo{font-size:14px;line-height:1.85;color:var(--ink)}
+.kai-shita{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:2px}
+.kai-tag{
+  font-size:11.5px;line-height:1.7;color:var(--mute);
+  background:var(--men-ki);border:2px solid var(--rule);border-radius:999px;padding:1px 10px;
+}
+.kai-do{
+  margin-inline-start:auto;font-family:var(--f-en);font-size:11px;
+  color:var(--mute);word-break:break-all;
+}
+.kai-chu{
+  margin:clamp(24px,3vw,36px) auto 0;max-width:720px;
+  font-size:13px;line-height:1.95;color:var(--mute);
+}
+
+@media (max-width:719px){
+  .kai-soto,.kai-do{margin-inline-start:0}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   上の帯（2026-09-21 に追加）
+
+   空（ヒーロー）のすぐ下に置いて、position:sticky で上にはりつけます。
+   　・空の絵とロゴは隠さない（最初の画面は絵が主役のまま）
+   　・1回スクロールした瞬間から、帯はずっと上に付いてくる
+   　・JSは1行も使いません。行き先は #ima のような、このページの中だけ
+   いつも出しておきたくなったら .obi を top:0 の fixed にするのではなく、
+   帯を <header> の前に移すだけで済みます（sticky のまま）。
+   ══════════════════════════════════════════════════════════════ */
+
+.obi{
+  position:sticky;top:0;z-index:20;
+  background:var(--bg);border-bottom:2.5px solid var(--ink);
+}
+.obi-uchi{
+  /* 帯だけは内寸960pxより広くとる。7つの行き先が、切れずに1列に並ぶ幅 */
+  max-width:1160px;margin:0 auto;padding-inline:var(--pad);
+  display:flex;align-items:center;gap:16px;min-height:58px;
+}
+.obi-na{
+  flex:none;font-family:var(--f-maru);font-weight:900;font-size:15px;
+  letter-spacing:.04em;color:var(--ink);text-decoration:none;white-space:nowrap;
+}
+.obi-l{
+  list-style:none;margin:0;padding:0;
+  display:flex;align-items:center;gap:4px;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.obi-l::-webkit-scrollbar{display:none}
+.obi-l li{margin:0;flex:none}
+.obi-l a{
+  display:inline-flex;align-items:center;min-height:40px;padding:6px 14px;
+  font-family:var(--f-maru);font-weight:700;font-size:13.5px;letter-spacing:.04em;
+  color:var(--ink);text-decoration:none;
+  border:2.5px solid transparent;border-radius:999px;
+  white-space:nowrap;transition:background .14s ease,border-color .14s ease;
+}
+.obi-l a:hover{background:var(--men-ki);border-color:var(--ink)}
+.obi-l a:focus-visible{background:var(--men-ki)}
+
+/* 帯の下に隠れないように、飛んだ先を帯のぶんだけ下げて止める */
+.sec,.foot{scroll-margin-top:64px}
+
+/* 幅が足りなくなったら、まずロゴを引っこめる（行き先が切れるほうが困る）。
+   1024px 未満で 7つが1列に収まる値にしてあります（実測 640px） */
+@media (max-width:1023px){
+  .obi-na{display:none}
+  .obi-uchi{gap:0}
+  .obi-l a{padding:6px 11px;font-size:13px}
+}
+@media (max-width:719px){
+  .obi-uchi{padding-inline:12px;min-height:54px}
+}
+@media (prefers-reduced-motion:reduce){
+  .obi-l a{transition:none}
+}
+
+/* スマホでは行き先が画面の外に続く。続きがあることを、右のふちのぼかしで見せる
+   （字で「よこに動かせます」と書くと、帯が2段になって本文が押し下がるため） */
+@media (max-width:719px){
+  .obi-uchi{position:relative}
+  .obi-uchi::after{
+    content:"";position:absolute;inset-block:0;inset-inline-end:0;width:34px;
+    pointer-events:none;
+    background:linear-gradient(to right,rgba(252,251,247,0) 0%,var(--bg) 78%);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   こよみ（左）＋ 一覧（右）　2026-09-21 に追加
+
+   一覧だけでは「来月のどこか」しか分かりませんでした。
+   月のますめを置くと、空いている週と混んでいる週が形で見えます。
+   色のついた日は、右の一覧のその1件への行き先（ページの中）です。
+   ══════════════════════════════════════════════════════════════ */
+
+.ima-2{display:grid;gap:clamp(20px,3vw,34px)}
+@media (min-width:860px){
+  .ima-2{grid-template-columns:minmax(290px,330px) 1fr;align-items:start}
+}
+
+.koyomi{
+  display:grid;gap:14px;
+  padding:clamp(16px,2vw,20px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);
+}
+.tsuki-na{
+  margin:0 0 8px;text-align:center;
+  font-family:var(--f-maru);font-weight:700;font-size:13px;letter-spacing:.08em;color:var(--mute);
+}
+.tsuki-na b{font-size:19px;color:var(--ink);margin-inline-start:4px}
+.masu{width:100%;border-collapse:collapse;table-layout:fixed}
+.kakure{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.masu th{
+  padding:2px 0 6px;font-family:var(--f-maru);font-weight:700;font-size:11px;
+  color:var(--mute);border-bottom:2px solid var(--rule);
+}
+.masu th:first-child{color:var(--shu)}
+.masu th:last-child{color:var(--kon)}
+.masu td{height:34px;padding:1px;text-align:center;vertical-align:middle}
+.masu td>span{display:block;font-size:13px;line-height:32px;color:var(--ink)}
+.hi--nichi>span{color:var(--shu)}
+.hi--do>span{color:var(--kon)}
+.hi--mae>span{color:#B9B8B4}
+/* 今日は、数字の下に短い線を引く（色だけで伝えない） */
+.hi--kyou{position:relative}
+.hi--kyou::after{
+  content:"";position:absolute;left:50%;bottom:2px;transform:translateX(-50%);
+  width:16px;height:2.5px;background:var(--ink);
+}
+/* 予定のある日 */
+.maru{
+  display:grid;place-items:center;position:relative;
+  width:32px;height:32px;margin:0 auto;
+  font-family:var(--f-maru);font-weight:700;font-size:13px;font-style:normal;
+  color:var(--ink);text-decoration:none;
+  border:2.5px solid var(--ink);border-radius:50%;
+  transition:transform .14s ease;
+}
+a.maru:hover,a.maru:focus-visible{transform:scale(1.12)}
+.maru--gakkatsu{background:#E3EEE6}
+.maru--gyoji   {background:#F7E3D9}
+.maru--jidokai {background:#E1EAF3}
+.maru--club    {background:#FBF0CE}
+.maru--hata    {background:var(--rule)}
+.maru--shime   {border-style:dashed}
+.hi-kazu{
+  position:absolute;top:-5px;inset-inline-end:-5px;
+  min-width:15px;height:15px;padding:0 2px;
+  display:grid;place-items:center;font-size:9.5px;font-style:normal;
+  color:var(--bg);background:var(--ink);border-radius:999px;
+}
+.hi-soto{background:transparent}
+
+.hanrei{
+  list-style:none;margin:2px 0 0;padding:10px 0 0;border-top:2px solid var(--rule);
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;
+}
+.hanrei li{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--mute);line-height:1.5}
+.hanrei .maru{width:24px;height:24px;font-size:11px;border-width:2px;margin:0;flex:none;color:transparent}
+.hanrei li:last-child{grid-column:1 / -1}
+.koyomi-chu{margin:0;font-size:11.5px;line-height:1.7;color:var(--mute)}
+
+/* 右の一覧は、こよみから飛んでも帯の下に隠れないように止める */
+.hyo--ken .gyo{scroll-margin-top:74px}
+.ima-migi .hyo--ken{gap:12px}
+
+@media (max-width:859px){
+  .koyomi{gap:12px}
+  .hanrei{grid-template-columns:1fr 1fr 1fr}
+  .hanrei li:last-child{grid-column:1 / -1}
+  /* 指で押すので、ますめと丸を大きくする（40px） */
+  .masu td{height:40px}
+  .masu td>span{line-height:38px;font-size:14px}
+  .maru{width:38px;height:38px;font-size:14px}
+  .hanrei .maru{width:24px;height:24px;font-size:11px}
+}
+
+/* ══ 帯に仕切りを入れる（となりの行き先と混ざらないように） ══
+   ますめの罫と同じ考えで、短い縦線を中ほどに1本。
+   上下いっぱいの線にすると、帯が「表」に見えて重くなります。 */
+.obi-l li + li{position:relative;padding-inline-start:10px;margin-inline-start:5px}
+.obi-l li + li::before{
+  content:"";position:absolute;inset-inline-start:0;top:50%;
+  transform:translateY(-50%);
+  width:2px;height:20px;background:#C4C2B9;
+}
+.obi-na{
+  padding-inline-end:16px;margin-inline-end:0;
+  border-inline-end:2.5px solid var(--ink);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   学ぶ（学級活動(1)の学習過程）
+   お悩みから該当段階を開き、根拠資料まで同じページで読めるようにする。
+   ══════════════════════════════════════════════════════════════ */
+.manabu-box{
+  max-width:860px;margin:0 auto clamp(30px,5vw,56px);
+  padding:clamp(18px,3vw,30px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:22px;
+  box-shadow:7px 7px 0 var(--ink);
+}
+.manabu-box:last-child{margin-bottom:0}
+.manabu-h{
+  margin:0;font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(20px,2.7vw,29px);line-height:1.55;letter-spacing:.06em;
+}
+.manabu-note{margin:8px 0 22px;font-size:14px;line-height:1.9;color:var(--mute)}
+.manabu-source{margin:18px 0 0;font-size:12.5px}
+
+.nayami{
+  list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.nayami button{
+  width:100%;min-height:58px;padding:10px 12px 10px 15px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font:inherit;font-size:14px;font-weight:700;line-height:1.55;text-align:start;
+  color:var(--ink);background:var(--bg);border:2px solid var(--ink);border-radius:13px;
+  cursor:pointer;box-shadow:3px 3px 0 var(--ink);
+  transition:transform .14s ease,box-shadow .14s ease,background .14s ease;
+}
+.nayami button:hover,.nayami button:focus-visible{
+  background:var(--men-sora);transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink);
+}
+.nayami .to{
+  flex:none;padding:2px 8px;border:2px solid var(--ink);border-radius:999px;
+  background:var(--ki);font-size:12px;line-height:1.6;white-space:nowrap;
+}
+
+.learn-cycle{
+  list-style:none;margin:4px 0 24px;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+}
+.learn-cycle li{position:relative}
+.learn-cycle li:not(:last-child)::after{
+  content:"→";position:absolute;z-index:2;inset-inline-end:-8px;top:20px;
+  width:16px;text-align:center;font-weight:900;color:var(--ink);pointer-events:none;
+}
+.learn-cycle button{
+  width:100%;min-height:82px;padding:8px 4px;border:2px solid var(--ink);border-radius:16px;
+  background:var(--men-sora);color:var(--ink);font:inherit;cursor:pointer;
+  display:grid;place-items:center;align-content:center;gap:4px;
+  transition:transform .14s ease,background .14s ease;
+}
+.learn-cycle button:hover,.learn-cycle button:focus-visible{transform:translateY(-3px);background:var(--sora)}
+.learn-cycle button.is-on{background:var(--accent);color:var(--bg)}
+.learn-cycle b{
+  display:grid;place-items:center;width:29px;height:29px;border:2px solid currentColor;border-radius:50%;
+  font-family:var(--f-en);font-size:15px;line-height:1;
+}
+.learn-cycle span{font-family:var(--f-maru);font-size:11px;font-weight:700;line-height:1.35}
+
+.learn-steps{display:grid;gap:10px}
+.learn-step{background:var(--bg);border:2px solid var(--ink);border-radius:16px;overflow:hidden}
+.learn-step[open]{box-shadow:5px 5px 0 var(--ink)}
+.learn-step summary{
+  list-style:none;display:flex;align-items:flex-start;gap:12px;padding:15px 16px;cursor:pointer;
+}
+.learn-step summary::-webkit-details-marker{display:none}
+.learn-step summary:hover{background:var(--men-sora)}
+.learn-step .no{
+  flex:none;display:grid;place-items:center;width:31px;height:31px;margin-top:1px;
+  border:2px solid var(--accent);border-radius:50%;color:var(--accent);
+  font-family:var(--f-en);font-size:14px;font-weight:700;line-height:1;
+}
+.learn-step[open] .no{background:var(--accent);color:var(--bg)}
+.learn-step .sh{flex:1;min-width:0}
+.learn-step .sh b{display:block;font-family:var(--f-maru);font-size:16px;line-height:1.6}
+.learn-step .sh span{display:block;margin-top:2px;font-size:12.5px;line-height:1.7;color:var(--mute)}
+.learn-step .pm{flex:none;width:24px;height:24px;margin-top:4px;position:relative}
+.learn-step .pm::before,.learn-step .pm::after{
+  content:"";position:absolute;left:3px;top:11px;width:18px;height:2.5px;background:var(--ink);border-radius:2px;
+}
+.learn-step .pm::after{transform:rotate(90deg)}
+.learn-step[open] .pm::after{display:none}
+.learn-body{padding:18px 18px 20px;border-top:2px solid var(--ink);background:#fff}
+.leadline{margin:0 0 15px;font-family:var(--f-te);font-size:16px;font-weight:600;line-height:1.9}
+.learn-points{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;counter-reset:item}
+.learn-points li{
+  counter-increment:item;padding:13px 13px 14px;border:2px solid var(--rule);border-radius:12px;background:var(--bg);
+}
+.learn-points li::before{
+  content:counter(item);display:grid;place-items:center;width:24px;height:24px;margin-bottom:7px;
+  border-radius:50%;background:var(--accent);color:var(--bg);font-size:12px;font-weight:700;
+}
+.learn-points b{display:block;font-family:var(--f-maru);font-size:14.5px;line-height:1.6}
+.learn-points span{display:block;margin-top:4px;font-size:13px;line-height:1.75;color:var(--mute)}
+.tomorrow{
+  display:flex;align-items:flex-start;gap:10px;margin:14px 0 0;padding:12px 13px;
+  border:2px solid var(--accent);border-radius:12px;background:var(--men-midori);
+  font-size:14px;font-weight:700;line-height:1.8;
+}
+.tomorrow span{
+  flex:none;padding:2px 8px;border-radius:999px;background:var(--accent);color:var(--bg);
+  font-size:11.5px;line-height:1.6;
+}
+.learn-loop{
+  margin:14px 0 0;padding:11px 14px;border:2px dashed var(--ink);border-radius:12px;
+  text-align:center;font-size:13px;line-height:1.8;color:var(--mute);
+}
+
+.learn-yt{max-width:640px;margin:14px auto 0}
+.learn-yt>button{
+  width:100%;padding:0;display:grid;grid-template-columns:minmax(220px,42%) 1fr;
+  align-items:stretch;text-align:start;overflow:hidden;
+  border:2px solid var(--ink);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer;
+}
+.learn-yt>button:hover{background:var(--men-ki)}
+.learn-yt-media{
+  position:relative;display:block;width:100%;aspect-ratio:16 / 9;overflow:hidden;
+  align-self:center;background:var(--ink);border-inline-end:2px solid var(--ink);
+}
+.learn-yt-thumb{display:block;width:100%;height:100%;object-fit:cover}
+.learn-yt .play{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:58px;height:58px;border-radius:50%;background:var(--shu);
+  border:3px solid var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.28);
+}
+.learn-yt .play::after{
+  content:"";position:absolute;left:22px;top:16px;border-style:solid;border-width:11px 0 11px 16px;
+  border-color:transparent transparent transparent var(--bg);
+}
+.learn-yt-label{display:flex;flex-direction:column;justify-content:center;padding:12px 14px 13px}
+.learn-yt b{display:block;font-family:var(--f-maru);font-size:14px;line-height:1.55}
+.learn-yt small{display:block;font-size:11.5px;line-height:1.6;color:var(--mute)}
+.learn-yt p{margin:5px 0 0;text-align:center;font-size:12px;line-height:1.6}
+.learn-yt-frame{position:relative;padding-top:56.25%;overflow:hidden;border:2px solid var(--ink);border-radius:12px;background:#000}
+.learn-yt-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+.learn-links{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.learn-links a{
+  min-height:92px;padding:14px 14px 14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  border:2px solid var(--ink);border-radius:14px;background:var(--bg);color:var(--ink);text-decoration:none;
+  box-shadow:3px 3px 0 var(--ink);transition:transform .14s ease,box-shadow .14s ease;
+}
+.learn-links a:hover,.learn-links a:focus-visible{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+.learn-links b{display:block;font-family:var(--f-maru);font-size:14px;line-height:1.6}
+.learn-links small{display:block;margin-top:3px;font-size:11.5px;line-height:1.6;color:var(--mute)}
+.learn-links i{
+  flex:none;padding:2px 8px;border:2px solid var(--ink);border-radius:999px;
+  font-size:10.5px;font-weight:700;font-style:normal;letter-spacing:.05em;
+}
+
+@media (max-width:719px){
+  .manabu-box{padding:17px 14px;border-radius:18px;box-shadow:5px 5px 0 var(--ink)}
+  .nayami,.learn-links{grid-template-columns:1fr}
+  .learn-cycle{grid-template-columns:repeat(5,minmax(72px,1fr));overflow-x:auto;padding:2px 2px 8px}
+  .learn-cycle button{min-height:76px}
+  .learn-points{grid-template-columns:1fr}
+  .learn-step summary{padding:13px 12px;gap:9px}
+  .learn-step .sh b{font-size:14.5px}
+  .learn-body{padding:15px 12px 17px}
+  .tomorrow{display:grid;gap:7px}
+  .learn-yt>button{grid-template-columns:minmax(132px,42%) 1fr}
+  .learn-yt .play{width:42px;height:42px;border-width:2px}
+  .learn-yt .play::after{left:16px;top:11px;border-width:9px 0 9px 13px}
+  .learn-yt-label{padding:9px 10px}
+  .learn-yt b{font-size:12.5px}
+  .learn-yt small{font-size:10.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  .nayami button,.learn-cycle button,.learn-links a{transition:none}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   特活とは（ABOUT）
+   国立教育政策研究所『特別活動指導資料（小学校編）』の総論を、
+   4つの箱に組み直したところ。箱の器は「学ぶ」と同じ .manabu-box を使い回します。
+   ══════════════════════════════════════════════════════════════ */
+.about-hitokoto{
+  margin:0 0 20px;padding:13px 16px;
+  font-family:var(--f-te);font-size:15.5px;line-height:1.95;
+  background:var(--men-sora);border:2px solid var(--ink);border-radius:14px;
+}
+.about-hitokoto b{font-family:var(--f-maru);font-size:16.5px}
+
+/* 資質・能力の三つの柱 */
+.about-hashira{
+  list-style:none;margin:0 0 18px;padding:0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+}
+.about-hashira li,.mitsu li{
+  padding:13px 14px 14px;background:var(--bg);
+  border:2px solid var(--ink);border-radius:14px;
+}
+/* 札は、地の色に墨の字＋墨のふち（.learn-links の札と同じ作り）。
+   11pxの小さい字なので、色を地にすると朱が 4.0:1 までしか出ません。
+   色分けはカードの地のほうでやり、字は墨のまま濃さを譲りません。 */
+.about-hashira .lbl,.mitsu .lbl{
+  display:inline-block;margin-bottom:7px;padding:2px 9px;
+  font-family:var(--f-maru);font-size:11px;font-weight:700;letter-spacing:.05em;
+  color:var(--ink);background:var(--bg);
+  border:2px solid var(--ink);border-radius:999px;
+}
+.about-hashira b,.mitsu b{display:block;font-family:var(--f-maru);font-size:15.5px;line-height:1.6}
+.about-hashira span:not(.lbl),.mitsu span:not(.lbl){
+  display:block;margin-top:5px;font-size:13px;line-height:1.8;color:var(--mute);
+}
+
+/* 三つの視点。色は飾りではなく、札の字とセットで意味を持たせています */
+.mitsu{list-style:none;margin:0 0 16px;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mitsu li.m--kan{background:#F7E3D9}
+.mitsu li.m--san{background:#E1EAF3}
+.mitsu li.m--ji {background:#E3EEE6}
+
+/* 原文をひらくふた */
+.about-moto{
+  margin:0 0 18px;background:var(--bg);
+  border:2px solid var(--ink);border-radius:14px;overflow:hidden;
+}
+.about-moto[open]{box-shadow:4px 4px 0 var(--ink)}
+.about-moto summary{
+  list-style:none;cursor:pointer;padding:12px 14px;
+  display:flex;align-items:center;gap:10px;
+}
+.about-moto summary::-webkit-details-marker{display:none}
+.about-moto summary:hover{background:var(--men-sora)}
+.about-moto .sh{flex:1;min-width:0;font-family:var(--f-maru);font-size:14px;line-height:1.65}
+.about-moto .pm{flex:none;width:20px;height:20px;position:relative}
+.about-moto .pm::before,.about-moto .pm::after{
+  content:"";position:absolute;left:2px;top:9px;width:16px;height:2.5px;background:var(--ink);
+}
+.about-moto .pm::after{transform:rotate(90deg)}
+.about-moto[open] .pm::after{display:none}
+.about-in{
+  margin:0;padding:15px 16px 16px;background:#fff;
+  border-top:2px solid var(--ink);
+  font-family:var(--f-te);font-size:14px;line-height:2;
+}
+.about-in p{margin:0 0 9px}
+.about-in p:last-child{margin-bottom:0}
+
+/* 任せられないこと */
+.about-midashi3{
+  margin:0 0 9px;font-family:var(--f-maru);font-weight:700;font-size:16px;letter-spacing:.04em;
+}
+.makasenai{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:7px}
+.makasenai li{
+  position:relative;padding:9px 12px 9px 40px;font-size:14px;line-height:1.75;
+  background:var(--bg);border:2px solid var(--ink);border-radius:12px;
+}
+.makasenai li::before{
+  content:"";position:absolute;left:13px;top:50%;width:15px;height:15px;margin-top:-7px;
+  background:
+    linear-gradient(to bottom right,transparent 44%,var(--shu) 44%,var(--shu) 56%,transparent 56%),
+    linear-gradient(to bottom left, transparent 44%,var(--shu) 44%,var(--shu) 56%,transparent 56%);
+}
+
+.about-chu{margin:0;font-size:13.5px;line-height:1.95;color:var(--mute)}
+.about-chu + .manabu-source{margin-top:16px}
+
+/* 4人ならびに「この先つながる集団」を1行足す */
+.hitori .saki{
+  display:block;margin-top:7px;padding-top:7px;
+  border-top:2px dotted var(--ink);
+  font-family:var(--f-maru);font-size:11.5px;line-height:1.5;
+}
+.hitori .saki::before{content:"→ "}
+.manabu-box .kyara{margin-bottom:16px}
+
+@media (max-width:859px){
+  .about-hashira,.mitsu{grid-template-columns:1fr}
+}
+@media (max-width:719px){
+  .about-hitokoto{padding:11px 13px;font-size:14.5px}
+  .makasenai li{padding:8px 11px 8px 36px;font-size:13.5px}
+  .about-moto .sh{font-size:13px}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4つの内容に、悩みと実践を集める（2026-09-21 夜）
+   ──────────────────────────────────────────────────────────────
+   カードを押すと、その内容の悩みと実践が **同じ場所で** 開きます。
+   飛ばさない・見た目を変えない、が原則なので <details> だけで作ります。
+   ══════════════════════════════════════════════════════════════ */
+
+/* カードを1枚だけ開いたとき、となりの空っぽが伸びないように */
+.yotsu{align-items:start}
+.naiyo-ake{margin-top:18px}
+.naiyo-ake>summary{
+  width:100%;justify-content:space-between;
+  padding:10px 18px;font-size:14px;letter-spacing:.04em;
+}
+.naiyo-naka{padding-top:4px}
+.naiyo-h{
+  margin:18px 0 10px;display:flex;align-items:center;gap:9px;
+  font-family:var(--f-maru);font-weight:700;font-size:14px;letter-spacing:.06em;color:var(--ink);
+}
+.naiyo-h i{
+  font-style:normal;font-size:12px;line-height:1.6;padding:1px 9px;
+  border:2px solid var(--ink);border-radius:999px;background:var(--ki);
+}
+.nayami--naka{grid-template-columns:1fr;gap:8px}
+.nayami--naka button{min-height:52px;font-size:13.5px}
+/* まだ答えを置けていない悩み。押せる見た目にしない（押しても何も起きない、を作らない） */
+.nayami li.mada{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:52px;padding:10px 12px 10px 15px;
+  font-size:13.5px;font-weight:700;line-height:1.55;color:var(--mute);
+  background:var(--bg);border:2px dashed var(--ink);border-radius:13px;
+}
+.nayami .to--mada{background:var(--bg);color:var(--mute);font-weight:400}
+.naiyo-jissen{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.naiyo-jissen a{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:52px;padding:10px 15px;text-decoration:none;color:var(--ink);
+  font-size:13.5px;font-weight:700;line-height:1.55;
+  background:var(--men-sora);border:2px solid var(--ink);border-radius:13px;
+  box-shadow:3px 3px 0 var(--ink);
+  transition:transform .14s ease,box-shadow .14s ease;
+}
+.naiyo-jissen a:hover,.naiyo-jissen a:focus-visible{
+  transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink);
+}
+.naiyo-jissen .d{flex:none;font-size:15px}
+.naiyo-nai{margin:14px 0 0;font-size:13.5px;line-height:1.9;color:var(--mute)}
+.naiyo-okuru{margin:16px 0 0;font-size:13px}
+.naiyo-okuru a{
+  color:var(--accent);font-family:var(--f-maru);font-weight:700;
+  letter-spacing:.04em;text-decoration:none;
+}
+.naiyo-okuru a::after{content:"　↓"}
+.naiyo-okuru a:hover,.naiyo-okuru a:focus-visible{text-decoration:underline}
+.naiyo-t .naiyo-mada{margin-bottom:0}
+
+/* 実践のふだ → その内容のカードへ戻る札 */
+a.fuda-tag{text-decoration:none;transition:transform .14s ease}
+a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
+.t--gakkyu {background:var(--accent)}
+.t--gyoji  {background:var(--shu)}
+.t--jidokai{background:var(--kon)}
+.t--club   {background:var(--ki);color:var(--ink)}
+
+@media (max-width:719px){
+  .naiyo-ake>summary{justify-content:center;text-align:center}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   見るところは、三つ ── 図解（2026-09-21 夜）
+   ──────────────────────────────────────────────────────────────
+   3枚のカードを横に並べると、三つが「別のもの」に見えていました。
+   資料が言っているのは逆で、**はっきり区別されない・同時に働く**。
+   だから輪を重ねます。重なりは mix-blend-mode で本当に混ぜるので、
+   色が濃くなったところが、そのまま「重なっている」の意味になります。
+   ══════════════════════════════════════════════════════════════ */
+
+.mitsu-zu{margin:0 0 20px}
+.mz-wa{
+  position:relative;isolation:isolate;
+  width:100%;max-width:520px;margin:0 auto;aspect-ratio:1/.94;
+  background:var(--bg);
+}
+.mz-c{position:absolute;width:62%;aspect-ratio:1}
+.mz-c::before{
+  content:"";position:absolute;inset:0;
+  border:2.5px solid var(--ink);border-radius:50%;
+  mix-blend-mode:multiply;
+}
+.mz--kan{left:0;top:0}
+.mz--san{right:0;top:0}
+.mz--ji {left:19%;bottom:0}
+.mz--kan::before{background:#F7E3D9}
+.mz--san::before{background:#E1EAF3}
+.mz--ji::before {background:#E3EEE6}
+/* 字は、輪の「重なっていないところ」に置きます（混ざった上に乗せない） */
+.mz-c b,.mz-c i{
+  position:absolute;transform:translate(-50%,-50%);
+  width:max-content;max-width:88%;text-align:center;line-height:1.5;
+}
+.mz-c b{font-family:var(--f-maru);font-weight:700;font-size:clamp(13px,3.5vw,17px);letter-spacing:.04em}
+.mz-c i{font-style:normal;font-size:clamp(11px,2.7vw,12.5px);color:var(--mute)}
+.mz--kan b{left:33%;top:27%}  .mz--kan i{left:33%;top:38%}
+.mz--san b{left:67%;top:27%}  .mz--san i{left:67%;top:38%}
+.mz--ji  b{left:50%;top:69%}  .mz--ji  i{left:50%;top:80%}
+/* 三つが重なる、まんなか */
+.mz-naka{
+  position:absolute;left:50%;top:44.4%;transform:translate(-50%,-50%);z-index:2;
+  padding:7px 13px;text-align:center;
+  font-family:var(--f-maru);font-weight:700;font-size:clamp(11.5px,2.9vw,13.5px);
+  line-height:1.45;letter-spacing:.04em;
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:16px;
+  box-shadow:3px 3px 0 var(--ink);
+}
+.mitsu-zu figcaption{
+  margin:18px auto 0;max-width:640px;text-align:center;
+  font-size:13.5px;line-height:1.95;color:var(--mute);
+}
+.mitsu-zu figcaption strong{color:var(--ink)}
+
+/* ── どの場面でも働く、の帯 ── */
+.mz-obi{
+  margin:0;padding:14px 16px 16px;
+  background:var(--men-sora);border:2px dashed var(--ink);border-radius:16px;
+}
+.mz-obi-h{
+  margin:0 0 11px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  font-size:13.5px;line-height:1.8;color:var(--mute);
+}
+.mz-obi-h strong{color:var(--ink);font-family:var(--f-maru)}
+/* 三つとも、の印（見出しの下の3色の点と同じ言い方） */
+.mz-ten{flex:none;display:inline-flex;gap:5px}
+.mz-ten span{width:10px;height:10px;border-radius:50%;border:2px solid var(--ink)}
+.mz-ten span:nth-child(1){background:#F7E3D9}
+.mz-ten span:nth-child(2){background:#E1EAF3}
+.mz-ten span:nth-child(3){background:#E3EEE6}
+.mz-dan{
+  list-style:none;margin:0;padding:0;
+  display:flex;flex-wrap:wrap;gap:7px;
+}
+.mz-dan li{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:5px 12px 5px 6px;font-size:12.5px;line-height:1.7;white-space:nowrap;
+  background:var(--bg);border:2px solid var(--ink);border-radius:999px;
+}
+.mz-dan b{
+  width:20px;height:20px;flex:none;display:grid;place-items:center;
+  font-family:var(--f-en);font-size:11.5px;line-height:1;
+  color:var(--bg);background:var(--accent);border-radius:50%;
+}
+
+@media (max-width:719px){
+  .mz-wa{max-width:340px}
+  .mz-dan li{font-size:12px}
+}
+
+/* 悩みの出どころ（4つの内容の見出しの下に、小さく添える） */
+.yotsu-moto{margin-top:14px!important;font-size:13px!important;color:var(--mute)}
+.yotsu-moto strong{color:var(--ink)}
+
+/* ══════════════════════════════════════════════════════════════
+   資料を、ページの中で開く（2026-09-21 夜）
+   ──────────────────────────────────────────────────────────────
+   PDFは埋めません。1ページ＝1枚の画像にして、この1枚のHTMLの中に
+   入れてあります。だから **外に1本もつながりません**。
+   窓の中だけが動くので、開いても読んでいた場所を見失いません。
+   ══════════════════════════════════════════════════════════════ */
+
+.shiryo-hiraku{margin-top:16px}
+.shiryo-hiraku>summary{padding:10px 20px;font-size:14px}
+.shiryo-naka{margin-top:14px}
+.shiryo-chu{margin:0 0 10px;font-size:12.5px;line-height:1.8;color:var(--mute)}
+.shiryo-mado{
+  max-height:78vh;overflow-y:auto;overscroll-behavior:contain;
+  padding:14px;display:grid;gap:14px;
+  background:var(--men-sora);border:2.5px solid var(--ink);border-radius:16px;
+}
+.shiryo-mado figure{margin:0}
+.shiryo-mado img{
+  display:block;width:100%;height:auto;
+  background:var(--bg);border:2px solid var(--ink);border-radius:8px;
+}
+.shiryo-mado figcaption{
+  margin-top:5px;text-align:center;
+  font-family:var(--f-en);font-size:11.5px;letter-spacing:.06em;color:var(--mute);
+}
+/* 外のタブが開くものは、そう分かる見た目のまま残します */
+.fuda-shiryo .shiryo-b i{font-style:normal;font-size:11.5px;color:var(--mute)}
+
+@media (max-width:719px){
+  .shiryo-mado{max-height:70vh;padding:10px;gap:10px}
+}

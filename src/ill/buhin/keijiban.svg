@@ -1,0 +1,18 @@
+<svg viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
+<title>児童会の掲示板のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M18 47L36 18H244L262 47Z" fill="#1F5C3F"/>
+<path d="M25 45H255V176H25Z" fill="#1F5C3F"/>
+<path d="M38 57H242V162H38Z" fill="#FCFBF7"/>
+<path d="M48 176H65V212H48ZM215 176H232V212H215Z" fill="#1F5C3F"/>
+<path d="M50 70H104V147H50Z" fill="#D2552A"/>
+<path d="M113 70H167V147H113Z" fill="#E8C547"/>
+<path d="M176 70H230V147H176Z" fill="#3A6EA5"/>
+<g fill="none" stroke="#FCFBF7">
+<path d="M62 94H92M62 117H92"/>
+<path d="M125 94H155M125 117H155"/>
+<path d="M188 94H218M188 117H218"/>
+</g>
+<path d="M30 212H250" fill="none"/>
+</g>
+</svg>

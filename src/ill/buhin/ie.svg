@@ -1,0 +1,13 @@
+<svg viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
+<title>住宅のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M31 91H249V212H31Z" fill="#FCFBF7"/>
+<path d="M14 94L140 18L266 94H14Z" fill="#D2552A"/>
+<path d="M120 30L140 18L160 30V63H120Z" fill="#FCFBF7"/>
+<path d="M47 111H93V145H47ZM187 111H233V145H187ZM47 160H93V194H47ZM187 160H233V194H187Z" fill="#A9E1F5"/>
+<path d="M70 111V145M47 128H93M210 111V145M187 128H233M70 160V194M47 177H93M210 160V194M187 177H233" fill="none"/>
+<path d="M116 153H164V212H116Z" fill="#3A6EA5"/>
+<circle cx="153" cy="183" r="3" fill="#E8C547"/>
+<path d="M12 212H268" fill="none"/>
+</g>
+</svg>

@@ -1,0 +1,15 @@
+<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
+<title>校門のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M29 67H88V212H29Z" fill="#FCFBF7"/>
+<path d="M212 67H271V212H212Z" fill="#FCFBF7"/>
+<path d="M20 48H280V91H20Z" fill="#1F5C3F"/>
+<path d="M37 48L48 31H252L263 48Z" fill="#3A6EA5"/>
+<path d="M46 107H71V183H46Z" fill="#A9E1F5"/>
+<path d="M229 107H254V183H229Z" fill="#A9E1F5"/>
+<circle cx="58.5" cy="196" r="5" fill="#E8C547"/>
+<circle cx="241.5" cy="196" r="5" fill="#E8C547"/>
+<path d="M88 132H212" fill="none"/>
+<path d="M0 212H300" fill="none"/>
+</g>
+</svg>

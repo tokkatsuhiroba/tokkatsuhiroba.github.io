@@ -1,0 +1,16 @@
+<svg viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg">
+<title>運動会の入退場門のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M28 119H78V272H28Z" fill="#FCFBF7"/>
+<path d="M262 119H312V272H262Z" fill="#FCFBF7"/>
+<path d="M47 142V116C47 50 102 18 170 18S293 50 293 116V142H253V119C253 81 218 58 170 58S87 81 87 119V142Z" fill="#D2552A"/>
+<path d="M170 18V2M170 3L192 12L170 21Z" fill="#E8C547"/>
+<path d="M105 37V15M105 16L127 25L105 34Z" fill="#3A6EA5"/>
+<path d="M235 37V15M235 16L257 25L235 34Z" fill="#2FBA68"/>
+<path d="M39 172H67V239H39Z" fill="#A9E1F5"/>
+<path d="M273 172H301V239H273Z" fill="#A9E1F5"/>
+<circle cx="53" cy="254" r="5" fill="#E8C547"/>
+<circle cx="287" cy="254" r="5" fill="#E8C547"/>
+<path d="M0 272H340" fill="none"/>
+</g>
+</svg>

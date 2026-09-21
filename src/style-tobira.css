@@ -1,0 +1,209 @@
+:root{
+  --bg:#FCFBF7;
+  --ink:#1C1C1A;        /* 本体 style.css と絵の部品に合わせた（旧 #273033） */
+  --mute:#63625C;       /* 本体と同じ（旧 #596468） */
+  --rule:#E3E2DC;       /* 本体と同じ（旧 #C9DDE2） */
+  --sora:#A9E1F5;
+  --accent:#1F5C3F;
+  /* ピンの色は、絵の部品が使っている色とそろえる。
+     ずれていると「別のデザインが2つ乗っている」ように見える（2026-09-21） */
+  --undokai:#D2552A;    /* 旧 #E7653E */
+  --sotsugyo:#3A6EA5;   /* 旧 #3B78C4 */
+  --gakkyukai:#1F5C3F;  /* 旧 #1F6B48 */
+  --club:#E8C547;       /* 旧 #F3C934 */
+  --sora-h:50svh;
+  --pad:clamp(14px,2.4vw,28px);
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
+  font-size:16px;
+  line-height:1.7;
+}
+a{color:var(--accent)}
+:focus-visible{outline:4px solid #FCFBF7;outline-offset:3px;box-shadow:0 0 0 7px var(--ink)}
+
+.skip{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip:focus{
+  width:auto;height:auto;clip:auto;overflow:visible;white-space:normal;
+  inset-inline-start:var(--pad);top:8px;z-index:30;background:var(--bg);
+  border:3px solid var(--ink);padding:8px 12px;font-size:14px;
+}
+
+.tb{width:100%;margin:0}
+
+.tb-hero{
+  position:relative;
+  height:clamp(620px,90svh,820px);
+  min-height:0;
+  overflow:hidden;
+  background:var(--sora);
+  border-bottom:4px solid var(--ink);
+}
+.tb-world{position:absolute;inset:0}
+.tb-world svg{display:block;width:100%;height:100%;object-fit:cover}
+
+.tb-brand{
+  position:absolute;z-index:3;inset-inline-start:var(--pad);top:var(--pad);
+  width:min(460px,42vw);
+  padding:clamp(14px,2vw,22px) clamp(16px,2.4vw,28px);
+  background:#FCFBF7;
+  border:4px solid var(--ink);
+  border-radius:26px 26px 26px 8px;
+}
+.tb-kicker{margin:0 0 4px;font-size:clamp(13px,1.35vw,17px);font-weight:700;letter-spacing:.04em}
+.tb-logo{
+  margin:0;
+  font-family:"BIZ UDPMincho","Hiragino Mincho ProN",serif;
+  font-weight:700;font-size:clamp(30px,4vw,54px);
+  letter-spacing:.1em;line-height:1.2;
+}
+.tb-copy{margin:7px 0 0;font-size:clamp(14px,1.55vw,20px);font-weight:700;letter-spacing:.06em}
+.tb-copy span{display:inline-block;animation:tb-deru .45s ease both;animation-delay:calc(var(--i) * .04s)}
+@keyframes tb-deru{from{transform:translateY(6px)}to{transform:none}}
+
+.tb-enter{
+  position:absolute;z-index:4;inset-inline-end:var(--pad);top:var(--pad);
+  min-height:58px;padding:10px 12px 10px 25px;
+  display:flex;gap:18px;align-items:center;
+  color:#FCFBF7;background:var(--undokai);
+  border:4px solid var(--ink);border-radius:18px;
+  text-decoration:none;font-size:clamp(16px,1.6vw,21px);font-weight:800;
+}
+.tb-enter b{
+  width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  color:var(--ink);background:#FCFBF7;font-size:24px;line-height:1;
+}
+.tb-enter:hover,.tb-enter:focus-visible{transform:translateY(-3px)}
+
+.tb-spots{position:absolute;inset:0;z-index:4;pointer-events:none}
+.tb-spot{
+  position:absolute;min-height:48px;padding:8px 16px 8px 11px;
+  display:flex;align-items:center;gap:9px;
+  color:var(--ink);background:#FCFBF7;
+  border:4px solid var(--ink);border-radius:999px;
+  text-decoration:none;font-weight:800;font-size:clamp(14px,1.35vw,18px);
+  pointer-events:auto;transition:transform .18s ease;
+}
+.tb-spot i{display:block;width:17px;height:17px;border:3px solid var(--ink);border-radius:50%}
+.tb-spot:hover,.tb-spot:focus-visible{transform:translate(-50%,-56%)}
+.tb-undokai{left:14%;top:62%;transform:translate(-50%,-50%)}
+.tb-undokai i{background:var(--undokai)}
+.tb-sotsugyo{left:34%;top:55%;transform:translate(-50%,-50%)}
+.tb-sotsugyo i{background:var(--sotsugyo)}
+.tb-gakkyukai{left:69%;top:55%;transform:translate(-50%,-50%)}
+.tb-gakkyukai i{background:var(--gakkyukai)}
+.tb-club{left:89%;top:62%;transform:translate(-50%,-50%)}
+.tb-club i{background:var(--club)}
+
+.tb-guide{
+  position:absolute;z-index:3;left:50%;bottom:17px;transform:translateX(-50%);
+  margin:0;padding:8px 15px;
+  color:var(--ink);background:#FCFBF7;
+  border:3px solid var(--ink);border-radius:999px;
+  font-size:13px;font-weight:700;white-space:nowrap;
+}
+
+.tb-ima{
+  display:flex;gap:12px;align-items:baseline;
+  margin:0;padding:14px var(--pad);border-bottom:1px solid var(--rule);
+  font-size:14.5px;line-height:1.7;
+}
+.tb-ima .lb{flex:none;font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--mute)}
+.tb-ima a{color:var(--ink);text-decoration:none}
+.tb-ima a:hover{text-decoration:underline;text-underline-offset:3px}
+.tb-ima .ext{flex:none;font-size:11.5px;color:var(--mute)}
+
+.tb-foot{padding:26px var(--pad) 40px;font-size:13.5px;line-height:1.85;color:var(--mute)}
+.tb-foot p{margin:0 0 8px}
+.tb-foot a{color:var(--accent);font-weight:700}
+
+@media (max-width:760px){
+  .tb-hero{height:760px}
+  .tb-world{top:176px;bottom:205px}
+  .tb-world svg{object-fit:cover;object-position:center}
+  .tb-brand{width:auto;inset-inline:12px;top:12px;padding:12px 15px;border-radius:20px 20px 20px 7px}
+  .tb-kicker{font-size:12px}.tb-logo{font-size:30px}.tb-copy{font-size:14px}
+  .tb-enter{top:auto;bottom:16px;left:12px;right:12px;justify-content:center;min-height:58px}
+  .tb-spots{inset:auto 12px 82px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tb-spot{position:static;transform:none;justify-content:center;min-height:50px;padding:7px 10px;font-size:15px}
+  .tb-spot:hover,.tb-spot:focus-visible{transform:translateY(-2px)}
+  .tb-guide{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .tb-copy span{opacity:1}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ここから下は 2026-09-21 の追記。上の指定は1行も消していません。
+   この節ごと消せば、前の状態に戻ります。
+
+   広場を「部品23種を組んで作る 2400×1200 の絵」に変えました。
+   ・ヒーローを絵と同じ 2:1 にして、ピンが絵の正しい場所に乗るようにする
+   ・ピンの位置を、組み直した広場の3つの場面（左＝卒業式／中＝学級会／
+     右＝運動会）に合わせ直す
+   ・クラブ活動のピンは、絵の中にまだ場所が無いので出していません
+     （出すには部品が要ります。CSSの指定 .tb-club は残してあります）
+   ══════════════════════════════════════════════════════════════ */
+
+.tb{max-width:1640px;margin:0 auto}
+.tb-hero{height:auto;aspect-ratio:8 / 3}   /* 広場 3200×1200 と同じ比 */
+
+/* ロゴが「TOKKATSU / 広場」と2行に折れないだけの幅を取る */
+.tb-brand{width:min(620px,50vw)}
+.tb-logo{font-size:clamp(28px,3.5vw,44px)}
+/* 案内は学級活動のピンと重なるので、下のすみへ寄せる */
+.tb-guide{left:auto;right:var(--pad);transform:none;font-size:12.5px}
+.tb-world svg{width:100%;height:100%;display:block}
+
+/* 特別活動の4つの内容。広場（3200×1200）の4つの場所に合わせた位置 */
+.tb-p-club, .tb-p-gakkyu, .tb-p-jidokai, .tb-p-gyoji{
+  position:absolute;transform:translate(-50%,-50%);
+}
+/* 左から 学級活動 → 学校行事 → 児童会活動 → クラブ活動 */
+.tb-p-gakkyu {left:12%;top:84%}
+.tb-p-gyoji  {left:39%;top:80%}
+.tb-p-jidokai{left:65%;top:82%}
+.tb-p-club   {left:88%;top:80%}
+.tb-p-club i   {background:var(--club)}
+.tb-p-gakkyu i {background:var(--gakkyukai)}
+.tb-p-jidokai i{background:var(--sotsugyo)}
+.tb-p-gyoji i  {background:var(--undokai)}
+.tb-p-club:hover,.tb-p-club:focus-visible,
+.tb-p-gakkyu:hover,.tb-p-gakkyu:focus-visible,
+.tb-p-jidokai:hover,.tb-p-jidokai:focus-visible,
+.tb-p-gyoji:hover,.tb-p-gyoji:focus-visible{transform:translate(-50%,-56%)}
+
+.tb-yoko{display:none}
+
+@media (max-width:760px){
+  /* スマホ：広場（3200×1200）を375pxに押しこむと、子どもが10.5pxになって読めない。
+     そこで縦の高さを決めて、よこにスワイプして見る形にする。
+     こうすると子どもは25pxになり、4つの場面を順にたどれる。 */
+  .tb-hero{height:660px;aspect-ratio:auto}
+  .tb-world{
+    top:140px;bottom:190px;left:0;right:0;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+    border-block:3px solid var(--ink);
+  }
+  .tb-world svg{height:100%;width:auto;max-width:none;display:block;object-fit:fill}
+  .tb-yoko{
+    display:block;position:absolute;z-index:5;left:52px;right:52px;top:150px;
+    margin:0;padding:5px 10px;text-align:center;
+    color:var(--ink);background:#FCFBF7;
+    border:3px solid var(--ink);border-radius:999px;
+    font-size:12px;font-weight:700;
+  }
+  /* スマホではピンは絵の上に乗せず、下に2×2で並べる（もとのCSSの指定どおり） */
+  .tb-p-club,.tb-p-gakkyu,.tb-p-jidokai,.tb-p-gyoji{position:static;transform:none}
+  .tb-p-club:hover,.tb-p-gakkyu:hover,.tb-p-jidokai:hover,.tb-p-gyoji:hover,
+  .tb-p-club:focus-visible,.tb-p-gakkyu:focus-visible,
+  .tb-p-jidokai:focus-visible,.tb-p-gyoji:focus-visible{transform:translateY(-2px)}
+}

@@ -1,0 +1,24 @@
+<svg viewBox="0 0 96 126" xmlns="http://www.w3.org/2000/svg">
+<title>行人（学校行事のキャラクター）のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M76 8v96" fill="none"/>
+<path d="M77 12l17 9-17 9z" fill="#E8C547"/>
+<rect x="20" y="58" width="10" height="28" rx="5" fill="#F6D8B8" transform="rotate(16 25 60)"/>
+<rect x="35" y="94" width="10" height="24" rx="5" fill="#F6D8B8"/>
+<rect x="51" y="94" width="10" height="24" rx="5" fill="#F6D8B8"/>
+<path d="M33 110h11a1 1 0 0 1 1 1v4a3 3 0 0 1-3 3H32a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z" fill="#FCFBF7"/>
+<path d="M63 110H52a1 1 0 0 0-1 1v4a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z" fill="#FCFBF7"/>
+<path d="M48 52c-14 0-22 8-22 19v29h44V71c0-11-8-19-22-19z" fill="#D2552A"/>
+<path d="M32 66h32" fill="none" stroke="#FCFBF7"/>
+<rect x="66" y="32" width="10" height="28" rx="5" fill="#F6D8B8" transform="rotate(14 71 60)"/>
+<circle cx="48" cy="30" r="25" fill="#F6D8B8"/>
+<path d="M22 26C25 13 35 5 48 5s23 8 26 21c-7-7-16-11-26-11s-19 4-26 11z" fill="#1C1C1A" stroke="none"/>
+<path d="M23 25c5-7 14-11 25-11s20 4 25 11c-1 3-2 5-3 7-6-6-13-9-22-9s-16 3-22 9c-1-2-2-4-3-7z" fill="#FCFBF7"/>
+<path d="M22 27l-8 3M22 31l-7 6" fill="none"/>
+<circle cx="39" cy="34" r="2.9" fill="#1C1C1A" stroke="none"/>
+<circle cx="57" cy="34" r="2.9" fill="#1C1C1A" stroke="none"/>
+<path d="M41 41c1.8 4.6 11.2 4.6 13 0-1.8 1.8-11.2 1.8-13 0z" fill="#1C1C1A" stroke="none"/>
+<circle cx="30" cy="40" r="3.4" fill="#D2552A" stroke="none"/>
+<circle cx="66" cy="40" r="3.4" fill="#D2552A" stroke="none"/>
+</g>
+</svg>

@@ -1,0 +1,42 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+<title>運動会の校庭のイラスト</title>
+<rect x="3" y="3" width="234" height="234" rx="20" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="194" cy="43" r="17" fill="#E8C547" stroke="#1C1C1A" stroke-width="4"/>
+<g fill="none" stroke="#E8C547" stroke-width="4" stroke-linecap="round">
+<path d="M194 15V8"/>
+<path d="M194 78v-7"/>
+<path d="M166 43h-7"/>
+<path d="M229 43h-7"/>
+<path d="M174 23l-5-5"/>
+<path d="M219 68l-5-5"/>
+<path d="M214 23l5-5"/>
+<path d="M169 68l5-5"/>
+</g>
+<path d="M3 115C47 93 91 91 129 103C169 116 201 111 237 95V217C237 228 228 237 217 237H23C12 237 3 228 3 217Z" fill="#E8C547" opacity=".22"/>
+<path d="M3 149C54 126 103 127 145 143C178 156 207 154 237 140" fill="none" stroke="#FCFBF7" stroke-width="4" stroke-linecap="round"/>
+<path d="M3 181C53 160 102 161 143 177C176 190 207 189 237 176" fill="none" stroke="#FCFBF7" stroke-width="4" stroke-linecap="round"/>
+<path d="M38 104V174" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M40 108L76 117L40 132Z" fill="#D2552A" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<path d="M202 86V157" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M200 90L165 99L200 114Z" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<path d="M86 174C83 159 88 145 99 138C111 131 126 133 136 143C145 152 148 165 145 177" fill="#D2552A" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="116" cy="124" r="14" fill="#1C1C1A"/>
+<circle cx="116" cy="126" r="9" fill="#FCFBF7"/>
+<circle cx="112.5" cy="124.5" r="1.5" fill="#1C1C1A"/>
+<circle cx="119.5" cy="124.5" r="1.5" fill="#1C1C1A"/>
+<path d="M113 129Q116 132 119 129" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M103 137C108 143 124 145 134 138" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M99 146L77 161" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M136 146L156 160" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<circle cx="75" cy="163" r="5" fill="#E8C547" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="159" cy="162" r="5" fill="#E8C547" stroke="#1C1C1A" stroke-width="4"/>
+<path d="M99 174L91 205" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M137 174L146 205" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M91 205H79" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M146 205H158" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<circle cx="56" cy="194" r="10" fill="#D2552A" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="77" cy="211" r="9" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="181" cy="188" r="10" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="203" cy="207" r="9" fill="#D2552A" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="174" cy="214" r="8" fill="#D2552A" stroke="#1C1C1A" stroke-width="4"/>
+</svg>

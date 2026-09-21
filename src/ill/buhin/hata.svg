@@ -1,0 +1,8 @@
+<svg viewBox="0 0 50 170" xmlns="http://www.w3.org/2000/svg">
+<title>三角の旗のイラスト</title>
+<g stroke-linecap="round" stroke-linejoin="round">
+<path d="M12 9V162" fill="none" stroke="#1C1C1A" stroke-width="2.5"/>
+<path d="M13 13L47 28L13 43Z" fill="#D2552A" stroke="#1C1C1A" stroke-width="2.5"/>
+<path d="M4 162H22" fill="none" stroke="#1C1C1A" stroke-width="2.5"/>
+</g>
+</svg>

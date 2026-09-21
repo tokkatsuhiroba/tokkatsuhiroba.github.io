@@ -1,0 +1,67 @@
+# 実践が1件増えたら、サイトを作り直して公開する
+#
+#   src/ に .md が増える（フォーム → Apps Script → ここにコミット）
+#     ↓
+#   python3 build.py         ← 検問はここで働く。止まれば公開もされない
+#     ↓
+#   公開用/index.html を GitHub Pages へ
+#
+# ★ src/_ngword.txt はリポジトリに置きません（同僚の名前などが入るため）。
+#    Actions の Secret「NGWORD」から、ビルドの直前に書き出します。
+
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'build.py', '.github/workflows/build.yml']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 出してはいけない語の表を置く
+        env:
+          NGWORD: ${{ secrets.NGWORD }}
+        run: |
+          printf '%s\n' "$NGWORD" > src/_ngword.txt
+
+      - name: 組み立てる（検問に引っかかったら、ここで止まる）
+        run: python3 build.py
+
+      - name: 公開するものだけを取り出す
+        run: |
+          mkdir -p _site
+          cp 公開用/index.html _site/index.html
+          if [ -f 公開用/ogp.png ]; then cp 公開用/ogp.png _site/ogp.png; fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

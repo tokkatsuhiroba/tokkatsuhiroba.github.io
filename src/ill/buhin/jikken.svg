@@ -1,0 +1,17 @@
+<svg viewBox="0 0 240 180" xmlns="http://www.w3.org/2000/svg">
+<title>科学クラブの実験の机のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M72 22H92V55L110 83C113 88 109 94 103 94H61C55 94 51 88 54 83L72 55Z" fill="#A9E1F5"/>
+<path d="M68 22H96" fill="none"/>
+<path d="M59 78H105" fill="none" stroke="#FCFBF7"/>
+<path d="M132 56H205V68H132Z" fill="#E8C547"/>
+<path d="M137 86H200V96H137Z" fill="#E8C547"/>
+<path d="M143 43V84C143 89 151 89 151 84V43Z" fill="#FCFBF7"/>
+<path d="M165 38V84C165 89 173 89 173 84V38Z" fill="#A9E1F5"/>
+<path d="M187 46V84C187 89 195 89 195 84V46Z" fill="#FCFBF7"/>
+<path d="M20 94H220V118H20Z" fill="#FCFBF7"/>
+<path d="M36 118H58V172H36ZM182 118H204V172H182Z" fill="#1F5C3F"/>
+<path d="M58 139H182V151H58Z" fill="#1F5C3F"/>
+<path d="M14 172H226" fill="none"/>
+</g>
+</svg>

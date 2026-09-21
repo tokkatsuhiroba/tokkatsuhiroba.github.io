@@ -1,0 +1,11 @@
+<svg viewBox="0 0 220 150" xmlns="http://www.w3.org/2000/svg">
+<title>校庭の鉄棒のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M11 134C26 125 47 128 61 132C78 124 99 127 111 132C128 124 150 126 163 132C178 126 199 128 209 135V142H11Z" fill="#E8C547"/>
+<g fill="none">
+<path d="M24 142V36M85 142V36M146 142V57M207 142V78"/>
+<path d="M24 36H85M85 57H146M146 78H207"/>
+<path d="M16 142H32M77 142H93M138 142H154M199 142H215"/>
+</g>
+</g>
+</svg>

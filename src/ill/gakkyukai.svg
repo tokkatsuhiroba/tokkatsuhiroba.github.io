@@ -1,0 +1,35 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+<title>学級会の教室のイラスト</title>
+<rect x="3" y="3" width="234" height="234" rx="20" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4"/>
+<circle cx="194" cy="43" r="17" fill="#E8C547" stroke="#1C1C1A" stroke-width="4"/>
+<path d="M179 43H209M194 28V58" fill="none" stroke="#FCFBF7" stroke-width="4" stroke-linecap="round"/>
+<path d="M194 60L156 111H224L207 60Z" fill="#E8C547" opacity=".15"/>
+<rect x="22" y="47" width="137" height="65" rx="4" fill="#1F5C3F" stroke="#1C1C1A" stroke-width="4"/>
+<path d="M49 112V120M132 112V120" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M73 58H110V97H73Z" fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<path d="M82 69H101M82 78H101M82 87H96" fill="none" stroke="#E8C547" stroke-width="4" stroke-linecap="round"/>
+<path d="M3 115L45 97H195L237 115V217C237 228 228 237 217 237H23C12 237 3 228 3 217Z" fill="#E8C547" opacity=".16"/>
+<g fill="#FCFBF7" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round">
+<path d="M7 123L52 104H85L72 135H7Z"/><path d="M168 104H199L233 123V135H179Z"/>
+<path d="M7 158H69L62 188H7Z"/><path d="M176 158H233V188H182Z"/>
+<path d="M69 104H171L166 125H74Z"/>
+</g>
+<g fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round">
+<path d="M22 135V157M60 135V157M187 135V157M220 135V157"/>
+<path d="M21 188V213M52 188V213M192 188V213M222 188V213"/>
+</g>
+<circle cx="116" cy="124" r="14" fill="#1C1C1A"/>
+<circle cx="116" cy="126" r="9" fill="#FCFBF7"/>
+<circle cx="112.5" cy="124.5" r="1.5" fill="#1C1C1A"/>
+<circle cx="119.5" cy="124.5" r="1.5" fill="#1C1C1A"/>
+<path d="M113 129Q116 132 119 129" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<path d="M98 143C103 137 109 134 116 134C124 134 132 138 137 145L143 178H91Z" fill="#1F5C3F" stroke="#1C1C1A" stroke-width="4" stroke-linejoin="round"/>
+<path d="M98 146L82 166M136 145L148 116L153 80" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M148 116L159 91" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<circle cx="153" cy="76" r="6" fill="#E8C547" stroke="#1C1C1A" stroke-width="4"/>
+<path d="M103 178L96 205M130 178L138 205M96 205H84M138 205H150" fill="none" stroke="#1C1C1A" stroke-width="4" stroke-linecap="round"/>
+<g stroke="#1C1C1A" stroke-width="4">
+<circle cx="71" cy="205" r="8" fill="#E8C547"/><circle cx="91" cy="220" r="8" fill="#FCFBF7"/>
+<circle cx="164" cy="216" r="9" fill="#E8C547"/><circle cx="184" cy="201" r="8" fill="#FCFBF7"/>
+</g>
+</svg>

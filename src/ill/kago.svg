@@ -1,0 +1,13 @@
+<svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+<title>玉入れのかごのイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M56 49H64V192H56Z" fill="#1C1C1A"/>
+<path d="M27 29C27 18 42 10 60 10S93 18 93 29V55C93 67 78 76 60 76S27 67 27 55Z" fill="#D2552A"/>
+<ellipse cx="60" cy="29" rx="33" ry="19" fill="#D2552A"/>
+<path d="M35 37C44 43 76 43 85 37M36 52C47 58 73 58 84 52M43 20V65M60 11V75M77 20V65" fill="none"/>
+<path d="M43 192H77" fill="none"/>
+<circle cx="22" cy="183" r="9" fill="#FCFBF7"/>
+<circle cx="42" cy="183" r="9" fill="#D2552A"/>
+<circle cx="98" cy="183" r="9" fill="#FCFBF7"/>
+</g>
+</svg>

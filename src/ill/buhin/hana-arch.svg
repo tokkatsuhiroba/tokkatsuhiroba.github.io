@@ -1,0 +1,34 @@
+<svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+<title>卒業式の花のアーチのイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M48 292V151C48 71 105 24 180 24S312 71 312 151V292" fill="none" stroke="#1F5C3F"/>
+<rect x="38" y="143" width="20" height="149" rx="10" fill="#1F5C3F"/>
+<rect x="302" y="143" width="20" height="149" rx="10" fill="#1F5C3F"/>
+<g fill="#2FBA68">
+<ellipse cx="48" cy="250" rx="22" ry="11" transform="rotate(-28 48 250)"/>
+<ellipse cx="48" cy="207" rx="22" ry="11" transform="rotate(28 48 207)"/>
+<ellipse cx="51" cy="164" rx="22" ry="11" transform="rotate(-27 51 164)"/>
+<ellipse cx="76" cy="96" rx="23" ry="11" transform="rotate(-38 76 96)"/>
+<ellipse cx="111" cy="57" rx="23" ry="11" transform="rotate(-25 111 57)"/>
+<ellipse cx="153" cy="34" rx="23" ry="11" transform="rotate(-10 153 34)"/>
+<ellipse cx="207" cy="34" rx="23" ry="11" transform="rotate(10 207 34)"/>
+<ellipse cx="249" cy="57" rx="23" ry="11" transform="rotate(25 249 57)"/>
+<ellipse cx="284" cy="96" rx="23" ry="11" transform="rotate(38 284 96)"/>
+<ellipse cx="309" cy="164" rx="22" ry="11" transform="rotate(27 309 164)"/>
+<ellipse cx="312" cy="207" rx="22" ry="11" transform="rotate(-28 312 207)"/>
+<ellipse cx="312" cy="250" rx="22" ry="11" transform="rotate(28 312 250)"/>
+</g>
+<g fill="#D2552A">
+<path d="M42 115C42 105 52 105 55 112C58 105 68 107 66 116C74 119 70 129 61 127C58 135 48 132 49 124C40 125 36 117 42 115Z"/>
+<path d="M126 38C126 28 136 28 139 35C142 28 152 30 150 39C158 42 154 52 145 50C142 58 132 55 133 47C124 48 120 40 126 38Z"/>
+<path d="M216 36C216 26 226 26 229 33C232 26 242 28 240 37C248 40 244 50 235 48C232 56 222 53 223 45C214 46 210 38 216 36Z"/>
+<path d="M297 116C297 106 307 106 310 113C313 106 323 108 321 117C329 120 325 130 316 128C313 136 303 133 304 125C295 126 291 118 297 116Z"/>
+</g>
+<g fill="#E8C547">
+<path d="M39 191C39 181 49 181 52 188C55 181 65 183 63 192C71 195 67 205 58 203C55 211 45 208 46 200C37 201 33 193 39 191Z"/>
+<path d="M172 20C172 10 182 10 185 17C188 10 198 12 196 21C204 24 200 34 191 32C188 40 178 37 179 29C170 30 166 22 172 20Z"/>
+<path d="M300 191C300 181 310 181 313 188C316 181 326 183 324 192C332 195 328 205 319 203C316 211 306 208 307 200C298 201 294 193 300 191Z"/>
+</g>
+<path d="M26 292H70M290 292H334" fill="none"/>
+</g>
+</svg>

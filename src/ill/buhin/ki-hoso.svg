@@ -1,0 +1,11 @@
+<svg viewBox="0 0 100 240" xmlns="http://www.w3.org/2000/svg">
+<title>細い木のイラスト</title>
+<g stroke-linecap="round" stroke-linejoin="round">
+<path d="M43 112L41 232H59L57 112Z" fill="#1F5C3F" stroke="#1C1C1A" stroke-width="2.5"/>
+<path d="M50 147L34 119" fill="none" stroke="#1F5C3F" stroke-width="2.5"/>
+<path d="M50 171L68 137" fill="none" stroke="#1F5C3F" stroke-width="2.5"/>
+<path d="M50 5C65 5 74 18 75 34C88 42 91 58 84 71C92 84 87 101 76 108C75 127 64 141 50 141C36 141 25 127 24 108C13 101 8 84 16 71C9 58 12 42 25 34C26 18 35 5 50 5Z" fill="#2FBA68" stroke="#1C1C1A" stroke-width="2.5"/>
+<path d="M29 54C36 45 43 42 50 42M71 55C64 46 58 43 51 42M30 88C37 80 43 77 50 77M70 89C63 81 57 78 50 77" fill="none" stroke="#1F5C3F" stroke-width="2.5"/>
+<path d="M31 232H69" fill="none" stroke="#1C1C1A" stroke-width="2.5"/>
+</g>
+</svg>

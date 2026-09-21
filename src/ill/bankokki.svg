@@ -1,0 +1,16 @@
+<svg viewBox="0 0 600 130" xmlns="http://www.w3.org/2000/svg">
+<title>万国旗のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M0 23C115 48 197 63 300 48C410 32 493 30 600 55" fill="none"/>
+<path d="M39 31L64 37L47 68Z" fill="#D2552A"/>
+<path d="M93 42L118 47L101 78Z" fill="#E8C547"/>
+<path d="M148 51L173 54L158 86Z" fill="#3A6EA5"/>
+<path d="M204 55L229 55L217 88Z" fill="#2FBA68"/>
+<path d="M261 52L286 50L276 84Z" fill="#D2552A"/>
+<path d="M319 45L344 41L337 76Z" fill="#E8C547"/>
+<path d="M378 37L403 34L396 69Z" fill="#3A6EA5"/>
+<path d="M437 33L462 34L450 67Z" fill="#2FBA68"/>
+<path d="M495 37L520 42L503 73Z" fill="#D2552A"/>
+<path d="M549 46L574 52L556 82Z" fill="#E8C547"/>
+</g>
+</svg>
