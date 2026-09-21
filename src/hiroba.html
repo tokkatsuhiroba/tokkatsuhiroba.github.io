@@ -500,18 +500,20 @@
            学級活動(1)(2)(3) は、ぜんぶ「学級活動」のカードに集まります。
            選んだ6つのほうは scene に残るので、札には (1)(2)(3) まで出ます。 -->
       <div class="okuru-g">
-        <label class="okuru-l" for="okuru-n">内容<span class="okuru-hissu">必須</span></label>
-        <p class="okuru-yomi okuru-yomi--sub">選んだ内容の<b>カード</b>に集まります。<br>
+        <!-- 内容（2026-09-22：プルダウン → 押す札）。学年と同じ形にしました。
+             ★学年とちがって、**1つだけ**です。1つの実践は1つの内容に属します。
+               押すと、前に押していたものが外れます。 -->
+        <span class="okuru-l" id="okuru-nn-l">内容<span class="okuru-hissu">必須</span></span>
+        <p class="okuru-yomi okuru-yomi--sub">1つだけ押してください。押したものの<b>カード</b>に集まります。<br>
           学級活動(1)(2)(3)は、ぜんぶ<b>「学級活動」</b>のカードへ。</p>
-        <select class="okuru-i" id="okuru-n" name="n" required>
-          <option value="">えらんでください</option>
-          <option value="gakkyu1">学級活動(1)　話合い活動・係活動</option>
-          <option value="gakkyu2">学級活動(2)　日常の生活・健康安全</option>
-          <option value="gakkyu3">学級活動(3)　キャリア形成・自己実現</option>
-          <option value="gyoji">学校行事</option>
-          <option value="jidokai">児童会活動</option>
-          <option value="club">クラブ活動</option>
-        </select>
+        <div class="okuru-nen okuru-nai" id="okuru-nn" role="group" aria-labelledby="okuru-nn-l">
+          <button type="button" class="okuru-nen-b" data-n="gakkyu1" aria-pressed="false">学級活動(1)<i>話合い活動・係活動</i></button>
+          <button type="button" class="okuru-nen-b" data-n="gakkyu2" aria-pressed="false">学級活動(2)<i>日常の生活・健康安全</i></button>
+          <button type="button" class="okuru-nen-b" data-n="gakkyu3" aria-pressed="false">学級活動(3)<i>キャリア形成・自己実現</i></button>
+          <button type="button" class="okuru-nen-b" data-n="gyoji" aria-pressed="false">学校行事</button>
+          <button type="button" class="okuru-nen-b" data-n="jidokai" aria-pressed="false">児童会活動</button>
+          <button type="button" class="okuru-nen-b" data-n="club" aria-pressed="false">クラブ活動</button>
+        </div>
       </div>
 
       <div class="okuru-g">
@@ -748,6 +750,33 @@
     };
   }
 
+  /* 1つだけ押せる札（2026-09-22）。学年（nen_fuda）は いくつでも押せますが、
+     内容は **1つだけ** です。1つの実践は、1つの内容に属します。
+     押すと、前に押していたものが外れます。もう一度押すと外れます。 */
+  function hitotsu_fuda(id){
+    var bako = document.getElementById(id);
+    var b = bako ? [].slice.call(bako.querySelectorAll('.okuru-nen-b')) : [];
+    var osu = function(x, on){ x.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+    b.forEach(function(x){
+      x.addEventListener('click', function(){
+        var ima = x.getAttribute('aria-pressed') === 'true';
+        b.forEach(function(y){ osu(y, false); });
+        osu(x, !ima);
+      });
+    });
+    return {
+      yomu: function(){
+        for(var i = 0; i < b.length; i++){
+          if(b[i].getAttribute('aria-pressed') === 'true') return b[i].getAttribute('data-n');
+        }
+        return '';
+      },
+      kesu: function(){ b.forEach(function(x){ osu(x, false); }); },
+      /* 書いていないときに、そこへ連れていくため */
+      moto: bako, saki: b[0]
+    };
+  }
+
   var okuruF = document.getElementById('okuru-f');
   if(okuruF){
     if(!OKURU_URL){
@@ -803,6 +832,7 @@
       };
 
       var gakunen = nen_fuda('okuru-gn'), nen = gakunen.yomu, nen_kesu = gakunen.kesu;
+      var naiyo = hitotsu_fuda('okuru-nn');
 
       var mIn = document.getElementById('okuru-m');
       var kazu = document.getElementById('okuru-kazu');
@@ -854,15 +884,17 @@
         }
         /* 必須の2つ（2026-09-22）。novalidate なので、ここで自分で見ます。
            書いていないところへ連れていって、そこを光らせます。 */
-        var nIn = document.getElementById('okuru-n');
         var naIn = document.getElementById('okuru-na');
-        var tarinai = !nIn.value ? nIn : (!naIn.value.trim() ? naIn : null);
-        if(tarinai){
-          shirase.textContent = (tarinai === nIn)
-            ? '内容をえらんでください（4つの内容のどこに集めるかが決まります）。'
-            : 'お名前を書いてください。出すかどうかは、下のチェックで選べます。';
-          tarinai.focus();
-          if(tarinai.scrollIntoView) tarinai.scrollIntoView({block:'center'});
+        if(!naiyo.yomu()){
+          shirase.textContent = '内容を1つ押してください（4つの内容のどこに集めるかが決まります）。';
+          if(naiyo.saki) naiyo.saki.focus();
+          if(naiyo.moto) naiyo.moto.scrollIntoView({block:'center'});
+          return;
+        }
+        if(!naIn.value.trim()){
+          shirase.textContent = 'お名前を書いてください。出すかどうかは、下のチェックで選べます。';
+          naIn.focus();
+          naIn.scrollIntoView({block:'center'});
           return;
         }
         botan.disabled = true;
@@ -881,7 +913,7 @@
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
             body: JSON.stringify({
               kind: 'bansho', e: e, p: p,
-              n:  nIn.value,                                   /* 6つの内容 */
+              n:  naiyo.yomu(),                                /* 6つの内容（1つだけ） */
               t:  document.getElementById('okuru-t').value.slice(0, 60),
               g:  nen(),                                       /* 押された学年 */
               m:  document.getElementById('okuru-m').value.slice(0, 1000),
@@ -891,7 +923,7 @@
             })
           });
         }).then(function(){
-          okuruF.reset(); mihon.textContent = ''; nen_kesu();
+          okuruF.reset(); mihon.textContent = ''; nen_kesu(); naiyo.kesu();
           if(kazu) kazu.textContent = '0 / 1000字';
           shirase.textContent = '送りました。数分で「板書」のページに出ます。';
           botan.disabled = false;
