@@ -2299,3 +2299,19 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   background:var(--ink);color:var(--bg);box-shadow:3px 3px 0 var(--rule);
 }
 .okuru-nen-b[aria-pressed="true"]:hover{background:var(--ink)}
+
+/* この実践について、LINEで聞く（2026-09-22）。
+   札の足もとに1本だけ。押す場所を増やしすぎないよう、ここで打ち止めにします。
+   外へ出るので「外部」と字で書きます（色だけで伝えない）。 */
+.bansho-b--line{
+  background:var(--midori);border-color:var(--ink);color:var(--ink);
+  font-size:13.5px;padding:9px 16px;
+}
+.bansho-b--line i{
+  font-style:normal;font-family:var(--f-hon);font-size:11px;font-weight:400;
+  color:var(--ink);opacity:.75;
+}
+.bansho-b--line:hover,.bansho-b--line:focus-visible{background:var(--ki)}
+@media (max-width:719px){
+  .bansho-b--line{width:100%;justify-content:center}
+}

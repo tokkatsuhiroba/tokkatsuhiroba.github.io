@@ -2411,7 +2411,7 @@ BFUDA = """      <article class="bfuda" id="b-{slug}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
         <p class="bfuda-lead">{lead}</p>
-{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span></p>
+{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><a class="bansho-b bansho-b--line" href="{line}" target="_blank" rel="noopener noreferrer">この実践について、LINEで聞く<i>外部 ↗</i></a></p>
       </article>"""
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
@@ -2471,12 +2471,23 @@ def build_bansho(jissen):
         more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
                                      ja_md(a['d'])) if x)
+        # ── この実践について、LINEで聞く（2026-09-22）─────────────
+        #   ★LINEには「決まったオープンチャットを、本文を入れた状態で開く」
+        #     入口がありません。できるのは次の2つだけです。
+        #       line.me/R/share?text=…  … 本文は入る。送り先は押した人が選ぶ
+        #       line.me/ti/g2/…         … あの部屋が直接開く。本文は空
+        #   本文が入っているほうが値打ちが大きいので、前者にしました。
+        #   押す → LINEが開く → 一覧から「みんなの特活ひろば」を選ぶ → 本文は入っている。
+        #   ★ここから何かが出ていくことはありません。送るのは押した人です。
+        #   ★話す場はLINE、溜まる場はここ。この1本が、その芯そのものです。
+        ima = SITE_URL + 'bansho.html#b-' + a['slug']
         fuda.append(BFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
-            mado=mado, shiryo=sh, more=more, by=esc_html(a['by'])))
+            mado=mado, shiryo=sh, more=more, by=esc_html(a['by']),
+            line=esc_html(line_share(a['title'] + '\n' + ima + '\n\n'))))
     return '    <div class="bantana">\n' + '\n'.join(fuda) + '\n    </div>'
 
 
