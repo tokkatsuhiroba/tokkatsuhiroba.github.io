@@ -85,7 +85,25 @@ function hajimeru() {
 
 
 function todoita(e) {
-  var ans = hiraku_(e);
+  okuru_(hiraku_(e));
+}
+
+
+/** 動きを見るための1件（手で実行します）。メールが届けば、道はつながっています。 */
+function tameshi() {
+  okuru_({
+    title: 'ためしの1件（あとで消してください）',
+    lead:  'これは、知らせが届くかを見るための、ためしの実践です。',
+    scene: '学級活動(1)・話合い', grade: '全学年', time: '45分',
+    weekly: '学級会：ためし',
+    junbi: 'ためし', nagare: 'ためし', bansho: 'ためし', tsumazuki: 'ためし',
+    nanori: '名前を出さない'
+  });
+  Logger.log('送りました。メール（と、入れてあればLINE）を見てください。');
+}
+
+
+function okuru_(ans) {
   var id  = Utilities.getUuid().slice(0, 8);
   var md  = tsukuru_(ans, id);
 
