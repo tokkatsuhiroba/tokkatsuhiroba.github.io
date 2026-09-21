@@ -1465,6 +1465,8 @@ KAI = (
      ('実践事例', '研修会')),
 )
 
+KAI_UE_N = 3      # 研究会を、上から何件だけ出しておくか（のこりはページの中のふた）
+
 KAI_T = """      <a class="kai" href="{url}" target="_blank" rel="noopener noreferrer">
         <span class="kai-ue"><span class="kai-han han--{han}">{han_ji}</span><span class="kai-muke">{muke}</span><span class="kai-soto">外部</span></span>
         <b class="kai-na">{na}</b>
@@ -1495,7 +1497,14 @@ def build_kai():
             url=esc_html(url), han=han, han_ji=esc_html(han_ji), muke=esc_html(muke),
             na=esc_html(na), yo=esc_html(yo), tag=fuda,
             do=esc_html(urlsplit(url).netloc.replace('www.', ''))))
-    return '    <div class="kaiban">\n' + '\n'.join(gyo) + '\n    </div>'
+    # 2026-09-21：15会ぜんぶ並べると、ここだけでスマホ5画面ありました。
+    #   上から KAI_UE_N 件だけ出して、のこりはこのページの中のふたへ。
+    ue, ato = gyo[:KAI_UE_N], gyo[KAI_UE_N:]
+    honbun = '    <div class="kaiban">\n' + '\n'.join(ue) + '\n    </div>'
+    if not ato:
+        return honbun
+    naka = '      <div class="kaiban">\n' + '\n'.join(ato) + '\n      </div>'
+    return tsunagu(honbun, naka, len(ato))
 
 
 # ══════════════════════════════════════════════════════════
@@ -1737,6 +1746,9 @@ JFUDA_SHIRYO = """        <p class="fuda-shiryo"><b>持ち帰れる資料</b>{it
 """
 
 
+JISSEN_UE_N = 2   # 実践を、上から何枚だけ出しておくか（のこりはページの中のふた）
+
+
 def build_jissen_hiroba(jissen, goods):
     fuda = []
     for a in jissen:
@@ -1762,7 +1774,15 @@ def build_jissen_hiroba(jissen, goods):
             scene=esc_html(a['scene']), grade=esc_html(a['grade']),
             time=esc_html(a['time']), title=esc_html(a['title']), lead=inline_md(a['lead']),
             more=more, setb=setb + shb, weekly=shu, by=esc_html(a['by'])))
-    return '    <div class="tefuda">\n' + '\n'.join(fuda) + '\n    </div>'
+    # 2026-09-21：札をぜんぶ縦に並べると、ここだけでスマホ5画面ありました。
+    #   上から JISSEN_UE_N 枚だけ出して、のこりはこのページの中のふたへ。
+    #   4つの内容から #j-◯◯ で飛んできたときは、akeru() がふたを先に開きます。
+    ue, ato = fuda[:JISSEN_UE_N], fuda[JISSEN_UE_N:]
+    honbun = '    <div class="tefuda">\n' + '\n'.join(ue) + '\n    </div>'
+    if not ato:
+        return honbun
+    naka = '      <div class="tefuda">\n' + '\n'.join(ato) + '\n      </div>'
+    return tsunagu(honbun, naka, len(ato))
 
 
 NEWS_H_N = 5      # ニュースを、上から何件だけ出しておくか（のこりはふたの中）
