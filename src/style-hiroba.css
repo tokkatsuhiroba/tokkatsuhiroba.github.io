@@ -1152,14 +1152,30 @@ a.maru:hover,a.maru:focus-visible{transform:scale(1.12)}
 }
 .nayami--naka{grid-template-columns:1fr;gap:8px}
 .nayami--naka button{min-height:52px;font-size:13.5px}
-/* まだ答えを置けていない悩み。押せる見た目にしない（押しても何も起きない、を作らない） */
-.nayami li.mada{
+/* まだ答えが付いていない悩み。破線のままにします（答えが付くと実線の札になる）。
+   2026-09-22：押すと、その悩みの本文（困りごとのページ）へ行けるようにしました。
+   「押しても何も起きない」は作らない、という決めごとは守っています。 */
+.nayami li.mada{border-radius:13px}
+.nayami li.mada a{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  min-height:52px;padding:10px 12px 10px 15px;
+  min-height:52px;padding:10px 12px 10px 15px;text-decoration:none;
   font-size:13.5px;font-weight:700;line-height:1.55;color:var(--mute);
   background:var(--bg);border:2px dashed var(--ink);border-radius:13px;
+  transition:transform .14s ease,color .14s ease,border-color .14s ease;
+}
+.nayami li.mada a:hover,.nayami li.mada a:focus-visible{
+  color:var(--ink);border-color:var(--ink);transform:translate(-2px,-2px);
 }
 .nayami .to--mada{background:var(--bg);color:var(--mute);font-weight:400}
+
+/* 悩みが1件も無いとき／のこりへの行き先 */
+.nayami-mada{
+  margin:0;padding:20px;text-align:center;font-size:14px;line-height:1.95;color:var(--mute);
+  border:2px dashed var(--rule);border-radius:16px;
+}
+.nayami-motto{margin:12px 0 0;text-align:right;font-size:13.5px}
+.nayami-motto a{font-weight:700;color:var(--ink)}
+.nayami-motto i{font-style:normal;margin-inline-start:4px}
 .naiyo-jissen{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .naiyo-jissen a{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -1983,18 +1999,55 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   to  {transform:translateX(118vw)}
 }
 
-/* 絵ぜんたいが、ゆっくり息をする。
-   1.028 まで。これ以上あげると、下のふちと帯のあいだに隙間が見えます */
-.hero-e svg{
-  transform-origin:50% 100%;
-  animation:hero-iki 30s ease-in-out infinite alternate;
+/* ── A 広場が、スクロールに合わせて横に流れる（2026-09-22）──
+   スマホで見えているのは 3200px ある絵の真ん中だけでした。左の学級会も
+   右のクラブ活動も、誰も見ていません。下にスクロールするだけで、校庭を
+   左から右へ歩いて見ていく形にします。
+
+   ★絵を1.2倍にして、はみ出したぶんの中で左右に振ります。
+     ・拡大の起点は下（50% 100%）。だから地面は動かず、切れるのは上の空だけ。
+       空の色は .hero の地と同じなので、切れても見えません。
+     ・はみ出しは .hero の overflow:hidden が切ります。
+     ・振り幅は片側8%。拡大1.2倍のあそび（片側10%）より内がわです。
+   ★scale と translate は「単独の指定」で書きます。transform でまとめると
+     2つの動きがぶつかって、片方が消えます。 */
+.hero-e svg{transform-origin:50% 100%;scale:1.2}
+
+@supports (animation-timeline:view()){
+  .hero-e svg{
+    animation:hero-nagare linear both;
+    /* ★view() ではなく scroll()。ヒーローはページのいちばん上にあるので、
+       view() だと読み込んだ時点でもう8割すすんでいて、流れが見えません
+       （実測。開いた直後に translate が -4.6% まで来ていました）。
+       いちばん上から1画面ぶんスクロールするあいだに、8% → -8% を使いきります。 */
+    animation-timeline:scroll(root block);
+    animation-range:0 92vh;
+  }
+  @keyframes hero-nagare{
+    from{translate:8% 0}
+    to  {translate:-8% 0}
+  }
 }
-@keyframes hero-iki{from{transform:scale(1)}to{transform:scale(1.02)}}
+
+/* ── B 校庭を走る子 ───────────────────────────────
+   絵の中の子は動かせないので、上に重ねた子が走ります。
+   走りながら小さく弾みます（--h が1歩の速さ）。 */
+.hko{
+  position:absolute;z-index:1;pointer-events:none;
+  left:0;bottom:var(--b);width:var(--w);
+  animation:hko-hashiru var(--t,20s) linear var(--d,0s) infinite;
+}
+.hko svg{
+  display:block;width:100%;height:auto;
+  animation:hko-haneru var(--h,.3s) ease-in-out infinite alternate;
+}
+@keyframes hko-hashiru{from{translate:-14vw 0}to{translate:114vw 0}}
+@keyframes hko-haneru {from{transform:translateY(0)}to{transform:translateY(-2.5px)}}
 
 /* 動きを減らす設定の人には、1つも動かしません（絵はそのまま出ます） */
 @media (prefers-reduced-motion:reduce){
-  .hkumo{animation:none;display:none}
-  .hero-e svg{animation:none}
+  .hkumo,.hko{animation:none;display:none}
+  .hero-e svg{animation:none;scale:1;translate:none}
 }
 
 /* ══ ページの頭の絵（2026-09-22）════════════════════════════
@@ -2145,7 +2198,9 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .zen-naka{overflow:auto;display:grid;place-items:center;padding:8px}
 .zen-naka img{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
 /* 「大きく」＝もとの大きさ。はみ出したぶんは指で動かせます（横長の黒板はこれで読めます） */
-.zen--ookiku .zen-naka{place-items:start}
+/* はみ出していないほうの向きは、まんなかに寄せます（safe＝はみ出すときは端から）。
+   これが start だと、画面より低い写真が上にはりついて、下に地が残ります。 */
+.zen--ookiku .zen-naka{place-items:safe center}
 .zen--ookiku .zen-naka img{max-width:none;max-height:none}
 .zen-te{
   display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
@@ -2165,4 +2220,43 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .zen-te{gap:8px;padding:10px}
   .zen-b{font-size:12.5px;padding:9px 13px}
   .zen-tojiru{margin-inline-start:0}
+}
+
+/* ══ 送るところ：必須の印と、名前を出すかのチェック（2026-09-22）══
+   「必須」は、色だけでなく **字** で書いてあります（色で意味を伝えない）。 */
+.okuru-hissu{
+  padding:1px 7px;border:2px solid var(--shu);border-radius:999px;
+  font-size:10.5px;font-weight:700;color:var(--bg);background:var(--shu);
+}
+.okuru-check{
+  margin:0 0 clamp(14px,2vw,20px);padding:14px 16px;
+  background:var(--bg);border:2px solid var(--ink);border-radius:14px;
+}
+.okuru-check label{
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+  font-family:var(--f-maru);font-size:14.5px;font-weight:700;letter-spacing:.03em;
+}
+.okuru-check input{
+  flex:none;width:24px;height:24px;accent-color:var(--accent);cursor:pointer;
+}
+.okuru-check-chu{
+  display:block;margin-top:9px;font-size:12.5px;line-height:1.8;color:var(--mute);
+}
+/* 書いていないところへ連れていったとき、どこかが分かるように */
+.okuru-i:focus-visible{outline:3px solid var(--shu);outline-offset:2px}
+
+/* ── C 押すと、中のキャラが1回跳ねる（2026-09-22）──────────
+   札そのものは影へへこむ（前から）。それに中の子の跳ねを足します。
+   跳ねは .hfuda-e（外がわの箱）に付けます。中の svg はふだんの息を
+   続けているので、同じ要素に書くと打ち消し合うためです。 */
+.hfuda:active .hfuda-e,
+.igi-h:active .e{animation:kyara-haneru .42s cubic-bezier(.3,1.5,.5,1)}
+@keyframes kyara-haneru{
+  0%  {transform:translateY(0)      scaleY(1)}
+  22% {transform:translateY(2px)    scaleY(.9)}   /* いちど沈む */
+  55% {transform:translateY(-13px)  scaleY(1.06)} /* とぶ */
+  100%{transform:translateY(0)      scaleY(1)}
+}
+@media (prefers-reduced-motion:reduce){
+  .hfuda:active .hfuda-e,.igi-h:active .e{animation:none}
 }

@@ -76,7 +76,7 @@ SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
 PAGES = (
     # 2026-09-21 夜：板書を送るところを、ホームのいちばん上にしました。
     #   このサイトの目玉はここです。研究日程より前に出します。
-    ('index.html',    'TOKKATSU広場', '', ('okuru', 'ima')),
+    ('index.html',    'TOKKATSU広場', '', ('okuru', 'kiku', 'ima')),
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。',
      ('about', 'yotsu')),
     ('manabu.html',   '学ぶ',   '学級会の学習過程と、明日そのまま使える実践。',
@@ -104,7 +104,7 @@ SETSU_NA = {
     'about':  '特活とは',   'manabu': '学ぶ',
     'yotsu':  '4つの内容',  'jissen': '実践',
     'kai':    '日本の研究会', 'okuru': '実践を送る',
-    'bansho': '板書', 'komari': '困りごと',
+    'bansho': '板書', 'komari': '困りごと', 'kiku': 'ちょっと聞きたい',
 }
 
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
@@ -649,9 +649,40 @@ def load_komari():
         fm['hon'] = hon[:KOMARI_MOJI_MAX]
         fm['grade'] = (fm.get('grade') or '').strip()
         fm['slug'] = slug_of(f)
+
+        # 短い言葉。お悩み別の入口に出すのは、これです。
+        #   送られたときは、Apps Script が本文の1行目から作ります。
+        #   長すぎたり、言い方が個別すぎたりしたら、**あとから手で直せます**。
+        fm['mijikai'] = (fm.get('title') or '').strip() or mijikaku(hon)
+
+        # ここから下の2つは、**あとから人が足す欄**です。
+        #   naiyo … 4つの内容のどれか。足すと、その内容のカードにも並びます
+        #   saki  … 学級活動(1)の学習過程の段階（1〜5）。足すと、押せる札になり
+        #           「学ぶ」のそこが開きます。＝ この悩みに答えが付いた、という印
+        # どちらも空のままで出ます。**答えが無いことも情報**なので隠しません。
+        aru = [n for n, _ in naiyo_ichiran()]
+        fm['naiyo'] = (fm.get('naiyo') or '').strip()
+        if fm['naiyo'] and fm['naiyo'] not in aru:
+            tobashita.append('%s … naiyo が「%s」です（%s のどれか）'
+                             % (f, fm['naiyo'], '／'.join(aru)))
+            continue
+        fm['saki'] = (fm.get('saki') or '').strip()
+        if fm['saki'] and fm['saki'] not in '12345':
+            tobashita.append('%s … saki が「%s」です（1〜5 か、空）' % (f, fm['saki']))
+            continue
+
         kiji.append(fm)
     kiji.sort(key=lambda a: (a['d'], a['_file']), reverse=True)
     return kiji, tobashita
+
+
+def mijikaku(hon, n=26):
+    """本文から、札に出す短い言葉を作る。1行目を、文の切れ目で切ります。"""
+    gyo = hon.split('\n')[0].strip().lstrip('#-・ 　')
+    for ku in ('。', '？', '?', '！', '!'):
+        if 0 < gyo.find(ku) <= n:
+            return gyo[:gyo.find(ku)]
+    return gyo if len(gyo) <= n else gyo[:n] + '…'
 
 
 KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
@@ -659,8 +690,8 @@ KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
         <div class="komari-hon">{hon}</div>
       </article>"""
 
-KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。
-      いちばん上の欄から、いま困っていることを送ってください。</p>"""
+KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。<br>
+      ホームの <a href="#kiku">ちょっと聞きたい</a> から、いま困っていることを送ってください。</p>"""
 
 
 def build_komari(komari):
@@ -785,12 +816,9 @@ SHIRYO_MADO = """        <details class="hiraku shiryo-hiraku">
 def shiryo_mado(midashi, oki, alt, moto=None, page='manabu.html'):
     """資料1件ぶんの「ページの中で開く窓」。"""
     mai = shiryo_yomu(oki, moto, page)
-    g = []
-    for i, (uri, w, h) in enumerate(mai):
-        g.append('              <figure><img src="%s" alt="%s %dページめ" '
-                 'width="%d" height="%d" loading="lazy" decoding="async">'
-                 '<figcaption>%d / %d</figcaption></figure>'
-                 % (uri, esc_html(alt), i + 1, w, h, i + 1, len(mai)))
+    g = [GAZOU.format(uri=uri, alt=esc_html('%s %dページめ' % (alt, i + 1)),
+                      w=w, h=h, i=i + 1, n=len(mai))
+         for i, (uri, w, h) in enumerate(mai)]
     return SHIRYO_MADO.format(midashi=esc_html(midashi), n=len(mai), gazou='\n'.join(g))
 
 
@@ -2069,7 +2097,7 @@ def build_kai():
 # 2026-09-21：ここは本体サイトの #manabu へ飛んでいました。
 # 飛び先は別のデザインなので、押した人は「別のサイトへ出された」と感じます。
 # だから、いまは **どこへも飛ばしません**。カードの中で、その内容の
-# 悩み（NAYAMI）と実践（src/jissen の naiyo）が、その場で開きます。
+# 悩み（src/komari の naiyo）と実践（src/jissen の naiyo）が、その場で開きます。
 YOTSU = (
     ('n-gakkyu',  'GAKKYU KATSUDO',  '学級活動',   '30 900 1000 400',
      '学級会・係・当番・給食。子どもが自分たちで決める時間です。'),
@@ -2091,90 +2119,65 @@ def naiyo_ja(nid):
     return dict(naiyo_ichiran())[nid]
 
 
-# ── 広場で出た悩み（4つの内容ごとに集める）──────────────
-# 1行＝(4つの内容のどれか, 悩みの言葉, 行き先)
-#   行き先 '1'〜'5' … 学級活動(1)の学習過程の段階。押すと「学ぶ」のそこが開きます
-#   行き先 ''      … まだ答えを置けていない悩み。隠さずに、そのまま出します
+# ── 広場で出た悩み ────────────────────────────────
 #
-# ★ここ1か所に書くと、2か所に出ます。
-#   ・「学ぶ」の お悩み別の入口 … 上から NAYAMI_IRIGUCHI 件（段階につながるものだけ）
-#   ・「4つの内容」のカードの中 … その内容の悩み、ぜんぶ
+# ★2026-09-22、**書き置きをやめました。**
+#   ここには手で書いた悩みが24件ありました。読みものとしては良かったのですが、
+#   「最初から全部そろっている」ので、**みんなで作っている感じになりません**。
+#   いまは `src/komari/*.md` ＝ **送られた困りごと** が、そのまま悩みになります。
+#   消した24件は `src/komari/_LINEから書き出したもの.md` に控えてあります
+#   （頭が _ なので出ません）。1件ずつ .md にすれば、また並びます。
 #
-# ── 出どころ（2026-09-21）──────────────────────────
-# LINEオープンチャット「みんなの特活ひろば（仮）」の 8/9〜9/21 のやりとり
-# （1750件）を読んで、**実際に出ていた困りごとだけ**を書き出したものです。
+# ★悩みが「解ける」しくみ
+#   送られたときは、naiyo も saki も空です。＝ まだ答えがついていない悩み。
+#   人があとから .md に saki: 2 と足すと、押せる札になり、学習過程の②が開きます。
+#   naiyo: gakkyu と足すと、4つの内容のカードにも並びます。
+#   **答えが増えるほど、押せる札が増えていきます。**それが見えるのが狙いです。
 #
-# 載せるときの約束。ここを外すと、書いた人が特定されます。
-#   1. 発言をそのまま引用しない。**悩みの言葉に言いかえる**
-#   2. 発言者・学校・地域・日付は**一切載せない**（この表にも持たせない）
+# 載せるときの約束（送られたぶんにも、同じことが要ります）
+#   1. 発言をそのまま引用しない。**悩みの言葉に言いかえる**（title: で直せます）
+#   2. 発言者・学校・地域は**一切載せない**
 #   3. 1人の個別事情が分かる書き方にしない。**同じ困りごとの一般形**にする
 #   4. 答えを置けていないものも消さない。**「まだ答えが無い」ことが情報**です
-NAYAMI = (
-    # ── 学級活動 ───────────────────────────────
-    ('gakkyu',  '学級会が話し合いにならない',                   '2'),
-    ('gakkyu',  '議題が出てこない',                             '1'),
-    ('gakkyu',  '学級会の進め方が分からない',                   '1'),
-    ('gakkyu',  '話合いが決まらない・多数決になる',             '3'),
-    ('gakkyu',  '係活動が形だけになっている',                   '4'),
-    ('gakkyu',  'やりっぱなしで次につながらない',               '5'),
-    ('gakkyu',  '学級会をやったことのないクラスで、どう始めるか', '1'),
-    ('gakkyu',  '議題が楽しいことばかりで、生活の問題に向かわない', '1'),
-    ('gakkyu',  '意見が広がるだけで、深まらない',               '2'),
-    ('gakkyu',  '決まらないとき「とりあえずやってみる」でいいのか', '3'),
-    ('gakkyu',  '「私」から「私たち」に変わるとは、どういうことか', '3'),
-    ('gakkyu',  '係と当番のちがいが分からない',                 '4'),
-    ('gakkyu',  '振り返りの視点が、毎回こんがらがる',           '5'),
-    ('gakkyu',  '「振り返らせる」になっていないか',             '5'),
-    ('gakkyu',  '特別支援学級の子と、どう一緒に学級会をつくるか', ''),
-    ('gakkyu',  '学級活動(1)(2)(3)の区別が、あいまいなまま',    ''),
-    # ── 学校行事 ───────────────────────────────
-    ('gyoji',   '行事が本番だけで終わり、積み上がらない',       ''),
-    ('gyoji',   '行事のとき、子どもに何を渡せばいいか',         ''),
-    ('gyoji',   '移動教室のバスレクや夜の集いの中身が思いつかない', ''),
-    # ── 児童会活動 ─────────────────────────────
-    ('jidokai', '児童会を任された',                             ''),
-    ('jidokai', '委員会で、めあては決まるのに活動が思いつかない', ''),
-    ('jidokai', '代表委員会が、決まった話し合いだけで終わる',   ''),
-    # ── クラブ活動 ─────────────────────────────
-    ('club',    'クラブが何をする時間か分からない',             ''),
-    ('club',    'ほかの学校が、どんなクラブをやっているか知りたい', ''),
-)
 
-# 「学ぶ」のお悩み別の入口に出す数（上から数えて、段階につながるものだけ）。
+# 「学ぶ」のお悩み別の入口に出す数。
 # ぜんぶ出すと入口が長くなって、入口の役をしなくなります。
 NAYAMI_IRIGUCHI = 6
 
 MARU = '①②③④⑤'
 
 
-def kenmon_nayami():
-    aru = [n for n, _ in naiyo_ichiran()]
-    mita = set()
-    for naiyo, kotoba, saki in NAYAMI:
-        if naiyo not in aru:
-            raise Tomeru('悩み「%s」の内容が %s です（%s のどれか）'
-                         % (kotoba, naiyo or '空', '／'.join(aru)))
-        if saki and saki not in '12345':
-            raise Tomeru('悩み「%s」の行き先が %s です（1〜5 の段階か、空）' % (kotoba, saki))
-        if kotoba in mita:
-            raise Tomeru('悩み「%s」が2回出ています' % kotoba)
-        mita.add(kotoba)
-
-
-def nayami_gyo(kotoba, saki, ji=' ' * 8):
-    """悩み1つぶんの行。行き先があれば押せる札、無ければ破線の札。"""
-    if saki:
+def nayami_gyo(a, ji=' ' * 8):
+    """悩み1つぶんの行。
+       saki があれば押せる札（学習過程のそこが開く）。
+       無ければ、その悩みの本文へ行く札（困りごとのページ）。"""
+    kotoba = esc_html(a['mijikai'])
+    if a['saki']:
         return ('%s<li><button type="button" data-learn-step="%s">'
                 '<span>%s</span><span class="to">%sへ</span></button></li>'
-                % (ji, saki, esc_html(kotoba), MARU[int(saki) - 1]))
-    return ('%s<li class="mada"><span>%s</span>'
-            '<span class="to to--mada">LINEで聞く</span></li>' % (ji, esc_html(kotoba)))
+                % (ji, a['saki'], kotoba, MARU[int(a['saki']) - 1]))
+    return ('%s<li class="mada"><a href="#k-%s"><span>%s</span>'
+            '<span class="to to--mada">まだ答えなし</span></a></li>'
+            % (ji, a['slug'], kotoba))
 
 
-def build_nayami():
-    """「学ぶ」のお悩み別の入口。段階につながる悩みを、表の順に上から数件。"""
-    gyo = [nayami_gyo(k, s) for _, k, s in NAYAMI if s][:NAYAMI_IRIGUCHI]
-    return '      <ul class="nayami">\n' + '\n'.join(gyo) + '\n      </ul>'
+NAYAMI_KARA = """      <p class="nayami-mada">まだ1件もありません。<br>
+      いま困っていることを <a href="#komari">ちょっと聞きたい</a> から送ってください。
+      送られたものが、そのままここに並びます。</p>"""
+
+
+def build_nayami(komari):
+    """「学ぶ」のお悩み別の入口。送られた困りごとを、新しいものから数件。
+       答えが付いたもの（saki あり）を先に出します。"""
+    if not komari:
+        return NAYAMI_KARA
+    narabi = [a for a in komari if a['saki']] + [a for a in komari if not a['saki']]
+    gyo = [nayami_gyo(a) for a in narabi[:NAYAMI_IRIGUCHI]]
+    ato = ''
+    if len(komari) > NAYAMI_IRIGUCHI:
+        ato = ('\n      <p class="nayami-motto"><a href="#komari">'
+               'のこり%d件も見る<i>→</i></a></p>' % (len(komari) - NAYAMI_IRIGUCHI))
+    return '      <ul class="nayami">\n' + '\n'.join(gyo) + '\n      </ul>' + ato
 
 
 YOTSU_T = """      <div class="naiyo {cls}" id="naiyo-{nid}">
@@ -2211,7 +2214,7 @@ def yotsu_atsume(nid, ja, nayami, jissen):
         aji.append('悩み%d件' % len(nayami))
         naka.append('              <p class="naiyo-h">広場で出た悩み<i>%d</i></p>' % len(nayami))
         naka.append('              <ul class="nayami nayami--naka">\n'
-                    + '\n'.join(nayami_gyo(k, s, ' ' * 16) for _, k, s in nayami)
+                    + '\n'.join(nayami_gyo(a, ' ' * 16) for a in nayami)
                     + '\n              </ul>')
     if jissen:
         aji.append('実践%d件' % len(jissen))
@@ -2229,7 +2232,7 @@ def yotsu_atsume(nid, ja, nayami, jissen):
     return YOTSU_AKE.format(aji='・'.join(aji) + 'をひらく', naka='\n'.join(naka))
 
 
-def build_yotsu(kyara, jissen):
+def build_yotsu(kyara, jissen, komari):
     # どのカードに だれが立つかは KYARA_MEN の4つめ（クラス名）で結びます
     dare = dict((cls, (n, na)) for n, na, _, cls in KYARA_MEN)
     gyo = []
@@ -2243,7 +2246,7 @@ def build_yotsu(kyara, jissen):
             cls=c, nid=nid, en=en, ja=ja, win=w, setsumei=se,
             n=n, na=na, kw=kyara[n][0], kh=kyara[n][1],
             atsume=yotsu_atsume(nid, ja,
-                                [x for x in NAYAMI if x[0] == nid],
+                                [a for a in komari if a['naiyo'] == nid],
                                 [a for a in jissen if a['naiyo'] == nid])))
     return '    <div class="yotsu">\n' + '\n'.join(gyo) + '\n    </div>'
 
@@ -2362,14 +2365,26 @@ def build_jissen_hiroba(jissen, goods):
 # ══ 板書（2026-09-21 新設。「溜める」と決めたので、置き場を分けました）══
 #   写真は **このページにだけ** 入ります。実践の札からは、リンク1本で渡ります。
 #   ここに溜まるいっぽうなので、build の最後に「いま何MB・あと何枚」を出します。
+# 板書は「大きく出す」が既定です（2026-09-22）。
+#   実測：届いた1枚めは 1400×418 の横長でした。札の幅（405px）で頭打ちになり、
+#   **405×124** でしか出ていませんでした。窓には585pxの高さが空いていたのにです。
+#   黒板は横長なので、効くのは高さではなく **幅** でした。だから札の外まで広げます。
+#   それでもスマホでは字が読めないので、1枚ずつ［大きく見る］を付けます。
+#   ★開く先は、同じページの中にある同じ画像です。外へは1バイトも出ません。
 BFUDA = """      <article class="bfuda" id="b-{slug}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
-        <div class="bfuda-mado">
+        <div class="bfuda-mado bfuda-mado--hiro">
 {gazou}
         </div>
         <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><a class="bansho-b" href="#j-{slug}">この実践を読む<i>→</i></a></p>
       </article>"""
+
+# 写真1枚ぶん。図と、その下の［大きく見る］。
+#   ボタンは figure の中に置きます。押されたら、同じ figure の <img> を大きく出します。
+GAZOU = """              <figure class="shot"><img src="{uri}" alt="{alt}" width="{w}" height="{h}" loading="lazy" decoding="async">
+                <figcaption class="shot-shita"><span class="shot-kazu">{i} / {n}</span><button class="shot-b" type="button" data-zen>大きく見る</button></figcaption>
+              </figure>"""
 
 
 def bansho_aru(jissen):
@@ -2389,12 +2404,9 @@ def build_bansho(jissen):
     fuda = []
     for a in aru:
         mai = shiryo_yomu(a['bansho'], BANSHO, 'bansho.html')
-        g = []
-        for i, (uri, w, h) in enumerate(mai):
-            g.append('          <figure><img src="%s" alt="%s の板書 %d枚め" '
-                     'width="%d" height="%d" loading="lazy" decoding="async">'
-                     '<figcaption>%d / %d</figcaption></figure>'
-                     % (uri, esc_html(a['title']), i + 1, w, h, i + 1, len(mai)))
+        g = [GAZOU.format(uri=uri, alt=esc_html('%s の板書 %d枚め' % (a['title'], i + 1)),
+                          w=w, h=h, i=i + 1, n=len(mai))
+             for i, (uri, w, h) in enumerate(mai)]
         meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
                                      ja_md(a['d'])) if x)
         fuda.append(BFUDA.format(
@@ -2414,6 +2426,18 @@ def build_bansho_iriguchi(jissen):
     mai = sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))
     return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#bansho">'
             '板書の写真だけを並べて見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
+
+
+def build_komari_miru(komari):
+    """困りごとを送る欄の、すぐ下に置く「見るところ」（2026-09-22）。
+       0件のときはリンクにしません（押しても何も無い、を作らないため）。"""
+    if not komari:
+        return ('    <p class="bansho-iri bansho-iri--mada">'
+                '<b>届いている困りごと</b>まだ1件もありません。いちばん乗りをどうぞ。</p>')
+    tsuita = sum(1 for a in komari if a['saki'])
+    return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#komari">'
+            '届いている困りごとを見る（%d件・うち%d件に答え）<i>→</i></a></p>'
+            % (len(komari), tsuita))
 
 
 def build_okuru_miru(jissen):
@@ -2514,7 +2538,7 @@ def build_kyara_narabi(kyara):
 #     2026-09-21 夜、「伝えたい」が atsumaru.html#okuru を指したまま
 #     送るところがホームへ移り、行き先が消えかけました。
 IGI_MEN = (
-    ('gakkatsu', 'ちょっと聞きたい', 'いま困っていることを。',   'komari'),
+    ('gakkatsu', 'ちょっと聞きたい', 'いま困っていることを。',   'kiku'),
     ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
     ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'jissen'),
     ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
@@ -2596,7 +2620,7 @@ HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
       </a>"""
 
 
-def home_kazu(sid, sec, kiji, jissen, ken):
+def home_kazu(sid, sec, kiji, jissen, ken, komari):
     """札に出す数。その場で数えたものだけを出します。"""
     def kazoe(pat):
         return len(re.findall(pat, sec.get(sid, '')))
@@ -2610,7 +2634,7 @@ def home_kazu(sid, sec, kiji, jissen, ken):
         return '%d段階と資料%d件' % (kazoe(r'data-learn-detail='),
                                   kazoe(r'<li><a href="https?://[^"]*"[^>]*><span><b>'))
     if sid == 'yotsu':
-        return '悩み%d件' % len(NAYAMI)
+        return '悩み%d件' % len(komari)
     if sid == 'jissen':
         return '%d件' % len(jissen)
     if sid == 'kai':
@@ -2622,7 +2646,7 @@ def home_kazu(sid, sec, kiji, jissen, ken):
     raise Tomeru('ホームの札 %s に、数の出し方がありません' % sid)
 
 
-def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
+def build_home(doko, sec, buhin, kyara, kiji, jissen, ken, komari):
     """ホームの8枚。使った絵の名前も返します（defs に入れるため）。"""
     fuda, tsukatta = [], set()
     for sid, tane, na, yo in HOME_FUDA:
@@ -2637,7 +2661,7 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
             page=doko[sid].replace('.html', ''),
             saki='%s#%s' % (doko[sid], sid), tane=tane, na=na, w=w, h=h,
             midashi=esc_html(SETSU_NA[sid]), yo=esc_html(yo),
-            kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken))))
+            kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken, komari))))
     honbun = ('<section class="sec sec--ki" id="ichiran">\n'
               '  <div class="uchi">\n'
               '    <h2 class="midashi"><span class="en">CONTENTS</span>'
@@ -2931,7 +2955,6 @@ def build_shin():
     kiji, _ = load_news()
     goods = load_goods()
     jissen, _ = load_jissen(goods)
-    kenmon_nayami()
     body = rd('src/hiroba.html')
 
     if not kiji:
@@ -2959,7 +2982,21 @@ def build_shin():
                               ('34%', 150, 96, 34, '.5'),
                               ('7%',   80, 62, 58, '.42')))
 
-    hero = (hero_kumo
+    # ── 校庭を走る子（2026-09-22）──────────────────────────
+    #   これも雲と同じで「絵の上に重ねた入れ物」。絵の中の子は動かせません。
+    #   ★絵の中の子と同じ大きさに見えるよう、はばを px で決め打ちにします。
+    #     広い窓（3200）でもスマホの窓（1450）でも、画面上の子は同じくらいの
+    #     大きさになるので（実測、どちらも約0.25倍）、1つの値で足ります。
+    #   （下からの位置, はば, 横切る秒数, 出るまでの秒数）
+    hw, hh, _ = buhin['ko-hashiru']
+    hero_ko = ''.join(
+        '<i class="hko" aria-hidden="true" style="--b:%s;--w:%dpx;--t:%ds;--d:-%ds;--h:%ss">'
+        '<svg viewBox="0 0 %g %g" focusable="false"><use href="#ill-b-ko-hashiru"/></svg></i>'
+        % (b, w, t, d, h, hw, hh)
+        for b, w, t, d, h in (('6%',  17, 21, 0,  '.30'),
+                              ('2%',  21, 17, 9,  '.26')))
+
+    hero = (hero_kumo + hero_ko
             + '<svg viewBox="0 0 %d %d" role="img" aria-label="校庭で学級活動・学校行事・'
             '児童会活動・クラブ活動をしている学校の広場のイラスト">'
             '<use href="#ill-hiroba"/></svg>' % (HIROBA_W, HIROBA_H))
@@ -2969,19 +3006,20 @@ def build_shin():
     #   右の時計台を切っていました（「空と学校が切れている」）。
     #   いまは 空と雲・校舎まるごと・右の時計台まるごと・下の子どもたち、
     #   が1枚に入る窓です（1450:1060 ＝ たて長め）。
-    hero_s = (hero_kumo
+    hero_s = (hero_kumo + hero_ko
               + '<svg viewBox="760 140 1450 1060" role="img" aria-label="校庭で学校行事を'
               'している学校のイラスト"><use href="#ill-hiroba"/></svg>')
 
     for mark, html in (('<!--BUILD:HIROBA-->', hero),
                        ('<!--BUILD:HIROBA_S-->', hero_s),
                        ('<!--BUILD:COPY-->',   build_copy(TOBIRA_COPY)),
-                       ('    <!--BUILD:YOTSU-->',  build_yotsu(kyara, jissen)),
-                       ('      <!--BUILD:NAYAMI-->', build_nayami()),
+                       ('    <!--BUILD:YOTSU-->',  build_yotsu(kyara, jissen, komari)),
+                       ('      <!--BUILD:NAYAMI-->', build_nayami(komari)),
                        ('    <!--BUILD:KYARA-->',  build_kyara_narabi(kyara)),
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
                        ('    <!--BUILD:BANSHO_IRI-->', build_bansho_iriguchi(jissen)),
                        ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
+                       ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
                        ('    <!--BUILD:KAI-->',      build_kai()),
@@ -3023,7 +3061,7 @@ def build_shin():
     # 頭と足もとは、どのページにも同じものが載ります（張りかえません）
     tsune = set(re.findall(r'\sid="([^"]+)"', hero + foot)) | {'ue'}
 
-    home_html, home_e = build_home(doko, sec, buhin, kyara, kiji, jissen, ken)
+    home_html, home_e = build_home(doko, sec, buhin, kyara, kiji, jissen, ken, komari)
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
@@ -3228,11 +3266,11 @@ def main_shin(check_only):
           % (len(hyo), sum(h[3] for h in hyo)))
     print('  4つの内容　… %s'
           % '、'.join('%s（悩み%d・実践%d）'
-                     % (ja, sum(1 for x in NAYAMI if x[0] == nid),
+                     % (ja, sum(1 for a in komari if a['naiyo'] == nid),
                         sum(1 for a in jissen if a['naiyo'] == nid))
                      for nid, ja in naiyo_ichiran()))
-    print('  悩み　　　　… %d件（うち %d件が学習過程につながっています）'
-          % (len(NAYAMI), sum(1 for x in NAYAMI if x[2])))
+    print('  悩み　　　　… %d件（うち %d件に答えが付いています）'
+          % (len(komari), sum(1 for a in komari if a['saki'])))
     print('  実践　　　　… %d件（うち議題が%d件。ぜんぶ、中身までこのページに）'
           % (len(jissen), sum(1 for a in jissen if a['kind'] == 'gidai')))
     print('  板書　　　　… %d件・%d枚（写真は bansho.html にだけ入れています）'
