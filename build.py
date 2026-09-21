@@ -1995,59 +1995,84 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
 #   ★ ここに書く中身は、ぜんぶ節そのものから抜いています。
 #     手で写さないこと（節を直したのに概要が古い、が起きます）。
 
-GFUDA = """      <a class="gfuda gf--{sid}" href="{saki}">
-        <b class="gfuda-h">{midashi}</b>
-        <ul class="gfuda-l">
-{gyo}
-        </ul>
-        <span class="gfuda-go">開く</span>
-      </a>"""
+GFUDA = """      <div class="gfuda gf--{sid}">
+        <div class="atama" aria-hidden="true" inert>
+{atama}
+        </div>
+        <a class="gfuda-a" href="{saki}"><b class="gfuda-h">{midashi}</b><span class="gfuda-go">開く</span></a>
+      </div>"""
+
+# 概要に出す、節のあたま何個ぶんか。窓の高さでも切るので、多くしても伸びません
+ATAMA_N = 3
+_IMG_RE = re.compile(r'<img\b[^>]*>')
+_ID_RE = re.compile(r'\sid="[^"]*"')
+_A_RE = re.compile(r'(<a\b[^>]*?)\shref="[^"]*"')
+_VOID = {'br', 'img', 'input', 'hr', 'meta', 'link', 'use', 'path', 'circle',
+         'rect', 'source', 'col', 'area', 'ellipse', 'line', 'polygon', 'polyline'}
 
 
-def _nuku(html, pat, n=4):
-    """節そのものから、見出しになっている字だけを抜く。
-       ★手で写さないこと。写すと、節を直したのに概要が古い、が起きます。"""
-    out = []
-    for m in re.finditer(pat, html, re.S):
-        t = re.sub(r'<[^>]+>', '', m.group(1)).strip()
-        t = re.sub(r'\s+', ' ', t)
-        if t and t not in out:
-            out.append(t)
-    if not out:
-        raise Tomeru('ホームの概要が、節から中身を1つも抜けませんでした（%s）' % pat)
-    return out[:n]
+def uchi_kodomo(sec_html):
+    """節の <div class="uchi"> の、じかの子どもを順に切り出す。"""
+    m = re.search(r'<div class="uchi">(.*)\n  </div>\n</section>', sec_html, re.S)
+    if not m:
+        raise Tomeru('節から <div class="uchi"> を切り出せませんでした')
+    naka = re.sub(r'<!--.*?-->', '', m.group(1), flags=re.S)
+    out, fukasa, hajime = [], 0, None
+    for t in re.finditer(r'<(/?)([a-zA-Z][\w-]*)\b[^>]*?(/?)>', naka):
+        tojiru, na, jiko = t.group(1), t.group(2).lower(), t.group(3)
+        if tojiru:
+            fukasa -= 1
+            if fukasa == 0 and hajime is not None:
+                out.append(naka[hajime:t.end()])
+                hajime = None
+        elif jiko or na in _VOID:
+            if fukasa == 0:
+                out.append(t.group(0))
+        else:
+            if fukasa == 0:
+                hajime = t.start()
+            fukasa += 1
+    if fukasa or not out:
+        raise Tomeru('節の中の入れ子が合っていません（概要が作れません）')
+    return out
 
 
-def build_gaiyo(sec, doko, kiji, jissen):
+def build_atama(sec_html):
+    """そのページの「いちばん上」を、そのままの大きさで短く載せる。
+       ★写真は入れません（指導案22ページ＝2.5MB あるため）。
+       ★id と href は外します（id が二重になるのと、
+         窓の中の押せるものに指やTabが入るのを防ぐため）。
+       ★data-yt も外します（残すと、開いただけで YouTube に画像を取りに行きます）。"""
+    naka = ''.join(uchi_kodomo(sec_html)[:ATAMA_N])
+    naka = _IMG_RE.sub('', naka)
+    naka = _ID_RE.sub('', naka)
+    naka = _A_RE.sub(r'\1', naka)
+    naka = re.sub(r'\sdata-yt="[^"]*"', '', naka)
+    naka = naka.replace('<summary', '<summary tabindex="-1"')
+    naka = naka.replace('<button ', '<button tabindex="-1" ')
+    return naka
+
+
+def build_gaiyo(sec, doko):
     """ホームの「中身を、ざっと」。
-       2026-09-21：いちど本物の縮小を窓で見せましたが、小さすぎて読めない、
-       という話になりました。読める字の概要にして、押すとそのページへ行きます。"""
-    naka = {
-        'about':  _nuku(sec['about'], r'<h3 class="manabu-h">(.*?)</h3>'),
-        'manabu': _nuku(sec['manabu'], r'<summary><span class="no">\d</span>'
-                                       r'<span class="sh"><b>(.*?)</b>', 5),
-        'yotsu':  ['%s　%s' % (na, naiyo) for _, na, naiyo, _ in KYARA_MEN],
-        'okuru':  _nuku(sec['okuru'], r'<li><span class="n">\d</span><b>(.*?)</b>'),
-        'news':   [a.get('home') or a['title'] for a in kiji[:4]],
-        'jissen': [a['title'] for a in jissen[:4]],
-        'kai':    ['全国の会　%d' % sum(1 for k in KAI if k[0] == 'zen'),
-                   '都道府県の会　%d' % sum(1 for k in KAI if k[0] == 'ken'),
-                   '市の会　%d' % sum(1 for k in KAI if k[0] == 'shi')],
-    }
+       2026-09-21：箇条書き→本物の縮小→読める箇条書き、と回ったあと、
+       「各ページの最初の画面のみ そのまま載せる感じ。短いバージョンで」に落ちつきました。
+       だから、節のあたまを**そのままの大きさで**載せ、窓の高さで切ります。
+       写した絵でも、縮めた絵でもないので、節を直せばここも変わります。"""
     fuda = []
     for sid, _, _, _ in HOME_FUDA:
-        if sid not in naka:       # こよみは、この上に本物が出ているので要りません
+        if sid == 'ima':      # こよみは、この上に本物が出ているので要りません
             continue
         fuda.append(GFUDA.format(
             sid=sid, saki='%s#%s' % (doko[sid], sid),
             midashi=esc_html(SETSU_NA[sid]),
-            gyo='\n'.join('          <li>%s</li>' % esc_html(t) for t in naka[sid])))
+            atama=build_atama(sec[sid])))
     return ('<section class="sec" id="gaiyo">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">SUMMARY</span>'
             '<span class="ja">中身を、ざっと</span></h2>\n'
-            '    <p class="yomi">どこに何があるか、押すまえに見られます。'
-            'ここに出ているのは、その節そのものの中身です。</p>\n'
+            '    <p class="yomi">それぞれのページの、いちばん上です。'
+            '写した絵ではなく本物なので、中身が変わればここも変わります。</p>\n'
             '    <div class="gban">\n' + '\n'.join(fuda) + '\n    </div>\n'
             '  </div>\n'
             '</section>')
@@ -2090,9 +2115,10 @@ def build_obi(ima_file, doko):
     for sid, _, _, _ in HOME_FUDA:
         saki = doko[sid]
         ima = (saki == ima_file)
-        gyo.append('      <li><a href="%s"%s>%s</a></li>'
-                   % ('#%s' % sid if ima else '%s#%s' % (saki, sid),
-                      ' class="obi-ima" aria-current="page"' if ima else '',
+        gyo.append('      <li><a class="obi-s obi--%s%s" href="%s"%s>%s</a></li>'
+                   % (sid, ' obi-ima' if ima else '',
+                      '#%s' % sid if ima else '%s#%s' % (saki, sid),
+                      ' aria-current="page"' if ima else '',
                       esc_html(SETSU_NA[sid])))
     return ('<nav class="obi" aria-label="TOKKATSU広場の中の、8つの行き先">\n'
             '  <div class="obi-uchi">\n'
@@ -2263,7 +2289,7 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
-    gaiyo_html = build_gaiyo(sec, doko, kiji, jissen)
+    gaiyo_html = build_gaiyo(sec, doko)
     for i in re.findall(r'\sid="([^"]+)"', gaiyo_html):
         doko[i] = HOME
 

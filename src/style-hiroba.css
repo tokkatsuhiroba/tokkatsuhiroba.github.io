@@ -1440,9 +1440,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   gap:clamp(14px,2vw,20px);margin-top:clamp(24px,3vw,34px);
 }
 .gfuda{
-  display:grid;grid-template-rows:auto 1fr auto;
-  padding:clamp(16px,1.8vw,22px) clamp(15px,1.7vw,20px) clamp(14px,1.6vw,18px);
-  color:var(--ink);text-decoration:none;
+  position:relative;display:grid;grid-template-rows:1fr auto;
+  padding:0;overflow:hidden;
   background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
   box-shadow:5px 5px 0 var(--ink);
   transition:transform .16s ease,box-shadow .16s ease;
@@ -1451,22 +1450,54 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);
 }
 
-.gfuda-l{
-  list-style:none;margin:11px 0 0;padding:0;
-  display:grid;gap:5px;font-size:13px;line-height:1.7;color:var(--mute);
+/* ── そのページの「いちばん上」を、そのままの大きさで短く見せる窓 ──
+   写した絵でも縮めた絵でもなく、本物のHTMLです。だから節を直せばここも変わります。
+   中は inert なので、指も Tab も入りません（押すのは札ぜんたい）。 */
+.atama{
+  position:relative;overflow:hidden;
+  max-height:clamp(250px,28vw,320px);
+  padding:clamp(16px,1.8vw,22px) clamp(15px,1.7vw,20px) 0;
+  background:var(--mi-ji,var(--bg));
+  pointer-events:none;-webkit-user-select:none;user-select:none;
 }
-.gfuda-l li{display:grid;grid-template-columns:auto 1fr;gap:7px;align-items:start}
-.gfuda-l li::before{
-  content:"";width:6px;height:6px;margin-top:8px;border-radius:50%;
-  background:var(--ink);opacity:.35;
+/* 窓の中では、見出しまわりを詰める。窓の高さは決まっているので、
+   見出しが大きいと、肝心の中身が1行も見えなくなります（実測で気づいたところ）。
+   本文の字は、そのままの大きさにしておきます。 */
+.atama .midashi{
+  margin-bottom:10px;display:flex;align-items:baseline;justify-content:center;gap:9px;
 }
+.atama .midashi .en{font-size:10.5px;letter-spacing:.18em;margin:0}
+.atama .midashi .ja{font-size:19px;line-height:1.35;text-indent:0}
+.atama .midashi::after{display:none}
+.atama .yomi{font-size:13.5px;line-height:1.8;margin-bottom:13px}
+.atama .manabu-box{padding:14px 13px;border-radius:14px;box-shadow:4px 4px 0 var(--ink);
+  margin-bottom:0}
+.atama .manabu-h{font-size:17px}
+.atama .manabu-note{font-size:12.5px;line-height:1.75;margin-bottom:12px}
+/* 下ぶちをぼかして「まだ続く」と分かるようにする */
+.atama::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:58px;
+  background:linear-gradient(to bottom,transparent,var(--mi-ji,var(--bg)));
+}
+/* 窓の地は、その節がほんとうに使っている色に */
+.gf--about .atama {--mi-ji:var(--men-sora)}
+.gf--jissen .atama{--mi-ji:var(--men-midori)}
+.gf--manabu .atama,.gf--okuru .atama{--mi-ji:var(--men-ki)}
+
+.gfuda-a{
+  display:flex;align-items:baseline;gap:10px;
+  padding:12px clamp(15px,1.7vw,20px) 13px;
+  border-top:2.5px solid var(--ink);background:var(--bg);
+  color:var(--ink);text-decoration:none;
+}
+/* 札ぜんたいを押せるようにする（<a> の中に押せるものを入れないため） */
+.gfuda-a::after{content:"";position:absolute;inset:0}
 .gfuda-h{
-  display:block;font-family:var(--f-maru);font-weight:700;font-size:16px;
-  letter-spacing:.04em;padding-bottom:9px;border-bottom:2px solid var(--rule);
+  font-family:var(--f-maru);font-weight:700;font-size:15.5px;letter-spacing:.04em;
 }
 .gfuda-go{
-  display:block;margin-top:13px;font-family:var(--f-maru);font-weight:700;
-  font-size:12.5px;letter-spacing:.04em;color:var(--accent);
+  margin-inline-start:auto;font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;letter-spacing:.04em;color:var(--accent);white-space:nowrap;
 }
 .gfuda-go::after{content:"　→"}
 
@@ -1477,6 +1508,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .yoko-hint{font-size:11.5px}
   .gban{grid-template-columns:1fr;gap:12px;margin-top:22px}
   .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
+  .atama{max-height:200px;padding:14px 13px 0}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1523,4 +1555,52 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   #ima .hyo--ken .t{line-height:1.45}
   #ima .hyo--ken .t .sub{line-height:1.5}
   #ima .koyomi{padding:11px}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   帯を、スマホでは2段4列に（2026-09-21）
+
+   8つに戻したぶん、スマホでは横にスクロールしないと後ろの4つが
+   見えませんでした。2段にして、ぜんぶ出します。
+   色は、その行き先のページごと。＝同じ色は、同じページに着きます。
+   色だけで伝えないため、いまいる所はベタ塗り（形でも分かる）にします。
+   ══════════════════════════════════════════════════════════════ */
+.obi-s{position:relative}
+/* 行き先のページごとの色（広い画面では、下に細い線で） */
+.obi--about,.obi--yotsu  {--obi-iro:var(--men-sora)}
+.obi--manabu,.obi--jissen{--obi-iro:var(--men-midori)}
+.obi--ima,.obi--news,.obi--kai,.obi--okuru{--obi-iro:var(--men-ki)}
+@media (min-width:720px){
+  .obi-l a.obi-s::after{
+    content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;
+    border-radius:2px;background:var(--obi-iro);
+  }
+  .obi-l a.obi-ima::after{background:var(--bg);opacity:.5}
+}
+
+@media (max-width:719px){
+  .obi-uchi{
+    display:block;padding-block:6px 7px;min-height:0;
+  }
+  /* 帰り道は、下のページの頭（← TOKKATSU広場）にあるので、
+     せまい画面では帯から外します。8つを4列に出すための場所を作ります。 */
+  .obi-na{display:none}
+  .obi-l{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+    overflow:visible;
+  }
+  /* 1列だったころの「区切りの縦線」は、2段4列では邪魔になります */
+  .obi-l li{min-width:0}
+  .obi-l li + li{padding-inline-start:0;margin-inline-start:0}
+  .obi-l li + li::before{display:none}
+  .obi-l a{
+    width:100%;min-height:33px;padding:5px 4px;justify-content:center;
+    text-align:center;font-size:11.5px;letter-spacing:0;line-height:1.3;
+    border-width:2px;background:var(--obi-iro);border-color:var(--obi-iro);
+  }
+  .obi-l a.obi-ima{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+  .obi-l a:hover,.obi-l a:focus-visible{border-color:var(--ink)}
+  /* 帯が2段になったぶん、飛んだ先を止める位置も下げる */
+  .sec,.foot{scroll-margin-top:96px}
+  .hyo--ken .gyo{scroll-margin-top:104px}
 }
