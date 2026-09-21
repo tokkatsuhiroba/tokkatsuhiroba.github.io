@@ -2615,7 +2615,7 @@ def build_jissen_hiroba(jissen, goods):
 #   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
-BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}">
+BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
         <p class="bfuda-lead">{lead}</p>
@@ -2692,6 +2692,7 @@ def build_bansho(jissen):
         fuda.append(BFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
             toki=a['todoita'].strftime('%Y%m%d%H%M'),
+            nen=' '.join(nen_bunkai(a['grade'])),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
@@ -2720,6 +2721,12 @@ SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
           <button type="button" class="okuru-nen-b" data-n="" aria-pressed="true">ぜんぶ</button>
 {naiyo}        </div>
       </div>
+      <div class="sagasu-gyo" id="sagasu-g-gyo">
+        <span class="sagasu-l" id="sagasu-g-l">学年</span>
+        <div class="okuru-nen" role="group" aria-labelledby="sagasu-g-l" id="sagasu-g">
+          <button type="button" class="okuru-nen-b" data-g="" aria-pressed="true">ぜんぶ</button>
+{nen}        </div>
+      </div>
       <div class="sagasu-gyo">
         <span class="sagasu-l" id="sagasu-j-l">並び</span>
         <div class="okuru-nen" role="group" aria-labelledby="sagasu-j-l" id="sagasu-j">
@@ -2729,6 +2736,44 @@ SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
       </div>
       <p class="sagasu-kazu" id="sagasu-kazu" role="status" aria-live="polite"></p>
     </div>"""
+
+
+NEN_FUDA = [('1', '1年'), ('2', '2年'), ('3', '3年'), ('4', '4年'),
+            ('5', '5年'), ('6', '6年'), ('chu', '中学校')]
+
+
+def nen_bunkai(grade):
+    """学年の字を、1年ずつの印にほどく。
+
+       送られてくる字は1つに決まっていません。フォームからは「5年・6年」、
+       古いものは「5〜6年」、こちらで用意した道具は「全学年」です。
+       字のまま比べると、5年をさがしている人に「5〜6年」が当たりません。
+       だから **1年ずつにほどいてから** 比べます。
+           全学年      → 1 2 3 4 5 6
+           5〜6年      → 5 6
+           5年・6年    → 5 6
+           中学校      → chu
+       どれにも当たらなければ、空（＝学年の札では絞りこめない1件）。"""
+    g = (grade or '').strip()
+    if not g:
+        return []
+    out = set()
+    if '全学年' in g:
+        out |= set('123456')
+    for a, b in re.findall(r'([1-6１-６])\s*[〜～~\-]\s*([1-6１-６])', g):
+        a, b = int(han(a)), int(han(b))
+        for i in range(min(a, b), max(a, b) + 1):
+            out.add(str(i))
+    for a in re.findall(r'([1-6１-６])\s*年', g):
+        out.add(han(a))
+    if '中学' in g:
+        out.add('chu')
+    return [k for k, _ in NEN_FUDA if k in out]
+
+
+def han(c):
+    """１ → 1。全角で書かれていても、同じ学年として数えます。"""
+    return chr(ord(c) - 0xFEE0) if '１' <= c <= '６' else c
 
 
 def sagasu_obi(aru):
@@ -2743,7 +2788,15 @@ def sagasu_obi(aru):
         gyo.append('          <button type="button" class="okuru-nen-b" data-n="%s" '
                    'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
                    % (nid, esc_html(ja), kazu))
-    return SAGASU_OBI.format(naiyo=''.join(gyo))
+    nen = []
+    for k, ja in NEN_FUDA:
+        kazu = sum(1 for a in aru_n if k in nen_bunkai(a['grade']))
+        if not kazu:
+            continue
+        nen.append('          <button type="button" class="okuru-nen-b" data-g="%s" '
+                   'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
+                   % (k, esc_html(ja), kazu))
+    return SAGASU_OBI.format(naiyo=''.join(gyo), nen=''.join(nen))
 
 
 def build_bansho_iriguchi(jissen):

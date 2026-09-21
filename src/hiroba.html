@@ -1450,9 +1450,14 @@
     var sgJi   = document.getElementById('sagasu-ji');
     var sgKazu = document.getElementById('sagasu-kazu');
     var sgN    = document.getElementById('sagasu-n');
+    var sgG    = document.getElementById('sagasu-g');
+    var sgGgyo = document.getElementById('sagasu-g-gyo');
     var sgJun  = document.getElementById('sagasu-j');
     var sgFuda = [].slice.call(sgTana.querySelectorAll('.bfuda'));
-    var sgNai = '', sgJun_ima = 'atarashii';
+    var sgNai = '', sgNen = '', sgJun_ima = 'atarashii';
+    /* 学年の札が1つも無いとき（学年を書かずに届いたものばかりのとき）は、
+       その行ごと出しません。「ぜんぶ」しか無い行は、押す意味がないためです。 */
+    if(sgGgyo && sgG.querySelectorAll('[data-g]').length < 2) sgGgyo.hidden = true;
 
     /* さがす用の字は、1件につき1回だけ作ります（押すたびに作り直さない）。
        ★<details> の中も textContent には入ります。閉じていても さがせます。 */
@@ -1476,6 +1481,10 @@
       var ji = (sgJi.value || '').replace(/\s+/g, '').toLowerCase();
       var nokotta = sgFuda.filter(function(f){
         if(sgNai && f.getAttribute('data-naiyo') !== sgNai) return false;
+        /* 学年は「5 6」のように、1年ずつの印がならんでいます。
+           前後に空白を足してから見るので、1 と 11 を取りちがえません。 */
+        if(sgNen && (' ' + (f.getAttribute('data-nen') || '') + ' ')
+                      .indexOf(' ' + sgNen + ' ') < 0) return false;
         if(ji && f._ji.indexOf(ji) < 0) return false;
         return true;
       });
@@ -1493,8 +1502,9 @@
       if(!nokotta.length){
         sgKara.textContent = ji
           ? ('「' + sgJi.value.trim() + '」に当たるものは、ありませんでした。'
-             + '字を短くするか、内容の札を「ぜんぶ」に戻してみてください。')
-          : 'この内容は、まだ1件もありません。';
+             + '字を短くするか、内容と学年の札を「ぜんぶ」に戻してみてください。')
+          : 'この絞りこみに当たるものは、まだ1件もありません。'
+            + '内容か学年の札を「ぜんぶ」に戻してみてください。';
       }
     }
 
@@ -1502,6 +1512,11 @@
       var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
       sgNai = b.getAttribute('data-n') || '';
       sg_osu(sgN, sgNai, 'data-n'); sg_utsusu();
+    });
+    sgG.addEventListener('click', function(ev){
+      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
+      sgNen = b.getAttribute('data-g') || '';
+      sg_osu(sgG, sgNen, 'data-g'); sg_utsusu();
     });
     sgJun.addEventListener('click', function(ev){
       var b = ev.target.closest('.okuru-nen-b'); if(!b) return;

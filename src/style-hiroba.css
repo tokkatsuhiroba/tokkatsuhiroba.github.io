@@ -2474,9 +2474,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:12.5px;letter-spacing:.04em;color:var(--mute);
 }
 .sagasu-nai[hidden]{display:none}
+/* ★2列にしてはいけません（2026-09-22 実測）。
+   学年の行が増えたとき、内容の列が 1文字ずつ縦に折れて、札が細い
+   たんざくになりました。行は上から順に、どの幅でも1本ずつ置きます。
+   札そのものは、はばに合わせて自分で折り返します。 */
 @media (min-width:720px){
-  /* PCは、さがす欄を広くとって、札を右に流します */
-  .sagasu{grid-template-columns:1fr auto;align-items:start}
-  .sagasu-gyo:first-child{grid-column:1 / -1}
-  .sagasu-kazu{grid-column:1 / -1}
+  .sagasu{padding:clamp(16px,2vw,20px) clamp(18px,2.2vw,24px)}
+  .sagasu-i{max-width:520px}
+}
+
+/* スマホでの さがす帯（2026-09-22 夜 実測で追加）
+   学年の札が7つ増えたぶん、帯だけで 572px ＝ 画面の7割になりました。
+   実践が1件も見えないまま、まず帯を通り過ぎることになります。
+   ★ただし、札を44pxより低くはしません（指で押せなくなるため）。
+     縮めるのは すきまと 左右の余白だけです。 */
+@media (max-width:719px){
+  .sagasu{gap:9px;padding:12px 12px 10px;border-radius:14px}
+  .sagasu .okuru-nen{gap:6px}
+  .sagasu .okuru-nen-b{padding:9px 12px;font-size:13.5px;letter-spacing:.02em}
+  .sagasu .sagasu-b-kazu{margin-inline-start:5px;padding:1px 6px;font-size:11px}
+  .sagasu-gyo{gap:5px}
+  .sagasu-i{min-height:46px;padding:10px 12px}
 }
