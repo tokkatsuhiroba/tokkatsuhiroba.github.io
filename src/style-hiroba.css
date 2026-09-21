@@ -2097,3 +2097,72 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hfuda-e svg,.igi-h .e svg{animation:none}
   .hfuda,.igi-h{animation:none;opacity:1;translate:none;scale:none}
 }
+
+/* ══ 写真を大きく見る（2026-09-22）════════════════════════
+   きっかけは実測です。届いた板書は 1400×418 の横長で、
+   札の幅で頭打ちになり **405×124** でしか出ていませんでした。
+   黒板は横長なので、効くのは高さではなく幅です。
+
+     1. 札の中の窓を、札のふちいっぱいまで広げる（左右の余白を取る）
+     2. 高さの頭うちをやめる（横長は、高さでは切れません）
+     3. それでもスマホでは字が読めないので［大きく見る］を1枚ずつ付ける
+
+   ★開く先は、同じページの中にある同じ画像です。外へは1バイトも出ません。
+   ────────────────────────────────────── */
+
+/* ── 1・2．板書の窓は、札のふちまで使う ── */
+.bfuda-mado--hiro{
+  max-height:none;overflow:visible;
+  /* 札の内ぶんだけ外へ出して、写真に幅をぜんぶ渡します */
+  margin-inline:calc(-1 * clamp(18px,2.4vw,26px));
+  padding:0;border-inline:0;border-radius:0;
+  background:var(--men-ki);
+}
+.bfuda-mado--hiro .shot img{border-radius:0;border-inline:0}
+
+/* ── 3．図の下の行（何枚めか／大きく見る）── */
+.shot{margin:0}
+.shot-shita{
+  margin-top:6px;padding:0 10px 8px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.shot-kazu{font-family:var(--f-en);font-size:12px;color:var(--mute)}
+.shot-b{
+  font-family:var(--f-maru);font-weight:700;font-size:12.5px;letter-spacing:.04em;
+  padding:7px 14px;min-height:36px;
+  background:var(--bg);color:var(--ink);
+  border:2px solid var(--ink);border-radius:999px;cursor:pointer;
+}
+.shot-b:hover,.shot-b:focus-visible{background:var(--ki)}
+
+/* ── 大きく見る窓。ページの上にかぶせるだけです ── */
+.zen[hidden]{display:none}
+.zen{
+  position:fixed;inset:0;z-index:90;
+  background:rgba(16,16,15,.95);
+  display:grid;grid-template-rows:1fr auto;
+}
+.zen-naka{overflow:auto;display:grid;place-items:center;padding:8px}
+.zen-naka img{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+/* 「大きく」＝もとの大きさ。はみ出したぶんは指で動かせます（横長の黒板はこれで読めます） */
+.zen--ookiku .zen-naka{place-items:start}
+.zen--ookiku .zen-naka img{max-width:none;max-height:none}
+.zen-te{
+  display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+  padding:12px 14px;background:#100F0E;
+  padding-bottom:max(12px,env(safe-area-inset-bottom));
+}
+.zen-b{
+  font-family:var(--f-maru);font-weight:700;font-size:13.5px;letter-spacing:.04em;
+  padding:10px 18px;min-height:44px;
+  background:transparent;color:#FCFBF7;
+  border:2px solid #FCFBF7;border-radius:999px;cursor:pointer;
+}
+.zen-b[aria-pressed="true"]{background:#FCFBF7;color:#100F0E}
+.zen-b:hover,.zen-b:focus-visible{background:var(--ki);color:var(--ink);border-color:var(--ki)}
+.zen-tojiru{margin-inline-start:auto}
+@media (max-width:719px){
+  .zen-te{gap:8px;padding:10px}
+  .zen-b{font-size:12.5px;padding:9px 13px}
+  .zen-tojiru{margin-inline-start:0}
+}
