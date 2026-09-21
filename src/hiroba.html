@@ -380,6 +380,9 @@
      閉じたふたの中に入ることがあります。別ページへは飛ばさないまま、
      その場でふたを開いてから連れていきます。何も送信しません。 */
   function akeru(el){
+    /* 行き先そのものが ふた のことがあります（研究会の1件は <details> です）。
+       上のふただけ開けても、当の1件が閉じたままになります。 */
+    if(el && el.tagName === 'DETAILS') el.open = true;
     for(var oya = el && el.parentElement; oya; oya = oya.parentElement){
       if(oya.tagName === 'DETAILS') oya.open = true;
     }

@@ -193,7 +193,7 @@ img,svg{max-width:100%}
   font-family:var(--f-maru);font-size:26px;font-weight:700;color:var(--shu);
   margin-inline-end:2px;
 }
-.hyo--ken .gyo{align-items:center}
+
 
 /* ── 足もと ── */
 .foot{background:var(--ink);color:var(--bg);padding-block:clamp(40px,6vw,72px)}
@@ -311,29 +311,69 @@ img,svg{max-width:100%}
 /* よこにスライドする器と重なったときは、器の並べ方を勝たせる */
 .hyo--ken.yoko-ban{gap:clamp(12px,1.8vw,18px)}
 .hyo--ken.yoko-ban .gyo{height:auto;align-self:start}
+/* ── 研究会の1件（2026-09-21 から、押すとページの中でひらきます）──
+   前は、押すといきなり外のサイトが開いていました。いまは1回めで
+   ここに中身が出て、申し込みたい人だけが外へ出ます。 */
 .hyo--ken .gyo{
-  grid-template-columns:auto auto 1fr auto;gap:16px;align-items:center;
-  padding:14px 20px;background:var(--bg);
+  display:block;padding:0;background:var(--bg);
   border:2.5px solid var(--ink);border-radius:18px;
-  box-shadow:5px 5px 0 var(--ink);
+  box-shadow:5px 5px 0 var(--ink);overflow:hidden;
   transition:transform .16s ease,box-shadow .16s ease;
 }
-.hyo--ken a.gyo:hover,.hyo--ken a.gyo:focus-visible{
-  transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);
+/* ★ 札の幅は、どの画面でも 290〜340px です（よこスライドの中だから）。
+   だから「広い画面だから横に5列」は成り立ちません。
+   2026-09-21：5列のまま広い画面に出したら、字の列が20pxまで潰れて
+   縦書きに見えていました。レイアウトは、1つだけにします。 */
+.hyo--ken .ken>summary{
+  list-style:none;cursor:pointer;
+  display:grid;grid-template-columns:auto auto 1fr auto;
+  gap:10px;align-items:start;padding:13px 14px;
 }
-.hyo--ken a:hover .t{text-decoration:none}
+.hyo--ken .ken>summary>*{min-width:0}
+.hyo--ken .hizuke{grid-column:1;grid-row:1;align-self:start}
+.hyo--ken .ken .kao{grid-column:2;grid-row:1;align-self:start;width:48px;height:48px}
+.hyo--ken .t{grid-column:3;grid-row:1}
+.hyo--ken .pm{grid-column:4;grid-row:1;align-self:start;margin-top:3px}
+.hyo--ken .nokori{grid-column:3;grid-row:2;justify-self:start;margin-top:6px}
+.hyo--ken .ken>summary::-webkit-details-marker{display:none}
+.hyo--ken .ken>summary:hover{background:var(--men-ki)}
+.hyo--ken .ken[open]{transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink)}
+/* ひらくしるし（＋／−）。色だけでなく形で分かるように */
+.hyo--ken .pm{width:22px;height:22px;position:relative;flex:none}
+.hyo--ken .pm::before,.hyo--ken .pm::after{
+  content:"";position:absolute;left:2px;top:10px;width:18px;height:2.5px;
+  background:var(--ink);border-radius:2px;
+}
+.hyo--ken .pm::after{transform:rotate(90deg)}
+.hyo--ken .ken[open] .pm::after{display:none}
+/* ひらいた中身 */
+.ken-naka{
+  padding:16px 18px 18px;border-top:2.5px solid var(--ink);background:#fff;
+}
+.ken-g{
+  display:grid;grid-template-columns:5.4em 1fr;gap:10px;
+  padding:7px 0;border-bottom:1px solid var(--rule);
+}
+.ken-g:last-of-type{border-bottom:0}
+.ken-g dt{
+  font-family:var(--f-maru);font-weight:700;font-size:12.5px;
+  letter-spacing:.06em;color:var(--mute);line-height:1.8;
+}
+.ken-g dd{margin:0;font-size:14px;line-height:1.85}
+.ken-soto{margin:14px 0 0;text-align:center}
+.btn--soto{font-size:14px;padding:12px 22px;min-height:52px}
 /* 日付（枠のいちばん左）。「10/2」と曜日だけ。
    長い日付は、目には出さず 読み上げ用にだけ持たせています。 */
 .hyo--ken .hizuke{
   display:grid;justify-items:center;gap:1px;
-  min-width:54px;padding-inline-end:15px;
+  min-width:42px;padding-inline-end:10px;
   border-inline-end:2px solid var(--rule);
   font-family:var(--f-maru);line-height:1.1;
 }
-.hyo--ken .hizuke b{font-size:23px;font-weight:700;color:var(--ink)}
+.hyo--ken .hizuke b{font-size:19px;font-weight:700;color:var(--ink)}
 .hyo--ken .hizuke i{font-size:11.5px;font-style:normal;font-weight:700;color:var(--mute)}
 .hyo--ken .kao{
-  width:56px;height:56px;border-radius:50%;overflow:hidden;
+  width:48px;height:48px;border-radius:50%;overflow:hidden;
   border:2.5px solid var(--ink);background:var(--bg);
   display:grid;place-items:center;
 }
@@ -397,11 +437,10 @@ img,svg{max-width:100%}
 
 /* ── スマホ（960pxの外が無いので、キャラクターは4人ならびだけになります） ── */
 @media (max-width:719px){
-  .hyo--ken .gyo{grid-template-columns:auto auto 1fr;gap:10px;padding:14px 14px}
-  .hyo--ken .nokori{grid-column:3;justify-self:start;margin-top:6px}
-  .hyo--ken .gyo .kao{align-self:start;width:48px;height:48px}
-  .hyo--ken .hizuke{min-width:42px;padding-inline-end:10px;align-self:start}
-  .hyo--ken .hizuke b{font-size:19px}
+  /* 札まわりは、どの画面でも同じ形にしたので、ここでは寸法だけ */
+  .ken-naka{padding:13px 13px 15px}
+  .ken-g{grid-template-columns:4.6em 1fr;gap:8px}
+  .ken-g dd{font-size:13.5px}
   .kyara{grid-template-columns:repeat(2,1fr)}
   .naiyo-kao{width:56px;right:12px}
 }

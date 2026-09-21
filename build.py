@@ -1278,8 +1278,19 @@ def load_kenkyukai(kyou=None):
                 continue
             out.append({'d': d, 'nokori': nokori, 'shurui': shurui,
                         'ja': hiku('s_ja') or hiku('ja'), 'org': hiku('org_ja'),
-                        'basho': hiku('place_ja'), 'url': hiku('url')})
+                        'basho': hiku('place_ja'), 'url': hiku('url'),
+                        # 2026-09-21：ここから下は、押したときページの中で出すぶん。
+                        #   app.js には前から入っていたのに、1つも画面に出していませんでした。
+                        'seishiki': hiku('ja'), 'venue': hiku('venue'),
+                        'naka': hiku('about_ja'), 'moushikomi': hiku('apply_ja')})
     out.sort(key=lambda a: a['d'])
+    # ★ 原則③（単なるリンク集にしない）の検問。
+    #   名前と日付だけ並べて外へ投げるのは、このサイトではやらないと決めています。
+    for a in out:
+        if len(a['naka'].strip()) < 10:
+            raise Tomeru('研究会「%s」に about_ja（中身の1行）がありません。'
+                         '名前とURLだけ並べるのは、このサイトではやらないと'
+                         '決めています（src/app.js の EVENTS）' % a['ja'])
     return out
 
 
@@ -1301,12 +1312,26 @@ def ken_kao(a, kyara, buhin):
     return 'ill-b-hata', 'hata', '0 0 %g %g' % (w, h)
 
 
-KEN_T = """      <{tag} class="gyo{tsugi}" id="ken-{ban}"{href}>
+# 2026-09-21：前は、押すといきなり外のサイトが開いていました。
+#   いまは1回めで「ここで」中身がひらき、申し込みたい人だけが外へ出ます。
+#   （原則「押した先で見た目を変えない」の、最後まで残っていたところ）
+KEN_T = """      <details class="gyo ken{tsugi}" id="ken-{ban}">
+        <summary>
         <span class="hizuke"><b aria-hidden="true">{md}</b><i aria-hidden="true">{youbi}</i>\
 <span class="kakure">{ja_date}（{youbi}）</span></span>
         <span class="kao kao--{kao}"><svg viewBox="{win}" aria-hidden="true" focusable="false"><use href="#{ref}"/></svg></span>
-        <span class="t">{ja}<span class="sub">{shurui}{basho}{soto}</span></span>
-        <span class="nokori"><b>{nokori}</b>日後</span></{tag}>"""
+        <span class="t">{ja}<span class="sub">{shurui}{basho}</span></span>
+        <span class="nokori"><b>{nokori}</b>日後</span>
+        <span class="pm" aria-hidden="true"></span>
+        </summary>
+        <div class="ken-naka">
+{gyou}{soto}        </div>
+      </details>"""
+
+KEN_GYOU = """          <div class="ken-g"><dt>{na}</dt><dd>{atai}</dd></div>
+"""
+KEN_SOTO = """          <p class="ken-soto"><a class="btn btn--soto" href="{url}" target="_blank" rel="noopener noreferrer">{ji}<span class="btn-ya">↗</span></a></p>
+"""
 
 
 # ══ よこにスライドする器（2026-09-21）════════════════════
@@ -1417,25 +1442,35 @@ def build_kenkyukai(ken, kyara, buhin, kyou=None):
     kyou = kyou or datetime.date.today()
 
     def gyo(a, i):
-        tag = 'a' if a['url'] else 'div'
         ref, kao, win = ken_kao(a, kyara, buhin)
         d = a['d']
+        youbi = YOUBI[(calendar.weekday(d.year, d.month, d.day) + 1) % 7]
+        basho = '　'.join(x for x in (a['venue'], a['basho']) if x)
+        # 押したとき、ページの中に出すぶん。空の行は出しません
+        gyou = ''.join(
+            KEN_GYOU.format(na=na, atai=esc_html(atai))
+            for na, atai in (('日にち', '%s（%s）・%s' % (ja_md(d), youbi, a['shurui'])),
+                             ('会　場', basho),
+                             ('中　身', a['naka']),
+                             ('主　催', a['org']),
+                             ('申込み', a['moushikomi']))
+            if atai)
+        soto = (KEN_SOTO.format(url=esc_html(a['url']),
+                                ji='申込み・くわしくは、この会のサイト')
+                if a['url'] else '')
         return KEN_T.format(
-            tag=tag, tsugi=(' gyo--tsugi' if i == 0 else ''), ban=i,
-            href=(' href="%s" target="_blank" rel="noopener noreferrer"' % a['url']) if a['url'] else '',
+            tsugi=(' gyo--tsugi' if i == 0 else ''), ban=i,
             ref=ref, kao=kao, win=win,
-            md='%d/%d' % (d.month, d.day),
-            youbi=YOUBI[(calendar.weekday(d.year, d.month, d.day) + 1) % 7],
-            soto=('・外部' if a['url'] else ''),
-            ja=esc_html(a['ja']), shurui=a['shurui'], ja_date=ja_md(d),
+            md='%d/%d' % (d.month, d.day), youbi=youbi,
+            ja=esc_html(a['seishiki'] or a['ja']), shurui=a['shurui'], ja_date=ja_md(d),
             basho=('・' + esc_html(a['basho'])) if a['basho'] else '',
-            nokori=a['nokori'])
+            nokori=a['nokori'], gyou=gyou, soto=soto)
     # 2026-09-21：一覧も、こよみと同じ「よこにスライド」にしました。
     #   横に並ぶので、ぜんぶ出してもページは伸びません。ふたは要らなくなりました。
     hyo = yoko_ban([gyo(a, i) for i, a in enumerate(ken)],
                    '近い研究会の一覧。%d件を、よこにスライドして見ます' % len(ken),
                    mae='前の研究会を見る', tsugi='次の研究会を見る', ji=6,
-                   haba='min(290px,86%)', cls='hyo hyo--ken')
+                   haba='min(420px,92%)', cls='hyo hyo--ken')
     return ('    <div class="ima-2">\n'
             + build_koyomi(ken, kyou) + '\n'
             + '    <div class="ima-migi">\n' + hyo + '\n    </div>\n'
