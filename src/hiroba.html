@@ -18,7 +18,7 @@
   <i class="kazari kazari--migi" data-k="jidokai" style="--y:52%;--w:108px;--d:1.2s"></i>
   <div class="uchi">
     <h2 class="midashi"><span class="en">CALENDAR</span><span class="ja">研究</span></h2>
-    <p class="yomi">研究会の当日と、申込の締切。<br>こよみと、近いものから並べた一覧です。こよみの色のついた日を押すと、その1件がひらきます。</p>
+    <p class="yomi">研究会の当日と、申込の締切。</p>
     <!--BUILD:KENKYUKAI-->
   </div>
 </section>
@@ -382,8 +382,7 @@
   function ikisaki(id){
     if(!id) return null;
     try{ id = decodeURIComponent(id); }catch(e){}
-    var el = document.getElementById(id);
-    return (el && el.closest('.mihon')) ? null : el;   /* 見本の中へは連れていかない */
+    return document.getElementById(id);
   }
   /* 押された瞬間（既定の移動より前）に開ける。だから移動先がずれません */
   document.addEventListener('click', function(ev){
@@ -413,32 +412,35 @@
     setTimeout(hashDe, 0);
   }
 
-  /* ── こよみを、月ごとによこへ送る（2026-09-21）──────────────
-     スワイプと ‹ › の両方で動きます。やっているのは scrollBy だけで、
+  /* ── よこにスライドする器（2026-09-21）──────────────────
+     こよみ（月ごと）と、その下の研究会の一覧。どちらも同じ作りです。
+     スワイプでも ‹ › でも動きます。やっているのは scrollBy だけで、
      何も送信しません。JSが動かない場面でも、指でスライドはできます。 */
-  var koyomiBan = document.querySelector('.tsuki-ban');
-  if(koyomiBan){
-    var tsukiHaba = function(){
-      var t = koyomiBan.querySelector('.tsuki');
-      return t ? t.getBoundingClientRect().width + 18 : koyomiBan.clientWidth;
+  document.querySelectorAll('.yoko').forEach(function(wrap){
+    var ban = wrap.querySelector('.yoko-ban');
+    if(!ban) return;
+    var botan = wrap.querySelectorAll('.yoko-b');
+    var haba = function(){
+      var k = ban.firstElementChild;
+      return k ? k.getBoundingClientRect().width + 16 : ban.clientWidth;
     };
-    var okuriNaosu = function(){
-      var ue = koyomiBan.scrollLeft;
-      var hashi = koyomiBan.scrollWidth - koyomiBan.clientWidth - 1;
-      document.querySelectorAll('.tsuki-b').forEach(function(b){
-        b.disabled = (b.dataset.tsuki === '-1') ? (ue <= 1) : (ue >= hashi);
+    var naosu = function(){
+      var ima = ban.scrollLeft;
+      var hashi = ban.scrollWidth - ban.clientWidth - 1;
+      botan.forEach(function(b){
+        b.disabled = (b.dataset.yoko === '-1') ? (ima <= 1) : (ima >= hashi);
       });
     };
-    document.querySelectorAll('.tsuki-b').forEach(function(b){
+    botan.forEach(function(b){
       b.addEventListener('click', function(){
-        koyomiBan.scrollBy({left: tsukiHaba() * Number(b.dataset.tsuki),
-                            behavior: reduced ? 'auto' : 'smooth'});
+        ban.scrollBy({left: haba() * Number(b.dataset.yoko),
+                      behavior: reduced ? 'auto' : 'smooth'});
       });
     });
-    koyomiBan.addEventListener('scroll', okuriNaosu, {passive:true});
-    window.addEventListener('resize', okuriNaosu);
-    okuriNaosu();
-  }
+    ban.addEventListener('scroll', naosu, {passive:true});
+    window.addEventListener('resize', naosu);
+    naosu();
+  });
 
   function setCycle(n){
     document.querySelectorAll('[data-learn-step]').forEach(function(button){
@@ -462,11 +464,9 @@
   }
 
   document.querySelectorAll('[data-learn-step]').forEach(function(button){
-    if(button.closest('.mihon')) return;      /* 見本の中は、さわれません */
     button.addEventListener('click', function(){ openLearnStep(button.dataset.learnStep, true); });
   });
   document.querySelectorAll('[data-learn-detail]').forEach(function(detail){
-    if(detail.closest('.mihon')) return;
     detail.addEventListener('toggle', function(){
       if(detail.open) setCycle(detail.dataset.learnDetail);
     });
@@ -474,9 +474,6 @@
 
   var canEmbed = location.protocol === 'http:' || location.protocol === 'https:';
   document.querySelectorAll('.learn-yt').forEach(function(box){
-    /* 見本の中では動かさない。動かすと i.ytimg.com に画像を取りに行き、
-       「何も送信しません」が崩れます（ホームにも増えるところでした） */
-    if(box.closest('.mihon')) return;
     var button = box.querySelector('button');
     if(!button) return;
     var id = box.dataset.yt;

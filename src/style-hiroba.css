@@ -45,6 +45,15 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 html,body{margin:0;padding:0}
+/* ── 横には、ぜったいにはみ出させない（2026-09-21）──────────
+   スマホで右にスクロールでき、そのまま画面が白くなる、という報告から。
+   本当の原因は「帯とこよみが min-width:auto でちぢまなかった」ことで、
+   そちらは直しました。ここは、同じことが二度と起きないための止めです。
+   overflow-x:hidden ではなく clip を使います（hidden だと帯の
+   position:sticky が効かなくなるため）。 */
+html{overflow-x:clip}
+body{max-width:100%;overflow-x:clip}
+
 body{
   background:var(--bg);color:var(--ink);
   font-family:var(--f-hon);
@@ -303,6 +312,9 @@ img,svg{max-width:100%}
 
 /* ── 研究会カレンダー（線の一覧 → カードの一覧） ── */
 .hyo--ken{display:grid;gap:14px;border-top:0}
+/* よこにスライドする器と重なったときは、器の並べ方を勝たせる */
+.hyo--ken.yoko-ban{gap:clamp(12px,1.8vw,18px)}
+.hyo--ken.yoko-ban .gyo{height:auto;align-self:start}
 .hyo--ken .gyo{
   grid-template-columns:auto auto 1fr auto;gap:16px;align-items:center;
   padding:14px 20px;background:var(--bg);
@@ -655,6 +667,11 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
   list-style:none;margin:0;padding:0;
   display:flex;align-items:center;gap:4px;
   overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  /* ★これが無いと、帯がちぢまずにページごと横に広がります。
+     flex の子は min-width:auto ＝「中身より小さくならない」が既定のため。
+     2026-09-21：行き先を4つ→8つに戻したとき、これでページが1020pxになり、
+     スマホで絵も中身も切れて見えていました。 */
+  min-width:0;
 }
 .obi-l::-webkit-scrollbar{display:none}
 .obi-l li{margin:0;flex:none}
@@ -704,13 +721,13 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
    色のついた日は、右の一覧のその1件への行き先（ページの中）です。
    ══════════════════════════════════════════════════════════════ */
 
-.ima-2{display:grid;gap:clamp(20px,3vw,34px)}
+.ima-2{min-width:0;display:grid;gap:clamp(20px,3vw,34px)}
 @media (min-width:860px){
   .ima-2{grid-template-columns:minmax(290px,330px) 1fr;align-items:start}
 }
 
 .koyomi{
-  display:grid;gap:14px;
+  min-width:0;display:grid;gap:14px;
   padding:clamp(16px,2vw,20px);
   background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
   box-shadow:6px 6px 0 var(--ink);
@@ -1348,19 +1365,21 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (max-width:719px){
   .ko{padding-block:22px 26px}
   .ko-h{letter-spacing:.06em}
-  /* スマホは1列。札を横に寝かせて、絵・名前・1行・数を1行ずつ読ませる
-     （2列のままだと、絵64pxを引いた残りが84pxしかなく、字が折れます） */
-  .hban{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  /* スマホは2列×4段（2026-09-21）。
+     いちど1列で横に寝かせていましたが、縦に8枚ぶん転がるので
+     スクロールが長くなりました。2列に戻し、そのぶん絵と字を小さくします。
+     絵を左に置く形はやめます（幅171pxから絵を引くと、字が84pxしか残らないため）。 */
+  .hban{grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
   .hfuda{
-    grid-template-columns:64px 1fr;grid-template-rows:auto auto auto;
-    column-gap:14px;border-radius:16px;box-shadow:5px 5px 0 var(--ink);
-    padding:14px 14px 15px;
+    grid-template-columns:1fr;grid-template-rows:auto auto 1fr auto;
+    border-radius:16px;box-shadow:4px 4px 0 var(--ink);
+    padding:12px 11px 13px;
   }
-  .hfuda-e{grid-row:1 / span 3;height:64px;margin:0;align-self:center}
-  .hfuda-e svg{width:100%;height:auto;max-height:64px}
-  .hfuda-h{font-size:15.5px}
-  .hfuda-yo{margin-top:4px;font-size:12.5px}
-  .hfuda-kazu{margin-top:8px}
+  .hfuda-e{height:52px;margin:0 0 8px}
+  .hfuda-e svg{width:auto;height:100%;max-height:52px}
+  .hfuda-h{font-size:14.5px;line-height:1.45}
+  .hfuda-yo{margin-top:5px;font-size:11.5px;line-height:1.65}
+  .hfuda-kazu{margin-top:9px;padding:2px 9px;font-size:11px}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1371,39 +1390,44 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    という声をもらい、よこ並べに直したところです。
    スワイプでも ‹ › でも動きます。JSは scrollBy を呼ぶだけです。
    ══════════════════════════════════════════════════════════════ */
-.koyomi-ue{
+.yoko-ue{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
   margin-bottom:4px;
 }
-.koyomi-hint{
+.yoko-hint{
   margin:0;font-family:var(--f-maru);font-weight:700;font-size:12px;
   letter-spacing:.04em;color:var(--mute);
 }
-.koyomi-hint::after{content:"　→"}
-.koyomi-okuri{margin:0;display:flex;gap:8px}
-.tsuki-b{
+.yoko-hint::after{content:"　→"}
+.yoko-okuri{margin:0;display:flex;gap:8px}
+.yoko-b{
   width:38px;height:38px;display:grid;place-items:center;
   background:var(--bg);color:var(--ink);
   border:2.5px solid var(--ink);border-radius:50%;
   font-family:var(--f-en);font-size:20px;line-height:1;cursor:pointer;
   transition:transform .14s ease,background .14s ease;
 }
-.tsuki-b:hover,.tsuki-b:focus-visible{background:var(--men-ki);transform:scale(1.08)}
-.tsuki-b[disabled]{opacity:.3;cursor:default;transform:none;background:var(--bg)}
+.yoko-b:hover,.yoko-b:focus-visible{background:var(--men-ki);transform:scale(1.08)}
+.yoko-b[disabled]{opacity:.3;cursor:default;transform:none;background:var(--bg)}
 
-.tsuki-ban{
-  display:grid;grid-auto-flow:column;grid-auto-columns:100%;
-  gap:clamp(14px,2vw,20px);
+.yoko{min-width:0}
+.yoko-ban{
+  /* grid の子は min-width:auto が既定なので、これが無いと
+     「100%」が画面ではなく中身を基準にして、ページごと横に広がります。 */
+  min-width:0;
+  display:grid;grid-auto-flow:column;grid-auto-columns:var(--yoko-w,100%);
+  gap:clamp(12px,1.8vw,18px);
   overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x mandatory;scroll-behavior:smooth;
   scrollbar-width:none;-webkit-overflow-scrolling:touch;
-  /* 指でつかむ所が要るので、ふちに少しだけ余白を残す */
   padding-bottom:2px;
 }
-.tsuki-ban::-webkit-scrollbar{display:none}
-.tsuki-ban:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
-.tsuki{scroll-snap-align:center;min-width:0}
-@media (prefers-reduced-motion:reduce){.tsuki-ban{scroll-behavior:auto}}
+.yoko-ban::-webkit-scrollbar{display:none}
+.yoko-ban:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+.yoko-ban > *{scroll-snap-align:center;min-width:0}
+@media (prefers-reduced-motion:reduce){.yoko-ban{scroll-behavior:auto}}
+/* 一覧のふだは、よこ並びでも高さをそろえる */
+.ima-migi .yoko-ban > *{align-content:start}
 
 /* ══ ホームの「中身を、ざっと」 ══════════════════════════════
    2026-09-21：はじめは箇条書きでしたが「各々の表示概要で」＝
@@ -1416,8 +1440,9 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   gap:clamp(14px,2vw,20px);margin-top:clamp(24px,3vw,34px);
 }
 .gfuda{
-  position:relative;
-  padding:clamp(14px,1.6vw,18px);
+  display:grid;grid-template-rows:auto 1fr auto;
+  padding:clamp(16px,1.8vw,22px) clamp(15px,1.7vw,20px) clamp(14px,1.6vw,18px);
+  color:var(--ink);text-decoration:none;
   background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
   box-shadow:5px 5px 0 var(--ink);
   transition:transform .16s ease,box-shadow .16s ease;
@@ -1426,50 +1451,21 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);
 }
 
-/* 本物を、のぞき窓ごしに小さく見せる ──────────────────
-   中身は inert なので、指も Tab も入りません（押すのは札ぜんたい）。 */
-.mihon{
-  --mi-ji:var(--bg);
-  display:block;position:relative;overflow:hidden;
-  height:clamp(168px,18vw,206px);
-  border:2px solid var(--ink);border-radius:11px;background:var(--mi-ji);
-  pointer-events:none;
-  container-type:inline-size;          /* 窓の幅を、下の calc で使います */
+.gfuda-l{
+  list-style:none;margin:11px 0 0;padding:0;
+  display:grid;gap:5px;font-size:13px;line-height:1.7;color:var(--mute);
 }
-.mihon-naka{
-  display:block;position:absolute;top:0;left:0;
-  /* 本物の900px幅を、窓の幅ちょうどに縮めます。
-     倍率を決め打ちにすると、札の幅が変わったとき右にすき間が出たり、
-     逆に横が切れたりします（3列・2列・1列で幅がちがうため）。 */
-  width:900px;transform:scale(.27);transform-origin:0 0;
-  pointer-events:none;-webkit-user-select:none;user-select:none;
+.gfuda-l li{display:grid;grid-template-columns:auto 1fr;gap:7px;align-items:start}
+.gfuda-l li::before{
+  content:"";width:6px;height:6px;margin-top:8px;border-radius:50%;
+  background:var(--ink);opacity:.35;
 }
-@supports (width:1cqw){
-  .mihon-naka{transform:scale(calc(100cqw / 900))}
-}
-/* 写真のかわりに置く、灰色の場所 */
-.mihon-e{display:block;height:200px;border-radius:10px;background:var(--rule)}
-/* 下ぶちをぼかして「まだ続く」と分かるようにする */
-.mihon::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:52px;
-  background:linear-gradient(to bottom,transparent,var(--mi-ji));
-}
-/* 窓の地は、その節がほんとうに使っている色にそろえる */
-.gf--about .mihon {--mi-ji:var(--men-sora)}
-.gf--jissen .mihon{--mi-ji:var(--men-midori)}
-.gf--manabu .mihon,.gf--okuru .mihon{--mi-ji:var(--men-ki)}
-
-.gfuda-a{
-  display:block;margin-top:13px;color:var(--ink);text-decoration:none;
-}
-/* 札ぜんたいを押せるようにする（<a> の中に押せるものを入れないため） */
-.gfuda-a::after{content:"";position:absolute;inset:0;border-radius:18px}
 .gfuda-h{
   display:block;font-family:var(--f-maru);font-weight:700;font-size:16px;
-  letter-spacing:.04em;
+  letter-spacing:.04em;padding-bottom:9px;border-bottom:2px solid var(--rule);
 }
 .gfuda-go{
-  display:block;margin-top:5px;font-family:var(--f-maru);font-weight:700;
+  display:block;margin-top:13px;font-family:var(--f-maru);font-weight:700;
   font-size:12.5px;letter-spacing:.04em;color:var(--accent);
 }
 .gfuda-go::after{content:"　→"}
@@ -1478,8 +1474,53 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .gban{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:719px){
-  .koyomi-hint{font-size:11.5px}
+  .yoko-hint{font-size:11.5px}
   .gban{grid-template-columns:1fr;gap:12px;margin-top:22px}
   .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
-  .mihon{height:150px}
+}
+
+/* ══════════════════════════════════════════════════════════════
+   研究（こよみ）を、スマホの1画面に収める（2026-09-21）
+
+   「カレンダーと詳細が1画面で収まるようなサイズ感に」という話から。
+   直前は 1284px（1.5画面）ありました。帯58pxを引いた 786px に入れます。
+   字はこれ以上小さくしません。減らすのは すきま と、重なった言葉だけです。
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width:719px){
+  #ima{padding-block:16px 18px}
+  /* 大見出しは、CALENDAR と 研究 を1行に並べ、3つの点は出しません。
+     （縦に積むと、それだけで100px。1画面に入れるには、ここが一番効きます） */
+  #ima .midashi{
+    margin-bottom:2px;display:flex;align-items:baseline;justify-content:center;gap:10px;
+  }
+  #ima .midashi .en{font-size:11.5px;margin:0;letter-spacing:.2em}
+  #ima .midashi .ja{font-size:25px;line-height:1.3;text-indent:0}
+  #ima .midashi::after{display:none}
+  #ima .yomi{margin-bottom:10px;line-height:1.7}
+  #ima .ima-2{gap:8px}
+  #ima .koyomi{padding:12px;gap:8px;border-radius:16px;box-shadow:5px 5px 0 var(--ink)}
+  /* ますめ。字の大きさは変えず、行の高さだけ詰める */
+  #ima .masu td{height:27px}
+  #ima .masu td>span{line-height:25px}
+  #ima .maru{width:25px;height:25px;font-size:12.5px}
+  #ima .masu th{padding:0 0 4px}
+  #ima .hanrei{padding-top:8px;gap:4px 8px}
+  /* 「色のついた日を押すと、下の一覧のその1件にとびます」は、
+     すぐ下に一覧が見えていれば言わなくても分かります */
+  #ima .koyomi-chu{display:none}
+  #ima .yoko-ue{margin-bottom:0}
+  #ima .yoko-b{width:32px;height:32px;font-size:17px}
+  /* 凡例は3列に。色の意味は、こよみの丸とセットで分かります */
+  #ima .hanrei{grid-template-columns:repeat(3,1fr);gap:3px 6px}
+  #ima .hanrei li{font-size:11px;gap:5px}
+  #ima .hanrei .maru{width:19px;height:19px}
+  #ima .hanrei li:last-child{grid-column:auto}
+  /* 一覧のふだ。字は変えず、すきまと絵の大きさだけ詰める */
+  #ima .hyo--ken .gyo{padding:11px 12px;gap:8px}
+  #ima .hyo--ken .hizuke b{font-size:20px}
+  #ima .hyo--ken .kao{width:38px;height:38px}
+  #ima .hyo--ken .nokori{margin-top:3px}
+  #ima .hyo--ken .t{line-height:1.45}
+  #ima .hyo--ken .t .sub{line-height:1.5}
+  #ima .koyomi{padding:11px}
 }

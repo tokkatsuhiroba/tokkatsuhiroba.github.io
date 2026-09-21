@@ -1304,6 +1304,33 @@ KEN_T = """      <{tag} class="gyo{tsugi}" id="ken-{ban}"{href}>
         <span class="nokori"><b>{nokori}</b>日後</span></{tag}>"""
 
 
+# ══ よこにスライドする器（2026-09-21）════════════════════
+#   「縦にめっちゃ長い」という声から、こよみを月ごとの横スライドにしました。
+#   そのあと「各々の下の項目も横スライドできるように」と言われたので、
+#   こよみと一覧で同じ器を使い回します。スワイプでも ‹ › でも動きます。
+#   JSは scrollBy を呼ぶだけ。何も送信しません。
+
+def yoko_ban(gyo, yomi, mae='前を見る', tsugi='次を見る', ji=6, haba='', cls=''):
+    """gyo … 中に並べるHTMLの並び。ji … 字下げの深さ。
+       cls … 器そのものに足すクラス（中の札の見た目は、ここに付いています）"""
+    a = ' ' * ji
+    return (a + '<div class="yoko"%s>\n' % (' style="--yoko-w:%s"' % haba if haba else '')
+            + a + '  <div class="yoko-ue">\n'
+            + a + '    <p class="yoko-hint">よこにスライド</p>\n'
+            + a + '    <p class="yoko-okuri">\n'
+            + a + '      <button type="button" class="yoko-b" data-yoko="-1"'
+                  ' aria-label="%s">‹</button>\n' % esc_html(mae)
+            + a + '      <button type="button" class="yoko-b" data-yoko="1"'
+                  ' aria-label="%s">›</button>\n' % esc_html(tsugi)
+            + a + '    </p>\n'
+            + a + '  </div>\n'
+            + a + '  <div class="yoko-ban%s" tabindex="0" role="group" aria-label="%s">\n'
+                  % ((' ' + cls) if cls else '', esc_html(yomi))
+            + '\n'.join(gyo) + '\n'
+            + a + '  </div>\n'
+            + a + '</div>')
+
+
 def build_koyomi(ken, kyou):
     """ken は load_kenkyukai() の戻り（日付順）。kyou は今日。"""
     hi = {}
@@ -1376,21 +1403,9 @@ def build_koyomi(ken, kyou):
         '      <p class="koyomi-chu">色のついた日を押すと、下の一覧のその1件にとびます。</p>')
     # 2026-09-21：月を縦に積むと、それだけで画面何枚ぶんにもなりました。
     #   よこに並べて、1月ずつスライドさせます（スワイプでも、‹ › でも動きます）。
-    ue = ('      <div class="koyomi-ue">\n'
-          '        <p class="koyomi-hint">よこにスライド</p>\n'
-          '        <p class="koyomi-okuri">\n'
-          '          <button type="button" class="tsuki-b" data-tsuki="-1"'
-          ' aria-label="前の月を見る">‹</button>\n'
-          '          <button type="button" class="tsuki-b" data-tsuki="1"'
-          ' aria-label="次の月を見る">›</button>\n'
-          '        </p>\n'
-          '      </div>')
-    ban = ('      <div class="tsuki-ban" tabindex="0" role="group"'
-           ' aria-label="研究会のこよみ。%dか月ぶんを、よこにスライドして見ます">\n'
-           % len(out)
-           + '\n'.join(out) + '\n      </div>')
-    return ('    <div class="koyomi">\n' + ue + '\n' + ban + '\n'
-            + hanrei + '\n    </div>')
+    naka = yoko_ban(out, '研究会のこよみ。%dか月ぶんを、よこにスライドして見ます' % len(out),
+                    mae='前の月を見る', tsugi='次の月を見る', ji=6)
+    return '    <div class="koyomi">\n' + naka + '\n' + hanrei + '\n    </div>'
 
 
 def build_kenkyukai(ken, kyara, buhin, kyou=None):
@@ -1406,22 +1421,16 @@ def build_kenkyukai(ken, kyara, buhin, kyou=None):
             ref=ref, kao=kao, win=win,
             md='%d/%d' % (d.month, d.day),
             youbi=YOUBI[(calendar.weekday(d.year, d.month, d.day) + 1) % 7],
-            soto=('・外部（申込のページ）' if a['url'] else ''),
+            soto=('・外部' if a['url'] else ''),
             ja=esc_html(a['ja']), shurui=a['shurui'], ja_date=ja_md(d),
             basho=('・' + esc_html(a['basho'])) if a['basho'] else '',
             nokori=a['nokori'])
-    # 2026-09-21：一覧は、近い KEN_UE_N 件だけ出して、のこりはふたの中へ。
-    #   （前は「こよみから飛べるように」ぜんぶ出していました。いまは
-    #     hiroba.html の akeru() が、飛び先のふたを先に開くので、
-    #     ふたの中にあってもこよみから飛べます。）
-    ue, ato = ken[:KEN_UE_N], ken[KEN_UE_N:]
-    hyo = ('      <div class="hyo hyo--ken">\n'
-           + '\n'.join(gyo(a, i) for i, a in enumerate(ue)) + '\n      </div>')
-    if ato:
-        naka = ('        <div class="hyo hyo--ken">\n'
-                + '\n'.join(gyo(a, i + len(ue)) for i, a in enumerate(ato))
-                + '\n        </div>')
-        hyo = tsunagu(hyo, naka, len(ato))
+    # 2026-09-21：一覧も、こよみと同じ「よこにスライド」にしました。
+    #   横に並ぶので、ぜんぶ出してもページは伸びません。ふたは要らなくなりました。
+    hyo = yoko_ban([gyo(a, i) for i, a in enumerate(ken)],
+                   '近い研究会の一覧。%d件を、よこにスライドして見ます' % len(ken),
+                   mae='前の研究会を見る', tsugi='次の研究会を見る', ji=6,
+                   haba='min(290px,86%)', cls='hyo hyo--ken')
     return ('    <div class="ima-2">\n'
             + build_koyomi(ken, kyou) + '\n'
             + '    <div class="ima-migi">\n' + hyo + '\n    </div>\n'
@@ -1986,87 +1995,59 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
 #   ★ ここに書く中身は、ぜんぶ節そのものから抜いています。
 #     手で写さないこと（節を直したのに概要が古い、が起きます）。
 
-GFUDA = """      <div class="gfuda gf--{sid}">
-        <span class="mihon" aria-hidden="true" inert><span class="mihon-naka">
-{mihon}
-        </span></span>
-        <a class="gfuda-a" href="{saki}"><b class="gfuda-h">{midashi}</b><span class="gfuda-go">{iku}</span></a>
-      </div>"""
-
-# 見本に出す、節のあたま何個ぶんか。多くすると重くなるだけで、窓からはみ出ます
-MIHON_N = 4
-# 見本の中に入れないもの（<img> は指導案22ページ＝2.5MB。入れると配れません）
-_IMG_RE = re.compile(r'<img\b[^>]*>')
-_ID_RE = re.compile(r'\sid="[^"]*"')
-_A_RE = re.compile(r'(<a\b[^>]*?)\shref="[^"]*"')
-_VOID = {'br', 'img', 'input', 'hr', 'meta', 'link', 'use', 'path', 'circle',
-         'rect', 'source', 'col', 'area', 'ellipse', 'line', 'polygon', 'polyline'}
+GFUDA = """      <a class="gfuda gf--{sid}" href="{saki}">
+        <b class="gfuda-h">{midashi}</b>
+        <ul class="gfuda-l">
+{gyo}
+        </ul>
+        <span class="gfuda-go">開く</span>
+      </a>"""
 
 
-def uchi_kodomo(sec_html):
-    """節の <div class="uchi"> の、じかの子どもを順に切り出す。"""
-    m = re.search(r'<div class="uchi">(.*)\n  </div>\n</section>', sec_html, re.S)
-    if not m:
-        raise Tomeru('節から <div class="uchi"> を切り出せませんでした')
-    naka = re.sub(r'<!--.*?-->', '', m.group(1), flags=re.S)
-    out, fukasa, hajime = [], 0, None
-    for t in re.finditer(r'<(/?)([a-zA-Z][\w-]*)\b[^>]*?(/?)>', naka):
-        tojiru, na, jiko = t.group(1), t.group(2).lower(), t.group(3)
-        if tojiru:
-            fukasa -= 1
-            if fukasa == 0 and hajime is not None:
-                out.append(naka[hajime:t.end()])
-                hajime = None
-        elif jiko or na in _VOID:
-            if fukasa == 0:
-                out.append(t.group(0))
-        else:
-            if fukasa == 0:
-                hajime = t.start()
-            fukasa += 1
-    if fukasa or not out:
-        raise Tomeru('節の中の入れ子が合っていません（見本が作れません）')
-    return out
+def _nuku(html, pat, n=4):
+    """節そのものから、見出しになっている字だけを抜く。
+       ★手で写さないこと。写すと、節を直したのに概要が古い、が起きます。"""
+    out = []
+    for m in re.finditer(pat, html, re.S):
+        t = re.sub(r'<[^>]+>', '', m.group(1)).strip()
+        t = re.sub(r'\s+', ' ', t)
+        if t and t not in out:
+            out.append(t)
+    if not out:
+        raise Tomeru('ホームの概要が、節から中身を1つも抜けませんでした（%s）' % pat)
+    return out[:n]
 
 
-def build_mihon(sec_html):
-    """そのページの本物を、そのまま小さく写すための中身を作る。
-       ★写真は入れません（指導案22ページ＝2.5MB あるため）。
-       ★id と href は外します（ページの中で二重になるのと、
-         見本の中の押せるものに指が入るのを防ぐため）。"""
-    naka = ''.join(uchi_kodomo(sec_html)[:MIHON_N])
-    naka = _IMG_RE.sub('<span class="mihon-e"></span>', naka)
-    naka = _ID_RE.sub('', naka)
-    naka = _A_RE.sub(r'\1', naka)
-    # 動画のふだは、目じるしごと外します。JS側でも止めていますが、
-    # 「開いただけで外に通信が飛ぶ」ものは、二重に止めておきます
-    naka = re.sub(r'\sdata-yt="[^"]*"', '', naka)
-    naka = naka.replace('<summary', '<summary tabindex="-1"')
-    naka = naka.replace('<button ', '<button tabindex="-1" ')
-    return naka
-
-
-def build_gaiyo(sec, doko):
+def build_gaiyo(sec, doko, kiji, jissen):
     """ホームの「中身を、ざっと」。
-       2026-09-21：はじめは箇条書きでしたが、「各々の表示概要で」＝
-       そのページの見た目で見せてほしい、という話になりました。
-       だから本物のHTMLをそのまま入れて、CSSで縮めて窓から見せます。
-       写した絵ではないので、節を直せば見本も勝手に変わります。"""
+       2026-09-21：いちど本物の縮小を窓で見せましたが、小さすぎて読めない、
+       という話になりました。読める字の概要にして、押すとそのページへ行きます。"""
+    naka = {
+        'about':  _nuku(sec['about'], r'<h3 class="manabu-h">(.*?)</h3>'),
+        'manabu': _nuku(sec['manabu'], r'<summary><span class="no">\d</span>'
+                                       r'<span class="sh"><b>(.*?)</b>', 5),
+        'yotsu':  ['%s　%s' % (na, naiyo) for _, na, naiyo, _ in KYARA_MEN],
+        'okuru':  _nuku(sec['okuru'], r'<li><span class="n">\d</span><b>(.*?)</b>'),
+        'news':   [a.get('home') or a['title'] for a in kiji[:4]],
+        'jissen': [a['title'] for a in jissen[:4]],
+        'kai':    ['全国の会　%d' % sum(1 for k in KAI if k[0] == 'zen'),
+                   '都道府県の会　%d' % sum(1 for k in KAI if k[0] == 'ken'),
+                   '市の会　%d' % sum(1 for k in KAI if k[0] == 'shi')],
+    }
     fuda = []
     for sid, _, _, _ in HOME_FUDA:
-        if sid == 'ima':      # こよみは、この上に本物が出ているので要りません
+        if sid not in naka:       # こよみは、この上に本物が出ているので要りません
             continue
         fuda.append(GFUDA.format(
             sid=sid, saki='%s#%s' % (doko[sid], sid),
             midashi=esc_html(SETSU_NA[sid]),
-            iku=esc_html('%s を開く' % dict((f, na) for f, na, _, _ in PAGES)[doko[sid]]),
-            mihon=build_mihon(sec[sid])))
+            gyo='\n'.join('          <li>%s</li>' % esc_html(t) for t in naka[sid])))
     return ('<section class="sec" id="gaiyo">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">SUMMARY</span>'
             '<span class="ja">中身を、ざっと</span></h2>\n'
-            '    <p class="yomi">それぞれのページの、いちばん上のところです。'
-            '写した絵ではなく本物なので、中身が変わればここも変わります。</p>\n'
+            '    <p class="yomi">どこに何があるか、押すまえに見られます。'
+            'ここに出ているのは、その節そのものの中身です。</p>\n'
             '    <div class="gban">\n' + '\n'.join(fuda) + '\n    </div>\n'
             '  </div>\n'
             '</section>')
@@ -2128,20 +2109,29 @@ KO_T = """<header class="ko" id="ue">
     <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a></p>
     <h1 class="ko-h">{na}</h1>
     <p class="ko-yo">{yo}</p>
-    <p class="ko-naka">{naka}</p>
   </div>
 </header>"""
+
+
+def page_na(f):
+    """画面に出すページの名前。2026-09-21：「知る・学ぶ・集まる」という
+       4つの言い方は、帯の8つと数が合わず分かりにくいので画面から消しました。
+       かわりに、そのページに入っている節の名前をそのまま出します。"""
+    for x, _, _, setsu in PAGES:
+        if x == f:
+            return '　'.join(SETSU_NA[t] for t in setsu) or 'TOKKATSU広場'
+    raise Tomeru('%s は PAGES にありません' % f)
 
 
 def head_de(f, na):
     """頭は1つの型を使い回し、題と自分のURLだけをページごとに差しかえます。"""
     head = rd('src/head-hiroba.html')
-    dai = 'TOKKATSU広場' if f == HOME else '%s｜TOKKATSU広場' % na
+    dai = 'TOKKATSU広場' if f == HOME else '%s｜TOKKATSU広場' % page_na(f)
     head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
         head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))
         head = head.replace('content="TOKKATSU広場｜特別活動の情報が、溜まる場。"',
-                            'content="%s｜TOKKATSU広場"' % esc_html(na), 1)
+                            'content="%s｜TOKKATSU広場"' % esc_html(page_na(f)), 1)
     return head
 
 
@@ -2215,8 +2205,12 @@ def build_shin():
             '児童会活動・クラブ活動をしている学校の広場のイラスト">'
             '<use href="#ill-hiroba"/></svg>' % (HIROBA_W, HIROBA_H))
 
-    # スマホ用は、校舎と学校行事のあたりを寄って切り出す（2:1）
-    hero_s = ('<svg viewBox="620 500 1400 700" role="img" aria-label="校庭で学校行事を'
+    # スマホ用の切り出し（2026-09-21 直し）。
+    #   前は 620 500 1400 700。空を1ドットも入れず、校舎の屋根と
+    #   右の時計台を切っていました（「空と学校が切れている」）。
+    #   いまは 空と雲・校舎まるごと・右の時計台まるごと・下の子どもたち、
+    #   が1枚に入る窓です（1450:1060 ＝ たて長め）。
+    hero_s = ('<svg viewBox="760 140 1450 1060" role="img" aria-label="校庭で学校行事を'
               'している学校のイラスト"><use href="#ill-hiroba"/></svg>')
 
     for mark, html in (('<!--BUILD:HIROBA-->', hero),
@@ -2269,7 +2263,7 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
-    gaiyo_html = build_gaiyo(sec, doko)
+    gaiyo_html = build_gaiyo(sec, doko, kiji, jissen)
     for i in re.findall(r'\sid="([^"]+)"', gaiyo_html):
         doko[i] = HOME
 
@@ -2281,8 +2275,7 @@ def build_shin():
             naka_html = '\n\n'.join([home_html]
                                     + [sec[s] for s in setsu] + [gaiyo_html])
         else:
-            atama = KO_T.format(home=HOME, na=esc_html(na), yo=esc_html(yo),
-                                naka='　'.join(SETSU_NA[s] for s in setsu))
+            atama = KO_T.format(home=HOME, na=esc_html(page_na(f)), yo=esc_html(yo))
             naka_html, saki = '\n\n'.join(sec[s] for s in setsu), setsu[0]
         p = '\n'.join(['<a class="skip" href="#%s">本文へ進む</a>' % saki,
                        atama, build_obi(f, doko), naka_html, foot, shikake])
