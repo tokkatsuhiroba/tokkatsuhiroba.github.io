@@ -1466,8 +1466,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    なので、本物のHTMLをそのまま札の中に入れて、ここで縮めて見せます。
    写した絵ではないので、節を直せば見本も勝手に変わります。
    （写真だけは入れていません。指導案22ページ＝2.5MBあるため） */
+/* 2列です。3列にはしません（2026-09-22 実測）。
+   内寸は960px固定なので、3列だと札はどの画面でも280pxしかありません。
+   その幅だと、窓に映る本物の中身（2つならびの悩み札・研究会の札）が
+   120pxまで痩せて、日本語が縦書きのように1字ずつ折れます。
+   中身を見せる場所なので、列を減らして幅を取るほうを選びました。 */
 .gban{
-  display:grid;grid-template-columns:repeat(3,1fr);
+  display:grid;grid-template-columns:repeat(2,1fr);
   gap:clamp(14px,2vw,20px);margin-top:clamp(24px,3vw,34px);
 }
 .gfuda{
@@ -1530,9 +1535,6 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .gfuda-go::after{content:"　→"}
 
-@media (max-width:1023px){
-  .gban{grid-template-columns:repeat(2,1fr)}
-}
 @media (max-width:719px){
   .yoko-hint{font-size:11.5px}
   .gban{grid-template-columns:1fr;gap:12px;margin-top:22px}
@@ -1956,3 +1958,41 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   word-break:auto-phrase;text-wrap:pretty;
 }
 .igi-b{margin:22px 0 0;text-align:center}
+
+/* ══ 広場の絵の動き（2026-09-22）════════════════════════
+   ★分かったこと
+     絵は <defs> の #ill-hiroba を <use> で使い回しています。
+     この中に CSS や SMIL のアニメーションを書いても、<use> の側には
+     出ません（実測。中身の書きかえ自体は反映されるのに、動きだけ出ない）。
+     だから動かすのは「絵の上に重ねた入れ物」のほうです。
+
+   ★決めごと
+     ・校舎・木・子どもは動かさない。建物が揺れると絵が不安定に見えます。
+     ・動くのは空にあるものだけ。雲が流れて、絵ぜんたいがゆっくり息をします。
+     ・字の後ろを通るので、雲はうすく（--o）。読みにくくしません。 */
+
+/* 空を流れる雲。絵の上・字の下（z-index 1、.hero-koe が 2） */
+.hkumo{
+  position:absolute;z-index:1;pointer-events:none;
+  left:0;top:var(--y);width:var(--w);opacity:var(--o,.8);
+  animation:hkumo var(--t,80s) linear var(--d,0s) infinite;
+}
+.hkumo svg{display:block;width:100%;height:auto}
+@keyframes hkumo{
+  from{transform:translateX(-26vw)}
+  to  {transform:translateX(118vw)}
+}
+
+/* 絵ぜんたいが、ゆっくり息をする。
+   1.028 まで。これ以上あげると、下のふちと帯のあいだに隙間が見えます */
+.hero-e svg{
+  transform-origin:50% 100%;
+  animation:hero-iki 30s ease-in-out infinite alternate;
+}
+@keyframes hero-iki{from{transform:scale(1)}to{transform:scale(1.02)}}
+
+/* 動きを減らす設定の人には、1つも動かしません（絵はそのまま出ます） */
+@media (prefers-reduced-motion:reduce){
+  .hkumo{animation:none;display:none}
+  .hero-e svg{animation:none}
+}

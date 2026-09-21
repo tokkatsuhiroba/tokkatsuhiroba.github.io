@@ -1215,6 +1215,9 @@ def hiroba_naka(ill):
 
     # ── 空 ──
     o.append('<rect width="%d" height="%d" fill="#A9E1F5"/>' % (HIROBA_W, HIROBA_H))
+    # ★この絵の中では動かしません。絵は <defs> に置いて <use> で使い回すので、
+    #   中に付けたアニメーションは <use> の側に出ません（2026-09-22に実測）。
+    #   動くものは、絵の「上に重ねる入れ物」として hero に置いてあります。
     o.append('<circle cx="2940" cy="140" r="88" fill="#E8C547"%s/>' % SEN_ZOKUSEI)
     for x, y in ((330, 150), (900, 96), (1620, 168), (2280, 110), (2720, 176)):
         o.append(oku('kumo', x, y, ashi=110))
@@ -2405,13 +2408,39 @@ def uchi_kodomo(sec_html):
     return out
 
 
+# 窓の頭で飛ばすもの。見出しと、その下の説明文です。
+#   2026-09-22：実機で数えたら、**6枚のうち5枚が見出しと説明文だけ**で
+#   窓を使い切っていました（「中身をざっと と言っているのに中身が見えない」）。
+#   札の下には行き先の名前（学ぶ・実践…）がもう出ているので、
+#   窓の中でもう一度 見出しを出すのは、場所の無駄でした。
+#   だから **見出しと、頭に続く説明文を飛ばして、中身から始めます。**
+#   「写した絵ではなく本物」は変えていません。始める場所を下げただけです。
+#   「準備中です」の知らせも飛ばします。まだ何も無い、という知らせは
+#   中身ではないので、窓の1枚めに来ると札がいちばん弱く見えます
+#   （実測：学ぶの札が「準備中です」で始まっていました）。
+_TOBASU = re.compile(r'^\s*<(?:h2[^>]*class="[^"]*\bmidashi\b'
+                     r'|p[^>]*class="[^"]*\byomi\b'
+                     r'|[a-z0-9]+[^>]*class="[^"]*--mada\b)', re.S)
+
+
+def atama_kezuru(ko):
+    """節の子どもから、頭の見出しと説明文を落とす。
+       ぜんぶ落ちてしまう節（説明文しか無い節）は、落とさずに返します。
+       空の窓を出すくらいなら、説明文でも出ているほうがよいためです。"""
+    i = 0
+    while i < len(ko) and _TOBASU.match(ko[i]):
+        i += 1
+    return ko[i:] if i < len(ko) else ko
+
+
 def build_atama(sec_html):
-    """そのページの「いちばん上」を、そのままの大きさで短く載せる。
+    """そのページの「中身のはじまり」を、そのままの大きさで短く載せる。
+       ★見出しと説明文は飛ばします（→ atama_kezuru）。
        ★写真は入れません（指導案22ページ＝2.5MB あるため）。
        ★id と href は外します（id が二重になるのと、
          窓の中の押せるものに指やTabが入るのを防ぐため）。
        ★data-yt も外します（残すと、開いただけで YouTube に画像を取りに行きます）。"""
-    naka = ''.join(uchi_kodomo(sec_html)[:ATAMA_N])
+    naka = ''.join(atama_kezuru(uchi_kodomo(sec_html))[:ATAMA_N])
     naka = _IMG_RE.sub('', naka)
     naka = _ID_RE.sub('', naka)
     naka = _A_RE.sub(r'\1', naka)
@@ -2440,7 +2469,7 @@ def build_gaiyo(sec, doko):
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">SUMMARY</span>'
             '<span class="ja">中身を、ざっと</span></h2>\n'
-            '    <p class="yomi">それぞれのページの、いちばん上です。'
+            '    <p class="yomi">それぞれのページの、中身のはじまりです。'
             '写した絵ではなく本物なので、中身が変わればここも変わります。</p>\n'
             '    <div class="gban">\n' + '\n'.join(fuda) + '\n    </div>\n'
             '  </div>\n'
@@ -2609,7 +2638,24 @@ def build_shin():
     komari, tobashita_k = load_komari()
     # 絵は1ページに1回だけ埋めこみ、4つの内容は <use> で別の場所を切り出す
     e_naka = hiroba_naka(buhin)
-    hero = ('<svg viewBox="0 0 %d %d" role="img" aria-label="校庭で学級活動・学校行事・'
+
+    # ── 空を流れる雲（2026-09-22）──────────────────────────
+    #   絵そのものは <defs> ＋ <use> なので、中に動きを付けても出ません
+    #   （実測ずみ）。そこで「絵の上に重ねた入れ物」を動かします。
+    #   1つずつ 高さ・大きさ・速さ・出る間 を変えます。そろうと列車に見えます。
+    #   （上からの位置, はば, 1周の秒数, 出るまでの秒数, うすさ）
+    kw, kh, _ = buhin['kumo']
+    hero_kumo = ''.join(
+        '<i class="hkumo" aria-hidden="true" '
+        'style="--y:%s;--w:%dpx;--t:%ds;--d:-%ds;--o:%s">'
+        '<svg viewBox="0 0 %g %g" focusable="false"><use href="#ill-b-kumo"/></svg></i>'
+        % (y, w, t, d, o, kw, kh)
+        for y, w, t, d, o in (('16%', 108, 74, 0,  '.62'),
+                              ('34%', 150, 96, 34, '.5'),
+                              ('7%',   80, 62, 58, '.42')))
+
+    hero = (hero_kumo
+            + '<svg viewBox="0 0 %d %d" role="img" aria-label="校庭で学級活動・学校行事・'
             '児童会活動・クラブ活動をしている学校の広場のイラスト">'
             '<use href="#ill-hiroba"/></svg>' % (HIROBA_W, HIROBA_H))
 
@@ -2618,7 +2664,8 @@ def build_shin():
     #   右の時計台を切っていました（「空と学校が切れている」）。
     #   いまは 空と雲・校舎まるごと・右の時計台まるごと・下の子どもたち、
     #   が1枚に入る窓です（1450:1060 ＝ たて長め）。
-    hero_s = ('<svg viewBox="760 140 1450 1060" role="img" aria-label="校庭で学校行事を'
+    hero_s = (hero_kumo
+              + '<svg viewBox="760 140 1450 1060" role="img" aria-label="校庭で学校行事を'
               'している学校のイラスト"><use href="#ill-hiroba"/></svg>')
 
     for mark, html in (('<!--BUILD:HIROBA-->', hero),
