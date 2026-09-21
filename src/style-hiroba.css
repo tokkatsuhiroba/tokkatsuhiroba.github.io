@@ -1406,46 +1406,73 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (prefers-reduced-motion:reduce){.tsuki-ban{scroll-behavior:auto}}
 
 /* ══ ホームの「中身を、ざっと」 ══════════════════════════════
-   札を押すまで中身が分からない、という話から足したところ。
-   中に出ている字は、ぜんぶ節そのものから抜いています。 */
+   2026-09-21：はじめは箇条書きでしたが「各々の表示概要で」＝
+   そのページの見た目で見せてほしい、という話になりました。
+   なので、本物のHTMLをそのまま札の中に入れて、ここで縮めて見せます。
+   写した絵ではないので、節を直せば見本も勝手に変わります。
+   （写真だけは入れていません。指導案22ページ＝2.5MBあるため） */
 .gban{
   display:grid;grid-template-columns:repeat(3,1fr);
   gap:clamp(14px,2vw,20px);margin-top:clamp(24px,3vw,34px);
 }
 .gfuda{
-  display:grid;grid-template-rows:auto 1fr auto;
-  padding:clamp(16px,1.8vw,22px) clamp(15px,1.7vw,20px) clamp(14px,1.6vw,18px);
+  position:relative;
+  padding:clamp(14px,1.6vw,18px);
   background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
-  box-shadow:5px 5px 0 var(--ink);color:var(--ink);text-decoration:none;
+  box-shadow:5px 5px 0 var(--ink);
   transition:transform .16s ease,box-shadow .16s ease;
 }
-.gfuda:hover,.gfuda:focus-visible{
+.gfuda:hover,.gfuda:focus-within{
   transform:translate(-3px,-3px);box-shadow:8px 8px 0 var(--ink);
 }
+
+/* 本物を、のぞき窓ごしに小さく見せる ──────────────────
+   中身は inert なので、指も Tab も入りません（押すのは札ぜんたい）。 */
+.mihon{
+  --mi-ji:var(--bg);
+  display:block;position:relative;overflow:hidden;
+  height:clamp(168px,18vw,206px);
+  border:2px solid var(--ink);border-radius:11px;background:var(--mi-ji);
+  pointer-events:none;
+  container-type:inline-size;          /* 窓の幅を、下の calc で使います */
+}
+.mihon-naka{
+  display:block;position:absolute;top:0;left:0;
+  /* 本物の900px幅を、窓の幅ちょうどに縮めます。
+     倍率を決め打ちにすると、札の幅が変わったとき右にすき間が出たり、
+     逆に横が切れたりします（3列・2列・1列で幅がちがうため）。 */
+  width:900px;transform:scale(.27);transform-origin:0 0;
+  pointer-events:none;-webkit-user-select:none;user-select:none;
+}
+@supports (width:1cqw){
+  .mihon-naka{transform:scale(calc(100cqw / 900))}
+}
+/* 写真のかわりに置く、灰色の場所 */
+.mihon-e{display:block;height:200px;border-radius:10px;background:var(--rule)}
+/* 下ぶちをぼかして「まだ続く」と分かるようにする */
+.mihon::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:52px;
+  background:linear-gradient(to bottom,transparent,var(--mi-ji));
+}
+/* 窓の地は、その節がほんとうに使っている色にそろえる */
+.gf--about .mihon {--mi-ji:var(--men-sora)}
+.gf--jissen .mihon{--mi-ji:var(--men-midori)}
+.gf--manabu .mihon,.gf--okuru .mihon{--mi-ji:var(--men-ki)}
+
+.gfuda-a{
+  display:block;margin-top:13px;color:var(--ink);text-decoration:none;
+}
+/* 札ぜんたいを押せるようにする（<a> の中に押せるものを入れないため） */
+.gfuda-a::after{content:"";position:absolute;inset:0;border-radius:18px}
 .gfuda-h{
-  font-family:var(--f-maru);font-weight:700;font-size:16px;letter-spacing:.04em;
-  padding-bottom:9px;border-bottom:2px solid var(--rule);
-}
-.gfuda-l{
-  list-style:none;margin:10px 0 0;padding:0;
-  display:grid;gap:5px;font-size:13px;line-height:1.7;color:var(--mute);
-}
-.gfuda-l li{
-  display:grid;grid-template-columns:auto 1fr;gap:7px;align-items:start;
-}
-.gfuda-l li::before{
-  content:"";width:6px;height:6px;margin-top:8px;border-radius:50%;
-  background:var(--ink);opacity:.35;
+  display:block;font-family:var(--f-maru);font-weight:700;font-size:16px;
+  letter-spacing:.04em;
 }
 .gfuda-go{
-  margin-top:13px;font-family:var(--f-maru);font-weight:700;font-size:12.5px;
-  letter-spacing:.04em;color:var(--accent);
+  display:block;margin-top:5px;font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;letter-spacing:.04em;color:var(--accent);
 }
 .gfuda-go::after{content:"　→"}
-/* 行き先のページごとに、札と同じ色をつける */
-.gf--about,.gf--yotsu  {background:var(--men-sora)}
-.gf--manabu,.gf--jissen{background:var(--men-midori)}
-.gf--news,.gf--kai,.gf--okuru{background:var(--men-ki)}
 
 @media (max-width:1023px){
   .gban{grid-template-columns:repeat(2,1fr)}
@@ -1453,5 +1480,6 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media (max-width:719px){
   .koyomi-hint{font-size:11.5px}
   .gban{grid-template-columns:1fr;gap:12px;margin-top:22px}
-  .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink);padding:15px 14px 16px}
+  .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
+  .mihon{height:150px}
 }

@@ -382,7 +382,8 @@
   function ikisaki(id){
     if(!id) return null;
     try{ id = decodeURIComponent(id); }catch(e){}
-    return document.getElementById(id);
+    var el = document.getElementById(id);
+    return (el && el.closest('.mihon')) ? null : el;   /* 見本の中へは連れていかない */
   }
   /* 押された瞬間（既定の移動より前）に開ける。だから移動先がずれません */
   document.addEventListener('click', function(ev){
@@ -461,9 +462,11 @@
   }
 
   document.querySelectorAll('[data-learn-step]').forEach(function(button){
+    if(button.closest('.mihon')) return;      /* 見本の中は、さわれません */
     button.addEventListener('click', function(){ openLearnStep(button.dataset.learnStep, true); });
   });
   document.querySelectorAll('[data-learn-detail]').forEach(function(detail){
+    if(detail.closest('.mihon')) return;
     detail.addEventListener('toggle', function(){
       if(detail.open) setCycle(detail.dataset.learnDetail);
     });
@@ -471,6 +474,9 @@
 
   var canEmbed = location.protocol === 'http:' || location.protocol === 'https:';
   document.querySelectorAll('.learn-yt').forEach(function(box){
+    /* 見本の中では動かさない。動かすと i.ytimg.com に画像を取りに行き、
+       「何も送信しません」が崩れます（ホームにも増えるところでした） */
+    if(box.closest('.mihon')) return;
     var button = box.querySelector('button');
     if(!button) return;
     var id = box.dataset.yt;

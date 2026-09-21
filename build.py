@@ -1986,63 +1986,87 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken):
 #   ★ ここに書く中身は、ぜんぶ節そのものから抜いています。
 #     手で写さないこと（節を直したのに概要が古い、が起きます）。
 
-GFUDA = """      <a class="gfuda gf--{sid}" href="{saki}">
-        <b class="gfuda-h">{midashi}</b>
-        <ul class="gfuda-l">
-{gyo}
-        </ul>
-        <span class="gfuda-go">{iku}</span>
-      </a>"""
+GFUDA = """      <div class="gfuda gf--{sid}">
+        <span class="mihon" aria-hidden="true" inert><span class="mihon-naka">
+{mihon}
+        </span></span>
+        <a class="gfuda-a" href="{saki}"><b class="gfuda-h">{midashi}</b><span class="gfuda-go">{iku}</span></a>
+      </div>"""
+
+# 見本に出す、節のあたま何個ぶんか。多くすると重くなるだけで、窓からはみ出ます
+MIHON_N = 4
+# 見本の中に入れないもの（<img> は指導案22ページ＝2.5MB。入れると配れません）
+_IMG_RE = re.compile(r'<img\b[^>]*>')
+_ID_RE = re.compile(r'\sid="[^"]*"')
+_A_RE = re.compile(r'(<a\b[^>]*?)\shref="[^"]*"')
+_VOID = {'br', 'img', 'input', 'hr', 'meta', 'link', 'use', 'path', 'circle',
+         'rect', 'source', 'col', 'area', 'ellipse', 'line', 'polygon', 'polyline'}
 
 
-def _nuku(html, pat, n=4):
-    """節の中から、見出しになっている字だけを抜く。"""
-    out = []
-    for m in re.finditer(pat, html, re.S):
-        t = re.sub(r'<[^>]+>', '', m.group(1)).strip()
-        t = re.sub(r'\s+', ' ', t)
-        if t and t not in out:
-            out.append(t)
-    if not out:
-        raise Tomeru('ホームの概要が、節から中身を1つも抜けませんでした（%s）' % pat)
-    return out[:n]
+def uchi_kodomo(sec_html):
+    """節の <div class="uchi"> の、じかの子どもを順に切り出す。"""
+    m = re.search(r'<div class="uchi">(.*)\n  </div>\n</section>', sec_html, re.S)
+    if not m:
+        raise Tomeru('節から <div class="uchi"> を切り出せませんでした')
+    naka = re.sub(r'<!--.*?-->', '', m.group(1), flags=re.S)
+    out, fukasa, hajime = [], 0, None
+    for t in re.finditer(r'<(/?)([a-zA-Z][\w-]*)\b[^>]*?(/?)>', naka):
+        tojiru, na, jiko = t.group(1), t.group(2).lower(), t.group(3)
+        if tojiru:
+            fukasa -= 1
+            if fukasa == 0 and hajime is not None:
+                out.append(naka[hajime:t.end()])
+                hajime = None
+        elif jiko or na in _VOID:
+            if fukasa == 0:
+                out.append(t.group(0))
+        else:
+            if fukasa == 0:
+                hajime = t.start()
+            fukasa += 1
+    if fukasa or not out:
+        raise Tomeru('節の中の入れ子が合っていません（見本が作れません）')
+    return out
 
 
-def build_gaiyo(sec, doko, kiji, jissen):
-    naka = {
-        # 「特活とは」… 4つの箱の見出し
-        'about':  _nuku(sec['about'], r'<h3 class="manabu-h">(.*?)</h3>'),
-        # 「学ぶ」… 5段階の名前
-        'manabu': _nuku(sec['manabu'], r'<summary><span class="no">\d</span>'
-                                       r'<span class="sh"><b>(.*?)</b>', 5),
-        # 「4つの内容」… 4人の名前と、受けもつ内容
-        'yotsu':  ['%s　%s' % (na, naiyo) for _, na, naiyo, _ in KYARA_MEN],
-        # 「送る」… 4つの手順
-        'okuru':  _nuku(sec['okuru'], r'<li><span class="n">\d</span><b>(.*?)</b>'),
-        # ニュースと実践は、いま載っているものそのもの
-        'news':   [a.get('home') or a['title'] for a in kiji[:3]],
-        'jissen': [a['title'] for a in jissen[:3]],
-        # 研究会は、範囲ごとの数
-        'kai':    ['全国の会　%d' % sum(1 for k in KAI if k[0] == 'zen'),
-                   '都道府県の会　%d' % sum(1 for k in KAI if k[0] == 'ken'),
-                   '市の会　%d' % sum(1 for k in KAI if k[0] == 'shi')],
-    }
+def build_mihon(sec_html):
+    """そのページの本物を、そのまま小さく写すための中身を作る。
+       ★写真は入れません（指導案22ページ＝2.5MB あるため）。
+       ★id と href は外します（ページの中で二重になるのと、
+         見本の中の押せるものに指が入るのを防ぐため）。"""
+    naka = ''.join(uchi_kodomo(sec_html)[:MIHON_N])
+    naka = _IMG_RE.sub('<span class="mihon-e"></span>', naka)
+    naka = _ID_RE.sub('', naka)
+    naka = _A_RE.sub(r'\1', naka)
+    # 動画のふだは、目じるしごと外します。JS側でも止めていますが、
+    # 「開いただけで外に通信が飛ぶ」ものは、二重に止めておきます
+    naka = re.sub(r'\sdata-yt="[^"]*"', '', naka)
+    naka = naka.replace('<summary', '<summary tabindex="-1"')
+    naka = naka.replace('<button ', '<button tabindex="-1" ')
+    return naka
+
+
+def build_gaiyo(sec, doko):
+    """ホームの「中身を、ざっと」。
+       2026-09-21：はじめは箇条書きでしたが、「各々の表示概要で」＝
+       そのページの見た目で見せてほしい、という話になりました。
+       だから本物のHTMLをそのまま入れて、CSSで縮めて窓から見せます。
+       写した絵ではないので、節を直せば見本も勝手に変わります。"""
     fuda = []
     for sid, _, _, _ in HOME_FUDA:
-        if sid not in naka:       # こよみは、この下に本物が出ているので要りません
+        if sid == 'ima':      # こよみは、この上に本物が出ているので要りません
             continue
-        saki = '%s#%s' % (doko[sid], sid)
-        iku = '%s を開く' % dict((f, na) for f, na, _, _ in PAGES)[doko[sid]]
         fuda.append(GFUDA.format(
-            sid=sid, saki=saki, midashi=esc_html(SETSU_NA[sid]),
-            iku=esc_html(iku),
-            gyo='\n'.join('          <li>%s</li>' % esc_html(t) for t in naka[sid])))
+            sid=sid, saki='%s#%s' % (doko[sid], sid),
+            midashi=esc_html(SETSU_NA[sid]),
+            iku=esc_html('%s を開く' % dict((f, na) for f, na, _, _ in PAGES)[doko[sid]]),
+            mihon=build_mihon(sec[sid])))
     return ('<section class="sec" id="gaiyo">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">SUMMARY</span>'
             '<span class="ja">中身を、ざっと</span></h2>\n'
-            '    <p class="yomi">どのページに何があるか、押すまえに見られます。'
-            'ここに出ているのは、そのページの中身そのものです。</p>\n'
+            '    <p class="yomi">それぞれのページの、いちばん上のところです。'
+            '写した絵ではなく本物なので、中身が変わればここも変わります。</p>\n'
             '    <div class="gban">\n' + '\n'.join(fuda) + '\n    </div>\n'
             '  </div>\n'
             '</section>')
@@ -2245,7 +2269,7 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
-    gaiyo_html = build_gaiyo(sec, doko, kiji, jissen)
+    gaiyo_html = build_gaiyo(sec, doko)
     for i in re.findall(r'\sid="([^"]+)"', gaiyo_html):
         doko[i] = HOME
 
