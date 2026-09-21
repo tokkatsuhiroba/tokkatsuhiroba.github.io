@@ -3,21 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TOKKATU広場</title>
+<title>TOKKATSU広場</title>
 <meta name="robots" content="noindex, nofollow">
+<!-- ══ LINE・SNSで共有したときの見え方（OGP） ══ -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://yuutennis657-beep.github.io/tokkatsu-hiroba/">
+<meta property="og:site_name" content="TOKKATSU広場">
+<meta property="og:title" content="TOKKATSU広場｜特別活動の情報が、溜まる場。">
+<meta property="og:description" content="ニュース・一次資料・研究会カレンダー・学級会グッズ。LINEは話す場、ここは溜まる場です。">
+<meta property="og:image" content="https://yuutennis657-beep.github.io/tokkatsu-hiroba/ogp.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="TOKKATSU広場｜特別活動の情報が、溜まる場。">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="description" content="特別活動の情報が溜まる場。ニュース・一次資料・学級会の学習過程・研究会カレンダー。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDPMincho&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#FCFCFA;
+  --bg:#FCFBF7;       /* 地：わずかに暖かい白（西野：温かみ） */
   --ink:#1C1C1A;
   --accent:#1F5C3F;   /* 深い緑：締切・選択中 */
   --alert:#B3261E;    /* 赤：研究会の当日（カレンダーだけで使う） */
   --rule:#E3E2DC;
-  --mute:#6E6D67;
-  --tint:#F1F6F3;     /* 緑のごく薄い面 */
+  --mute:#63625C;     /* 添え字：白地に 5.9:1（見やすさ） */
+  --tint:#F0F5EE;     /* 緑のごく薄い面 */
   --pad:20px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -78,7 +90,7 @@ html[dir="rtl"] .logo{font-family:"Noto Sans Arabic",serif;letter-spacing:0;font
 .sec{padding:26px 0 4px;border-top:1px solid var(--rule);margin-top:26px}
 .sec.first{border-top:0;margin-top:0}
 .sec h2{font-size:15px;margin:0 0 2px;letter-spacing:.04em}
-.sec .note{font-size:13px;color:var(--mute);margin:0 0 12px;line-height:1.8}
+.sec .note{font-size:13.5px;color:var(--mute);margin:0 0 12px;line-height:1.85}
 .placeholder{font-size:13.5px;color:var(--mute);line-height:1.8;margin:0;padding:14px 0 2px}
 
 /* ── 記事 ── */
@@ -260,7 +272,7 @@ html[data-w="pc"] .tc{width:30%;font-size:12px}
 }
 .tile:hover{border-color:var(--accent)}
 .tile .tt{font-weight:700;display:block}
-.tile .ts{display:block;font-size:12px;color:var(--mute);line-height:1.6;font-weight:400}
+.tile .ts{display:block;font-size:12.5px;color:var(--mute);line-height:1.65;font-weight:400}
 .tile .go{font-size:12px;color:var(--accent);flex:none}
 .tile .go.ext{border:1px solid var(--rule);border-radius:3px;padding:2px 6px;color:var(--mute);letter-spacing:.06em}
 .tile .tl{flex:1;min-width:0}
@@ -455,6 +467,90 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
 @media (prefers-reduced-motion:no-preference){
   .btn,.tab,.rows a,.tile,.nayami button,.cal-nav{transition:background-color .12s,color .12s,border-color .12s}
 }
+
+/* ══ 2026-09-21 検討まとめの反映 ══
+   吉井：持ち寄る場（.hello）／片山：送る導線（.cta）／平良・西野：すぐ使える実践（.jissen）
+   島村：実践とグッズのセット（.jset .glist .weekly／.tile.goods .dl） */
+
+/* ── ようこそ（ホームの最初の1文） ── */
+.hello{
+  font-size:15px;line-height:1.9;color:#33322E;margin:10px 0 0;
+  padding:13px 16px;background:var(--tint);border-radius:6px;border-inline-start:3px solid var(--accent);
+}
+
+/* ── 送る（困りごと・意見・実践） ── */
+.cta{border:1px solid var(--accent);border-radius:6px;background:#fff;padding:16px;margin:0}
+.cta h2{font-size:15.5px;margin:0 0 5px;letter-spacing:.04em}
+.cta p{font-size:13.5px;color:#33322E;margin:0 0 12px;line-height:1.85}
+.cta .pick{display:grid;gap:8px}
+.cta .pick .btn{font-size:14px;padding:13px 11px;text-align:center;color:#fff;background:var(--accent);border-color:var(--accent);font-weight:700}
+.cta .pick .btn:hover{background:#17492F}
+.cta .sub{font-size:12px;color:var(--mute);margin:10px 0 0;line-height:1.7}
+
+/* ── すぐ使える実践（記事の形はニュースと同じ。中に「くわしく」「セット」「週案」が足される） ── */
+.jissen h3{font-size:18px;line-height:1.6;margin:9px 0 8px;font-weight:700;letter-spacing:.01em}
+.jmore{margin-top:10px;border:1px solid var(--rule);border-radius:6px;background:#fff}
+.jmore summary{
+  list-style:none;cursor:pointer;padding:11px 14px;font-size:13.5px;color:var(--accent);font-weight:700;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+}
+.jmore summary::-webkit-details-marker{display:none}
+.jmore summary::after{content:"＋";font-weight:400;flex:none}
+.jmore[open] summary::after{content:"−"}
+.jmore summary .m{display:none}
+.jmore[open] summary .p{display:none}
+.jmore[open] summary .m{display:inline}
+.jmore summary:hover{background:var(--tint)}
+.jbody{padding:2px 14px 14px;border-top:1px solid var(--rule)}
+.jbody h4{font-size:12.5px;margin:14px 0 4px;letter-spacing:.06em;color:var(--accent)}
+.jbody p,.jbody li{font-size:14.5px;line-height:1.9;color:#33322E;margin:0}
+.jbody ul,.jbody ol{margin:0;padding-inline-start:1.3em}
+.jbody li{margin:2px 0}
+.jset{margin-top:12px;border:1px solid var(--rule);border-radius:6px;background:#fff;padding:11px 14px 12px}
+.jset-h{font-size:11.5px;color:var(--mute);letter-spacing:.08em;margin:0 0 7px}
+.glist{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 10px}
+.glist li{display:inline-flex;align-items:center;gap:5px}
+.glist a{
+  display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:5px;
+  padding:5px 10px;font-size:13px;text-decoration:none;line-height:1.5;font-weight:700;
+}
+.glist a:hover{background:var(--tint)}
+.glist .gst{font-size:11px;color:var(--mute);letter-spacing:.04em}
+.weekly{
+  display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;
+  border:1px dashed #B9C8BE;border-radius:6px;padding:10px 12px;background:var(--tint);
+}
+.weekly .wl{flex:none;font-size:11.5px;font-weight:700;color:#fff;background:var(--accent);border-radius:3px;padding:2px 8px;line-height:1.6}
+.weekly .wt{flex:1;min-width:12em;font-size:14px;line-height:1.7}
+.btn.copy{flex:none;color:var(--accent);border-color:var(--accent);background:#fff}
+.btn.copy.done{background:var(--accent);color:#fff}
+.jissen .foot{margin-top:14px}
+.jissen .by{font-size:12.5px;color:var(--mute)}
+.jissen .acts{flex-wrap:wrap}
+
+/* 場所つきURL（#manabu/j-xxx）で来たときの目印。上に固定ヘッダーがある間は、その分だけ下げる */
+html:not([data-w="pc"]) [id]{scroll-margin-top:136px}
+.hit{animation:hit 1.6s ease-out 1}
+@keyframes hit{0%{background:var(--tint)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.hit{animation:none}}
+
+/* ── グッズ（配布できるものは PDF・Word のボタン、無ければ準備中） ── */
+.tile.goods{flex-wrap:wrap;cursor:default}
+.tile.goods:hover{border-color:var(--rule)}
+.tile .dl{display:flex;gap:6px;flex:none}
+.tile .dl .btn{font-size:12.5px;padding:8px 12px;color:var(--accent);border-color:var(--accent);font-weight:700}
+.tile .dl .btn:hover{background:var(--tint)}
+.tile .use{display:block;font-size:12px;color:var(--mute);line-height:1.7;margin-top:4px}
+.tile .use a{color:var(--accent)}
+
+/* PC：実践の記事は2段組にしない（ニュースの2段組の指定を戻す） */
+html[data-w="pc"] article.jissen{display:block;max-width:760px}
+html[data-w="pc"] .jissen .src{flex-direction:row;align-items:center;gap:9px;padding-top:0}
+html[data-w="pc"] .jissen .src .dot{display:block}
+html[data-w="pc"] .jissen .foot{display:flex;margin-top:14px}
+html[data-w="pc"] .jissen .acts{margin-top:0}
+html[data-w="pc"] .cta,html[data-w="pc"] .hello{max-width:860px}
+html[data-w="pc"] .cta .pick{grid-template-columns:1fr 1fr;max-width:560px}
 </style>
 <script>
 /* ══ storage.js を取りこみ（保存はここだけ。差しかえるときはこのブロックごと） ══ */
@@ -629,6 +725,12 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     <path d="M24 15.5v4M24 28.5v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" marker-end="url(#ar2)"/>
   </symbol>
 
+  <symbol id="g-mark" viewBox="0 0 48 48">
+    <rect x="5" y="12" width="17" height="24" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.7"/>
+    <circle cx="13.5" cy="24" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/>
+    <rect x="26" y="12" width="17" height="24" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.7"/>
+    <path d="M30 20l9 8M39 20l-9 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  </symbol>
   <symbol id="g-corner" viewBox="0 0 48 48">
     <rect x="5" y="8" width="38" height="30" rx="2" fill="#fff" stroke="currentColor" stroke-width="1.8"/>
     <g fill="currentColor" opacity=".18"><rect x="10" y="13" width="12" height="9" rx="1"/><rect x="26" y="13" width="12" height="9" rx="1"/><rect x="10" y="26" width="12" height="9" rx="1"/><rect x="26" y="26" width="12" height="9" rx="1"/></g>
@@ -688,7 +790,7 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
 <header>
   <div class="wrap">
     <div class="hd">
-      <p class="logo">TOKKATU広場</p>
+      <p class="logo">TOKKATSU広場</p>
       <div class="hd-r">
         <span class="stamp" data-ar="بيانات تجريبية">見本データ</span>
         <button class="lang" id="langBtn" type="button" lang="ar">عربي</button>
@@ -717,6 +819,7 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     <h1 id="h-home" data-ar="الرئيسية">ホーム</h1>
     <span class="meta" id="todayLabel"></span>
   </div>
+  <p class="hello" data-ar="ساحة توكاتسو مكانٌ نجمع فيه ممارسات الأنشطة الخاصة. لا موضوع بحثيّ ثابت هنا: ما نجح، وما تعثّر، أحضِره كما هو.">TOKKATSU広場は、特別活動の実践を持ち寄る場です。研究の主題は決めていません。うまくいったことも、困っていることも、そのまま持ち寄ってください。</p>
 
   <div class="sec first">
     <h2 data-ar="ما يستحقّ انتباهك الآن">いま気にすること</h2>
@@ -732,6 +835,16 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
       <p class="b" data-ar="أعيدوا معًا تحديد أدوار المجموعات في الفصل">係活動を、もう一度みんなで決め直す</p>
       <p class="s" data-ar="بدل الاستمرار بأدوار الفصل السابق، ابدأوا بسؤال: ما الأدوار التي يحتاجها فصلنا الآن؟ ليست توزيعًا للمهام، بل نشاطًا يجعل الفصل أفضل.">1学期の係をそのまま続けるのではなく、「クラスに今いる係は何か」を出し合うところから始めます。仕事の分担ではなく、クラスをよくする活動として立て直す週です。</p>
     </div>
+  </div>
+
+  <div class="sec">
+    <h2 data-ar="ممارسات جاهزة للغد">すぐ使える実践</h2>
+    <p class="note" data-ar="التحضير والمسار والسبورة، في صفحة واحدة. مع سطر جاهز لخطّة الأسبوع.">準備・流れ・板書まで、1画面で。週案にそのまま書ける1行つきです。</p>
+    <ul class="rows">
+      <li><a href="#manabu/j-keikaku-10min"><span class="t">計画委員会を10分で回す（学級会の前日）<span class="sub">学級活動(1)・計画委員会・3〜6年・10分</span></span><span class="d">→</span></a></li>
+      <li><a href="#manabu/j-gakkyukai-app"><span class="t">学級会アプリを子どもたちと作り、社会参画と人間関係を自分たちで創造する<span class="sub">学級活動(1)・話合い活動・3〜6年・何日かに分ける</span></span><span class="d">→</span></a></li>
+    </ul>
+    <p class="placeholder"><a href="#manabu/jissen" data-ar="عرض كل الممارسات">実践をすべて見る</a></p>
   </div>
 
   <div class="sec">
@@ -752,6 +865,17 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     <ul class="legend" id="homeLegend"></ul>
     <div id="homeDetail"></div>
     <p class="placeholder"><a href="#hiroba" data-ar="فتح التقويم كاملًا">カレンダーを大きく見る</a></p>
+  </div>
+
+  <div class="sec">
+    <div class="cta">
+      <h2 data-ar="ممارستك أيضًا ستُنشر هنا">あなたの実践も、ここに載ります</h2>
+      <p data-ar="صورة سبورة واحدة تكفي. بلا اسم وبلا تسجيل. يمكن إرفاق خطة الدرس أو الشرائح كذلك.">板書の写真1枚でも。無記名で、登録もいりません。指導案やスライドも、いっしょに付けられます。</p>
+      <div class="pick">
+        <a class="btn" href="https://forms.gle/fnWnivr61t2BA6tR7" target="_blank" rel="noopener noreferrer" data-ar="أرسِل ممارسة أو صورة سبورة">実践・板書を送る</a>
+      </div>
+      <p class="sub" data-ar="ما تُرسله لا يُنشر تلقائيًّا؛ نراجعه أوّلًا ثم نضعه في الموقع. أمّا ما يشغلك فاطرحه في ساحة LINE — هناك مَن يجيب في اليوم نفسه.">送ったものは、そのまま公開されません。確認してから載せます。<strong>困っていることは、下のLINEひろばへ。</strong>そのほうが、その日のうちに誰かが答えてくれます。</p>
+    </div>
   </div>
 
   <div class="sec">
@@ -853,7 +977,7 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     </div>
   </article>
 
-  <p class="placeholder" data-ar="التحديث اليومي التلقائي والبحث والحفظ والملاحظات ستُضاف في المرحلة 2. مؤشّر الأهمية من تقدير الموقع.">毎晩の自動更新（<code>content/news.json</code> の読み込み）と、検索・ストック・メモの保存は Step 2 で入れます。重要度の5マスは本サイトの判断です。</p>
+  <p class="placeholder" data-ar="التحديث اليومي التلقائي والبحث والحفظ والملاحظات ستُضاف في المرحلة 2. مؤشّر الأهمية من تقدير الموقع.">ニュースは <code>build.py</code> がこのページに書きこんでいます。検索・ストック・メモの保存は Step 2 で入れます。重要度の5マスは本サイトの判断です。</p>
 </section>
 
 <!-- ═══ まなぶ ═══ -->
@@ -863,7 +987,209 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     <span class="meta" data-ar="ابدأ من هنا">はじめての方はここから</span>
   </div>
 
-  <div class="sec first">
+  <div class="sec first" id="jissen">
+    <h2 data-ar="ممارسات جاهزة للغد">すぐ使える実践</h2>
+    <p class="note" data-ar="ممارسات يمكن استخدامها غدًا: التحضير والمسار والسبورة، مع الأدوات التي تُستخدم معها وسطر جاهز لخطّة الأسبوع. الأحدث أوّلًا.">明日の学級会にそのまま使えるものだけを置いています。準備・流れ・板書と、セットで使うグッズ、週案にそのまま書ける1行。新しい順です。</p>
+
+  <article class="jissen" id="j-keikaku-10min">
+    <div class="src"><span class="name">学級活動(1)・計画委員会</span><span class="dot"></span><span>3〜6年</span><span class="dot"></span><span>10分</span></div>
+    <h3>計画委員会を10分で回す（学級会の前日）</h3>
+    <p class="sum">学級会がうまくいくかどうかは、前日の計画委員会でほぼ決まります。長くやる必要はありません。10分で終わる型を1つ置いておくと、毎週回ります。</p>
+    <details class="jmore">
+      <summary><span class="p" data-ar="التفاصيل: التحضير والمسار والسبورة">くわしく（準備・流れ・板書）</span><span class="m" data-ar="إغلاق">とじる</span></summary>
+      <div class="jbody">
+        <h4>準備するもの</h4>
+        <ul>
+        <li>議題箱から選んだ提案カード（提案理由が書けているもの）</li>
+        <li>司会進行メモ</li>
+        <li>前回の学級会で決まったこと（掲示をそのまま持ってくる）</li>
+        </ul>
+        <h4>流れ（10分）</h4>
+        <ol>
+        <li>議題を1つに決める（3分）。提案理由が書けているものを優先します。書けていなければ、提案した子に一言足してもらいます。</li>
+        <li>話合いの順番を決める（3分）。「出し合う→くらべ合う→まとめる」の3段に、何を話すかをあてはめます。</li>
+        <li>司会・黒板記録・ノート記録を決める（2分）。前回と同じ子にしないのが約束です。</li>
+        <li>先生が1つだけ確かめる（2分）。「この議題は、みんなで決めることかな？」だけ聞きます。</li>
+        </ol>
+        <h4>板書</h4>
+        <p>黒板の隅に、議題・提案理由・話合いの順番の3行を、前日のうちに書いておきます。翌日の学級会は、この3行から始まります。中身は書きません。書くのは子どもです。</p>
+        <h4>つまずき</h4>
+        <ul>
+        <li>委員会が長引く → たいてい先生が話しすぎています。先生の出番は最後の2分だけにします。</li>
+        <li>議題が決まらない → 提案理由が書けているものを優先します。理由の無い議題は、次の週に回します。</li>
+        <li>同じ子ばかり司会になる → 前回の記録を見て、やっていない子から決めます。</li>
+        </ul>
+      </div>
+    </details>
+    <div class="jset">
+      <p class="jset-h" data-ar="يُستخدم مع هذه الأدوات">セットで使うもの</p>
+      <ul class="glist">
+        <li><a href="#manabu/goods-card" data-ar="بطاقة الاقتراح">提案カード</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+        <li><a href="#manabu/goods-shikai" data-ar="ورقة المُيسِّر">司会進行メモ</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+      </ul>
+    </div>
+    <div class="weekly">
+      <span class="wl" data-ar="سطر لخطّة الأسبوع">週案用のひとこと</span>
+      <span class="wt" id="w-keikaku-10min">昼休み：計画委員会10分（議題を1つに決める・話合いの順番・司会の分担）</span>
+      <button class="btn copy" type="button" data-copy="w-keikaku-10min" data-ar="نسخ">コピー</button>
+    </div>
+    <div class="foot">
+      <span class="by"><span data-ar="مقدَّم من">提供</span>：本サイト</span>
+      <div class="acts">
+        <a class="btn link" href="https://line.me/R/share?text=%E8%A8%88%E7%94%BB%E5%A7%94%E5%93%A1%E4%BC%9A%E3%82%9210%E5%88%86%E3%81%A7%E5%9B%9E%E3%81%99%EF%BC%88%E5%AD%A6%E7%B4%9A%E4%BC%9A%E3%81%AE%E5%89%8D%E6%97%A5%EF%BC%89%0Ahttps%3A%2F%2Fyuutennis657-beep.github.io%2Ftokkatsu-hiroba%2F%23manabu%2Fj-keikaku-10min" target="_blank" rel="noopener noreferrer" data-ar="ناقش هذه الممارسة في LINE">この実践について話す（LINE）</a>
+        <button class="btn copy" type="button" data-copy-text="https://yuutennis657-beep.github.io/tokkatsu-hiroba/#manabu/j-keikaku-10min" data-ar="نسخ رابط هذه الممارسة">この実践のURLをコピー</button>
+      </div>
+    </div>
+  </article>
+
+  <article class="jissen" id="j-gakkyukai-app">
+    <div class="src"><span class="name">学級活動(1)・話合い活動</span><span class="dot"></span><span>3〜6年</span><span class="dot"></span><span>何日かに分ける</span></div>
+    <h3>学級会アプリを子どもたちと作り、社会参画と人間関係を自分たちで創造する</h3>
+    <p class="sum">自ら学級会の手立てを考えるので、有効性が高まると考えました。</p>
+    <details class="jmore">
+      <summary><span class="p" data-ar="التفاصيل: التحضير والمسار والسبورة">くわしく（準備・流れ・板書）</span><span class="m" data-ar="إغلاق">とじる</span></summary>
+      <div class="jbody">
+        <h4>流れ</h4>
+        <ol>
+        <li>紙の学級会ノートの課題と良さを振り返る</li>
+        <li>アプリで入れたい機能を考える</li>
+        <li>実際に教師が実装する</li>
+        <li>子供と一緒に使う</li>
+        </ol>
+      </div>
+    </details>
+    <div class="jset jshiryo">
+      <p class="jset-h" data-ar="مواد للتنزيل">持ち帰れる資料</p>
+      <div class="acts">
+        <a class="btn" href="https://drive.google.com/file/d/1MeaqBtRT2VT6wgotXDdBTI0_eit6Db3t/view" target="_blank" rel="noopener noreferrer">アプリの画面（ツムゴロウ）</a>
+      </div>
+    </div>
+    <div class="foot">
+      <span class="by"><span data-ar="مقدَّم من">提供</span>：伊藤優</span>
+      <div class="acts">
+        <a class="btn link" href="https://line.me/R/share?text=%E5%AD%A6%E7%B4%9A%E4%BC%9A%E3%82%A2%E3%83%97%E3%83%AA%E3%82%92%E5%AD%90%E3%81%A9%E3%82%82%E3%81%9F%E3%81%A1%E3%81%A8%E4%BD%9C%E3%82%8A%E3%80%81%E7%A4%BE%E4%BC%9A%E5%8F%82%E7%94%BB%E3%81%A8%E4%BA%BA%E9%96%93%E9%96%A2%E4%BF%82%E3%82%92%E8%87%AA%E5%88%86%E3%81%9F%E3%81%A1%E3%81%A7%E5%89%B5%E9%80%A0%E3%81%99%E3%82%8B%0Ahttps%3A%2F%2Fyuutennis657-beep.github.io%2Ftokkatsu-hiroba%2F%23manabu%2Fj-gakkyukai-app" target="_blank" rel="noopener noreferrer" data-ar="ناقش هذه الممارسة في LINE">この実践について話す（LINE）</a>
+        <button class="btn copy" type="button" data-copy-text="https://yuutennis657-beep.github.io/tokkatsu-hiroba/#manabu/j-gakkyukai-app" data-ar="نسخ رابط هذه الممارسة">この実践のURLをコピー</button>
+      </div>
+    </div>
+  </article>
+
+  <article class="jissen" id="j-chokuzen-15min">
+    <div class="src"><span class="name">学級活動(1)・当日の準備</span><span class="dot"></span><span>全学年</span><span class="dot"></span><span>15分</span></div>
+    <h3>授業直前15分の準備（学級会の当日）</h3>
+    <p class="sum">学級会の45分は、始まる前の15分で決まります。準備するのは4つだけ。板書の枠、掲示、学級会ノート、司会との1分です。</p>
+    <details class="jmore">
+      <summary><span class="p" data-ar="التفاصيل: التحضير والمسار والسبورة">くわしく（準備・流れ・板書）</span><span class="m" data-ar="إغلاق">とじる</span></summary>
+      <div class="jbody">
+        <h4>15分の使い方</h4>
+        <ol>
+        <li>板書の枠を作る（5分）。議題・提案理由・めあての3行と、「出し合う｜くらべ合う｜まとめる」の3つの枠を黒板に引きます。中身は書きません。</li>
+        <li>掲示を貼る（3分）。「話合いの流れ」を、司会の子から見える位置に。前回の決まったことは黒板の横に。</li>
+        <li>学級会ノートを配る（4分）。「自分の考え」を書く欄が開いた状態で、机の上に置いておきます。</li>
+        <li>司会と1分（3分）。司会進行メモを一緒に読みます。最初の一言だけ、声に出して練習します。</li>
+        </ol>
+        <h4>板書</h4>
+        <p>黒板を3段に分けます。上段が議題・提案理由・めあて。中段が「出し合う」と「くらべ合う」。下段が「まとめる」。線と見出しだけ引いておき、意見が入る場所を空けておきます。</p>
+        <p>上段：議題　／　提案理由（いちばん大きく）　／　めあて<br>中段：出し合う（短冊を貼る）　→　くらべ合う（似た短冊を寄せる）<br>下段：まとめる（決まったこと・だれが・いつまで）</p>
+        <h4>つまずき</h4>
+        <ul>
+        <li>枠に中身まで書いてしまう → 子どもの言葉が入る場所が無くなります。枠だけにします。</li>
+        <li>15分が取れない → 板書の枠は前日に引いておいても大丈夫です。当日は掲示とノートだけ。</li>
+        <li>司会の子が固まる → 最初の一言だけ練習しておくと、その先は進みます。全部の練習は要りません。</li>
+        </ul>
+      </div>
+    </details>
+    <div class="jset">
+      <p class="jset-h" data-ar="يُستخدم مع هذه الأدوات">セットで使うもの</p>
+      <ul class="glist">
+        <li><a href="#manabu/goods-flow" data-ar="لوحة مسار الحوار">話合いの流れ掲示</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+        <li><a href="#manabu/goods-note" data-ar="دفتر اجتماع الفصل">学級会ノート</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+        <li><a href="#manabu/goods-shikai" data-ar="ورقة المُيسِّر">司会進行メモ</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+      </ul>
+    </div>
+    <div class="weekly">
+      <span class="wl" data-ar="سطر لخطّة الأسبوع">週案用のひとこと</span>
+      <span class="wt" id="w-chokuzen-15min">学級会（議題：◯◯）。前の休み時間に、板書の枠・掲示・学級会ノートを用意</span>
+      <button class="btn copy" type="button" data-copy="w-chokuzen-15min" data-ar="نسخ">コピー</button>
+    </div>
+    <div class="foot">
+      <span class="by"><span data-ar="مقدَّم من">提供</span>：本サイト</span>
+      <div class="acts">
+        <a class="btn link" href="https://line.me/R/share?text=%E6%8E%88%E6%A5%AD%E7%9B%B4%E5%89%8D15%E5%88%86%E3%81%AE%E6%BA%96%E5%82%99%EF%BC%88%E5%AD%A6%E7%B4%9A%E4%BC%9A%E3%81%AE%E5%BD%93%E6%97%A5%EF%BC%89%0Ahttps%3A%2F%2Fyuutennis657-beep.github.io%2Ftokkatsu-hiroba%2F%23manabu%2Fj-chokuzen-15min" target="_blank" rel="noopener noreferrer" data-ar="ناقش هذه الممارسة في LINE">この実践について話す（LINE）</a>
+        <button class="btn copy" type="button" data-copy-text="https://yuutennis657-beep.github.io/tokkatsu-hiroba/#manabu/j-chokuzen-15min" data-ar="نسخ رابط هذه الممارسة">この実践のURLをコピー</button>
+      </div>
+    </div>
+  </article>
+
+  <article class="jissen" id="j-bansho-kata">
+    <div class="src"><span class="name">学級活動(1)・話合い</span><span class="dot"></span><span>全学年</span><span class="dot"></span><span>45分（学級会の中で）</span></div>
+    <h3>板書の型：提案理由を真ん中に置く</h3>
+    <p class="sum">板書は「記録」ではなく「話合いの地図」です。提案理由を真ん中に、いちばん大きく置くと、話合いが迷子になりにくくなります。</p>
+    <details class="jmore">
+      <summary><span class="p" data-ar="التفاصيل: التحضير والمسار والسبورة">くわしく（準備・流れ・板書）</span><span class="m" data-ar="إغلاق">とじる</span></summary>
+      <div class="jbody">
+        <h4>型</h4>
+        <ul>
+        <li>上段：議題・提案理由・めあて。提案理由を真ん中に、いちばん大きく書きます。</li>
+        <li>中段の左：出し合う。出た意見を短冊に書いて貼ります。順番は気にしません。</li>
+        <li>中段の右：くらべ合う。似た短冊を寄せ、そばに理由を書きます。ここで短冊が動きます。</li>
+        <li>下段：まとめる。決まったこと・だれが・いつまでを書きます。</li>
+        </ul>
+        <h4>書き方の約束</h4>
+        <ul>
+        <li>子どもの言葉のまま書きます。先生が言い換えません。</li>
+        <li>賛成・反対は、数ではなく理由で残します。「◯人」と書かない。</li>
+        <li>消しません。「くらべ合う」で短冊を動かします。</li>
+        </ul>
+        <h4>つまずき</h4>
+        <ul>
+        <li>板書が意見のリストで終わる → 「くらべ合う」で短冊を動かしていません。動かす係を、黒板記録の子に頼みます。</li>
+        <li>提案理由が小さい → 話合いの途中で「何のために話しているか」が消えます。真ん中に、いちばん大きく。</li>
+        <li>決まったことが「がんばる」で終わる → だれが・いつまでを足すと、翌日から動きます。</li>
+        </ul>
+      </div>
+    </details>
+    <div class="jset">
+      <p class="jset-h" data-ar="يُستخدم مع هذه الأدوات">セットで使うもの</p>
+      <ul class="glist">
+        <li><a href="#manabu/goods-flow" data-ar="لوحة مسار الحوار">話合いの流れ掲示</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+        <li><a href="#manabu/goods-mark" data-ar="بطاقات الموافقة والمعارضة">賛成・反対マーク</a><span class="gst" data-ar="قيد الإعداد">準備中</span></li>
+      </ul>
+    </div>
+    <div class="weekly">
+      <span class="wl" data-ar="سطر لخطّة الأسبوع">週案用のひとこと</span>
+      <span class="wt" id="w-bansho-kata">学級会：板書は提案理由を中央に。出た意見は子どもの言葉のまま短冊で貼る</span>
+      <button class="btn copy" type="button" data-copy="w-bansho-kata" data-ar="نسخ">コピー</button>
+    </div>
+    <div class="foot">
+      <span class="by"><span data-ar="مقدَّم من">提供</span>：本サイト</span>
+      <div class="acts">
+        <a class="btn link" href="https://line.me/R/share?text=%E6%9D%BF%E6%9B%B8%E3%81%AE%E5%9E%8B%EF%BC%9A%E6%8F%90%E6%A1%88%E7%90%86%E7%94%B1%E3%82%92%E7%9C%9F%E3%82%93%E4%B8%AD%E3%81%AB%E7%BD%AE%E3%81%8F%0Ahttps%3A%2F%2Fyuutennis657-beep.github.io%2Ftokkatsu-hiroba%2F%23manabu%2Fj-bansho-kata" target="_blank" rel="noopener noreferrer" data-ar="ناقش هذه الممارسة في LINE">この実践について話す（LINE）</a>
+        <button class="btn copy" type="button" data-copy-text="https://yuutennis657-beep.github.io/tokkatsu-hiroba/#manabu/j-bansho-kata" data-ar="نسخ رابط هذه الممارسة">この実践のURLをコピー</button>
+      </div>
+    </div>
+  </article>
+
+    <div class="cta" style="margin-top:22px">
+      <h2 data-ar="ممارستك أيضًا تُنشر هنا">あなたの実践も、ここに載ります</h2>
+      <p data-ar="أرسِلها عبر النموذج؛ نراجع المحتوى ثم ننشره (أسلوب هيئة التحرير). يمكن الإرسال بلا اسم. صور السبورة: فقط ما تظهر فيه السبورة وحدها. يُسحب المنشور خلال أسبوع من طلبك.">板書の写真1枚でも、10分の工夫でも。フォームで送っていただき、内容を確認してから載せます（編集部方式）。無記名でも大丈夫です。写真は「板書だけが写ったもの」に限ります。載せたあとの取り下げは、依頼から1週間以内に反映します。</p>
+      <div class="pick">
+        <a class="btn" href="https://forms.gle/fnWnivr61t2BA6tR7" target="_blank" rel="noopener noreferrer" data-ar="أرسِل ممارسة أو صورة سبورة">実践・板書を送る</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" id="links">
+    <h2 data-ar="روابط لممارسات جيّدة من الخارج">実践のリンク集（外のよいもの）</h2>
+    <p class="note" data-ar="ما هو جيّد في الخارج نرتّبه هنا فقط؛ المحتوى لأصحابه. آخر تحقّق: 21 سبتمبر 2026">外にある良いものは、ここでは並べ直すだけです。中身は各サイトの権利者のものです。最終確認：2026年9月21日</p>
+    <ul class="tiles">
+      <li><a class="tile" href="https://www.pref.okinawa.jp/kyoiku/gakko/1008797/1008633/1008660/1018537/1018538/1008665.html" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-shido"/></svg><span class="tl"><b class="tt" data-ar="نماذج خطط دروس أنشطة الفصل (مكتب ناها التعليمي)">学級活動の指導案 記入例（那覇教育事務所）</b><span class="ts" data-ar="ستّة نماذج للابتدائي والإعدادي / محافظة أوكيناوا">小学校3本・中学校3本。学級活動(1)(3)の指導案の型／沖縄県教育庁</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://kawasaki-edu.jp/9/2kenkyukai/index.cfm/12,0,60,html" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-web"/></svg><span class="tl"><b class="tt" data-ar="قاعدة بيانات توكاتسو (كاواساكي)">特活データベース（川崎市立小学校教育研究会）</b><span class="ts" data-ar="أمثلة عملية، ونصّ المُيسِّر، ودفتر اجتماع الفصل، وأدوات السبورة">実践事例集・司会台本・学級会ノート・板書グッズ</span></span><span class="go ext">外部</span></a></li>
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_20240722-01.pdf" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-shido"/></svg><span class="tl"><b class="tt" data-ar="نماذج السبورة في الدليل الإرشادي (المعهد الوطني)">板書例（教師用指導資料・国立教育政策研究所）</b><span class="ts" data-ar="مسار اجتماع الفصل ونماذج السبورة">学級会の流れと板書例。まず見るならここ</span></span><span class="go ext">PDF</span></a></li>
+      <li><a class="tile" href="https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo/" target="_blank" rel="noopener noreferrer"><svg class="thumb" aria-hidden="true"><use href="#t-video"/></svg><span class="tl"><b class="tt" data-ar="مواد مرئية: أنشطة الفصل (المعهد الوطني)">映像で見る学級会（国立教育政策研究所）</b><span class="ts" data-ar="شاهد حوارًا حقيقيًّا في الفصل">話合いの実際を動画で。授業前の10分に</span></span><span class="go ext">外部</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sec">
     <h2 data-ar="ابدأ من مشكلتك">お悩み別の入口</h2>
     <p class="note" data-ar="اضغط ما يشبه حالك، وسيُفتح لك المكان المقابل في مسار التعلّم بالأسفل.">いま困っていることを押すと、下の学習過程のうち、あなたが立っている場所が開きます。</p>
     <ul class="nayami">
@@ -1108,15 +1434,16 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     </ul>
   </div>
 
-  <div class="sec">
+  <div class="sec" id="goods">
     <h2 data-ar="أدوات اجتماع الفصل">学級会グッズ</h2>
-    <p class="note" data-ar="قيد الإعداد. الرسوم أدناه من رسم الموقع؛ ستُستبدل بصور الأدوات الحقيقية عند جاهزيتها.">準備中です。下の絵は本サイトの自作図で、実物のデータが揃いしだい差し替えます。PDFとWordの両方を置きます（登録は要りません）。</p>
+    <p class="note" data-ar="مرتّبة لتُستخدم مع الممارسات أعلاه. سنضع PDF وWord معًا (بلا تسجيل). ما هو «قيد الإعداد» يُستبدل فور جاهزيته.">上の実践とセットで使えるように並べています。PDFとWordの両方を置きます（登録は要りません）。「準備中」は、できしだい差し替えます。</p>
     <ul class="tiles">
-      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-post"/></svg><span class="tl"><b class="tt" data-ar="ورقة صندوق الموضوعات">議題ポスト用紙</b><span class="ts" data-ar="يكتب الطفل ما يريد أن يقرّره الفصل معًا">「クラスのみんなで決めたいこと」を書いて入れる紙</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
-      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-card"/></svg><span class="tl"><b class="tt" data-ar="بطاقة الاقتراح">提案カード</b><span class="ts" data-ar="الموضوع وسبب الاقتراح في ورقة واحدة">議題と提案理由を、1枚で書けるようにしたカード</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
-      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-note"/></svg><span class="tl"><b class="tt" data-ar="دفتر اجتماع الفصل">学級会ノート</b><span class="ts" data-ar="رأيي قبل الحوار، وما قرّرناه بعده">話合いの前の自分の考えと、決まったことを書く</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
-      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-shikai"/></svg><span class="tl"><b class="tt" data-ar="ورقة المُيسِّر">司会進行メモ</b><span class="ts" data-ar="ما يقوله المُيسِّر، بالترتيب">司会の子が読むことばを、順番どおりに並べたもの</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
-      <li><span class="tile"><svg class="gthumb" aria-hidden="true"><use href="#g-flow"/></svg><span class="tl"><b class="tt" data-ar="لوحة مسار الحوار">話合いの流れ掲示</b><span class="ts" data-ar="نطرح ← نقارن ← نقرّر (تُعلَّق على الحائط)">「出し合う→くらべ合う→まとめる」を貼って示す</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></span></li>
+      <li><div class="tile goods" id="goods-post"><svg class="gthumb" aria-hidden="true"><use href="#g-post"/></svg><span class="tl"><b class="tt" data-ar="ورقة صندوق الموضوعات">議題ポスト用紙</b><span class="ts" data-ar="يكتب الطفل ما يريد أن يقرّره الفصل معًا">「クラスのみんなで決めたいこと」を書いて入れる紙</span></span><span class="go" data-ar="قيد الإعداد">準備中</span></div></li>
+      <li><div class="tile goods" id="goods-card"><svg class="gthumb" aria-hidden="true"><use href="#g-card"/></svg><span class="tl"><b class="tt" data-ar="بطاقة الاقتراح">提案カード</b><span class="ts" data-ar="الموضوع وسبب الاقتراح في ورقة واحدة">議題と提案理由を、1枚で書けるようにしたカード</span><span class="use"><span data-ar="الممارسات التي تستخدمه">使う実践</span>：<a href="#manabu/j-keikaku-10min">計画委員会を10分で回す（学級会の前日）</a></span></span><span class="go" data-ar="قيد الإعداد">準備中</span></div></li>
+      <li><div class="tile goods" id="goods-note"><svg class="gthumb" aria-hidden="true"><use href="#g-note"/></svg><span class="tl"><b class="tt" data-ar="دفتر اجتماع الفصل">学級会ノート</b><span class="ts" data-ar="رأيي قبل الحوار، وما قرّرناه بعده">話合いの前の自分の考えと、決まったことを書く</span><span class="use"><span data-ar="الممارسات التي تستخدمه">使う実践</span>：<a href="#manabu/j-chokuzen-15min">授業直前15分の準備（学級会の当日）</a></span></span><span class="go" data-ar="قيد الإعداد">準備中</span></div></li>
+      <li><div class="tile goods" id="goods-shikai"><svg class="gthumb" aria-hidden="true"><use href="#g-shikai"/></svg><span class="tl"><b class="tt" data-ar="ورقة المُيسِّر">司会進行メモ</b><span class="ts" data-ar="ما يقوله المُيسِّر، بالترتيب">司会の子が読むことばを、順番どおりに並べたもの</span><span class="use"><span data-ar="الممارسات التي تستخدمه">使う実践</span>：<a href="#manabu/j-keikaku-10min">計画委員会を10分で回す（学級会の前日）</a>、<a href="#manabu/j-chokuzen-15min">授業直前15分の準備（学級会の当日）</a></span></span><span class="go" data-ar="قيد الإعداد">準備中</span></div></li>
+      <li><div class="tile goods" id="goods-flow"><svg class="gthumb" aria-hidden="true"><use href="#g-flow"/></svg><span class="tl"><b class="tt" data-ar="لوحة مسار الحوار">話合いの流れ掲示</b><span class="ts" data-ar="نطرح ← نقارن ← نقرّر (تُعلَّق على الحائط)">「出し合う→くらべ合う→まとめる」を貼って示す</span><span class="use"><span data-ar="الممارسات التي تستخدمه">使う実践</span>：<a href="#manabu/j-chokuzen-15min">授業直前15分の準備（学級会の当日）</a>、<a href="#manabu/j-bansho-kata">板書の型：提案理由を真ん中に置く</a></span></span><span class="go" data-ar="قيد الإعداد">準備中</span></div></li>
+      <li><div class="tile goods" id="goods-mark"><svg class="gthumb" aria-hidden="true"><use href="#g-mark"/></svg><span class="tl"><b class="tt" data-ar="بطاقات الموافقة والمعارضة">賛成・反対マーク</b><span class="ts" data-ar="علامات تُلصق بجانب البطاقات، لإبقاء الأسباب لا الأعداد">短冊のそばに貼る印。数ではなく理由を残すために使う</span><span class="use"><span data-ar="الممارسات التي تستخدمه">使う実践</span>：<a href="#manabu/j-bansho-kata">板書の型：提案理由を真ん中に置く</a></span></span><span class="go" data-ar="قيد الإعداد">準備中</span></div></li>
     </ul>
   </div>
 </section>
@@ -1128,7 +1455,15 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     <span class="meta" data-ar="مكان الحديث في LINE">話す場はLINEにあります</span>
   </div>
 
-  <div class="sec first">
+  <div class="sec first" id="okuru">
+    <h2 data-ar="أرسِل ممارستك">実践を送る</h2>
+    <p class="note" data-ar="بلا اسم، وبلا تسجيل. ما تُرسله لا يُنشر تلقائيًّا؛ نراجعه ثم نضعه في الموقع. أمّا الحديث والأسئلة وما يشغلك فاطرحه في ساحة LINE أدناه — هناك مَن يجيب في اليوم نفسه.">無記名で、登録もいりません。送ったものはそのまま公開されず、確認してから載せます。<strong>困っていること・話したいこと・聞きたいことは、下のLINEひろばへ。</strong>そのほうが、その日のうちに誰かが答えてくれます。</p>
+    <ul class="tiles">
+      <li><a class="tile" href="https://forms.gle/fnWnivr61t2BA6tR7" target="_blank" rel="noopener noreferrer"><span class="tl"><b class="tt" data-ar="أرسِل ممارسة أو صورة سبورة">実践・板書を送る</b><span class="ts" data-ar="صورة سبورة واحدة تكفي. تُنشر في «ممارسات جاهزة للغد» بعد المراجعة.">板書の写真1枚でも。確認のうえ「すぐ使える実践」に載ります</span></span><span class="go ext" data-ar="نموذج">フォーム</span></a></li>
+    </ul>
+  </div>
+
+  <div class="sec">
     <h2 data-ar="تقويم اللقاءات البحثية">研究会カレンダー</h2>
     <p class="note" data-ar="الأحمر: يوم انعقاد اللقاء / الأخضر: آخر موعد للتسجيل. اضغط على اليوم لترى الجهة المنظِّمة والمكان والمحتوى. المصادر: المواقع الرسمية للجمعيات (آخر تحقّق: 23 أغسطس 2026)">赤は研究会の当日、緑は申込の締切日です。<strong>日付を押すと、主催・会場・内容・申込が開きます。</strong>出どころは各団体の公式サイトと公式の配布資料です（最終確認：2026年8月23日）。</p>
     <div id="mainCal"></div>
@@ -1218,6 +1553,7 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
       <li data-ar="هذا موقع غير رسمي.">本サイトは非公式です。</li>
       <li data-ar="لا نستخدم أي تحليلات، ولا نرسل أي بيانات. كل ما يُحفظ يبقى داخل جهازك.">アクセス解析を行わず、いかなるデータも送信しません。保存は端末の中だけです。</li>
       <li data-ar="ملخّصات الأخبار مُولَّدة بالذكاء الاصطناعي؛ يُرجى دائمًا مراجعة المصدر الأصلي.">ニュースの要約は生成AIによるものです。必ず出典元をご確認ください。</li>
+      <li data-ar="الممارسات وصور السبورة تصلنا عبر النموذج، ونراجعها قبل النشر (لا يُنشر شيء تلقائيًّا). يُسحب المنشور خلال أسبوع من طلب صاحبه.">実践と板書は、フォームで受けとり、内容を確認してから載せています（投稿がそのまま公開されることはありません）。掲載の取り下げは、依頼から1週間以内に反映します。</li>
       <li data-ar="نصّ المنهج الدراسي صادر عن وزارة التعليم اليابانية (إعلان رسمي).">「学習指導要領」の本文は文部科学省告示によります。</li>
       <li data-ar="مواد وزارة التعليم والمعهد الوطني تُقتبس وتُعالَج مع ذكر المصدر.">文部科学省・国立教育政策研究所の資料は、出典を明記して引用・加工しています。</li>
       <li data-ar="الفيديوهات من القناة الرسمية لوزارة التعليم على YouTube، وتُحمَّل فقط عند الضغط. الحقوق لأصحابها.">動画は文部科学省の公式YouTubeチャンネルのもので、<strong>押したときだけ読み込みます</strong>。権利は各権利者に帰属します。</li>
@@ -1232,8 +1568,8 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
 <footer class="site-foot">
   <div class="in">
     <p><span data-ar="المشرف على الموقع">管理者</span>：伊藤 優（Ito Yu）</p>
-    <p><span data-ar="البريد الإلكتروني">メール</span>：<span id="adminMail">（未設定）</span></p>
-    <p><span data-ar="لطلبات التعديل أو الإضافة على الموقع، تفضّل من هنا.">HPへの依頼や修正がありましたら、こちらからお願いします。</span> <a id="formLink" href="#my" data-ar="نموذج الطلبات">ご依頼・修正フォーム</a></p>
+    <p><span data-ar="البريد الإلكتروني">メール</span>：<a id="adminMail" href="mailto:yuutennis657@gmail.com">yuutennis657@gmail.com</a></p>
+    <p><span data-ar="لطلبات التعديل أو الإضافة على الموقع، تفضّل من هنا.">HPへの依頼や修正がありましたら、こちらからお願いします。</span> <a id="formLink" href="https://forms.gle/URQVFfYq6VoSk5fg9" target="_blank" rel="noopener noreferrer" data-ar="نموذج الطلبات">ご依頼・修正フォーム</a></p>
     <p data-ar="موقع غير رسمي / لا يجمع أي بيانات">本サイトは非公式です／データを一切集めません</p>
   </div>
 </footer>
@@ -1603,9 +1939,12 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
   var secs = document.querySelectorAll('[data-page]');
   var tabs = document.querySelectorAll('[data-tab]');
   var first = true;
+  /* #manabu           … タブだけ
+     #manabu/j-xxx     … タブの中の場所（実践1件・グッズ1点・節）。LINEに貼って直接ひらける */
   function route(){
-    var id = location.hash.replace(/^#/, '');
-    if(!PAGES[id]) id = 'home';
+    var raw = location.hash.replace(/^#/, '').split('/');
+    var id = raw[0], at = raw[1] || '';
+    if(!PAGES[id]){ id = 'home'; at = ''; }
     secs.forEach(function(s){
       var on = (s.dataset.page === id);
       s.classList.toggle('is-on', on);
@@ -1615,8 +1954,20 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
       if(x.dataset.tab === id) x.setAttribute('aria-current','page');
       else x.removeAttribute('aria-current');
     });
-    document.title = 'TOKKATU広場｜' + PAGES[id];
-    if(!first){
+    document.title = 'TOKKATSU広場｜' + PAGES[id];
+    var el = at ? document.getElementById(at) : null;
+    if(el){
+      /* たたまれた中にあれば、ひらいてから行く */
+      var d = el.tagName === 'DETAILS' ? el : (el.closest ? el.closest('details') : null);
+      while(d){ d.open = true; d = d.parentElement ? d.parentElement.closest('details') : null; }
+      var quick = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+      setTimeout(function(){
+        el.scrollIntoView({ block:'start', behavior:(quick ? 'auto' : 'smooth') });
+        if(!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+        el.focus({ preventScroll:true });
+        el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+      }, first ? 150 : 30);
+    }else if(!first){
       var cur = document.querySelector('[data-page="' + id + '"]');
       if(cur) cur.focus({ preventScroll:true });
       window.scrollTo(0, 0);
@@ -1716,6 +2067,37 @@ html[data-w="pc"] .onboard .pick{grid-template-columns:1fr 1fr}
     });
     window.__talkStage = setStage;
   }
+
+  /* ══ 8-4. コピー（週案用のひとこと／実践のURL）。端末の中で完結し、外には何も送らない ══ */
+  function copyText(txt, btn){
+    function done(){
+      var l = (lang==='ar') ? 'تم النسخ' : 'コピーしました';
+      btn.classList.add('done'); btn.textContent = l;
+      setTimeout(function(){
+        btn.classList.remove('done');
+        btn.innerHTML = (lang==='ar') ? btn.dataset.ar : (btn.dataset.ja !== undefined ? btn.dataset.ja : btn.dataset.orig);
+      }, 1600);
+    }
+    function legacy(){
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '-1000px';
+      document.body.appendChild(ta); ta.select();
+      try{ if(document.execCommand('copy')) done(); }catch(e){}
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText && (location.protocol === 'https:' || location.hostname === 'localhost')){
+      navigator.clipboard.writeText(txt).then(done, legacy);
+    }else legacy();
+  }
+  document.querySelectorAll('[data-copy],[data-copy-text]').forEach(function(b){
+    b.dataset.orig = b.innerHTML;
+    b.addEventListener('click', function(){
+      var txt = b.dataset.copyText;
+      if(!txt){ var src = document.getElementById(b.dataset.copy); txt = src ? src.textContent.trim() : ''; }
+      if(txt) copyText(txt, b);
+    });
+  });
 
   /* ══ 9. ストックの見た目（保存は Step 2） ══ */
   document.querySelectorAll('.stock').forEach(function(b){
