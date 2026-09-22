@@ -45,6 +45,67 @@
   </section>
 </main>
 
+<div class="kanri-naosu-mado" id="kanri-naosu-mado" hidden role="dialog"
+     aria-modal="true" aria-labelledby="kanri-naosu-h">
+  <form class="kanri-naosu-naka" id="kanri-naosu-f" method="post" target="kanri-kakunin" novalidate>
+    <input type="hidden" name="kind" value="kanri-naosu">
+    <input type="hidden" name="key" id="kanri-naosu-key" value="">
+    <input type="hidden" name="v" id="kanri-naosu-v" value="">
+    <input type="hidden" name="nonce" id="kanri-naosu-nonce" value="">
+    <p class="kanri-kago">実践を編集</p>
+    <h2 id="kanri-naosu-h">管理画面でなおす</h2>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-t">題名<span class="okuru-hissu">必須</span></label>
+      <input class="okuru-i" id="kanri-naosu-t" name="t" maxlength="60" required>
+    </div>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-n">内容<span class="okuru-hissu">必須</span></label>
+      <select class="okuru-i" id="kanri-naosu-n" name="n" required>
+        <option value="gakkyu1">学級活動(1)</option>
+        <option value="gakkyu2">学級活動(2)</option>
+        <option value="gakkyu3">学級活動(3)</option>
+        <option value="gyoji">学校行事</option>
+        <option value="jidokai">児童会活動</option>
+        <option value="club">クラブ活動</option>
+      </select>
+    </div>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-g">学年<span class="okuru-nin">任意</span></label>
+      <input class="okuru-i" id="kanri-naosu-g" name="g" maxlength="60"
+             placeholder="例：5年／全学年／5年、6年">
+    </div>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-o">推しポイント<span class="okuru-nin">任意</span></label>
+      <input class="okuru-i" id="kanri-naosu-o" name="o" maxlength="60">
+    </div>
+    <div class="kanri-naosu-g kanri-naosu-g--zen">
+      <label for="kanri-naosu-m">実践内容<span class="okuru-hissu">必須</span></label>
+      <textarea class="okuru-i okuru-hiroi" id="kanri-naosu-m" name="m"
+                maxlength="1000" rows="7" required></textarea>
+    </div>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-na">お名前<span class="okuru-nin">任意</span></label>
+      <input class="okuru-i" id="kanri-naosu-na" name="na" maxlength="40" autocomplete="name">
+    </div>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-sh">所属<span class="okuru-nin">任意</span></label>
+      <input class="okuru-i" id="kanri-naosu-sh" name="sh" maxlength="60">
+    </div>
+    <p class="okuru-check kanri-naosu-g--zen">
+      <label for="kanri-naosu-ko"><input type="checkbox" id="kanri-naosu-ko" name="ko" value="1">
+        <span>サイトに<b>名前と所属を出す</b></span></label>
+      <span class="okuru-check-chu">外すと「提供：送ってくださった先生」になります。</span>
+    </p>
+    <p class="kanri-naosu-chu kanri-naosu-g--zen">写真とPDFは、そのまま残ります。</p>
+    <p class="okuru-shirase kanri-naosu-g--zen" id="kanri-naosu-shirase"
+       role="status" aria-live="polite"></p>
+    <p class="kanri-naosu-te kanri-naosu-g--zen">
+      <button type="button" class="bansho-b" id="kanri-naosu-yameru">やめる</button>
+      <button type="submit" class="btn" id="kanri-naosu-kakutei">保存する<span class="btn-ya">→</span></button>
+    </p>
+  </form>
+</div>
+
 <div class="kanri-kesu-mado" id="kanri-kesu-mado" hidden role="dialog"
      aria-modal="true" aria-labelledby="kanri-kesu-h">
   <div class="kanri-kesu-naka">
@@ -86,6 +147,11 @@
   var kazu = document.getElementById('kanri-kazu');
   var cards = [].slice.call(document.querySelectorAll('.kanri-card'));
   var matte = '';
+  var naosuMatte = '', naosuIma = null;
+  var naosuMado = document.getElementById('kanri-naosu-mado');
+  var naosuF = document.getElementById('kanri-naosu-f');
+  var naosuKakutei = document.getElementById('kanri-naosu-kakutei');
+  var naosuShirase = document.getElementById('kanri-naosu-shirase');
   var kesuMatte = '', kesuIma = null;
   var kesuMado = document.getElementById('kanri-kesu-mado');
   var kesuF = document.getElementById('kanri-kesu-f');
@@ -93,6 +159,7 @@
   var kesuShirase = document.getElementById('kanri-kesu-shirase');
 
   form.action = OKURU_URL;
+  naosuF.action = OKURU_URL;
   kesuF.action = OKURU_URL;
 
   function nonce(){
@@ -124,6 +191,29 @@
     /* Apps Script の返事は Google の内側フレームから来るため、
        source ではなく、128ビットの使い捨て nonce でこの回の返事だけを受ける。 */
     if(!ev.data || ev.data.source !== 'tokkatsu-kanri') return;
+    if(ev.data.action === 'naosu'){
+      if(ev.data.nonce !== naosuMatte) return;
+      naosuKakutei.disabled = false;
+      if(ev.data.ok){
+        var d = naosu_yomu();
+        if(naosuIma){
+          var by = d.ko && d.na ? d.na + (d.sh ? '（' + d.sh + '）' : '') : '送ってくださった先生';
+          var scene = naosuF.elements.n.options[naosuF.elements.n.selectedIndex].text;
+          d.s = scene; d.by = by;
+          naosuIma.querySelector('h3').textContent = d.t;
+          naosuIma.querySelector('[data-kanri-meta]').textContent =
+            [scene, d.g || '学年なし', naosuIma.getAttribute('data-date'), '提供：' + by].filter(Boolean).join('・');
+          naosuIma.setAttribute('data-sagasu', [d.t, d.m, d.g, scene, by].join(' '));
+          naosuIma.querySelector('[data-naosu]').setAttribute('data-naosu', JSON.stringify(d));
+          naosuIma.querySelector('[data-kesu]').setAttribute('data-title', d.t);
+        }
+        naosuMado.hidden = true; naosuIma = null; shiboru();
+        kazu.textContent += '（保存しました。公開ページへの反映は数分後です）';
+      }else{
+        naosuShirase.textContent = ev.data.riyu || '保存できませんでした。';
+      }
+      return;
+    }
     if(ev.data.action === 'kesu'){
       if(ev.data.nonce !== kesuMatte) return;
       kesuKakutei.disabled = false;
@@ -173,12 +263,57 @@
     if(!k){ naka.hidden = true; lock.hidden = false; shirase.textContent = 'もう1度、確認が必要です。'; return; }
     try{
       var d = JSON.parse(b.getAttribute('data-naosu'));
-      d.key = k; d.kanri = true;
-      sessionStorage.setItem(NAOSHI_NA, JSON.stringify(d));
-      location.href = 'index.html#okuru';
+      naosuIma = b.closest('.kanri-card');
+      naosu_ireru(d); naosuShirase.textContent = ''; naosuMado.hidden = false;
+      document.getElementById('kanri-naosu-t').focus();
     }catch(e){
       kazu.textContent = 'この1件を開けませんでした。';
     }
+  });
+  function naosu_ireru(d){
+    document.getElementById('kanri-naosu-v').value = d.v || '';
+    document.getElementById('kanri-naosu-t').value = d.t || '';
+    document.getElementById('kanri-naosu-n').value = d.n || 'gakkyu1';
+    document.getElementById('kanri-naosu-g').value = d.g || '';
+    document.getElementById('kanri-naosu-o').value = d.o || '';
+    document.getElementById('kanri-naosu-m').value = d.m || '';
+    document.getElementById('kanri-naosu-na').value = d.na || '';
+    document.getElementById('kanri-naosu-sh').value = d.sh || '';
+    document.getElementById('kanri-naosu-ko').checked = !!d.ko;
+  }
+  function naosu_yomu(){
+    return {
+      v: document.getElementById('kanri-naosu-v').value,
+      t: document.getElementById('kanri-naosu-t').value.trim(),
+      n: document.getElementById('kanri-naosu-n').value,
+      g: document.getElementById('kanri-naosu-g').value.trim(),
+      o: document.getElementById('kanri-naosu-o').value.trim(),
+      m: document.getElementById('kanri-naosu-m').value.trim(),
+      na: document.getElementById('kanri-naosu-na').value.trim(),
+      sh: document.getElementById('kanri-naosu-sh').value.trim(),
+      ko: document.getElementById('kanri-naosu-ko').checked
+    };
+  }
+  document.getElementById('kanri-naosu-yameru').addEventListener('click', function(){
+    naosuMado.hidden = true; naosuIma = null; naosuShirase.textContent = '';
+  });
+  naosuF.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var d = naosu_yomu(), k = key_yomu();
+    if(!d.t || !d.m){
+      naosuShirase.textContent = !d.t ? '題名を書いてください。' : '実践内容を書いてください。';
+      document.getElementById(!d.t ? 'kanri-naosu-t' : 'kanri-naosu-m').focus(); return;
+    }
+    if(d.ko && !d.na){
+      naosuShirase.textContent = '名前を公開する場合は、お名前を書いてください。';
+      document.getElementById('kanri-naosu-na').focus(); return;
+    }
+    if(!k || !naosuIma){ naosuMado.hidden = true; naka.hidden = true; lock.hidden = false; return; }
+    naosuMatte = nonce(); naosuKakutei.disabled = true;
+    naosuShirase.textContent = '保存しています…';
+    document.getElementById('kanri-naosu-key').value = k;
+    document.getElementById('kanri-naosu-nonce').value = naosuMatte;
+    naosuF.submit();
   });
   document.getElementById('kanri-kesu-yameru').addEventListener('click', function(){
     kesuMado.hidden = true; kesuIma = null; kesuShirase.textContent = '';

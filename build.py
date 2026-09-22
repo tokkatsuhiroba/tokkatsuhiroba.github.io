@@ -2754,22 +2754,39 @@ def build_kanri_list(jissen):
        編集の権限はこのHTMLではなく、Apps ScriptのKANRI_KEYが決める。"""
     out = []
     for a in bansho_aru(jissen):
+        # by は公開ページ用の1行だが、管理画面では名前と所属を
+        # 別々になおす。既存データは「名前（所属）」から一度だけ分ける。
+        by = (a.get('by') or '').strip()
+        na, sh, ko = '', '', False
+        if by and by != '送ってくださった先生':
+            k = re.match(r'^(.*?)（([^()]*)）$', by)
+            if k:
+                na, sh = k.group(1).strip(), k.group(2).strip()
+            else:
+                na = by
+            ko = True
+        scene_key = {
+            '学級活動(1)': 'gakkyu1', '学級活動(2)': 'gakkyu2',
+            '学級活動(3)': 'gakkyu3', '学校行事': 'gyoji',
+            '児童会活動': 'jidokai', 'クラブ活動': 'club',
+        }.get(a['scene'], '')
         d = {
             'v': a['slug'], 't': a['title'], 'o': a.get('oshi') or '',
             'm': a['summary'].strip(), 'g': a['grade'], 's': a['scene'],
-            'by': a['by'],
+            'n': scene_key, 'na': na, 'sh': sh, 'ko': ko, 'by': a['by'],
         }
         sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by']))
         meta = '・'.join(x for x in (a['scene'], a['grade'], ja_md(a['d']), '提供：' + a['by']) if x)
         out.append(
-            '      <article class="kanri-card" data-v="%s" data-sagasu="%s">\n'
-            '        <div><h3>%s</h3><p>%s</p></div>\n'
+            '      <article class="kanri-card" data-v="%s" data-date="%s" data-sagasu="%s">\n'
+            '        <div><h3>%s</h3><p data-kanri-meta>%s</p></div>\n'
             '        <div class="kanri-card-te">'
             '<button type="button" class="jibun-naosu" data-naosu="%s">なおす</button>'
             '<button type="button" class="kanri-kesu" data-kesu data-title="%s">消す</button>'
             '</div>\n'
             '      </article>'
-            % (esc_html(a['slug']), esc_html(sagasu), esc_html(a['title']), esc_html(meta),
+            % (esc_html(a['slug']), esc_html(ja_md(a['d'])), esc_html(sagasu),
+               esc_html(a['title']), esc_html(meta),
                esc_html(json.dumps(d, ensure_ascii=False, separators=(',', ':'))),
                esc_html(a['title'])))
     return '\n'.join(out) if out else '      <p class="karappo">届いた実践はまだありません。</p>'

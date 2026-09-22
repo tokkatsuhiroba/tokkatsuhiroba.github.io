@@ -156,6 +156,13 @@ function doPost(e) {
     if (e.parameter && e.parameter.kind === 'kanri-kesu') {
       return _kanri_kesu(e.parameter);
     }
+    /* 管理画面内の編集。通常のJSON送信と違い、form POSTで
+       送るので、ここで受ける。返事はpostMessageで元の画面へ戻す。 */
+    if (e.parameter && e.parameter.kind === 'kanri-naosu') {
+      e.parameter.kanri = '1';
+      e.parameter.by_atarashii = '1';
+      return _naosu(e.parameter, true);
+    }
     var d = JSON.parse(e.postData.contents);
 
     // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
@@ -649,22 +656,28 @@ function doGet(e) {
    ★front matter は作りなおしますが、**届いた日と時こく（date・todoita）
      と 合いことば（nushi）は、はじめのものを引きつぎます**。
      直すたびに新しくなると、並びが変わって別ものに見えるためです。      */
-function _naosu(d) {
+function _naosu(d, kanriMado) {
+  function kotae(x) {
+    if (!kanriMado) return _kotae(x);
+    return _kanri_mado({ source: 'tokkatsu-kanri', action: 'naosu',
+                         ok: !!x.ok, riyu: x.riyu || '',
+                         nonce: String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80) });
+  }
   var slug = String(d.v || '').trim();
   if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
-    return _kotae({ ok: false, riyu: '行き先がありません' });
+    return kotae({ ok: false, riyu: '行き先がありません' });
   }
   var key = String(d.key || '').trim();
   var moto = _md_yomu(slug);
-  if (!moto.hon) return _kotae({ ok: false, riyu: 'もう残っていません' });
+  if (!moto.hon) return kotae({ ok: false, riyu: 'もう残っていません' });
   var kanri = !!(key && key === _kanri_key());
   if (!kanri) {
-    if (!moto.nushi)  return _kotae({ ok: false, riyu: 'この1件には合いことばが付いていません' });
+    if (!moto.nushi)  return kotae({ ok: false, riyu: 'この1件には合いことばが付いていません' });
     if (!key || _hash(key) !== moto.nushi) {
-      return _kotae({ ok: false, riyu: '合いことばが ちがいます' });
+      return kotae({ ok: false, riyu: '合いことばが ちがいます' });
     }
   }
-  if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
+  if (!_kazoeru()) return kotae({ ok: false, riyu: '今日はもう受けとれません' });
 
   var shashin = (d.e || []).slice(0, MAI_MAX);
   var pdfs    = (d.p || []).slice(0, 1);
@@ -674,9 +687,9 @@ function _naosu(d) {
     _kesu_folder('src/bansho/' + slug, slug);          // 古いぶんを先に消す
     for (var i = 0; i < shashin.length; i++) {
       var b = _dataURI(shashin[i]);
-      if (!b) return _kotae({ ok: false, riyu: '写真の形が読めません' });
+      if (!b) return kotae({ ok: false, riyu: '写真の形が読めません' });
       if (b.getBytes().length > KB_MAX * 1024) {
-        return _kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
+        return kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
       }
       var na = ('0' + (i + 1)).slice(-2) + '.jpg';
       folder.createFile(b.setName(na));
@@ -686,21 +699,25 @@ function _naosu(d) {
   var pdf = null;
   if (pdfs.length) {
     var pb = _dataURI_pdf(pdfs[0]);
-    if (!pb) return _kotae({ ok: false, riyu: 'PDFの形が読めません' });
+    if (!pb) return kotae({ ok: false, riyu: 'PDFの形が読めません' });
     if (pb.getBytes().length > PDF_MB_MAX * 1024 * 1024) {
-      return _kotae({ ok: false, riyu: 'PDFが大きすぎます（' + PDF_MB_MAX + 'MBまで）' });
+      return kotae({ ok: false, riyu: 'PDFが大きすぎます（' + PDF_MB_MAX + 'MBまで）' });
     }
     _kesu_folder('src/shiryo/' + slug, slug);          // 古いぶんを先に消す
     folder.createFile(pb.setName('shiryo.pdf'));
     pdf = Utilities.base64Encode(pb.getBytes());
   }
 
-  var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '',
+  var hon = d.m || '';
+  var oshi = _arau(d.o || '').slice(0, 60);
+  if (oshi) hon = '★推しポイント：' + oshi + '\n\n' + hon;
+  var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: hon,
             n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,
             nushi: moto.nushi };
-  /* 表に出ている提供者名は、管理画面からなおすときも引きつぐ。
-     管理人ではない人がd.byを作っても、ここには入りません。 */
-  if (kanri && d.kanri) n.by_hyoji = _arau(d.by).slice(0, 100);
+  /* 新しい管理画面は、名前・所属・公開の有無をそのまま送る。
+     以前は古い by を必ず優先していたため、名前や所属を
+     書き換えても更新されなかった。古い公開済み画面だけ互換用に by を引きつぐ。 */
+  if (kanri && d.kanri && !d.by_atarashii) n.by_hyoji = _arau(d.by).slice(0, 100);
   var md = _md(slug, n);
   md = _hikitsugu(md, moto.hon, ['date', 'todoita']);
   if (!uri.length && moto.bansho) md = md.replace(/\n---\n/, '\nbansho: ' + slug + '\n---\n');
@@ -708,7 +725,7 @@ function _naosu(d) {
   _github('src/jissen/' + moto.michi_na, Utilities.base64Encode(md, Utilities.Charset.UTF_8),
           '実践を1件 なおす（' + slug + '）');
   _shiraseru_naoshita(slug, d, n);
-  return _kotae({ ok: true });
+  return kotae({ ok: true });
 }
 
 /* 管理画面の開錠結果。返すのは「合った／ちがう」だけで、
