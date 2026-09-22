@@ -634,15 +634,42 @@ def kenmon_jissen(fm, goods):
     #     そのあいだ、入力してもらった推しポイントが どこにも残りません。
     #     本文に混ぜて運べば、**受け口を1行も触らずに** 今日から効きます。
     #   ★手で書く .md では、front matter の oshi: も使えます（そちらが優先）。
-    oshi = (fm.get('oshi') or '').strip()
     hon = fm['summary'].strip()
-    if not oshi and hon.startswith(OSHI_SHIRUSHI):
-        kire = hon.split('\n', 1)
-        oshi = kire[0][len(OSHI_SHIRUSHI):].strip()
-        hon = (kire[1] if len(kire) > 1 else '').strip()
-    elif hon.startswith(OSHI_SHIRUSHI):
-        hon = hon.split('\n', 1)[1].strip() if '\n' in hon else ''
+    oshi_shirushi, hon = shirushi_hagasu(hon, OSHI_SHIRUSHI)
+    oshi = (fm.get('oshi') or '').strip() or oshi_shirushi
     fm['oshi'] = oshi[:OSHI_MOJI_MAX]
+
+    # ── 地域（2026-09-22 依頼）────────────────────────────
+    #   「47都道府県で、日本の特色が見えたら楽しい」という話から。
+    #   都道府県だけでなく **自治体（市区町村）まで** 書けるようにします。
+    #   東京が多くなる見こみで、23区や支部で実態がちがうためです。
+    #   ★任意です。書かなければ、札にも何も出ません。
+    #   ★書いたぶんは公開ページに出ます（入力欄にもそう書いてあります）。
+    #     名前を出す／出さない とは別の話なので、ここは ko を見ません。
+    #   ★運び方は推しポイントと同じ（本文の頭に混ぜる）。理由は
+    #     shirushi_hagasu の覚え書きに書きました。
+    chiiki, hon = shirushi_hagasu(hon, CHIIKI_SHIRUSHI)
+    ken = (fm.get('ken') or '').strip()
+    shi = (fm.get('shi') or '').strip()
+    if chiiki and not (ken or shi):
+        kire = [x.strip() for x in chiiki.split(CHIIKI_KUGIRI)]
+        ken = kire[0]
+        shi = kire[1] if len(kire) > 1 else ''
+    if ken and ken not in KEN_CHIHO:
+        raise Tomeru('%s：ken の「%s」が 47都道府県にありません。'
+                     '「東京都」「神奈川県」「北海道」のように書いてください' % (f, ken))
+    if shi and not ken:
+        raise Tomeru('%s：shi（自治体）だけ書いてあって、ken（都道府県）が'
+                     'ありません。市区町村だけでは、どこの県か決まりません' % f)
+    if len(shi) > CHIIKI_SHI_MAX:
+        raise Tomeru('%s：shi（自治体）が長すぎます（%d字。%d字まで）'
+                     % (f, len(shi), CHIIKI_SHI_MAX))
+    if 'http' in shi or 'http' in ken:
+        raise Tomeru('%s：地域の欄にURLは入れられません' % f)
+    fm['ken'], fm['shi'] = ken, shi
+    fm['chiiki'] = (ken + ('　' + shi if shi else '')) if ken else ''
+    fm['chiho'] = KEN_CHIHO.get(ken, '')
+
     fm['summary'] = hon
     if not hon:
         # 推しポイントしか無いときは、それを本文にもします（空の札を出さない）
@@ -656,10 +683,32 @@ def kenmon_jissen(fm, goods):
     return True, None
 
 
-# 推しポイントを、本文の1行目に混ぜて運ぶときの目じるし。
-#   画面の入力欄（src/hiroba.html）と、ここと、2か所でしか使いません。
+# 本文の頭に混ぜて運ぶときの目じるし。
+#   画面の入力欄（src/hiroba.html・src/kanri.html）と、ここでしか使いません。
 OSHI_SHIRUSHI = '★推しポイント：'
 OSHI_MOJI_MAX = 60
+CHIIKI_SHIRUSHI = '★地域：'
+CHIIKI_KUGIRI = '／'     # 都道府県と自治体の間（例：東京都／江東区）
+CHIIKI_SHI_MAX = 20
+
+
+def shirushi_hagasu(hon, shirushi):
+    """本文の頭に混ぜて運んだ1行を、はがして返す。（値, のこりの本文）
+
+       なぜ front matter ではなく、本文の頭に混ぜて運ぶのか
+         新しい欄を front matter に書くのは **受け口（Apps Script）** です。
+         受け口はこちらのファイルを直しても、貼り直すまで古いまま動きます。
+         そのあいだ、入力してもらった字が どこにも残りません。
+         本文に混ぜて運べば、**受け口を1行も触らずに** 今日から効きます。
+       ★手で書く .md では front matter（oshi:／ken:／shi:）も使えます。
+         そちらのほうが読みやすいので、front matter があればそちらが勝ちます。
+       ★見るのは頭の4行だけです。本文の途中に同じ字が出ても、はがしません。
+    """
+    gyo = hon.split('\n')
+    for i, x in enumerate(gyo[:4]):
+        if x.startswith(shirushi):
+            return x[len(shirushi):].strip(), '\n'.join(gyo[:i] + gyo[i + 1:]).strip()
+    return '', hon
 
 
 _GIT_TODOITA = {}
@@ -2243,86 +2292,235 @@ def build_kenkyukai(ken, kyara, buhin, kyou=None):
 # 3-3. ほかの研究会（単なるリンク集にしない＝様子の1行とタグが要る）
 # ══════════════════════════════════════════════════════════
 
-# (範囲, 範囲の字, だれ向け, 会の名前, URL, 様子の1行, 置いてあるもののタグ)
+# ── 47都道府県と、地方のまとまり（2026-09-22）────────────────
+#   ここは2か所で使います。
+#     ① 研究会を「地方ごと」に束ねる（このすぐ下の KAI）
+#     ② 届いた実践の「地域」を確かめる（kenmon_jissen の ★地域）
+#   数が30・40と増えたら、この表がそのまま「地図から絞る」の土台になります。
+#   ★並びは北から南。地図を出すときも、この順に読みます。
+CHIHO = (
+    ('北海道・東北', ('北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県')),
+    ('関東',         ('茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県')),
+    ('中部',         ('新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
+                      '岐阜県', '静岡県', '愛知県')),
+    ('近畿',         ('三重県', '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県')),
+    ('中国・四国',   ('鳥取県', '島根県', '岡山県', '広島県', '山口県',
+                      '徳島県', '香川県', '愛媛県', '高知県')),
+    ('九州・沖縄',   ('福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県',
+                      '鹿児島県', '沖縄県')),
+)
+KEN_ZEN = tuple(k for _, ks in CHIHO for k in ks)          # 47
+
+# ── 日本の地図（2026-09-22 依頼）────────────────────────────
+#   「みんなの実践」を、県から絞るための地図です。
+#
+#   ★形は、ここに書いた **経度・緯度** から組み立てます。
+#     画像は1枚も使いません。外からも1バイトも取りにいきません
+#     （Googleマップ等は開いただけで通信が飛びます。原則2に触れます）。
+#   ★海岸線は ざっくりです。岬と湾の大きいところだけ拾っています。
+#     細かくすると重くなるうえ、スマホでは どのみち見えません。
+#   ★押すのは **県の札**（HTMLのボタン）で、絵の上に重ねています。
+#     絵そのものを押させると、香川県が指より小さくなって押せません。
+#
+#   直したいとき … 下の数（経度, 緯度）を動かすだけで形が変わります。
+#   CSSも画像もさわりません。
+
+# 地図の枠。ここに入る範囲だけを描きます（沖縄は別枠）。
+CHIZU_W, CHIZU_H = 480.0, 532.0
+CHIZU_LON0, CHIZU_LAT0 = 129.0, 45.9      # 左上のかど
+CHIZU_K = 34.0                            # 1度あたりの大きさ
+CHIZU_YOKO = 0.809                        # 北緯36度での、経度1度のちぢみ
+
+
+def chizu_ten(lon, lat):
+    """経度・緯度を、地図の中の位置に直す（ふつうの正距円筒図法）。"""
+    return ((lon - CHIZU_LON0) * CHIZU_YOKO * CHIZU_K,
+            (CHIZU_LAT0 - lat) * CHIZU_K)
+
+
+# 島のかたち。時計まわりに、岬と湾をたどります。
+CHIZU_SHIMA = {
+    '北海道': (
+        (141.9, 45.5), (142.6, 44.8), (143.9, 44.3), (144.8, 43.9),
+        (145.3, 44.35), (145.55, 43.3), (145.0, 43.0), (144.3, 42.95),
+        (143.3, 42.3), (143.25, 41.9), (142.5, 42.5), (141.6, 42.6),
+        (140.9, 42.35), (140.5, 41.75), (140.05, 41.45), (139.85, 41.9),
+        (140.3, 42.55), (139.8, 43.25), (140.5, 43.4), (140.3, 43.9),
+        (141.4, 44.6), (141.6, 45.2),
+    ),
+    '本州': (
+        (141.45, 41.45), (140.9, 41.2), (140.3, 41.25), (140.0, 40.5),
+        (139.85, 39.9), (139.9, 38.9), (139.4, 38.2), (138.9, 37.8),
+        (138.3, 37.2), (137.35, 36.75), (137.0, 37.5), (136.75, 36.85),
+        (136.05, 36.2), (135.75, 35.55), (135.15, 35.75), (134.2, 35.6),
+        (133.0, 35.55), (132.0, 35.15), (130.95, 34.4), (130.9, 34.0),
+        (131.4, 33.85), (132.0, 34.05), (132.55, 34.25), (133.4, 34.4),
+        (134.4, 34.55), (135.2, 34.4), (135.15, 33.9), (135.75, 33.45),
+        (136.4, 34.2), (136.85, 34.25), (136.85, 34.75), (137.5, 34.65),
+        (138.3, 34.6), (138.85, 34.6), (139.15, 35.15), (139.7, 35.25),
+        (139.85, 34.9), (140.4, 35.1), (140.85, 35.7), (140.65, 36.4),
+        (140.95, 37.0), (141.05, 38.25), (141.6, 38.3), (141.55, 39.0),
+        (142.05, 39.5), (141.95, 40.45), (141.4, 40.6),
+    ),
+    '四国': (
+        (134.6, 34.3), (134.75, 33.85), (134.2, 33.55), (134.18, 33.25),
+        (133.5, 33.5), (133.0, 33.15), (132.8, 32.9), (132.45, 33.3),
+        (132.4, 33.95), (132.75, 34.15), (133.6, 34.35),
+    ),
+    '九州': (
+        (130.95, 33.95), (131.35, 33.7), (131.75, 33.75), (131.9, 33.3),
+        (131.55, 32.8), (131.5, 31.9), (131.05, 31.4), (130.7, 31.0),
+        (130.6, 31.45), (130.3, 31.2), (130.2, 31.95), (130.05, 32.6),
+        (129.8, 32.75), (129.6, 33.0), (129.95, 33.4), (129.8, 33.6),
+        (130.25, 33.6), (130.4, 33.9), (130.75, 33.9),
+    ),
+}
+
+# 沖縄は、そのままの位置だと地図が縦にのびて、本州が小さくなります。
+#   だから左下に別枠を置きます（日本の地図の、ふつうのやり方です）。
+#   ★置き場所は **右下（太平洋がわ）**です。左下は九州が立っているので、
+#     そこに置くと枠が九州に重なります（実測で踏みました）。
+CHIZU_OKI_WAKU = (348.0, 404.0, 120.0, 120.0)    # x y 幅 高さ
+#   沖縄本島は、北東から南西へ ほそ長くのびた島です。
+CHIZU_OKI = (
+    (128.33, 26.87), (128.36, 26.70), (128.14, 26.54), (127.97, 26.45),
+    (127.85, 26.29), (127.76, 26.08), (127.64, 26.10), (127.70, 26.26),
+    (127.79, 26.41), (127.89, 26.52), (128.06, 26.64), (128.19, 26.79),
+)
+
+# 47都道府県を置くところ（経度, 緯度）。県庁ではなく、県の真ん中あたり。
+#   札が重なったら、build_chizu が下へずらします（手で直さなくて大丈夫）。
+KEN_ICHI = {
+    '北海道': (142.9, 43.4), '青森県': (140.75, 40.75), '岩手県': (141.4, 39.6),
+    '宮城県': (140.95, 38.45), '秋田県': (140.4, 39.75), '山形県': (140.15, 38.45),
+    '福島県': (140.3, 37.5), '茨城県': (140.3, 36.3), '栃木県': (139.8, 36.7),
+    '群馬県': (138.95, 36.5), '埼玉県': (139.35, 36.0), '千葉県': (140.2, 35.5),
+    '東京都': (139.4, 35.7), '神奈川県': (139.3, 35.4), '新潟県': (138.9, 37.5),
+    '富山県': (137.2, 36.6), '石川県': (136.75, 36.65), '福井県': (136.2, 35.85),
+    '山梨県': (138.6, 35.6), '長野県': (138.1, 36.15), '岐阜県': (137.0, 35.8),
+    '静岡県': (138.3, 34.95), '愛知県': (137.2, 35.05), '三重県': (136.4, 34.5),
+    '滋賀県': (136.1, 35.2), '京都府': (135.6, 35.2), '大阪府': (135.5, 34.6),
+    '兵庫県': (134.85, 35.0), '奈良県': (135.9, 34.3), '和歌山県': (135.4, 33.9),
+    '鳥取県': (133.95, 35.4), '島根県': (132.5, 35.1), '岡山県': (133.8, 34.85),
+    '広島県': (132.75, 34.6), '山口県': (131.6, 34.2), '徳島県': (134.3, 33.9),
+    '香川県': (134.0, 34.2), '愛媛県': (132.9, 33.7), '高知県': (133.4, 33.5),
+    '福岡県': (130.6, 33.5), '佐賀県': (130.15, 33.3), '長崎県': (129.85, 32.95),
+    '熊本県': (130.8, 32.6), '大分県': (131.4, 33.2), '宮崎県': (131.35, 32.2),
+    '鹿児島県': (130.6, 31.6), '沖縄県': (127.9, 26.4),
+}
+
+if sorted(KEN_ICHI) != sorted(KEN_ZEN):
+    # ★検問。1県でも落ちると、その県の実践が地図からさがせなくなります。
+    _nai = [k for k in KEN_ZEN if k not in KEN_ICHI]
+    _yobun = [k for k in KEN_ICHI if k not in KEN_ZEN]
+    raise SystemExit('KEN_ICHI（地図の位置）がそろっていません。'
+                     '足りない：%s ／ 余分：%s'
+                     % ('、'.join(_nai) or '無し', '、'.join(_yobun) or '無し'))
+
+KEN_CHIHO = dict((k, ch) for ch, ks in CHIHO for k in ks)  # 県 → 地方
+
+if len(KEN_ZEN) != 47 or len(KEN_CHIHO) != 47:
+    raise SystemExit('CHIHO の都道府県が47ではありません（%d）' % len(KEN_ZEN))
+
+
+# (範囲, 範囲の字, だれ向け, 都道府県, 会の名前, URL, 様子の1行, 置いてあるもののタグ)
+#
+#   都道府県は、地方ごとに束ねるための鍵です。全国の会は '' にします。
+#   市の会は、その市がある県を書きます（川崎市→神奈川県）。
 KAI = (
-    ('zen', '全国', '小・中・高',
+    ('zen', '全国', '小・中・高', '',
      '全国特別活動研究会',
      'https://zentokkatsu.com/',
      '全国大会と冬季研・夏季ゼミの案内。この一覧そのものの出どころです。',
      ('大会案内', '各地の会の一覧')),
-    ('zen', '全国', '小中高・研究者',
+    ('zen', '全国', '小中高・研究者', '',
      '日本特別活動学会',
      'https://jaseatokkatsu.jimdoweb.com/',
      'オンラインの勉強会「特活カフェ」と研究会の案内。紀要と会報はPDFで読めます。',
      ('研究会案内', '紀要・会報PDF')),
-    ('zen', '全国', '小学校',
+    ('zen', '全国', '小学校', '',
      '特別活動 希望の会',
      'https://kibounokai.web.wox.cc/',
      '教科調査官と実践者のネットワーク。小学校特別活動の映像資料と大会の案内。',
      ('映像資料', '大会案内')),
-    ('zen', '全国', '小学校',
+    ('zen', '全国', '小学校', '',
      '全国小学校学校行事研究会',
      'https://zensyo-gyou.com/',
      '学校行事のガイドラインと研究報告。行事を「思い出づくり」から動かしたいときに。',
      ('行事のガイドライン', '研究報告')),
-    ('zen', '全国', '小・中',
+    ('zen', '全国', '小・中', '',
      '全国道徳特別活動研究会',
      'https://doutokutokkatukatarukai.jimdofree.com/',
      '昭和33年から続く会。全国大会と、月例会「大いに語る会」の案内。道徳といっしょに考えます。',
      ('全国大会', '月例会')),
-    ('ken', '都', '小学校',
+    ('ken', '都', '小学校', '東京都',
      '東京都小学校特別活動研究会',
      'http://tosho-tokkatsu.tokyo/',
      '検証授業の予定一覧と研究紀要、会報「都小特活」。ホームの研究日程は、ここから拾っています。',
      ('研究会の日程', '研究紀要')),
-    ('ken', '都', '中学校',
+    ('ken', '都', '中学校', '東京都',
      '東京都中学校特別活動研究会',
      'https://www.tochutokkatsu.com/',
      '月例研修会の予定、生徒会長サミット、研究紀要、講師派遣の窓口。',
      ('月例研修会', '生徒会長サミット')),
-    ('ken', '都', '高等学校',
+    ('ken', '都', '高等学校', '東京都',
      '東京都高等学校特別活動研究会',
      'http://tokkatsu.com/',
      '都高特活。高校の特別活動の研究協議会と、新しく担当になった先生への案内。',
      ('研究協議会',)),
-    ('ken', '県', '小・中',
+    ('ken', '県', '小・中', '埼玉県',
      '埼玉県特別活動研究会',
      'http://saitokkatsu.sub.jp/',
      '研究主題と年間計画、研究集録のバックナンバー、資料のダウンロード。',
      ('資料ダウンロード', '研究集録')),
-    ('ken', '県', '小学校',
-     '熊本県特別活動研究会',
-     'https://estokkatsu.wixsite.com/index',
-     '研究資料室に、活動報告書・年間指導計画・実態調査。会報「特活通信」のバックナンバーもあります。',
-     ('年間指導計画', '会報')),
-    ('ken', '県', '中学校',
-     '広島県中学校教育研究会 特別活動部会',
-     'https://www.pref.hiroshima.lg.jp/site/kyougikai/tokukatu.html',
-     '広島県の研究団体連絡協議会の中のページ。県の研究大会の予定が出ます。',
-     ('県の研究大会',)),
-    ('shi', '市', '小学校',
+    ('shi', '市', '小学校', '神奈川県',
      '川崎市立小学校特別活動研究会',
      'https://kawasaki-edu.jp/9/2kenkyukai/index.cfm/12,0,60,html',
      '特活データベース。実践事例集・司会台本・学級会ノート・板書グッズ。刷ってすぐ使えるものが多いです。',
      ('実践事例集', '司会台本・板書グッズ')),
-    ('shi', '市', '小学校',
+    ('shi', '市', '小学校', '神奈川県',
      '横浜市立小学校特別活動研究会',
      'http://yokohamatokkatu.cool.coocan.jp/index.html',
      '研究紀要と現況調査報告書。紀要で使ったワークシートがダウンロードできます。',
      ('ワークシート', '現況調査')),
-    ('shi', '市', '小学校',
+    ('shi', '市', '小学校', '愛知県',
      '名古屋市特別活動実践研究会',
      'http://www.nagoyatokkatsu.com/',
      'なごやとっかつ。「とっかつ 学びの扉」と「特活だより」。読み物として読めるものが多いです。',
      ('読み物', '特活だより')),
-    ('shi', '市', '小学校',
+    ('ken', '県', '中学校', '広島県',
+     '広島県中学校教育研究会 特別活動部会',
+     'https://www.pref.hiroshima.lg.jp/site/kyougikai/tokukatu.html',
+     '広島県の研究団体連絡協議会の中のページ。県の研究大会の予定が出ます。',
+     ('県の研究大会',)),
+    ('ken', '県', '小学校', '熊本県',
+     '熊本県特別活動研究会',
+     'https://estokkatsu.wixsite.com/index',
+     '研究資料室に、活動報告書・年間指導計画・実態調査。会報「特活通信」のバックナンバーもあります。',
+     ('年間指導計画', '会報')),
+    ('shi', '市', '小学校', '北海道',
      '札幌市特別活動研究会',
      'http://www.sattokkatu.com/',
      '研究の足跡と実践事例、研究・研修会のお知らせ。北海道（北特活）のコーナーもあります。',
      ('実践事例', '研修会')),
 )
 
-KAI_UE_N = 3      # 研究会を、上から何件だけ出しておくか（のこりはページの中のふた）
+# 2026-09-22：上から3件、という切り方をやめました。
+#   前は「上から KAI_UE_N 件だけ出して、のこりはふた」でした。
+#   切れ目が会の並びの途中に来るので、押した人は
+#   「いま何を見ているのか」が分かりませんでした。
+#   いまは **全国の会だけを出して、各地の会はふたの中**に分けます。
+#   ふたの見出しに地方の名前を並べるので、開く前から
+#   「どこの会が入っているか」が読めます。
+
+# 地方ごとの小見出し。会が1つもない地方は、そもそも出しません
+#   （空の見出しを置かない。「近畿には会が無い」とは言えないためです）。
+KAIGUMI_T = """      <div class="kaigumi">
+        <h3 class="kaigumi-h"><span class="kaigumi-ji">{ch}</span><span class="kaigumi-n">{n}会</span></h3>
+        <div class="kaiban">
+{naka}
+        </div>
+      </div>"""
 
 KAI_T = """      <a class="kai" href="{url}" target="_blank" rel="noopener noreferrer">
         <span class="kai-ue"><span class="kai-han han--{han}">{han_ji}</span><span class="kai-muke">{muke}</span><span class="kai-soto">外部</span></span>
@@ -2333,9 +2531,25 @@ KAI_T = """      <a class="kai" href="{url}" target="_blank" rel="noopener noref
 
 
 def build_kai():
+    """研究会の一覧。全国の会をそのまま出し、各地の会は地方ごとに束ねて
+       ページの中のふたへ入れます（2026-09-22 依頼）。
+
+       なぜ地方で束ねるのか
+         15会を均等に並べると、どこの会かは範囲の2文字（全国／都／県／市）
+         でしか分かりませんでした。地方の小見出しを入れると、
+         自分の近くの会が一目で見つかります。
+       なぜ日本地図にしないのか
+         全国の会が5つあって、地図の上に置き場所がありません。
+         そのうえ会があるのは7都道県だけで、のこり40県が真っ白になります。
+         白いのは「会が無い」のではなく「まだ載せていない」だけなので、
+         地図にすると事実とちがうことを伝えてしまいます。
+         会が30・40と増えたら、そのとき地図を**絞りこみの札**として
+         横に置きます（カードの形は、そのまま残す）。
+    """
     from urllib.parse import urlsplit
-    gyo, mita = [], set()
-    for han, han_ji, muke, na, url, yo, tags in KAI:
+    mita = set()
+    zen, chihou = [], {}
+    for han, han_ji, muke, ken, na, url, yo, tags in KAI:
         if han not in ('zen', 'ken', 'shi'):
             raise Tomeru('ほかの研究会「%s」の範囲が %s です（zen／ken／shi のどれか）' % (na, han))
         if not url.startswith(('http://', 'https://')):
@@ -2349,19 +2563,49 @@ def build_kai():
                          '名前とURLだけ並べるのは、このサイトではやらないと決めています' % na)
         if not tags:
             raise Tomeru('ほかの研究会「%s」に、置いてあるもののタグが1つもありません' % na)
+        # ★ 2026-09-22 に足した検問。地方ごとに束ねる鍵なので、
+        #   ここが空だったり ずれていたりすると、会が静かに消えます。
+        if han == 'zen':
+            if ken:
+                raise Tomeru('ほかの研究会「%s」は全国の会なのに 都道府県（%s）が'
+                             '書いてあります。全国の会は空にしてください' % (na, ken))
+        else:
+            if not ken:
+                raise Tomeru('ほかの研究会「%s」に 都道府県が書いてありません。'
+                             '地方ごとに束ねられません（市の会は、その市のある県を書く）' % na)
+            if ken not in KEN_CHIHO:
+                raise Tomeru('ほかの研究会「%s」の都道府県「%s」が 47都道府県に'
+                             'ありません（「東京都」「神奈川県」のように書く）' % (na, ken))
         fuda = ''.join('<span class="kai-tag">%s</span>' % esc_html(t) for t in tags)
-        gyo.append(KAI_T.format(
+        gyo = KAI_T.format(
             url=esc_html(url), han=han, han_ji=esc_html(han_ji), muke=esc_html(muke),
             na=esc_html(na), yo=esc_html(yo), tag=fuda,
-            do=esc_html(urlsplit(url).netloc.replace('www.', ''))))
-    # 2026-09-21：15会ぜんぶ並べると、ここだけでスマホ5画面ありました。
-    #   上から KAI_UE_N 件だけ出して、のこりはこのページの中のふたへ。
-    ue, ato = gyo[:KAI_UE_N], gyo[KAI_UE_N:]
-    honbun = '    <div class="kaiban">\n' + '\n'.join(ue) + '\n    </div>'
-    if not ato:
+            do=esc_html(urlsplit(url).netloc.replace('www.', '')))
+        if han == 'zen':
+            zen.append(gyo)
+        else:
+            chihou.setdefault(KEN_CHIHO[ken], []).append(gyo)
+
+    honbun = ('    <div class="kaigumi kaigumi--zen">\n'
+              '      <h3 class="kaigumi-h"><span class="kaigumi-ji">全国</span>'
+              '<span class="kaigumi-n">%d会</span></h3>\n'
+              '      <div class="kaiban">\n%s\n      </div>\n'
+              '    </div>' % (len(zen), '\n'.join(zen)))
+
+    # 地方は、北から南へ。会が1つもない地方は出しません。
+    kumi, na_zoro, kazu = [], [], 0
+    for ch, _ in CHIHO:
+        if ch not in chihou:
+            continue
+        naka = chihou[ch]
+        kazu += len(naka)
+        na_zoro.append(ch)
+        kumi.append(KAIGUMI_T.format(ch=esc_html(ch), n=len(naka), naka='\n'.join(naka)))
+    if not kumi:
         return honbun
-    naka = '      <div class="kaiban">\n' + '\n'.join(ato) + '\n      </div>'
-    return tsunagu(honbun, naka, len(ato))
+    return tsunagu(honbun, '\n'.join(kumi), kazu,
+                   a='各地の研究会 %d会を、このページで開く（%s）'
+                     % (kazu, '／'.join(na_zoro)))
 
 
 # ══════════════════════════════════════════════════════════
@@ -2527,16 +2771,24 @@ def build_yotsu(kyara, jissen, komari):
 #   飛び先は別のデザインなので、押した人は別のサイトに出されたと感じます。
 #   ふたを開けるだけにすれば、見た目も、いる場所も変わりません。
 MOTTO = """    <details class="motto">
-      <summary><span class="a">のこり{n}件を、このページで開く</span><span class="b">とじる</span></summary>
+      <summary><span class="a">{a}</span><span class="b">とじる</span></summary>
 {naka}
     </details>"""
 
 
-def tsunagu(ue, nokori_html, n):
-    """上に出すぶん ＋（のこりがあれば）ふたの中"""
+def tsunagu(ue, nokori_html, n, a=None):
+    """上に出すぶん ＋（のこりがあれば）ふたの中。
+
+       a … ふたの見出しの字。書かなければ「のこり◯件を、このページで開く」。
+           研究会は、開く前から中身が読めるように
+           「各地の研究会 10会を、このページで開く（北海道・東北／関東／…）」
+           と地方の名前まで出します（2026-09-22）。
+    """
     if not n:
         return ue
-    return ue + '\n' + MOTTO.format(n=n, naka=nokori_html)
+    return ue + '\n' + MOTTO.format(
+        n=n, naka=nokori_html,
+        a=esc_html(a) if a else 'のこり%d件を、このページで開く' % n)
 
 
 # ══ すぐ使える実践（中身まで、この1枚の中で開く） ══════════
@@ -2652,8 +2904,8 @@ def build_jissen_hiroba(jissen, goods):
 #   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
-BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}">
-        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
+BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}">
+        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
 {mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
@@ -2741,6 +2993,13 @@ def build_bansho(jissen):
                   if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
+            # 地域（2026-09-22 依頼）。書かれたときだけ出します。
+            #   ここは字なので、上の「さがす」欄で「徳島」と打てば当たります
+            #   （さがすは、札の字ぜんぶを見ています）。
+            chiiki=('<span class="bfuda-chi">%s</span>' % esc_html(a['chiiki'])
+                    if a.get('chiiki') else ''),
+            ken=esc_html(a.get('ken') or ''), shi=esc_html(a.get('shi') or ''),
+            chiho=esc_html(a.get('chiho') or ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             mado=mado, shiryo=sh, more=more, by=esc_html(a['by']),
             ima=esc_html(ima)))
@@ -2774,9 +3033,14 @@ def build_kanri_list(jissen):
             'v': a['slug'], 't': a['title'], 'o': a.get('oshi') or '',
             'm': a['summary'].strip(), 'g': a['grade'], 's': a['scene'],
             'n': scene_key, 'na': na, 'sh': sh, 'ko': ko, 'by': a['by'],
+            # 地域（2026-09-22）。ken は都道府県、shk は自治体。
+            #   sh は「所属」で先に使っているので、名前を分けています。
+            'ken': a.get('ken') or '', 'shk': a.get('shi') or '',
         }
-        sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by']))
-        meta = '・'.join(x for x in (a['scene'], a['grade'], ja_md(a['d']), '提供：' + a['by']) if x)
+        sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by'],
+                           a.get('chiiki') or ''))
+        meta = '・'.join(x for x in (a.get('chiiki') or '', a['scene'], a['grade'],
+                                     ja_md(a['d']), '提供：' + a['by']) if x)
         out.append(
             '      <article class="kanri-card" data-v="%s" data-date="%s" data-sagasu="%s">\n'
             '        <div><h3>%s</h3><p data-kanri-meta>%s</p>'
@@ -2979,6 +3243,7 @@ def nuru_ireru(body, doko):
 def build_kanri_page(jissen, komari, ken, tobashita):
     """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
     body = rd('src/kanri.html')
+    body = body.replace('          <!--BUILD:KEN-->', build_ken_options())
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
     body = body.replace('      <!--BUILD:KANRI_HOKA-->',
                         build_kanri_hoka(komari, ken, tobashita))
@@ -3018,13 +3283,154 @@ JIBUN_TANA = """    <section class="jibun" id="jibun" hidden aria-labelledby="ji
 #   ★字を1つも書かなくても使えます（押すだけで絞れる）。
 #   ★JavaScript が動かない人には、この帯を出しません（→ 下の hidden）。
 #     押しても何も起きない押しボタンを、画面に置かないためです。
+def chizu_michi(ten, hako=None):
+    """点を、なめらかな閉じた線（SVGのd）に直す。
+
+       かどを丸めるのに Catmull-Rom を ベジエに直しています。
+       点をそのまま線でつなぐと、海岸線がカクカクして
+       「四角を並べた地図」に見えてしまうためです。
+    """
+    p = [chizu_ten(lo, la) for lo, la in ten]
+    if hako:
+        # 別枠（沖縄）のときは、その枠の中に収めなおします
+        x0, y0, w, h = hako
+        xs = [q[0] for q in p]; ys = [q[1] for q in p]
+        hx, hy = max(xs) - min(xs), max(ys) - min(ys)
+        r = min((w - 34) / max(hx, .001), (h - 34) / max(hy, .001))
+        ox = x0 + (w - hx * r) / 2 - min(xs) * r
+        oy = y0 + (h - hy * r) / 2 - min(ys) * r
+        p = [(q[0] * r + ox, q[1] * r + oy) for q in p]
+    n = len(p)
+    d = ['M%.1f %.1f' % p[0]]
+    for i in range(n):
+        p0, p1, p2, p3 = p[(i - 1) % n], p[i], p[(i + 1) % n], p[(i + 2) % n]
+        d.append('C%.1f %.1f %.1f %.1f %.1f %.1f' % (
+            p1[0] + (p2[0] - p0[0]) / 6.0, p1[1] + (p2[1] - p0[1]) / 6.0,
+            p2[0] - (p3[0] - p1[0]) / 6.0, p2[1] - (p3[1] - p1[1]) / 6.0,
+            p2[0], p2[1]))
+    return ' '.join(d) + 'Z'
+
+
+def chizu_mijikaku(ken):
+    """札の中の字。「県」「府」を落として短くします。北海道はそのまま。"""
+    return ken if ken == '北海道' else ken[:-1]
+
+
+CHIZU_T = """      <div class="sagasu-gyo sagasu-gyo--chizu">
+        <span class="sagasu-l" id="sagasu-k-l">地図から</span>
+        <p class="chizu-yomi">押すと、その県のものだけになります。もう一度押すと もどります。<br>
+          <b>札が立っているのが、いま届いている県です。</b>札の無い県は
+          「そこに実践が無い」のではなく、<b>まだ送られていないだけ</b>です。
+          <span class="chizu-nashi-chu">{nashi}</span></p>
+        <div class="chizu" id="sagasu-k" role="group" aria-labelledby="sagasu-k-l">
+{e}
+{fuda}        </div>
+      </div>
+"""
+
+
+def build_chizu(aru):
+    """日本の地図（2026-09-22 依頼）。押すと、その県の実践だけになります。
+
+       ★絵は、経度・緯度から組み立てます。画像は1枚も使いません。
+         外の地図サービスも使いません（開いただけで通信が飛ぶため。原則2）。
+       ★押すのは、絵の上に重ねた **HTMLのボタン**です。
+         絵そのものを押させると、香川県が指より小さくなって押せません。
+         ボタンなら、キーボードでも読み上げでも たどれます。
+       ★件数は札の中に **数で** 出します。色の濃さだけで伝えると、
+         色の見え方がちがう人に届きません。
+       ★1件も地域が書かれていないときは、地図ごと出しません。
+         札が1枚も立っていない地図は、何も言っていないのと同じです。
+    """
+    kazu = {}
+    for a in aru:
+        k = a.get('ken')
+        if k:
+            kazu[k] = kazu.get(k, 0) + 1
+    if not kazu:
+        return ''
+    ooi = max(kazu.values())
+
+    # ── 絵（海・島・沖縄の別枠）────────────────────────
+    e = ['          <svg class="chizu-e" viewBox="0 0 %g %g" aria-hidden="true" '
+         'focusable="false" preserveAspectRatio="xMidYMid meet">'
+         % (CHIZU_W, CHIZU_H),
+         '            <rect class="chizu-umi" x="0" y="0" width="%g" height="%g" rx="16"/>'
+         % (CHIZU_W, CHIZU_H)]
+    for na, ten in CHIZU_SHIMA.items():
+        # ★<path> の中に <title> を入れないこと。build.py は path を
+        #   「閉じない札」として数えているので、閉じ札があると
+        #   「節の中の入れ子が合っていません」で止まります（実測で踏みました）。
+        #   絵そのものは aria-hidden なので、名前は要りません。
+        e.append('            <path class="chizu-shima" data-shima="%s" d="%s"/>'
+                 % (esc_html(na), chizu_michi(ten)))
+    ox, oy, ow, oh = CHIZU_OKI_WAKU
+    e.append('            <rect class="chizu-waku" x="%g" y="%g" width="%g" height="%g" rx="12"/>'
+             % (ox, oy, ow, oh))
+    e.append('            <path class="chizu-shima" d="%s"/>' % chizu_michi(CHIZU_OKI, CHIZU_OKI_WAKU))
+    e.append('            <text class="chizu-waku-ji" x="%g" y="%g">沖縄</text>'
+             % (ox + 9, oy + 18))
+    e.append('          </svg>')
+
+    # ── 札（押せるのは、届いている県だけ）──────────────
+    #   札を県の真上に置くと、小さい県（四国・香川あたり）が
+    #   札の下に 完全に隠れます（実測で踏みました）。
+    #   だから **印は県の上、札は少し外へ逃がして、細い線でつなぎます**。
+    #   逃がす向きは「日本のまん中から見て、外がわ」。だいたい海へ出ます。
+    MANNAKA = (200.0, 300.0)      # 地図の中の、だいたいの まん中
+    NIGASU = 52.0                 # 札を逃がす長さ
+
+    def ichi(ken):
+        if ken == '沖縄県':
+            return ox + ow / 2, oy + oh * 0.62
+        return chizu_ten(*KEN_ICHI[ken])
+
+    tate = []
+    for ken in sorted(kazu, key=lambda k: (ichi(k)[1], ichi(k)[0])):
+        x, y = ichi(ken)
+        dx, dy = x - MANNAKA[0], y - MANNAKA[1]
+        nagasa = (dx * dx + dy * dy) ** 0.5 or 1.0
+        lx, ly = x + dx / nagasa * NIGASU, y + dy / nagasa * NIGASU
+        # 枠から はみ出さないように、内がわへ戻します
+        lx = min(max(lx, 46.0), CHIZU_W - 46.0)
+        ly = min(max(ly, 18.0), CHIZU_H - 18.0)
+        # 前に置いた札と近すぎたら、下へ逃がします
+        for _ in range(40):
+            if all(abs(lx - px) > 74 or abs(ly - py) > 26 for px, py, _ in tate):
+                break
+            ly += 14
+        tate.append((lx, ly, (ken, x, y)))
+
+    hiku, fuda = [], []
+    for lx, ly, (ken, x, y) in tate:
+        n = kazu[ken]
+        koi = (1 + min(3, int(3.0 * (n - 1) / max(1, ooi - 1)))) if ooi > 1 else 4
+        hiku.append('            <line class="chizu-sen" x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>'
+                    % (x, y, lx, ly))
+        hiku.append('            <circle class="chizu-ten" cx="%.1f" cy="%.1f" r="5"/>' % (x, y))
+        fuda.append(
+            '          <button type="button" class="chizu-f" data-ken="%s" data-koi="%d" '
+            'aria-pressed="false" style="--x:%.3f%%;--y:%.3f%%" '
+            'aria-label="%s %d件。押すと、この県のものだけになります">'
+            '<span class="chizu-na">%s</span><span class="chizu-n">%d</span></button>\n'
+            % (esc_html(ken), koi, lx / CHIZU_W * 100, ly / CHIZU_H * 100,
+               esc_html(ken), n, esc_html(chizu_mijikaku(ken)), n))
+    e[-1:-1] = hiku      # 引き出し線と印は、島の上・札の下に入れます
+
+    nokori = 47 - len(kazu)
+    nashi = ('いまは %d県から %d件。のこり %d県には、まだ札が立っていません。'
+             % (len(kazu), sum(kazu.values()), nokori)) if nokori else \
+            'とうとう47都道府県、ぜんぶそろいました。'
+    return CHIZU_T.format(e='\n'.join(e), fuda=''.join(fuda), nashi=esc_html(nashi))
+
+
 SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
       <div class="sagasu-gyo">
         <label class="sagasu-l" for="sagasu-ji">さがす</label>
         <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
                placeholder="題・中身・学年・提供者から（例：たてわり）">
       </div>
-      <div class="sagasu-gyo">
+{chizu}      <div class="sagasu-gyo">
         <span class="sagasu-l" id="sagasu-n-l">内容</span>
         <div class="okuru-nen" role="group" aria-labelledby="sagasu-n-l" id="sagasu-n">
           <button type="button" class="okuru-nen-b" data-n="" aria-pressed="true">ぜんぶ</button>
@@ -3085,6 +3491,24 @@ def han(c):
     return chr(ord(c) - 0xFEE0) if '１' <= c <= '６' else c
 
 
+def build_ken_options():
+    """実践を送るフォームの「都道府県」の中身（2026-09-22 依頼）。
+
+       47を手で2か所に書くと、いつか片方だけ直ります。
+       出どころは CHIHO の1か所だけにして、ここから吐きます。
+       地方ごとに <optgroup> で束ねるので、スマホのプルダウンでも
+       北から南に並んで、自分の県をさがしやすくなります。
+       ★管理画面（src/kanri.html）の「なおす」にも、同じものを入れます。
+    """
+    gyo = []
+    for ch, kens in CHIHO:
+        gyo.append('          <optgroup label="%s">' % esc_html(ch))
+        for k in kens:
+            gyo.append('            <option value="%s">%s</option>' % (esc_html(k), esc_html(k)))
+        gyo.append('          </optgroup>')
+    return '\n'.join(gyo)
+
+
 def sagasu_obi(aru):
     """内容の札は、**いま届いているものにある内容だけ**出します。
        1件も無い内容の札を出すと、押したとたんに0件になるためです。"""
@@ -3105,7 +3529,7 @@ def sagasu_obi(aru):
         nen.append('          <button type="button" class="okuru-nen-b" data-g="%s" '
                    'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
                    % (k, esc_html(ja), kazu))
-    return SAGASU_OBI.format(naiyo=''.join(gyo), nen=''.join(nen))
+    return SAGASU_OBI.format(naiyo=''.join(gyo), nen=''.join(nen), chizu=build_chizu(aru))
 
 
 def build_bansho_iriguchi(jissen):
@@ -3790,6 +4214,7 @@ def build_shin():
                        ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
+                       ('          <!--BUILD:KEN-->', build_ken_options()),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
                        ('    <!--BUILD:KENKYUKAI-->',

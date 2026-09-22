@@ -706,6 +706,33 @@
         </div>
       </div>
 
+      <!-- ══ 地域（2026-09-22 依頼）══════════════════════════
+           「47都道府県で、日本の特色が見えたら楽しい」という話から。
+           都道府県だけでなく **自治体（市区町村）まで** 書けます。
+           東京が多くなる見こみで、23区や支部で実態がちがうためです。
+
+           ★任意です。書かなければ、札には何も出ません。
+           ★ここに書いたぶんは、そのまま公開ページに出ます。
+             （名前を出す／出さない とは、別の話です）
+           ★端末の位置は1つも見ていません。押して選ぶだけです。
+             位置を見にいくと、原則2「何も送信しない」に触れます。
+           ★47の中身は build.py の CHIHO 1か所から入ります。
+             ここに手で書くと、いつか片方だけ直ります。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-ken">地域<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトに出ます。</b>
+          書いていただいたぶんが溜まったら、地図からさがせるようにします。<br>
+          自治体は、書きたいときだけで大丈夫です（区や市でちがう、を言えるように）。</p>
+        <div class="okuru-chi">
+          <select class="okuru-i okuru-ken" id="okuru-ken" name="ken">
+            <option value="">えらばない</option>
+          <!--BUILD:KEN-->
+          </select>
+          <input class="okuru-i okuru-shk" type="text" id="okuru-shk" name="shk" maxlength="20"
+                 placeholder="自治体（例：江東区）">
+        </div>
+      </div>
+
       <!-- 推しポイント（2026-09-22 夜 依頼）。任意です。
            題のすぐ下に、ひとまわり大きく出ます。 -->
       <div class="okuru-g">
@@ -1162,6 +1189,8 @@
         document.getElementById('okuru-t').value = n.t || '';
         document.getElementById('okuru-o').value = n.o || '';
         document.getElementById('okuru-m').value = n.m || '';
+        document.getElementById('okuru-ken').value = n.ken || '';
+        document.getElementById('okuru-shk').value = n.shk || '';
         if(kazu) kazu.textContent = (n.m || '').length + ' / 1000字';
         gakunen.ireru(n.g || '');
         var n6 = NAIYO_SCENE[String(n.s || '').trim()];
@@ -1185,6 +1214,25 @@
         o = (o || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
         m = (m || '').slice(0, 1000);
         return o ? (OSHI_SHIRUSHI + o + '\n\n' + m) : m;
+      };
+
+      /* 地域も、同じやり方で本文の頭に混ぜて運びます（2026-09-22）。
+         受け口（Apps Script）を1行も触らずに、今日から効かせるためです。
+         取り出すのは build.py の shirushi_hagasu（CHIIKI_SHIRUSHI）。
+         ★自治体だけ書いて都道府県を選ばなかったときは、運びません。
+           市区町村だけでは、どこの県か決まらないためです（検問と同じ）。 */
+      var CHIIKI_SHIRUSHI = '★地域：';
+      var chiiki_tsukeru = function(ken, shk, m){
+        ken = (ken || '').trim();
+        shk = (shk || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 20);
+        if(!ken) return m;
+        return CHIIKI_SHIRUSHI + ken + (shk ? '／' + shk : '') + '\n\n' + m;
+      };
+      var chiiki_yomu = function(){
+        return {
+          ken: (document.getElementById('okuru-ken') || {}).value || '',
+          shk: (document.getElementById('okuru-shk') || {}).value || ''
+        };
       };
 
       var mIn = document.getElementById('okuru-m');
@@ -1538,8 +1586,11 @@
                  こうすると **受け口（Apps Script）を1行も触らずに** 効きます。
                  受け口はこちらを直しても、貼り直すまで古いまま動くためです。
                  取り出すのは build.py の kenmon_jissen（OSHI_SHIRUSHI）。 */
-              m:  oshi_tsukeru(document.getElementById('okuru-o').value,
-                               document.getElementById('okuru-m').value),
+              m:  (function(c){
+                     return chiiki_tsukeru(c.ken, c.shk,
+                       oshi_tsukeru(document.getElementById('okuru-o').value,
+                                    document.getElementById('okuru-m').value));
+                   })(chiiki_yomu()),
               na: naIn.value.trim().slice(0, 40),              /* お名前（必須） */
               sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
               ko: document.getElementById('okuru-ko').checked ? 1 : 0
@@ -1629,6 +1680,8 @@
                   g: f.getAttribute('data-grade') || '',
                   s: f.getAttribute('data-scene') || '',
                   o: f.getAttribute('data-oshi') || '',
+                  ken: f.getAttribute('data-ken') || '',
+                  shk: f.getAttribute('data-shi') || '',
                   m: f.getAttribute('data-hon') || ''
                 }));
                 location.href = 'index.html#okuru';
@@ -1671,8 +1724,9 @@
     var sgG    = document.getElementById('sagasu-g');
     var sgGgyo = document.getElementById('sagasu-g-gyo');
     var sgJun  = document.getElementById('sagasu-j');
+    var sgK    = document.getElementById('sagasu-k');      /* 日本の地図 */
     var sgFuda = [].slice.call(sgTana.querySelectorAll('.bfuda'));
-    var sgNai = '', sgNen = '', sgJun_ima = 'atarashii';
+    var sgNai = '', sgNen = '', sgKen = '', sgShi = '', sgJun_ima = 'atarashii';
     /* 学年の札が1つも無いとき（学年を書かずに届いたものばかりのとき）は、
        その行ごと出しません。「ぜんぶ」しか無い行は、押す意味がないためです。 */
     if(sgGgyo && sgG.querySelectorAll('[data-g]').length < 2) sgGgyo.hidden = true;
@@ -1703,6 +1757,10 @@
            前後に空白を足してから見るので、1 と 11 を取りちがえません。 */
         if(sgNen && (' ' + (f.getAttribute('data-nen') || '') + ' ')
                       .indexOf(' ' + sgNen + ' ') < 0) return false;
+        /* 地図（2026-09-22）。地域を書かずに届いたものは、県を押すと外れます。 */
+        if(sgKen && f.getAttribute('data-ken') !== sgKen) return false;
+        /* 自治体（2026-09-22 依頼）。県を押したときだけ出る、もう1段の札です。 */
+        if(sgShi && f.getAttribute('data-shi') !== sgShi) return false;
         if(ji && f._ji.indexOf(ji) < 0) return false;
         return true;
       });
@@ -1718,11 +1776,17 @@
         + (nokotta.length === sgFuda.length ? '' : '（ぜんぶで' + sgFuda.length + '件）');
       sgKara.hidden = !!nokotta.length;
       if(!nokotta.length){
-        sgKara.textContent = ji
-          ? ('「' + sgJi.value.trim() + '」に当たるものは、ありませんでした。'
-             + '字を短くするか、内容と学年の札を「ぜんぶ」に戻してみてください。')
-          : 'この絞りこみに当たるものは、まだ1件もありません。'
-            + '内容か学年の札を「ぜんぶ」に戻してみてください。';
+        /* 2026-09-22：地図で県を押していると、字が当たらないのか
+           県が当たらないのか 分かりませんでした。押している県は必ず言います。 */
+        sgKara.textContent =
+          (ji ? ('「' + sgJi.value.trim() + '」に当たるものは、ありませんでした。')
+              : 'この絞りこみに当たるものは、まだ1件もありません。')
+          + (sgKen ? ('いまは地図で ' + sgKen + (sgShi ? ('　' + sgShi) : '')
+                      + ' だけに絞っています。'
+                      + (sgShi ? '自治体の「ぜんぶ」を押すと、県ぜんぶに戻ります。'
+                               : 'もう一度押すと、ぜんぶに戻ります。'))
+                   : (ji ? '字を短くするか、内容と学年の札を「ぜんぶ」に戻してみてください。'
+                         : '内容か学年の札を「ぜんぶ」に戻してみてください。'));
       }
     }
 
@@ -1736,6 +1800,106 @@
       sgNen = b.getAttribute('data-g') || '';
       sg_osu(sgG, sgNen, 'data-g'); sg_utsusu();
     });
+    /* ══ 日本の地図から絞る（2026-09-22 依頼）══════════════
+       ★押した県は、もう一度押すと外れます（「ぜんぶ」を別に置かずに済む）。
+       ★いまどこを押しているかは、色だけでなく **字でも** 出します。
+         色の見え方がちがう人に、押している県が伝わらないためです。
+       ★札が立つのは、届いている県だけです。0件の県にはボタンがありません
+         （押しても何も起きない所を、画面に置かないため）。 */
+    if(sgK){
+      var chizuIma = document.createElement('p');
+      chizuIma.className = 'chizu-ima';
+      chizuIma.hidden = true;
+      chizuIma.innerHTML = '<span></span>'
+                         + '<button type="button" class="chizu-modosu">ぜんぶに戻す</button>';
+      sgK.parentNode.appendChild(chizuIma);
+
+      /* ══ 自治体の札（2026-09-22 依頼）══════════════════════
+         県を押したときだけ、その県の中の自治体が札になって出ます。
+         東京は 23区＋26市＋5町＋8村＝62 あります。これを地図にすると
+         62ますのうち1つしか埋まりません（日本の研究会を地図に
+         しなかったのと、まったく同じ形です）。
+
+         ★形を1つも描きません。**届いた自治体の名前を、そのまま札に
+           する**だけです。だから空の札が出ません。
+         ★東京だけの仕組みにしません。大阪でも徳島でも同じように出ます。
+         ★市町村が合併しても、こちらは何も直さなくて済みます。
+         ★出すのは **自治体が2つ以上あるとき**だけ。1つしか無い県で
+           押しても、絞る先が無いためです。
+         ★「ぜんぶ」の数は県の件数です。自治体を書かずに届いたものが
+           あると、札の数を足しても「ぜんぶ」に届きません。それでいい
+           です（書いていないものを、勝手にどこかの市に入れないため）。 */
+      var shiGyo = document.createElement('div');
+      shiGyo.className = 'sagasu-gyo sagasu-gyo--shi';
+      shiGyo.hidden = true;
+      shiGyo.innerHTML = '<span class="sagasu-l" id="sagasu-s-l">自治体</span>'
+                       + '<div class="okuru-nen" role="group" aria-labelledby="sagasu-s-l"'
+                       + ' id="sagasu-s"></div>';
+      sgK.parentNode.appendChild(shiGyo);
+      var sgS = shiGyo.querySelector('#sagasu-s');
+
+      var shi_tsukuru = function(){
+        sgS.textContent = '';
+        if(!sgKen){ shiGyo.hidden = true; return; }
+        /* この県のものだけを見て、自治体ごとに数えます */
+        var na = [], kazu = {}, zen = 0;
+        sgFuda.forEach(function(f){
+          if(f.getAttribute('data-ken') !== sgKen) return;
+          zen++;
+          var sh = f.getAttribute('data-shi') || '';
+          if(!sh) return;
+          if(!(sh in kazu)){ kazu[sh] = 0; na.push(sh); }
+          kazu[sh]++;
+        });
+        if(na.length < 2){ shiGyo.hidden = true; return; }
+        na.sort(function(a, b){ return kazu[b] - kazu[a] || (a < b ? -1 : 1); });
+        var tsukuru = function(atai, ji, n){
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'okuru-nen-b';
+          b.setAttribute('data-s', atai);
+          b.setAttribute('aria-pressed', sgShi === atai ? 'true' : 'false');
+          b.textContent = ji;
+          var k = document.createElement('span');
+          k.className = 'sagasu-b-kazu'; k.textContent = n;
+          b.appendChild(k);
+          sgS.appendChild(b);
+        };
+        tsukuru('', 'ぜんぶ', zen);
+        na.forEach(function(sh){ tsukuru(sh, sh, kazu[sh]); });
+        shiGyo.hidden = false;
+      };
+
+      var chizu_utsusu = function(){
+        [].slice.call(sgK.querySelectorAll('.chizu-f')).forEach(function(b){
+          b.setAttribute('aria-pressed',
+            b.getAttribute('data-ken') === sgKen ? 'true' : 'false');
+        });
+        chizuIma.hidden = !sgKen;
+        if(sgKen) chizuIma.querySelector('span').textContent =
+          sgKen + (sgShi ? '　' + sgShi : '') + 'のものだけを出しています';
+        shi_tsukuru();
+        sg_utsusu();
+      };
+      sgK.addEventListener('click', function(ev){
+        var b = ev.target.closest('.chizu-f'); if(!b) return;
+        var k = b.getAttribute('data-ken') || '';
+        sgKen = (sgKen === k) ? '' : k;      /* 同じ県をもう一度＝外す */
+        sgShi = '';                          /* 県を変えたら、自治体は外す */
+        chizu_utsusu();
+      });
+      sgS.addEventListener('click', function(ev){
+        var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
+        sgShi = b.getAttribute('data-s') || '';
+        sg_osu(sgS, sgShi, 'data-s');
+        chizuIma.querySelector('span').textContent =
+          sgKen + (sgShi ? '　' + sgShi : '') + 'のものだけを出しています';
+        sg_utsusu();
+      });
+      chizuIma.querySelector('.chizu-modosu').addEventListener('click', function(){
+        sgKen = ''; sgShi = ''; chizu_utsusu();
+      });
+    }
+
     sgJun.addEventListener('click', function(ev){
       var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
       sgJun_ima = b.getAttribute('data-j');

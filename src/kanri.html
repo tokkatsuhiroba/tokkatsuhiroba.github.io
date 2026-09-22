@@ -123,6 +123,22 @@
       <label for="kanri-naosu-o">推しポイント<span class="okuru-nin">任意</span></label>
       <input class="okuru-i" id="kanri-naosu-o" name="o" maxlength="60">
     </div>
+    <!-- 地域（2026-09-22 依頼）。送るフォームと同じ欄です。
+         ★47の中身は build.py の CHIHO 1か所から入ります。
+         ★受け口は ken／shk を知らないので、保存のときに
+           **実践内容の頭へ混ぜて** 運びます（下の submit）。 -->
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-ken">地域<span class="okuru-nin">任意</span></label>
+      <select class="okuru-i" id="kanri-naosu-ken" name="_ken">
+        <option value="">えらばない</option>
+          <!--BUILD:KEN-->
+      </select>
+    </div>
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-shk">自治体<span class="okuru-nin">任意</span></label>
+      <input class="okuru-i" id="kanri-naosu-shk" name="_shk" maxlength="20"
+             placeholder="例：江東区・吉野川市">
+    </div>
     <div class="kanri-naosu-g kanri-naosu-g--zen">
       <label for="kanri-naosu-m">実践内容<span class="okuru-hissu">必須</span></label>
       <textarea class="okuru-i okuru-hiroi" id="kanri-naosu-m" name="m"
@@ -707,6 +723,8 @@
     document.getElementById('kanri-naosu-g').value = d.g || '';
     document.getElementById('kanri-naosu-o').value = d.o || '';
     document.getElementById('kanri-naosu-m').value = d.m || '';
+    document.getElementById('kanri-naosu-ken').value = d.ken || '';
+    document.getElementById('kanri-naosu-shk').value = d.shk || '';
     document.getElementById('kanri-naosu-na').value = d.na || '';
     document.getElementById('kanri-naosu-sh').value = d.sh || '';
     document.getElementById('kanri-naosu-ko').checked = !!d.ko;
@@ -718,7 +736,13 @@
       n: document.getElementById('kanri-naosu-n').value,
       g: document.getElementById('kanri-naosu-g').value.trim(),
       o: document.getElementById('kanri-naosu-o').value.trim(),
-      m: document.getElementById('kanri-naosu-m').value.trim(),
+      /* 頭に付いている ★地域： は、いったん外してから読みます。
+         保存のときに こちらで混ぜているので、外さないと
+         2回押したときに2行ぶん重なります（実測で踏む前に直しました）。 */
+      m: document.getElementById('kanri-naosu-m').value
+           .replace(/^★地域：[^\n]*\n*/, '').trim(),
+      ken: document.getElementById('kanri-naosu-ken').value,
+      shk: document.getElementById('kanri-naosu-shk').value.trim(),
       na: document.getElementById('kanri-naosu-na').value.trim(),
       sh: document.getElementById('kanri-naosu-sh').value.trim(),
       ko: document.getElementById('kanri-naosu-ko').checked
@@ -754,6 +778,16 @@
         naosuF.appendChild(inp);
       });
     }
+    /* 地域を、実践内容の頭へ混ぜます（2026-09-22）。
+       受け口（Apps Script）は ken／shk という欄を知りません。
+       知らない欄は そのまま捨てられるので、ここで m に混ぜて運びます。
+       取り出すのは build.py の shirushi_hagasu（★地域：）。
+       ★送るフォーム（src/hiroba.html）と同じやり方です。
+       ★都道府県を選ばなかったときは混ぜません（自治体だけでは県が決まらない）。 */
+    var mEl = document.getElementById('kanri-naosu-m');
+    mEl.value = d.ken ? ('★地域：' + d.ken + (d.shk ? '／' + d.shk : '') + '\n\n' + d.m)
+                      : d.m;
+
     naosuMatte = nonce(); naosuKakutei.disabled = true;
     naosuShirase.textContent = (e && e.e)
       ? '保存しています…（写真' + e.e.length + '枚も送っています）' : '保存しています…';

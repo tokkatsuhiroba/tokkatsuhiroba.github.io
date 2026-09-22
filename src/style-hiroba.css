@@ -678,6 +678,53 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
   .kai-soto,.kai-do{margin-inline-start:0}
 }
 
+/* ── 地方ごとの小見出し（2026-09-22 依頼）────────────────────
+   15会を均等に並べると、どこの会かは範囲の2文字でしか分かりません
+   でした。地方で束ねると、自分の近くの会が一目で見つかります。
+   ★日本地図は、まだ置きません。全国の会5つに地図上の置き場所が
+     なく、会があるのは7都道県だけで、のこり40県が真っ白に
+     なるためです（白は「無い」ではなく「まだ載せていない」）。
+     会が30・40と増えたら、地図を**絞りこみの札**として横に置きます。 */
+.kaigumi + .kaigumi{margin-top:clamp(26px,3.4vw,40px)}
+.kaigumi-h{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:0 0 clamp(12px,1.6vw,18px);
+}
+.kaigumi-ji{
+  font-family:var(--f-maru);font-weight:700;font-size:clamp(15px,1.7vw,17px);
+  letter-spacing:.06em;color:var(--ink);
+  background:var(--men-ki);border:2.5px solid var(--ink);border-radius:999px;
+  box-shadow:3px 3px 0 var(--ink);padding:3px 16px;
+}
+.kaigumi-n{font-size:12px;color:var(--mute);font-family:var(--f-en);letter-spacing:.06em}
+/* 見出しの右へ、細い罫を1本のばして「ここからここまで」を出します */
+.kaigumi-h::after{
+  content:"";flex:1 1 40px;height:2px;background:var(--rule);border-radius:2px;
+}
+/* ふたの中は真ん中ぞろえなので、束ごと左ぞろえに戻します */
+.motto .kaigumi{text-align:start}
+.motto .kaigumi .kaiban{margin-top:0}
+.motto .kaigumi-h{margin-top:0}
+
+/* 送るフォームの「地域」（2026-09-22 依頼）。
+   都道府県はプルダウン、自治体は字。せまい画面では縦に積みます。
+   ★.okuru-i より後に書いても勝てるよう、.okuru-g を前に付けています
+     （同じ強さだと、あとに書いたほうが勝つためです）。
+   ★プルダウンの▼は、この字の中に描いた絵です。外へは1つも取りにいきません。 */
+.okuru-g .okuru-ken{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23393836' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 18px center;
+  background-size:13px 9px;
+  padding-inline-end:44px;
+}
+/* 2つで1つの答えなので、横に並べます。
+   入る幅が無くなったら、ひとりでに縦へ落ちます（flex-wrap）。 */
+.okuru-chi{display:flex;gap:10px;flex-wrap:wrap}
+.okuru-g .okuru-ken{flex:1 1 15em;min-width:0}
+.okuru-g .okuru-shk{flex:1 1 13em;min-width:0}
+
 /* ══════════════════════════════════════════════════════════════
    上の帯（2026-09-21 に追加）
 
@@ -1841,6 +1888,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-family:var(--f-maru);font-size:12px;font-weight:700;letter-spacing:.08em;
   color:var(--bg);border:2.5px solid var(--ink);border-radius:999px;padding:2px 13px;
 }
+/* 地域（2026-09-22 依頼）。書かれたときだけ出ます。
+   色だけで伝えず、県名と自治体名をそのまま字で出します。
+   ★数が溜まったら、ここが日本地図の絞りこみの押しどころになります。 */
+.bfuda-chi{
+  font-family:var(--f-maru);font-size:11.5px;font-weight:700;letter-spacing:.06em;
+  color:var(--ink);background:var(--men-ki);
+  border:2px solid var(--ink);border-radius:999px;padding:2px 11px;
+}
 .bfuda-h{
   margin:12px 0 14px;font-family:var(--f-maru);font-weight:700;
   font-size:clamp(17px,2vw,22px);letter-spacing:.05em;line-height:1.6;
@@ -2601,6 +2656,92 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-family:var(--f-hon);font-size:16px;  /* 16px未満にしない。iPhoneが寄るため */
 }
 .sagasu-i:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+/* ══ 日本の地図（2026-09-22 依頼）══════════════════════════════
+   海岸線は build.py の CHIZU_SHIMA（経度・緯度）から組み立てた
+   SVGです。画像は1枚も読みません。外からも1バイトも取りません。
+
+   絵は見るだけ（aria-hidden）。押すのは、その上に重ねた
+   **HTMLのボタン**です。絵そのものを押させると、香川県が指より
+   小さくなって押せません。ボタンなら大きさを決められます。
+   ══════════════════════════════════════════════════════════════ */
+.chizu-yomi{margin:0 0 8px;font-size:12px;line-height:1.85;color:var(--mute)}
+.chizu-nashi-chu{display:block;color:var(--ink)}
+.chizu{
+  position:relative;
+  width:100%;max-width:520px;margin:0 auto;
+  aspect-ratio:480 / 532;
+}
+.chizu-e{position:absolute;inset:0;width:100%;height:100%;display:block}
+.chizu-umi{fill:#DCEEF7}                         /* 海 */
+.chizu-shima{
+  fill:var(--men-ki);stroke:var(--ink);stroke-width:2.6;
+  stroke-linejoin:round;
+}
+.chizu-waku{fill:#DCEEF7;stroke:var(--ink);stroke-width:2.2;stroke-dasharray:6 5}
+.chizu-waku-ji{
+  fill:var(--mute);font-family:var(--f-maru);font-size:15px;font-weight:700;
+}
+/* 引き出し線と、県の位置の印。札が小さい県を隠さないための仕掛けです。 */
+.chizu-sen{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.chizu-ten{fill:var(--ink);stroke:#fff;stroke-width:2}
+
+/* 届いている県の札。引き出し線の先に立ちます。 */
+.chizu-f{
+  position:absolute;left:var(--x);top:var(--y);
+  transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;min-height:28px;
+  background:var(--men-ki);color:var(--ink);
+  border:2.5px solid var(--ink);border-radius:999px;box-shadow:2px 2px 0 var(--ink);
+  font-family:var(--f-maru);font-weight:700;font-size:12px;letter-spacing:.03em;
+  white-space:nowrap;cursor:pointer;
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.chizu-f[data-koi="2"]{background:#F4DFC4}
+.chizu-f[data-koi="3"]{background:#EFC79B}
+.chizu-f[data-koi="4"]{background:var(--shu);color:#fff;border-color:var(--ink)}
+.chizu-n{
+  font-family:var(--f-en);font-size:11.5px;font-weight:700;letter-spacing:0;
+  background:rgba(0,0,0,.10);border-radius:999px;padding:0 6px;min-width:17px;
+  text-align:center;
+}
+.chizu-f[data-koi="4"] .chizu-n{background:rgba(255,255,255,.28)}
+.chizu-f:hover,.chizu-f:focus-visible{
+  transform:translate(-50%,-50%) scale(1.06);box-shadow:4px 4px 0 var(--ink);z-index:3;
+}
+.chizu-f:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+/* 押されている県。地を墨にして白ぬき（濃さの段より強い） */
+.chizu-f[aria-pressed="true"],
+.chizu-f[aria-pressed="true"][data-koi]{
+  background:var(--ink);color:var(--bg);z-index:4;
+  transform:translate(-50%,-50%) scale(1.06);
+}
+.chizu-f[aria-pressed="true"] .chizu-n{background:rgba(255,255,255,.25)}
+/* 自治体の札（2026-09-22 依頼）。県を押したときだけ出ます。
+   内容・学年の札と同じ形（.okuru-nen-b）をそのまま使うので、
+   ここでは置き場所と、出てくるときの動きだけ書きます。 */
+.sagasu-gyo--shi{margin-top:10px}
+.sagasu-gyo--shi[hidden]{display:none}
+
+/* いま何県を押しているか、字でも出します（色だけで伝えない） */
+.chizu-ima{
+  margin:10px 0 0;font-family:var(--f-maru);font-weight:700;font-size:12.5px;
+  color:var(--ink);display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  justify-content:center;
+}
+.chizu-ima[hidden]{display:none}
+.chizu-modosu{
+  font-family:var(--f-maru);font-weight:700;font-size:12px;
+  background:var(--bg);color:var(--ink);
+  border:2px solid var(--ink);border-radius:999px;padding:3px 13px;cursor:pointer;
+}
+.chizu-modosu:hover{background:var(--men-ki)}
+/* せまい画面。札は小さくしますが、押せる高さ（26px）は残します。 */
+@media (max-width:659px){
+  .chizu-f{font-size:11px;padding:3px 8px;min-height:26px;gap:4px}
+  .chizu-n{font-size:10.5px;padding:0 5px;min-width:15px}
+}
+
 /* 札の中の「いま何件」。押されているときは、地が墨になるので白ぬきにします */
 .sagasu-b-kazu{
   margin-inline-start:7px;padding:1px 7px;border-radius:999px;
