@@ -3198,15 +3198,22 @@ def build_home(doko, sec, buhin, kyara, kiji, jissen, ken, komari):
 #   ★ ここに書く中身は、ぜんぶ節そのものから抜いています。
 #     手で写さないこと（節を直したのに概要が古い、が起きます）。
 
-GFUDA = """      <div class="gfuda p--{page}">
-        <div class="atama" aria-hidden="true" inert>
+GFUDA = """        <div class="gfuda p--{page}">
+          <div class="atama" aria-hidden="true" inert>
+            <div class="atama-in">
 {atama}
-        </div>
-        <a class="gfuda-a" href="{saki}"><b class="gfuda-h">{midashi}</b><span class="gfuda-go">開く</span></a>
-      </div>"""
+            </div>
+          </div>
+          <a class="gfuda-a" href="{saki}">
+            <span class="gfuda-ue"><b class="gfuda-h">{midashi}</b><span class="gfuda-kazu">{kazu}</span><span class="gfuda-go">開く</span></span>
+            <span class="gfuda-yo">{yo}</span>
+          </a>
+        </div>"""
 
-# 概要に出す、節のあたま何個ぶんか。窓の高さでも切るので、多くしても伸びません
-ATAMA_N = 3
+# 概要に出す、節のあたま何個ぶんか。窓の高さでも切るので、多くしても伸びません。
+#   2026-09-22：よこスライドにして窓を高くし、中を .atama-in で縮めたので、
+#   3個だと窓の下が空いてしまうようになりました。7個に増やします。
+ATAMA_N = 7
 _IMG_RE = re.compile(r'<img\b[^>]*>')
 _ID_RE = re.compile(r'\sid="[^"]*"')
 _A_RE = re.compile(r'(<a\b[^>]*?)\shref="[^"]*"')
@@ -3282,20 +3289,29 @@ def build_atama(sec_html):
     return naka
 
 
-def build_gaiyo(sec, doko):
+def build_gaiyo(sec, doko, kiji, jissen, ken, komari):
     """ホームの「中身を、ざっと」。
        2026-09-21：箇条書き→本物の縮小→読める箇条書き、と回ったあと、
        「各ページの最初の画面のみ そのまま載せる感じ。短いバージョンで」に落ちつきました。
-       だから、節のあたまを**そのままの大きさで**載せ、窓の高さで切ります。
-       写した絵でも、縮めた絵でもないので、節を直せばここも変わります。"""
+       だから、節のあたまを載せ、窓の高さで切ります。
+       写した絵でも、縮めた絵でもないので、節を直せばここも変わります。
+
+       2026-09-22：ここを **よこスライド** にしました（2列×3段 → 1列よこ）。
+       縦に3段あると、それだけで画面2枚ぶんありました。よこにすると、
+       1枚の札に使える高さが増えるので、同じ場所で中身が倍ほど見えます。
+       字は .atama-in で少し小さくしています（→ style-hiroba.css）。
+       札の下には、名前のほかに「数」と「ひとこと」も出します。
+       ★数は、その場で数えたものだけ（8つの札と同じ home_kazu を使います）。"""
     fuda = []
-    for sid, _, _, _ in HOME_FUDA:
+    for sid, _, _, yo in HOME_FUDA:
         if sid in ('ima', 'okuru'):   # この2つは、この上に本物が出ているので要りません
             continue
         fuda.append(GFUDA.format(
             page=doko[sid].replace('.html', ''),
             saki='%s#%s' % (doko[sid], sid),
             midashi=esc_html(SETSU_NA[sid]),
+            kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken, komari)),
+            yo=esc_html(yo),
             atama=build_atama(sec[sid])))
     return ('<section class="sec" id="gaiyo">\n'
             '  <div class="uchi">\n'
@@ -3303,7 +3319,8 @@ def build_gaiyo(sec, doko):
             '<span class="ja">中身を、ざっと</span></h2>\n'
             '    <p class="yomi">それぞれのページの、中身のはじまりです。'
             '写した絵ではなく本物なので、中身が変わればここも変わります。</p>\n'
-            '    <div class="gban">\n' + '\n'.join(fuda) + '\n    </div>\n'
+            + yoko_ban(fuda, 'それぞれのページの中身を、ざっと',
+                       mae='前の札を見る', tsugi='次の札を見る', ji=4, cls='gban') + '\n'
             '  </div>\n'
             '</section>')
 
@@ -3584,7 +3601,7 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
-    gaiyo_html = build_gaiyo(sec, doko)
+    gaiyo_html = build_gaiyo(sec, doko, kiji, jissen, ken, komari)
     for i in re.findall(r'\sid="([^"]+)"', gaiyo_html):
         doko[i] = HOME
 

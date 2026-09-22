@@ -1483,15 +1483,27 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    なので、本物のHTMLをそのまま札の中に入れて、ここで縮めて見せます。
    写した絵ではないので、節を直せば見本も勝手に変わります。
    （写真だけは入れていません。指導案22ページ＝2.5MBあるため） */
-/* 2列です。3列にはしません（2026-09-22 実測）。
-   内寸は960px固定なので、3列だと札はどの画面でも280pxしかありません。
+/* 同時に見えるのは2枚です。3枚にはしません（2026-09-22 実測）。
+   内寸は960px固定なので、3枚だと札はどの画面でも280pxしかありません。
    その幅だと、窓に映る本物の中身（2つならびの悩み札・研究会の札）が
    120pxまで痩せて、日本語が縦書きのように1字ずつ折れます。
-   中身を見せる場所なので、列を減らして幅を取るほうを選びました。 */
-.gban{
-  display:grid;grid-template-columns:repeat(2,1fr);
-  gap:clamp(14px,2vw,20px);margin-top:clamp(24px,3vw,34px);
+   中身を見せる場所なので、枚数を減らして幅を取るほうを選びました。
+   ── 2026-09-22 夜：2列×3段を **よこスライド** に変えました。
+   縦に3段あると、それだけで画面2枚ぶん流れていました。よこに寝かせると、
+   1枚に使える高さが増えるので、同じ場所のまま中身が倍ほど見えます。
+   器は、こよみや一覧と同じ .yoko（スワイプでも ‹ › でも動きます）。 */
+.yoko-ban.gban{
+  --yoko-w:calc((100% - clamp(14px,2vw,20px)) / 2);
+  gap:clamp(14px,2vw,20px);
+  /* 札のかげ（5px）と、浮いたとき（8px）のための逃げ場。
+     これが無いと、器のふちでかげが切られます。 */
+  padding:3px 10px 12px 3px;
 }
+/* ここだけ「左ぞろえで止まる」にします。器の既定は真ん中ぞろえですが、
+   同時に2枚見えるところで真ん中に寄せると、送るたびに左右が半分ずつ
+   切れた札になります（実測）。左ぞろえなら、いつも2枚まるごと出ます。 */
+.yoko-ban.gban > *{scroll-snap-align:start}
+#gaiyo .yoko{margin-top:clamp(20px,2.6vw,30px)}
 .gfuda{
   position:relative;display:grid;grid-template-rows:1fr auto;
   padding:0;overflow:hidden;
@@ -1508,10 +1520,22 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    中は inert なので、指も Tab も入りません（押すのは札ぜんたい）。 */
 .atama{
   position:relative;overflow:hidden;
-  max-height:clamp(250px,28vw,320px);
-  padding:clamp(16px,1.8vw,22px) clamp(15px,1.7vw,20px) 0;
+  max-height:clamp(300px,34vw,420px);
+  padding:clamp(14px,1.6vw,18px) clamp(13px,1.5vw,17px) 0;
   background:var(--mi-ji,var(--bg));
   pointer-events:none;-webkit-user-select:none;user-select:none;
+}
+/* 窓の中だけ、まるごと少し小さくします（2026-09-22）。
+   「字が小さくなっていいから、ここの情報量を増やして」という話から。
+   中身は px で書かれているので、親の font-size では縮みません。
+   だから入れ物ごと縮めます。先に幅を 1/倍率 に広げてから縮めるので、
+   右が余ることも、はみ出すこともありません。
+   おまけ：縮めるぶん、中身は本物のページに近い幅で組まれます。
+   2つならびの札が1列に折れる、というのも起きにくくなりました。 */
+.atama-in{
+  --mi-z:.78;
+  width:calc(100% / var(--mi-z));
+  transform:scale(var(--mi-z));transform-origin:top left;
 }
 /* 窓の中では、見出しまわりを詰める。窓の高さは決まっているので、
    見出しが大きいと、肝心の中身が1行も見えなくなります（実測で気づいたところ）。
@@ -1529,22 +1553,33 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .atama .manabu-note{font-size:12.5px;line-height:1.75;margin-bottom:12px}
 /* 下ぶちをぼかして「まだ続く」と分かるようにする */
 .atama::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:58px;
+  content:"";position:absolute;left:0;right:0;bottom:0;height:46px;
   background:linear-gradient(to bottom,transparent,var(--mi-ji,var(--bg)));
 }
 /* 窓の地も、行き先のページの色 */
 .gfuda .atama{--mi-ji:var(--p-iro,var(--bg))}
 
+/* 札の下。名前だけでしたが、8つの札と同じ「数」と「ひとこと」も
+   出すようにしました（2026-09-22）。数は、その場で数えたものだけです。 */
 .gfuda-a{
-  display:flex;align-items:baseline;gap:10px;
-  padding:12px clamp(15px,1.7vw,20px) 13px;
+  display:block;
+  padding:11px clamp(14px,1.6vw,18px) 12px;
   border-top:2.5px solid var(--ink);background:var(--bg);
   color:var(--ink);text-decoration:none;
 }
 /* 札ぜんたいを押せるようにする（<a> の中に押せるものを入れないため） */
 .gfuda-a::after{content:"";position:absolute;inset:0}
+.gfuda-ue{display:flex;align-items:baseline;gap:8px}
 .gfuda-h{
-  font-family:var(--f-maru);font-weight:700;font-size:15.5px;letter-spacing:.04em;
+  font-family:var(--f-maru);font-weight:700;font-size:15px;letter-spacing:.04em;
+}
+.gfuda-kazu{
+  padding:2px 9px;border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--f-maru);font-weight:700;font-size:11px;letter-spacing:.04em;
+  white-space:nowrap;
+}
+.gfuda-yo{
+  display:block;margin-top:5px;font-size:11.5px;line-height:1.6;color:var(--mute);
 }
 .gfuda-go{
   margin-inline-start:auto;font-family:var(--f-maru);font-weight:700;
@@ -1554,9 +1589,15 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 
 @media (max-width:719px){
   .yoko-hint{font-size:11.5px}
-  .gban{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  /* せまい画面では1枚ずつ。縮めかたも、ここだけ ゆるめます
+     （小さい画面で .78 まで縮めると、本文が10px を割ります） */
+  .yoko-ban.gban{--yoko-w:100%;gap:12px;padding:3px 8px 10px 3px}
+  #gaiyo .yoko{margin-top:18px}
   .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
-  .atama{max-height:200px;padding:14px 13px 0}
+  .atama{max-height:280px;padding:13px 12px 0}
+  .atama-in{--mi-z:.86}
+  .gfuda-h{font-size:14px}
+  .gfuda-yo{font-size:11px}
 }
 
 /* ══════════════════════════════════════════════════════════════
