@@ -152,6 +152,19 @@
   </div>
 </section>
 
+<!-- ══ ことばの意味（用語辞典・2026-09-23 依頼）════════════════
+     中身は src/kotoba.md。1語＝## から次の ## まで。
+     ★さがす欄は、このページの中だけで動きます。何も送りません。 -->
+<section class="sec" id="kotoba">
+  <i class="kazari" data-b="keijiban" style="--y:26%;--w:120px;--d:.5s"></i>
+  <div class="uchi">
+    <h2 class="midashi"><span class="en">WORDS</span><span class="ja">ことばの意味</span></h2>
+    <p class="yomi">特別活動の会議や資料で出てくることばを、はじめての先生に向けて短く。<br>
+      言い方はこのサイトによるものです。引用ではありません。</p>
+    <!--BUILD:KOTOBA-->
+  </div>
+</section>
+
 <section class="sec sec--sora" id="about">
   <i class="kazari" data-b="kumo" style="--y:12%;--w:120px;--d:.4s"></i>
   <i class="kazari kazari--migi" data-b="kumo" style="--y:22%;--w:96px;--d:1.6s"></i>
@@ -1799,6 +1812,105 @@
       });
     });
     yatta_utsusu();
+  })();
+
+  /* ══ ことばをさがす（2026-09-23 依頼）════════════════════
+     25語もあると、上から読むのは しんどくなります。
+     ★このページの中だけで動きます。**何も送りません。**
+     ★JSが動かない人には さがす欄を出しません（押しても何も
+       起きない欄を、画面に置かないため）。25語は、そのまま並びます。 */
+  (function(){
+    var ran = document.getElementById('kotoba-ran');
+    var obi = document.getElementById('kotoba-sagasu');
+    if(!ran || !obi) return;
+    obi.hidden = false;
+    var ji = document.getElementById('kotoba-ji');
+    var kazu = document.getElementById('kotoba-kazu');
+    var fuda = [].slice.call(ran.querySelectorAll('.kotoba'));
+    fuda.forEach(function(f){
+      f._ji = (f.getAttribute('data-sagasu') || '').replace(/\s+/g, '').toLowerCase();
+    });
+    var kara = document.createElement('p');
+    kara.className = 'karappo'; kara.hidden = true;
+    ran.parentNode.insertBefore(kara, ran.nextSibling);
+    function utsusu(){
+      var q = (ji.value || '').replace(/\s+/g, '').toLowerCase();
+      var n = 0;
+      fuda.forEach(function(f){
+        var deru = !q || f._ji.indexOf(q) >= 0;
+        f.hidden = !deru; if(deru) n++;
+      });
+      kazu.textContent = n + '語' + (n === fuda.length ? '' : '（ぜんぶで' + fuda.length + '語）');
+      kara.hidden = !!n;
+      if(!n) kara.textContent = '「' + ji.value.trim() + '」に当たることばは、ありませんでした。';
+    }
+    ji.addEventListener('input', utsusu);
+    utsusu();
+  })();
+
+  /* ══ 紙に出す（A4・2026-09-23 依頼）════════════════════════
+     学校は紙で回ります。実践1件を、職員室に配れる形にします。
+     ★PDFを作る道具は入れません。ブラウザの印刷にそのまま渡します。
+       印刷の画面で「PDFに保存」を選べば、そのままPDFになります。
+     ★隠し方 … 押した札から上へたどって、**きょうだいだけ**を隠します。
+       position で動かす手もありますが、位置を持つ親がいると崩れます。
+     ★刷り終わったら（やめたときも）、隠したものを ぜんぶ戻します。      */
+  (function(){
+    var kamiB = [].slice.call(document.querySelectorAll('[data-kami]'));
+    if(!kamiB.length || !window.print) return;
+
+    /* ★class の付け外しは classList でやります。
+       body の直ぐ下には絵の入れ物（<svg class="tane">）がいて、
+       SVG の className は **読むだけ** です。+= で足すと例外になり、
+       そこで止まって「隠したまま刷らない」が起きます（実測）。 */
+    function modosu(){
+      [].slice.call(document.querySelectorAll('.kami-kakusu')).forEach(function(c){
+        c.classList.remove('kami-kakusu');
+      });
+      var t = document.querySelector('.kami-taisho');
+      if(t){
+        t.classList.remove('kami-taisho');
+        t.removeAttribute('data-kami-url');
+      }
+    }
+    window.addEventListener('afterprint', modosu);
+
+    kamiB.forEach(function(b){
+      b.hidden = false;
+      b.addEventListener('click', function(){
+        var fuda = b.closest('.bfuda');
+        if(!fuda) return;
+        modosu();
+        var ko = fuda;
+        while(ko && ko !== document.body && ko.parentNode){
+          var oya = ko.parentNode;
+          [].slice.call(oya.children).forEach(function(c){
+            if(c !== ko) c.classList.add('kami-kakusu');
+          });
+          ko = oya;
+        }
+        fuda.classList.add('kami-taisho');
+        /* 紙の足もとに出すURL。この1件へ まっすぐ戻れる形にします。
+           ★location からは作りません。data: で開いたときに location.pathname が
+             ページまるごとになり、URL欄が数十万字になります（実測）。
+             head の og:url は、build.py がページごとに正しく入れています。 */
+        var moto = document.querySelector('meta[property="og:url"]');
+        fuda.setAttribute('data-kami-url',
+          (moto && moto.content ? moto.content : '') + '#' + fuda.id);
+        /* ふたは、開いてから刷ります（閉じたまま刷ると中身が消えます） */
+        [].slice.call(fuda.querySelectorAll('details')).forEach(function(d){
+          if(!d.open){ d.open = true; d.setAttribute('data-kami-aketa', '1'); }
+        });
+        window.print();
+        /* afterprint が来ない場面（古いSafariなど）のための保険 */
+        setTimeout(function(){
+          [].slice.call(fuda.querySelectorAll('[data-kami-aketa]')).forEach(function(d){
+            d.open = false; d.removeAttribute('data-kami-aketa');
+          });
+          modosu();
+        }, 1200);
+      });
+    });
   })();
 
   /* ══ みんなの実践を、絞る・並べかえる・さがす（2026-09-22 夜）══

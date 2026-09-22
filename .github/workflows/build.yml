@@ -118,6 +118,13 @@ jobs:
           mkdir -p _site
           cp 公開用/*.html _site/
           if [ -f 公開用/ogp.png ]; then cp 公開用/ogp.png _site/ogp.png; fi
+          # 検索に見つけてもらうための2枚（2026-09-23）。
+          # ★ここで写さないと、robots.txt が無いのと同じになり、
+          #   出さないと決めたページ（写真・困りごと・管理）も見に来られます。
+          for f in sitemap.xml robots.txt; do
+            if [ -f "公開用/$f" ]; then cp "公開用/$f" "_site/$f"; else
+              echo "⚠ 公開用/$f がありません（検索よけが効きません）"; exit 1; fi
+          done
           # PDFを塗る道具（pdf.js）。PDFを選んだ人だけが取りに行きます。
           # ページには入れていないので、ここで一緒に配らないと動きません。
           if [ -d 公開用/pdfjs ]; then cp -r 公開用/pdfjs _site/pdfjs; fi

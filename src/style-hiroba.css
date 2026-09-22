@@ -2987,6 +2987,74 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-kazu{margin:0 0 18px;color:var(--mute);font-size:13px}
 .kanri-list{display:grid;gap:12px}
 
+/* ── ことばの意味（2026-09-23）──────────────────────────
+   読みものではなく **引くもの** なので、1語ずつ切れて見えるようにします。 */
+.kotoba-sagasu{max-width:560px;margin:0 auto clamp(20px,3vw,30px)}
+.kotoba-sagasu[hidden]{display:none}
+.kotoba-ran{display:grid;gap:14px}
+@media (min-width:860px){.kotoba-ran{grid-template-columns:1fr 1fr;gap:16px}}
+.kotoba{
+  padding:clamp(14px,2vw,20px) clamp(16px,2.4vw,22px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:16px;
+  box-shadow:4px 4px 0 var(--ink);
+}
+.kotoba[hidden]{display:none}
+.kotoba-go{
+  margin:0 0 8px;font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(17px,2.2vw,20px);letter-spacing:.04em;
+}
+.kotoba-setsu{margin:0 0 6px;font-size:14px;line-height:1.95}
+.kotoba-setsu:last-of-type{margin-bottom:10px}
+.kotoba-moto{
+  margin:0;padding-top:8px;border-top:1px solid var(--rule);
+  font-size:12px;line-height:1.7;color:var(--mute);
+}
+
+/* ══ 紙に出す（A4・2026-09-23 依頼）════════════════════════
+   学校は紙で回ります。実践1件を職員室に配れる形にします。
+   ★PDFを作る道具は入れません。ブラウザの印刷にそのまま渡します
+     （1枚のHTMLに収める作りなので、重い道具を足したくないため）。
+     ★「PDFに保存」を選べば、そのままPDFになります。
+   ★隠し方は、押した札の**きょうだいだけ**に kami-kakusu を付ける形です
+     （position で動かすと、位置を持つ親がいたときに崩れます）。 */
+@page{size:A4 portrait;margin:14mm}
+
+@media print{
+  .kami-kakusu{display:none!important}
+  /* 押せるものは、紙には要りません */
+  .kami-taisho .bansho-b,
+  .kami-taisho .shot-b,
+  .kami-taisho .shot-shita,
+  .kami-taisho .shiryo-chu{display:none!important}
+  /* 札のかざりは落として、紙らしくします */
+  .kami-taisho{
+    border:0!important;box-shadow:none!important;border-radius:0!important;
+    padding:0!important;margin:0!important;background:#fff!important;
+  }
+  /* 写真は、画面の高さで抑えていました。紙では ぜんぶ出します */
+  .kami-taisho .bfuda-mado,
+  .kami-taisho .shiryo-mado{
+    max-height:none!important;overflow:visible!important;
+    border:0!important;background:#fff!important;padding:0!important;
+  }
+  .kami-taisho .bfuda-mado img,
+  .kami-taisho .shiryo-mado img{max-height:none!important;width:100%!important}
+  .kami-taisho figure{break-inside:avoid;page-break-inside:avoid}
+  /* ふたは、開いて出します（閉じたまま刷ると中身が消えます） */
+  .kami-taisho details{display:block!important}
+  .kami-taisho .shiryo-naka{display:block!important;height:auto!important;overflow:visible!important}
+  /* 紙の足もと。どこから出した紙かが、あとで分かるように */
+  .kami-taisho::after{
+    content:"TOKKATSU広場（特別活動の情報が、溜まる場）　" attr(data-kami-url);
+    display:block;margin-top:8mm;padding-top:3mm;
+    border-top:1px solid #999;font-size:9pt;color:#444;
+  }
+  .kami-taisho .bfuda-h{font-size:16pt;line-height:1.5}
+  .kami-taisho .bfuda-lead,.kami-taisho .bfuda-oshi{font-size:11pt;line-height:1.8}
+  .kami-taisho .bfuda-me{font-size:9.5pt}
+}
+.bansho-b--kami i{font-style:normal;margin-inline-start:6px}
+
 /* ── ニュースは いつまで入っているか（2026-09-23）────────────
    出しているのは「いちばん新しい記事の日」です。組んだ日ではありません。 */
 .news-hi{

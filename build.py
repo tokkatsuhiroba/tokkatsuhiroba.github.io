@@ -84,8 +84,8 @@ PAGES = (
     #   送りに来た人には邪魔でした。ニュースと同じページの上に移します
     #   （どちらも「外の動きを知る」ものなので、隣どうしが自然です）。
     ('index.html',    'TOKKATSU広場', '', ('okuru',)),
-    ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。',
-     ('about', 'yotsu')),
+    ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。ことばの意味も。',
+     ('about', 'yotsu', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
      ('manabu', 'jissen')),
     ('atsumaru.html', '集まる', '研究日程、ニュース、各地の研究会。',
@@ -128,6 +128,7 @@ SETSU_NA = {
     #   ファイル名（bansho.html）と front matter の bansho: は、そのままです。
     #   URLは読まれないので変えません。配ったリンクも生きます。
     'bansho': 'みんなの実践', 'komari': '困りごと', 'kiku': 'ちょっと聞きたい',
+    'kotoba': 'ことばの意味',
 }
 
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
@@ -2915,6 +2916,7 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
 {mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
 <button class="bansho-b bansho-b--hoshi" type="button" data-hoshi="{slug}" aria-pressed="false" hidden>あとで見る<i aria-hidden="true">☆</i></button>\
 <button class="bansho-b bansho-b--yatta" type="button" data-yatta="{slug}" hidden>やってみた<span class="yatta-n" data-yatta-n="{slug}"></span></button>\
+<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>紙に出す（A4）<i aria-hidden="true">🖶</i></button>\
 <button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
       </article>"""
 
@@ -3278,6 +3280,7 @@ def build_kanri_page(jissen, komari, ken, tobashita):
     if re.findall(r'<!--BUILD:[^>]*-->|\{\{[A-Z_]+\}\}', body):
         raise Tomeru('管理画面に差しこまれていない目じるしが残っています')
     head = rd('src/head-hiroba.html')
+    head = head.replace('<!--BUILD:ROBOTS-->', robots_tag('kanri.html'))
     head = head.replace('<title>TOKKATSU広場</title>', '<title>実践の管理｜TOKKATSU広場</title>')
     head = re.sub(r'<meta property="og:[^>]+>\n?', '', head)
     return '\n'.join([
@@ -4117,9 +4120,111 @@ def page_na(f):
     raise Tomeru('%s は PAGES にありません' % f)
 
 
+# ══ ことばの意味（用語辞典・2026-09-23 依頼）═══════════════
+#   src/kotoba.md が本体です。1語＝## から次の ## まで。
+#     ## 見出しの語
+#     説明の行（1〜3行）
+#     > もとにしたもの
+#
+#   ★言い方は本サイトによるもので、引用ではありません。
+#     「もとにしたもの」は、**どの文書に書かれていることか**を示すためです。
+#     ページ数は書きません（版でずれるため）。
+#   ★さがす欄は、このページの中だけで動きます。何も送りません。
+
+KOTOBA_MD = os.path.join(SRC, 'kotoba.md')
+KOTOBA_SETSU_MAX = 3        # 説明は3行まで（長い説明は、読まれません）
+
+
+def load_kotoba():
+    if not os.path.exists(KOTOBA_MD):
+        raise Tomeru('src/kotoba.md がありません（ことばの意味が作れません）')
+    hon = rd('kotoba.md') if False else io.open(KOTOBA_MD, encoding='utf-8').read()
+    out = []
+    for kata in re.split(r'^## ', hon, flags=re.M)[1:]:
+        gyo = [x.strip() for x in kata.strip().split('\n')]
+        go = gyo[0].strip()
+        setsu = [x for x in gyo[1:] if x and not x.startswith('>')]
+        moto = [x[1:].strip() for x in gyo[1:] if x.startswith('>')]
+        if not go:
+            raise Tomeru('src/kotoba.md に、見出しの無い語があります')
+        if not setsu:
+            raise Tomeru('src/kotoba.md「%s」に説明がありません' % go)
+        if len(setsu) > KOTOBA_SETSU_MAX:
+            raise Tomeru('src/kotoba.md「%s」の説明が%d行あります（%d行まで）'
+                         % (go, len(setsu), KOTOBA_SETSU_MAX))
+        if not moto:
+            raise Tomeru('src/kotoba.md「%s」に「> もとにしたもの」がありません'
+                         % go)
+        out.append({'go': go, 'setsu': setsu, 'moto': moto[0]})
+    if not out:
+        raise Tomeru('src/kotoba.md から1語も読めませんでした')
+    na = [a['go'] for a in out]
+    futatsu = sorted({x for x in na if na.count(x) > 1})
+    if futatsu:
+        raise Tomeru('src/kotoba.md に同じ語が2回あります： %s' % '、'.join(futatsu))
+    return out
+
+
+KOTOBA_T = """      <article class="kotoba" data-sagasu="{sagasu}">
+        <h3 class="kotoba-go">{go}</h3>
+{setsu}        <p class="kotoba-moto">{moto}</p>
+      </article>"""
+
+
+def build_kotoba(kotoba):
+    fuda = []
+    for a in kotoba:
+        setsu = ''.join('        <p class="kotoba-setsu">%s</p>\n' % inline_md(x)
+                        for x in a['setsu'])
+        fuda.append(KOTOBA_T.format(
+            go=esc_html(a['go']), setsu=setsu, moto=esc_html(a['moto']),
+            sagasu=esc_html(' '.join([a['go']] + a['setsu']))))
+    return ('    <div class="kotoba-sagasu" id="kotoba-sagasu" hidden>\n'
+            '      <label class="sagasu-l" for="kotoba-ji">ことばをさがす</label>\n'
+            '      <input class="sagasu-i" type="search" id="kotoba-ji" '
+            'autocomplete="off" placeholder="例：提案理由、合意形成、係">\n'
+            '      <p class="sagasu-kazu" id="kotoba-kazu" role="status" '
+            'aria-live="polite"></p>\n'
+            '    </div>\n'
+            '    <div class="kotoba-ran" id="kotoba-ran">\n'
+            + '\n'.join(fuda) + '\n    </div>')
+
+
+# ══ 検索に出すページ・出さないページ（2026-09-23 依頼）════════
+#   2026-09-23 まで、7枚ぜんぶに noindex が付いていました（8月に
+#   「URLを配らないかぎり人は来ない」と決めたときのままです）。
+#   全国の先生に見つけてもらうため、**6枚とも検索に出します**。
+#   「みんなの実践と困りごとを出さなきゃ意味がない」（本人・2026-09-23）。
+#
+#   ★出さないのは **管理画面だけ** です（乗っ取りが怖いため）。
+#     こちらは noindex に加えて robots.txt でも見に来させません。
+#
+#   ★送られたものが そのまま並ぶ2枚には、**字は出す／絵は出さない**を
+#     付けます（KAKUSU_E）。
+#       noimageindex          … 画像検索に載せない
+#       max-image-preview:none … 検索結果に写真の小窓を出さない
+#     実践は題名や中身で見つかるのに、子どもの顔が画像検索に並ぶ道は
+#     できません。★これは検索する側への**お願い**で、鍵ではありません。
+#       ・従うかどうかは、その検索サービス次第です（Googleは従います）
+#       ・URLを知っている人は、これまでどおり写真を見られます
+#     そこは変わっていません。変えたのは「検索から辿り着けるかどうか」です。
+DASANAI = ('kanri.html',)                      # そもそも検索に出さない
+KAKUSU_E = ('bansho.html', 'komari.html')      # 字は出す／絵は出さない
+
+
+def robots_tag(f):
+    if f in DASANAI:
+        return '<meta name="robots" content="noindex, nofollow">'
+    if f in KAKUSU_E:
+        return ('<meta name="robots" '
+                'content="index, follow, noimageindex, max-image-preview:none">')
+    return '<meta name="robots" content="index, follow">' 
+
+
 def head_de(f, na):
     """頭は1つの型を使い回し、題と自分のURLだけをページごとに差しかえます。"""
     head = rd('src/head-hiroba.html')
+    head = head.replace('<!--BUILD:ROBOTS-->', robots_tag(f))
     dai = 'TOKKATSU広場' if f == HOME else '%s｜TOKKATSU広場' % page_na(f)
     head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
@@ -4255,6 +4360,7 @@ def build_shin():
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
                        ('          <!--BUILD:KEN-->', build_ken_options()),
+                       ('    <!--BUILD:KOTOBA-->',   build_kotoba(load_kotoba())),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
                        ('    <!--BUILD:KENKYUKAI-->',
@@ -4560,6 +4666,7 @@ def main_shin(check_only):
     for f in pages:
         io.open(os.path.join(ROOT, '公開用', f), 'w',
                 encoding='utf-8', newline='\n').write(pages[f])
+    sitemap_kaku(pages)
     pdfjs_utsusu()
     print('')
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
@@ -4568,6 +4675,40 @@ def main_shin(check_only):
           % len(pages))
     print('')
     return 0
+
+
+# ══ 検索に見つけてもらうための2枚（2026-09-23 依頼）════════
+#   noindex を外しただけでは、すぐには拾われません。
+#   ★sitemap.xml … 出してよいページだけを並べます（DASANAI は入れません）
+#   ★robots.txt  … 出さないページを、そもそも見に来させません
+#                   （HTMLの noindex は「読んでから外す」ので、
+#                     写真の重いページを読ませずに済むほうが確かです）
+#   どちらも .github/workflows/build.yml で _site へ写します。
+
+def sitemap_kaku(pages):
+    dasu = [f for f in pages if f not in DASANAI]
+    hi = datetime.date.today().isoformat()
+    url = ''.join(
+        '  <url><loc>%s%s</loc><lastmod>%s</lastmod></url>\n'
+        % (SITE_URL, '' if f == HOME else f, hi)
+        for f in dasu)
+    io.open(os.path.join(ROOT, '公開用', 'sitemap.xml'), 'w',
+            encoding='utf-8', newline='\n').write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + url + '</urlset>\n')
+    io.open(os.path.join(ROOT, '公開用', 'robots.txt'), 'w',
+            encoding='utf-8', newline='\n').write(
+        '# 管理画面は、見に来ないでください。\n'
+        '# みんなの実践と困りごとは、検索に出します（写真だけは\n'
+        '# HTMLの noimageindex で、画像検索に載せないようお願いしています）。\n'
+        'User-agent: *\n'
+        + ''.join('Disallow: /tokkatsu-hiroba/%s\n' % f for f in DASANAI)
+        + '\nSitemap: %ssitemap.xml\n' % SITE_URL)
+    print('  検索　　　　… %d枚を sitemap.xml に。%d枚は出しません（%s）。'
+          % (len(dasu), len(DASANAI), '・'.join(DASANAI)))
+    print('  　　　　　　　 %s は 字だけ出します（写真は画像検索に載せません）'
+          % '・'.join(KAKUSU_E))
 
 
 PDFJS = os.path.join(SRC, 'pdfjs')   # PDFを、送る人のブラウザの中で絵にする道具
