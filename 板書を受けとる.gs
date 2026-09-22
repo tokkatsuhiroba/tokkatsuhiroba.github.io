@@ -156,6 +156,10 @@ function doPost(e) {
     if (e.parameter && e.parameter.kind === 'kanri-kesu') {
       return _kanri_kesu(e.parameter);
     }
+    /* どの画面が見られているか（2026-09-22）。管理人だけが読めます。 */
+    if (e.parameter && e.parameter.kind === 'kanri-miru') {
+      return _kanri_miru(e.parameter);
+    }
     /* 管理画面内の編集。通常のJSON送信と違い、form POSTで
        送るので、ここで受ける。返事はpostMessageで元の画面へ戻す。 */
     if (e.parameter && e.parameter.kind === 'kanri-naosu') {
@@ -174,6 +178,9 @@ function doPost(e) {
       return _naosu(e.parameter, true);
     }
     var d = JSON.parse(e.postData.contents);
+
+    // 見られた数（2026-09-22）。いちばん軽いので、いちばん先に返します。
+    if (d.kind === 'miru') return _miru(d);
 
     // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
     if (d.kind === 'komari') return _komari(d);
@@ -333,6 +340,76 @@ function _shiraseru_komari(slug, d, m, nose) {
 
   var mail = _mail();
   if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】困りごとが1件とどきました', honbun);
+}
+
+
+/* ══ 1の2の2. 見られた数（2026-09-22 依頼）══════════════════
+   「どの画面がいちばん使われているか」を、管理画面で見るためのものです。
+
+   ★残すのは **ページの名前と 日づけ だけ** です。
+     受けとらない／残さないもの … IPアドレス、ブラウザや端末の種類、
+     どこから来たか（リファラ）、Cookie、端末の番号。
+     ★同じ人が2回ひらいても、別々に数えます。
+       だから「何人が来たか」は、この仕組みでは **永久に分かりません**。
+       分かるのは「何回ひらかれたか」だけです。
+
+   ★これは、このサイトで「開いただけで外へ出る」ただ1つの通信です。
+     2026-09-22 までは1つもありませんでした。入れたのは管理人の判断です。
+
+   ★管理画面（kanri.html）は数えません。管理人自身の動きだからです。
+
+   ★1日ぶんを1つの覚え書き（miru_yyyyMMdd）にまとめます。
+     日づけごとに1行なので、1年ぶんでも数十KBにしかなりません。       */
+
+var MIRU_PAGE = { index:1, shiru:1, manabu:1, atsumaru:1, bansho:1, komari:1 };
+var MIRU_HI_MAX = 120;      // 何日ぶん残すか（これより古い日は、読むときに消します）
+
+function _miru(d) {
+  var p = String(d.p || '').replace(/[^a-z]/g, '').slice(0, 16);
+  if (!MIRU_PAGE[p]) return _kotae({ ok: true });     // 知らない名前は、数えません
+  var lock = LockService.getScriptLock();
+  /* 混み合っているときは、待たずに捨てます。
+     数がすこし減るより、送った人を待たせないほうが大事なためです。 */
+  try { lock.waitLock(3000); } catch (e) { return _kotae({ ok: true }); }
+  try {
+    var key = 'miru_' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyyMMdd');
+    var hi;
+    try { hi = JSON.parse(P.getProperty(key) || '{}') || {}; } catch (e) { hi = {}; }
+    hi[p] = (hi[p] || 0) + 1;
+    P.setProperty(key, JSON.stringify(hi));
+  } finally {
+    lock.releaseLock();
+  }
+  return _kotae({ ok: true });
+}
+
+/* 管理画面へ返す。ここでいちど、古い日を捨てます（掃除の場所はここ1か所）。 */
+function _kanri_miru(d) {
+  var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
+  var kotae = { source: 'tokkatsu-kanri', action: 'miru', ok: false,
+                nonce: nonce, riyu: '' };
+  if (String(d.key || '').trim() !== _kanri_key()) {
+    kotae.riyu = '合いことばがちがいます';
+    return _kanri_mado(kotae);
+  }
+  var subete = P.getProperties();
+  var furui = new Date();
+  furui.setDate(furui.getDate() - MIRU_HI_MAX);
+  var kagiri = Utilities.formatDate(furui, 'Asia/Tokyo', 'yyyyMMdd');
+  var hi = [];
+  for (var k in subete) {
+    if (k.slice(0, 5) !== 'miru_') continue;
+    var ymd = k.slice(5);
+    if (ymd < kagiri) { P.deleteProperty(k); continue; }   // 掃除
+    var p;
+    try { p = JSON.parse(subete[k]) || {}; } catch (e) { continue; }
+    hi.push({ d: ymd, p: p });
+  }
+  hi.sort(function (a, b) { return a.d < b.d ? 1 : (a.d > b.d ? -1 : 0); });  // 新しい順
+  kotae.ok = true;
+  kotae.hi = hi;
+  kotae.na = Object.keys(MIRU_PAGE);
+  return _kanri_mado(kotae);
 }
 
 
@@ -757,7 +834,10 @@ function _kanri_kesu(d) {
     kotae.riyu = '合いことばがちがいます';
     return _kanri_mado(kotae);
   }
-  if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
+  /* 2026-09-22：困りごと・研究日程も、管理画面から下ろせるようにしました。
+     _slug_kesu は もともと3つとも扱えます（komari- / nittei- / それ以外）。
+     ここの形あわせだけが、実践に絞られていました。 */
+  if (!/^(bansho|komari|nittei)-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
     kotae.riyu = '行き先がありません';
     return _kanri_mado(kotae);
   }

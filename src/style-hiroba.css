@@ -1946,6 +1946,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .okuru-yomi--sub{margin:0 0 8px;font-size:12.5px}
 .okuru-kazu{margin:6px 0 0;text-align:right;font-size:12px;color:var(--mute)}
 
+/* ── 節目のお祝い（2026-09-22）──────────────────────────
+   届いた実践が ちょうど節目の数になった回だけ、送るところの頭に出ます。
+   ★地は黄（--ki）、字は墨。この組みで 10:1 出ます（フッターのLINEと同じ理由）。
+   ★動きは付けません。1回きりで消えるものが動くと、押そうとして空ぶります。 */
+.fushime{
+  max-width:560px;margin:0 auto clamp(18px,2.6vw,26px);
+  padding:clamp(16px,2.4vw,22px) clamp(18px,3vw,28px);
+  background:var(--ki);color:var(--ink);
+  border:2.5px solid var(--ink);border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);text-align:center;
+}
+.fushime-hata{display:block;width:min(240px,72%);margin:0 auto 10px;line-height:0}
+.fushime-hata svg{display:block;width:100%;height:auto}
+.fushime-dai{
+  display:block;font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(17px,2.2vw,21px);letter-spacing:.04em;line-height:1.6;
+}
+.fushime-yo{display:block;margin-top:6px;font-size:13.5px;line-height:1.85}
+
 /* 困りごと（2026-09-21 夜）。送られた1件が、そのまま並びます */
 .komari-h{
   margin:clamp(36px,5vw,60px) 0 14px;
@@ -2160,8 +2179,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   transform:translate(-2px,-2px);
   box-shadow:6px 6px 0 rgba(252,251,247,.34);
 }
-/* 塗りのほうは黄。墨の字で 10:1 出ます（地に白抜きの朱では 4.0:1 しか出ません） */
-.foot .btn--nuri{background:var(--ki);color:var(--ink);border-color:var(--bg)}
+/* LINE への導線だけは緑。9色の --midori を使います（LINE の #06C755 に
+   ほぼ重なるので、10色めを増やさずに「LINEっぽさ」が出ます）。
+   字は墨で 6.8:1。白抜きにすると 2.4:1 しか出ないので、白は枠と影だけに使います。 */
+.foot .btn--line{background:var(--midori);color:var(--ink);border-color:var(--bg)}
 .foot .btn--yoru:focus-visible{outline:3px solid var(--bg);outline-offset:3px}
 
 @media (max-width:719px){
@@ -2790,6 +2811,48 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-sagasu{width:100%;margin-bottom:6px}
 .kanri-kazu{margin:0 0 18px;color:var(--mute);font-size:13px}
 .kanri-list{display:grid;gap:12px}
+
+/* ── 実践のほかに、届いたもの（2026-09-22）──────────────── */
+.kanri-hoka{margin-top:clamp(36px,5vw,56px);padding-top:clamp(24px,3.4vw,34px);border-top:2px solid var(--rule)}
+.kanri-hoka h2{margin:0 0 8px;font-family:var(--f-maru);font-size:clamp(18px,2.3vw,22px)}
+.kanri-hoka-yo{margin:0 0 6px;font-size:13px;line-height:1.9;color:var(--mute)}
+.kanri-hoka-h{
+  margin:24px 0 10px;font-family:var(--f-maru);font-size:15px;letter-spacing:.04em;
+  display:flex;align-items:baseline;gap:10px;
+}
+.kanri-hoka-h span{font-size:12.5px;font-weight:400;color:var(--mute)}
+.kanri-hoka .kanri-card{margin-bottom:12px}
+.kanri-tobashi{margin:0 0 10px;padding-left:1.2em;font-size:13px;line-height:1.9;color:var(--mute)}
+.kanri-tobashi li{overflow-wrap:anywhere}
+
+/* ── どの画面が見られているか（2026-09-22）────────────────
+   ★色だけで伝えません。棒のとなりに、かならず数を置きます。
+   ★日ごとの表は、せまい画面では よこにスクロールします
+     （字を小さくして押しこむと、読めなくなるためです）。 */
+.kanri-miru{margin-top:clamp(36px,5vw,56px);padding-top:clamp(24px,3.4vw,34px);border-top:2px solid var(--rule)}
+.kanri-miru h2{margin:0 0 8px;font-family:var(--f-maru);font-size:clamp(18px,2.3vw,22px)}
+.kanri-miru-yo{margin:0 0 16px;font-size:13px;line-height:1.9;color:var(--mute)}
+.kanri-miru-f{margin:0 0 10px}
+.kanri-miru-h3{
+  margin:22px 0 10px;font-family:var(--f-maru);font-size:15px;letter-spacing:.04em;
+  display:flex;align-items:baseline;gap:10px;
+}
+.kanri-miru-h3 span{font-size:12.5px;font-weight:400;color:var(--mute)}
+.kanri-miru-kara{margin:0;font-size:13px;color:var(--mute)}
+.kanri-miru-bo{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.kanri-miru-bo li{display:grid;grid-template-columns:7.5em 1fr 3.5em;align-items:center;gap:10px}
+.kanri-miru-bo b{font-size:13.5px;font-weight:700}
+.kanri-miru-bo .bo{display:block;height:14px;background:var(--rule);border-radius:999px}
+.kanri-miru-bo .bo i{display:block;height:100%;width:var(--w,0);min-width:3px;background:var(--accent);border-radius:999px}
+.kanri-miru-bo .n{text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;font-weight:700}
+.kanri-miru-hi{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.kanri-miru-hi table{border-collapse:collapse;font-size:13px;min-width:520px}
+.kanri-miru-hi th,.kanri-miru-hi td{padding:6px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.kanri-miru-hi thead th{font-size:12px;color:var(--mute);text-align:end;border-bottom:2px solid var(--rule)}
+.kanri-miru-hi thead th:first-child,.kanri-miru-hi tbody th{text-align:start}
+.kanri-miru-hi tbody th{font-weight:700}
+.kanri-miru-hi td{text-align:end;font-variant-numeric:tabular-nums}
+.kanri-miru-hi .zero{color:var(--rule)}
 .kanri-card{
   display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;
   padding:16px;background:var(--men);border:2px solid var(--ink);border-radius:14px;

@@ -2792,6 +2792,86 @@ def build_kanri_list(jissen):
     return '\n'.join(out) if out else '      <p class="karappo">届いた実践はまだありません。</p>'
 
 
+# ══ 管理画面の「実践のほか」（2026-09-22 依頼）════════════
+#   困りごとと 研究日程は、送られたら そのまま公開ページに出ます。
+#   ところが 2026-09-22 まで、下ろす道は**知らせメールのリンク1本だけ**
+#   でした。メールを見失うと、もう触れません。ここに一覧を出します。
+#
+#   ★消す仕組みは、実践と同じものを使い回します。
+#     .kanri-card に data-v（slug）が付いていれば、kanri.html の
+#     いまの［消す］がそのまま動きます。新しい道は作りません。
+#   ★「出していないもの」も並べます。NGワードや書き方で止まった1件は、
+#     いままでビルドの記録にしか出ず、誰の目にも触れませんでした。
+#     こちらは消せません（公開に出ていないので、消すものがありません）。
+
+KANRI_HOKA_T = """      <article class="kanri-card" data-v="{v}" data-sagasu="{sagasu}">
+        <div><h3>{dai}</h3><p data-kanri-meta>{meta}</p></div>
+        <div class="kanri-card-te"><button type="button" class="kanri-kesu" \
+data-kesu data-title="{dai}" data-nani="{nani}">消す</button></div>
+      </article>"""
+
+
+def build_kanri_hoka(komari, ken, tobashita):
+    """困りごと・送られた研究日程・出していないもの の3つ。"""
+    out = []
+
+    out.append('      <h3 class="kanri-hoka-h">困りごと'
+               '<span>%d件</span></h3>' % len(komari))
+    if komari:
+        for a in komari:
+            meta = '・'.join(x for x in (ja_md(a['d']), a.get('grade') or '') if x)
+            out.append(KANRI_HOKA_T.format(
+                v=esc_html(a['slug']), dai=esc_html(a['mijikai']),
+                meta=esc_html(meta), nani='困りごと',
+                sagasu=esc_html(' '.join((a['mijikai'], a['hon'], a.get('grade') or '')))))
+    else:
+        out.append('      <p class="karappo">届いた困りごとはまだありません。</p>')
+
+    # こよみは1件の .md から「当日」と「申込〆切」を別々の行に開きます。
+    #   ここは **ファイル1つ＝1枚** に畳みます（消すのはファイルなので、
+    #   同じ slug が2枚ならんでいると、どちらを押しても同じものが消えます）。
+    okuri = []
+    mita = {}
+    for a in ken:
+        if not a.get('okuri'):
+            continue
+        k = a['slug']
+        if k not in mita:
+            mita[k] = dict(a, hi=[])
+            okuri.append(mita[k])
+        mita[k]['hi'].append('%s（%s）' % (ja_md(a['d']), a['shurui']))
+    out.append('      <h3 class="kanri-hoka-h">サイトから送られた研究日程'
+               '<span>%d件</span></h3>' % len(okuri))
+    if okuri:
+        for a in okuri:
+            meta = '・'.join(x for x in ('／'.join(a['hi']), a.get('basho') or '',
+                                         a.get('org') or '') if x)
+            out.append(KANRI_HOKA_T.format(
+                v=esc_html(a['slug']), dai=esc_html(a['ja']),
+                meta=esc_html(meta), nani='研究日程',
+                sagasu=esc_html(' '.join((a['ja'], a.get('naka') or '',
+                                          a.get('basho') or '')))))
+    else:
+        out.append('      <p class="karappo">サイトから送られた日程は、まだありません。'
+                   '<br>（こちらで手で書いたぶんは、ここには出ません）</p>')
+
+    out.append('      <h3 class="kanri-hoka-h">届いたけれど、出していないもの'
+               '<span>%d件</span></h3>' % len(tobashita))
+    if tobashita:
+        out.append('      <ul class="kanri-tobashi">')
+        for t in tobashita:
+            out.append('        <li>%s</li>' % esc_html(t))
+        out.append('      </ul>')
+        out.append('      <p class="kanri-hoka-yo">これは公開ページに出ていません。'
+                   'だから、ここからは消せません。<br>'
+                   '中身を直して出すなら、GitHub の src/komari・src/nittei で '
+                   'その .md をなおしてください。</p>')
+    else:
+        out.append('      <p class="karappo">止まったものはありません。</p>')
+
+    return '\n'.join(out)
+
+
 NURU_ME = '/*BUILD:NURU*/'
 
 
@@ -2809,10 +2889,12 @@ def nuru_ireru(body, doko):
     return body.replace(NURU_ME, nuru_js(doko))
 
 
-def build_kanri_page(jissen):
+def build_kanri_page(jissen, komari, ken, tobashita):
     """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
     body = rd('src/kanri.html')
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
+    body = body.replace('      <!--BUILD:KANRI_HOKA-->',
+                        build_kanri_hoka(komari, ken, tobashita))
     body = body.replace('{{OKURU_URL}}', OKURU_URL)
     body = nuru_ireru(body, 'src/kanri.html')
     if re.findall(r'<!--BUILD:[^>]*-->|\{\{[A-Z_]+\}\}', body):
@@ -2996,6 +3078,41 @@ def build_hyo_news(kiji):
 
 # ── 節のまわりに立つ飾り（絵を1回だけ入れて、置きたい所で <use> する）──
 KAZARI_RE = re.compile(r'<i class="kazari([^"]*)" data-([kb])="([a-z0-9\-]+)"([^>]*)></i>')
+
+
+# ══ 節目のお祝い（2026-09-22）════════════════════════════════
+#   溜まった実践が **ちょうど** 下の数になったときだけ、ホームの
+#   「あなたの実践を、ここに」に お祝いが1つ出ます。
+#   次の1件が届くと、ひとりでに消えます（だから見られると嬉しい）。
+#
+#   ★これは「閲覧数」ではありません。閲覧数を数えるには、開いた人の
+#     端末から外へ1回送る必要があり、原則2（何も送信しない）に触れます。
+#     ここで数えているのは、サイトの中にもう有るもの＝届いた件数です。
+#     だから、読む人からは1バイトも出ません。
+#
+#   ★数を足すときは、下のタプルに入れるだけです。順番は問いません。
+FUSHIME = (1, 5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500, 1000)
+
+
+def build_fushime(jissen, buhin):
+    """届いた実践が ちょうど節目の数のときだけ、お祝いを返す。ほかは空。"""
+    n = len(bansho_aru(jissen))
+    if n not in FUSHIME:
+        return ''
+    if 'bankokki' not in buhin:
+        raise Tomeru('節目のお祝いが src/ill/buhin/bankokki.svg を呼んでいますが、'
+                     'その絵がありません')
+    w, h, _ = buhin['bankokki']
+    dai = ('はじめの1件が、届きました。' if n == 1
+           else '実践が、%d件になりました。' % n)
+    return ('    <p class="fushime">\n'
+            '      <span class="fushime-hata" aria-hidden="true">'
+            '<svg viewBox="0 0 %g %g" focusable="false">'
+            '<use href="#ill-b-bankokki"/></svg></span>\n'
+            '      <b class="fushime-dai">%s</b>\n'
+            '      <span class="fushime-yo">送ってくださった先生方、'
+            'ありがとうございます。</span>\n'
+            '    </p>' % (w, h, esc_html(dai)))
 
 
 def build_kazari(body, buhin, kyara):
@@ -3580,6 +3697,7 @@ def build_shin():
                        ('    <!--BUILD:KYARA-->',  build_kyara_narabi(kyara)),
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
                        ('    <!--BUILD:BANSHO_IRI-->', build_bansho_iriguchi(jissen)),
+                       ('    <!--BUILD:FUSHIME-->', build_fushime(jissen, buhin)),
                        ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
                        ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
@@ -3659,7 +3777,8 @@ def build_shin():
         ]) + '\n'
         ngword_check(html, '公開用/' + f)
         pages[f] = html
-    kanri = build_kanri_page(jissen)
+    kanri = build_kanri_page(jissen, komari, ken,
+                             list(tobashita_k) + list(NITTEI_TOBASHITA))
     ngword_check(kanri, '公開用/kanri.html')
     pages['kanri.html'] = kanri
     return pages, hyo, kiji, jissen, komari, tobashita_k

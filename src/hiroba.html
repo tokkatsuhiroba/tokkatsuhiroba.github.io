@@ -28,7 +28,9 @@
          これまで日程は、こちらで調べて手で書くぶんだけでした。
          知っている人がいても、その人からは載せられませんでした。
          見るところの すぐ下に、送るところを置きます。
-         ★開いただけでは、外に1バイトも出ません。押したときだけです。 -->
+         ★この入力欄からは、押したときにだけ出ます。
+           （2026-09-22 から、ページを開いた1回だけは「どの画面か」を送っています。
+             くわしくは、下の「どの画面が見られたか」のところ） -->
     <details class="hiraku hako" id="nittei">
       <summary><span class="a">研究日程を知らせる（知っている会を、ここに足す）</span><span class="b">とじる</span></summary>
 
@@ -614,13 +616,23 @@
       板書の写真1枚でも、指導案のPDFでも。
     </p>
 
+    <!-- ══ 節目のお祝い（2026-09-22）══════════════════════════════
+         溜まった実践が ちょうど節目の数になったときだけ、ここに出ます。
+         次の1件が届くと、ひとりでに消えます。
+         ★数えているのは「溜まった件数」です。閲覧数ではありません。
+           閲覧数を出すには、開いた人の端末から外へ送る必要があります
+           （原則2に触れます）。だからここでは数えません。 -->
+    <!--BUILD:FUSHIME-->
+
 
     <!-- ══ サイトの中で、そのまま送る（2026-09-21）══════════════
          いままでは外のフォームへ出ていました。ところが実践フォームは
          ファイル添付があるため、Googleが全員にログインを求めます。
          それでは「誰でも簡単に」になりません。だから入力欄を ここに置きます。
-         ★開いただけでは、外へ1バイトも出ません。
-           写真を選んでも、まだ出ません。「送る」を押したときだけ出ます。
+         ★この入力欄からは、写真を選んでも、まだ出ません。
+           「送る」を押したときだけ出ます。
+           （2026-09-22 から、ページを開いた1回だけは「どの画面か」を送っています。
+             くわしくは、下の「どの画面が見られたか」のところ）
          ★2026-09-21 夜：押したあとは 管理人を通さずに 板書のページへ出ます。
            知らせは管理人に届き、［すぐ消す］で1押しで下ろせます。 -->
     <form class="okuru-f" id="okuru-f" novalidate>
@@ -772,12 +784,12 @@
 
 <footer class="foot">
   <div class="uchi">
-    <p class="foot-koe">特別活動の情報が、溜まる場。<br>LINE＝話す場／ここ＝溜まる場。</p>
+    <p class="foot-koe">特別活動の情報が、溜まる場。<br>LINEで流れていく話も、ここには残ります。</p>
 
     <!-- 夜の地なので、ふちと影は墨ではなく地の色（--bg）で出します。
          押せるものはページの中と同じ丸いボタンの形にそろえます。 -->
     <div class="foot-botan">
-      <a class="btn btn--yoru btn--nuri" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">みんなの特活ひろば（LINE）<span class="btn-ya">↗</span></a>
+      <a class="btn btn--yoru btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">みんなの特活ひろば（LINE）<span class="btn-ya">↗</span></a>
     </div>
 
     <p class="kanri">管理者：伊藤 優<span aria-hidden="true">　／　</span><a href="kanri.html">管理画面</a></p>
@@ -866,8 +878,9 @@
   });
 
   /* ══ サイトの中から、そのまま送る（2026-09-21）══════════════
-     ★開いただけでは、外に1バイトも出ません。写真を選んでも出ません。
+     ★この入力欄からは、写真を選んでも出ません。
        出ていくのは「送る」を押したときの1回だけです。
+       （ページを開いた1回ぶんは、下の「どの画面が見られたか」で別に送っています）
      ★写真は、送るまえに この場で小さくします（長辺1400px・だいたい120KB）。
        もとの大きさのまま送ると、溜めるページがすぐ太るためです。
        Exif（撮った場所や日時）も、描きなおすので落ちます。
@@ -877,6 +890,42 @@
        （実践フォームはファイル添付があるため、Googleがログインを求めます。
          URLが入れば、ログイン無しで送れるようになります）        */
   var OKURU_URL = 'https://script.google.com/macros/s/AKfycbwb0xkl5HpPDX2WqSov42N8L2FkAVD6ZYx5sbbs_7r332mmsRYY8_VYDyfD29yqKHCH/exec';
+
+  /* ══ どの画面が見られたか、1回だけ送る（2026-09-22 依頼）════
+     ★ここは、このサイトで「開いただけで外へ出る」**ただ1つ**の通信です。
+       2026-09-22 までは1つもありませんでした。管理人が
+       「どの画面がいちばん使われているか」を知るために入れました。
+
+     ★送るのは **ページの名前だけ**（index / shiru / manabu / …）。
+       IPアドレス・ブラウザや端末の種類・どこから来たか・Cookie・
+       端末の番号は、送りませんし、受け口でも残しません。
+       同じ人が2回ひらいても別々に数えるので、「何人か」は分かりません。
+
+     ★次のときは、送りません。
+       ・ブラウザが「追跡しないで」と言っている（GPC／DNT）
+       ・ファイルを直に開いている（file:／作っている最中の確かめ）
+       ・管理画面（kanri.html）。管理人自身の動きだからです
+
+     ★失敗しても、ページは何も変わりません。黙って捨てます。       */
+  (function(){
+    if (!OKURU_URL) return;
+    if (location.protocol === 'file:') return;
+    if (navigator.globalPrivacyControl === true) return;
+    if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
+    var na = (location.pathname.split('/').pop() || 'index.html')
+               .replace(/\.html$/, '') || 'index';
+    if (!/^(index|shiru|manabu|atsumaru|bansho|komari)$/.test(na)) return;
+    var bun = JSON.stringify({ kind: 'miru', p: na });
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(OKURU_URL, new Blob([bun], {type:'text/plain;charset=UTF-8'}));
+      } else {
+        fetch(OKURU_URL, { method:'POST', mode:'no-cors', keepalive:true,
+                           headers:{'Content-Type':'text/plain;charset=UTF-8'},
+                           body: bun }).catch(function(){});
+      }
+    } catch (e) {}
+  })();
 
   /* ══ 合いことば（2026-09-22 夜）══════════════════════════
      送った人だけが、あとから自分の1件を消せるようにするしくみです。
@@ -1996,7 +2045,8 @@
   /* ══ 困りごとを送る（2026-09-21 夜）══════════════════════
      板書と同じ受け口に、kind: 'komari' で投げます。
      写真もPDFもありません。字だけです。
-     ★ここも、開いただけでは1バイトも出ません。押したときだけです。 */
+     ★ここも、この入力欄からは 押したときだけです。
+       （ページを開いた1回ぶんは「どの画面が見られたか」のほうです） */
   var komariF = document.getElementById('komari-f');
   if(komariF && OKURU_URL){
     var kM = document.getElementById('komari-m');
@@ -2062,7 +2112,8 @@
      同じ受け口に kind: 'nittei' で投げます。字だけです。
      送られたぶんは src/nittei/*.md に入り、上のこよみに合流します
      （こちらで調べて手で書くぶんは src/app.js の EVENTS のまま）。
-     ★ここも、開いただけでは1バイトも出ません。押したときだけです。 */
+     ★ここも、この入力欄からは 押したときだけです。
+       （ページを開いた1回ぶんは「どの画面が見られたか」のほうです） */
   var ntF = document.getElementById('nt-f');
   if(ntF && OKURU_URL){
     var ntV = function(id){ return (document.getElementById(id).value || '').trim(); };
