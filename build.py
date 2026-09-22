@@ -2762,13 +2762,16 @@ def build_kanri_list(jissen):
         sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by']))
         meta = '・'.join(x for x in (a['scene'], a['grade'], ja_md(a['d']), '提供：' + a['by']) if x)
         out.append(
-            '      <article class="kanri-card" data-sagasu="%s">\n'
+            '      <article class="kanri-card" data-v="%s" data-sagasu="%s">\n'
             '        <div><h3>%s</h3><p>%s</p></div>\n'
-            '        <button type="button" class="jibun-naosu" data-naosu="%s">'
-            'なおす</button>\n'
+            '        <div class="kanri-card-te">'
+            '<button type="button" class="jibun-naosu" data-naosu="%s">なおす</button>'
+            '<button type="button" class="kanri-kesu" data-kesu data-title="%s">消す</button>'
+            '</div>\n'
             '      </article>'
-            % (esc_html(sagasu), esc_html(a['title']), esc_html(meta),
-               esc_html(json.dumps(d, ensure_ascii=False, separators=(',', ':')))))
+            % (esc_html(a['slug']), esc_html(sagasu), esc_html(a['title']), esc_html(meta),
+               esc_html(json.dumps(d, ensure_ascii=False, separators=(',', ':'))),
+               esc_html(a['title'])))
     return '\n'.join(out) if out else '      <p class="karappo">届いた実践はまだありません。</p>'
 
 

@@ -153,6 +153,9 @@ function doPost(e) {
     if (e.parameter && e.parameter.kind === 'kanri-check') {
       return _kanri_check(e.parameter);
     }
+    if (e.parameter && e.parameter.kind === 'kanri-kesu') {
+      return _kanri_kesu(e.parameter);
+    }
     var d = JSON.parse(e.postData.contents);
 
     // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
@@ -625,17 +628,8 @@ function doGet(e) {
                + 'font-weight:700">消す</a>'
                + '<br><br><small>公開ページからは消えます。GitHubの履歴には残ります。</small>');
   }
-  var keshita = 0;
   try {
-    if (slug.indexOf('komari-') === 0) {
-      keshita += _kesu_md(slug, 'src/komari');
-    } else if (slug.indexOf('nittei-') === 0) {
-      keshita += _kesu_md(slug, 'src/nittei');
-    } else {
-      keshita += _kesu_folder('src/bansho/' + slug, slug);
-      keshita += _kesu_folder('src/shiryo/' + slug, slug);   // PDFから作った画像も
-      keshita += _kesu_md(slug, 'src/jissen');
-    }
+    var keshita = _slug_kesu(slug);
   } catch (err) {
     return _html('消せませんでした：' + String(err).slice(0, 200) +
                  '<br><br>手で消すなら GitHub の src/ の中です（' + slug + '）。');
@@ -722,11 +716,44 @@ function _naosu(d) {
 function _kanri_check(d) {
   var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
   var ok = !!(String(d.key || '').trim() === _kanri_key());
+  return _kanri_mado({ source: 'tokkatsu-kanri', action: 'login', ok: ok, nonce: nonce });
+}
+
+/* 管理画面からの削除。GETのURLに管理キーを出さず、
+   確認画面の「削除する」を押したPOSTだけを受ける。 */
+function _kanri_kesu(d) {
+  var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
+  var slug = String(d.v || '').trim();
+  var kotae = { source: 'tokkatsu-kanri', action: 'kesu', ok: false,
+                nonce: nonce, v: slug, riyu: '' };
+  if (String(d.key || '').trim() !== _kanri_key()) {
+    kotae.riyu = '合いことばがちがいます';
+    return _kanri_mado(kotae);
+  }
+  if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
+    kotae.riyu = '行き先がありません';
+    return _kanri_mado(kotae);
+  }
+  try {
+    var n = _slug_kesu(slug);
+    if (!n) {
+      kotae.riyu = 'もう残っていません';
+    } else {
+      kotae.ok = true;
+      kotae.kazu = n;
+    }
+  } catch (err) {
+    kotae.riyu = '削除できませんでした：' + String(err).slice(0, 160);
+  }
+  return _kanri_mado(kotae);
+}
+
+function _kanri_mado(kotae) {
+  /* Apps Script の HtmlService は、返したHTMLを Google の内側フレームに
+     もう1枚入れる。parent だとそこで止まるので、最上位の管理画面へ戻す。 */
+  var payload = JSON.stringify(kotae).replace(/</g, '\\u003c');
   var js = '<!doctype html><meta charset="utf-8"><script>'
-    /* Apps Script の HtmlService は、返したHTMLを Google の内側フレームに
-       もう1枚入れる。parent だとそこで止まるので、最上位の管理画面へ戻す。 */
-    + 'top.postMessage({source:"tokkatsu-kanri",ok:' + (ok ? 'true' : 'false')
-    + ',nonce:' + JSON.stringify(nonce) + '},"*");<\/script>';
+    + 'top.postMessage(' + payload + ',"*");<\/script>';
   return HtmlService.createHtmlOutput(js)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -812,6 +839,22 @@ function _kesu_folder(michi, slug) {
   for (var i = 0; i < ichiran.length; i++) {
     _github_kesu(ichiran[i].path, ichiran[i].sha, '板書を1件消す（' + slug + '）');
     n++;
+  }
+  return n;
+}
+
+/* 1件の字・写真・資料をまとめて削除する。
+   メールのリンクと管理画面の両方が、この同じ道を使う。 */
+function _slug_kesu(slug) {
+  var n = 0;
+  if (slug.indexOf('komari-') === 0) {
+    n += _kesu_md(slug, 'src/komari');
+  } else if (slug.indexOf('nittei-') === 0) {
+    n += _kesu_md(slug, 'src/nittei');
+  } else {
+    n += _kesu_folder('src/bansho/' + slug, slug);
+    n += _kesu_folder('src/shiryo/' + slug, slug);
+    n += _kesu_md(slug, 'src/jissen');
   }
   return n;
 }

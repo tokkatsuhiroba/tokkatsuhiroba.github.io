@@ -2705,9 +2705,37 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-card h3{margin:0 0 6px;font:700 17px/1.5 var(--f-maru)}
 .kanri-card p{margin:0;color:var(--mute);font-size:12.5px;line-height:1.7}
 .kanri-card .jibun-naosu{white-space:nowrap;background:var(--bg)}
+.kanri-card-te{display:flex;align-items:center;gap:8px}
+.kanri-kesu{
+  min-height:40px;padding:8px 16px;background:var(--bg);color:var(--shu);
+  border:2px solid var(--shu);border-radius:999px;
+  font:700 13px/1.4 var(--f-maru);cursor:pointer;white-space:nowrap;
+}
+.kanri-kesu:hover,.kanri-kesu:focus-visible{background:var(--shu);color:var(--bg)}
+.kanri-kesu-mado{
+  position:fixed;z-index:1001;inset:0;display:grid;place-items:center;
+  padding:18px;background:rgba(28,28,26,.7);
+}
+.kanri-kesu-mado[hidden]{display:none}
+.kanri-kesu-naka{
+  width:min(540px,100%);padding:clamp(20px,5vw,34px);background:var(--bg);
+  border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--shu);
+}
+.kanri-kesu-naka h2{margin:0 0 14px;font:900 clamp(21px,4vw,28px)/1.4 var(--f-maru)}
+.kanri-kesu-dai{margin:0 0 14px;padding:12px;background:var(--men);border-radius:10px;font-weight:700}
+.kanri-kesu-chu{font-size:14px;line-height:1.8}
+.kanri-kesu-te{display:flex;justify-content:flex-end;gap:10px;margin:20px 0 0}
+.kanri-kesu-kakutei{
+  min-height:42px;padding:9px 20px;background:var(--shu);color:var(--bg);
+  border:2px solid var(--shu);border-radius:999px;font:700 14px/1.4 var(--f-maru);cursor:pointer;
+}
+.kanri-kesu-kakutei:disabled{opacity:.55;cursor:wait}
 @media(max-width:560px){
   .kanri-login-gyo,.kanri-ue{align-items:stretch;flex-direction:column}
   .kanri-login-gyo .btn,.kanri-ue .bansho-b{width:100%;justify-content:center}
   .kanri-card{grid-template-columns:1fr}
   .kanri-card .jibun-naosu{width:100%}
+  .kanri-card-te{display:grid;grid-template-columns:1fr 1fr}
+  .kanri-kesu{width:100%}
+  .kanri-kesu-te{display:grid;grid-template-columns:1fr 1fr}
 }

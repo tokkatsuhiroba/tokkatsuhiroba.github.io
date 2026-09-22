@@ -45,6 +45,29 @@
   </section>
 </main>
 
+<div class="kanri-kesu-mado" id="kanri-kesu-mado" hidden role="dialog"
+     aria-modal="true" aria-labelledby="kanri-kesu-h">
+  <div class="kanri-kesu-naka">
+    <p class="kanri-kago">削除の確認</p>
+    <h2 id="kanri-kesu-h">この実践を削除しますか</h2>
+    <p class="kanri-kesu-dai" id="kanri-kesu-dai"></p>
+    <p class="kanri-kesu-chu">公開ページから、字・写真・PDFが削除されます。<br>
+      <b>GitHubの履歴には残ります。</b></p>
+    <p class="kanri-kesu-te">
+      <button type="button" class="bansho-b" id="kanri-kesu-yameru">やめる</button>
+      <button type="button" class="kanri-kesu-kakutei" id="kanri-kesu-kakutei">削除する</button>
+    </p>
+    <p class="okuru-shirase" id="kanri-kesu-shirase" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<form class="kanri-kakunin" id="kanri-kesu-f" method="post" target="kanri-kakunin">
+  <input type="hidden" name="kind" value="kanri-kesu">
+  <input type="hidden" name="key" id="kanri-kesu-key" value="">
+  <input type="hidden" name="v" id="kanri-kesu-v" value="">
+  <input type="hidden" name="nonce" id="kanri-kesu-nonce" value="">
+</form>
+
 <script>
 (function(){
   'use strict';
@@ -63,8 +86,14 @@
   var kazu = document.getElementById('kanri-kazu');
   var cards = [].slice.call(document.querySelectorAll('.kanri-card'));
   var matte = '';
+  var kesuMatte = '', kesuIma = null;
+  var kesuMado = document.getElementById('kanri-kesu-mado');
+  var kesuF = document.getElementById('kanri-kesu-f');
+  var kesuKakutei = document.getElementById('kanri-kesu-kakutei');
+  var kesuShirase = document.getElementById('kanri-kesu-shirase');
 
   form.action = OKURU_URL;
+  kesuF.action = OKURU_URL;
 
   function nonce(){
     var b = new Uint8Array(16);
@@ -94,8 +123,23 @@
   window.addEventListener('message', function(ev){
     /* Apps Script の返事は Google の内側フレームから来るため、
        source ではなく、128ビットの使い捨て nonce でこの回の返事だけを受ける。 */
-    if(!ev.data || ev.data.source !== 'tokkatsu-kanri'
-       || ev.data.nonce !== matte) return;
+    if(!ev.data || ev.data.source !== 'tokkatsu-kanri') return;
+    if(ev.data.action === 'kesu'){
+      if(ev.data.nonce !== kesuMatte) return;
+      kesuKakutei.disabled = false;
+      if(ev.data.ok){
+        if(kesuIma){
+          cards = cards.filter(function(c){ return c !== kesuIma; });
+          kesuIma.remove();
+        }
+        kesuMado.hidden = true; kesuIma = null; shiboru();
+        kazu.textContent += '（削除しました。公開ページへの反映は数分後です）';
+      }else{
+        kesuShirase.textContent = ev.data.riyu || '削除できませんでした。';
+      }
+      return;
+    }
+    if(ev.data.nonce !== matte) return;
     hairu.disabled = false;
     if(ev.data.ok){ shirase.textContent = ''; hiraku(keyIn.value.trim()); }
     else { key_kesu(); shirase.textContent = '合いことばがちがいます。'; keyIn.select(); }
@@ -115,6 +159,14 @@
     keyIn.focus();
   });
   document.getElementById('kanri-list').addEventListener('click', function(ev){
+    var kb = ev.target.closest('[data-kesu]');
+    if(kb){
+      kesuIma = kb.closest('.kanri-card');
+      document.getElementById('kanri-kesu-dai').textContent = kb.getAttribute('data-title') || '';
+      kesuShirase.textContent = ''; kesuMado.hidden = false;
+      document.getElementById('kanri-kesu-yameru').focus();
+      return;
+    }
     var b = ev.target.closest('[data-naosu]');
     if(!b) return;
     var k = key_yomu();
@@ -127,6 +179,19 @@
     }catch(e){
       kazu.textContent = 'この1件を開けませんでした。';
     }
+  });
+  document.getElementById('kanri-kesu-yameru').addEventListener('click', function(){
+    kesuMado.hidden = true; kesuIma = null; kesuShirase.textContent = '';
+  });
+  kesuKakutei.addEventListener('click', function(){
+    var k = key_yomu();
+    if(!k || !kesuIma){ kesuMado.hidden = true; naka.hidden = true; lock.hidden = false; return; }
+    kesuMatte = nonce(); kesuKakutei.disabled = true;
+    kesuShirase.textContent = '削除しています…';
+    document.getElementById('kanri-kesu-key').value = k;
+    document.getElementById('kanri-kesu-v').value = kesuIma.getAttribute('data-v') || '';
+    document.getElementById('kanri-kesu-nonce').value = kesuMatte;
+    kesuF.submit();
   });
 
   var nokori = key_yomu();
