@@ -1561,6 +1561,65 @@
     }
   }
 
+  /* ══ あなたが送ったもの（2026-09-22 夜 依頼）══════════════
+     ログインが無いので、こちらは「誰が誰か」を1つも持っていません。
+     だから **送った人のブラウザに聞きます**。送るときに作った合いことばが
+     その端末に残っているので、そのハッシュと、札に付いている data-nushi を
+     突き合わせます。合ったものが「あなたのもの」です。
+
+     ★見えるのは、その端末の人だけです。ほかの人の画面には出ません。
+     ★1つも合わなければ、棚ごと出しません（空の棚を置かない）。
+     ★［消す］は、受け口の確かめ画面をひらきます。押して初めて消えます。 */
+  var jibunTana = document.getElementById('jibun');
+  if(jibunTana && window.crypto && crypto.subtle){
+    (function(){
+      var hikae = aikotoba_yomu();
+      if(!hikae.length) return;
+      var fuda = [].slice.call(document.querySelectorAll('[data-nushi]'));
+      Promise.all(hikae.map(function(h){
+        /* 控えにハッシュが入っていない古いものは、その場で作りなおします */
+        return h.n ? Promise.resolve(h) : aikotoba_hash(h.k).then(function(n){
+          h.n = n; return h;
+        });
+      })).then(function(zen){
+        var l = document.getElementById('jibun-l');
+        var deta = 0;
+        zen.forEach(function(h){
+          if(!h.n) return;
+          var f = fuda.filter(function(x){ return x.getAttribute('data-nushi') === h.n; })[0];
+          var li = document.createElement('li');
+          li.className = 'jibun-1';
+          var dai = f ? (f.querySelector('.bfuda-h') || {}).textContent : '';
+          dai = (dai || h.t || '送ったもの').trim();
+          if(f){
+            f.classList.add('bfuda--jibun');
+            var shirushi = document.createElement('p');
+            shirushi.className = 'jibun-shirushi';
+            shirushi.textContent = 'あなたが送ったものです';
+            f.insertBefore(shirushi, f.firstChild);
+            li.innerHTML = '<a class="jibun-a"></a>'
+                         + '<span class="jibun-hi"></span>'
+                         + '<a class="jibun-kesu" target="_blank" rel="noopener">消す</a>';
+            li.querySelector('.jibun-a').textContent = dai;
+            li.querySelector('.jibun-a').href = '#' + f.id;
+            li.querySelector('.jibun-kesu').href =
+              OKURU_URL + '?v=' + encodeURIComponent(f.id.replace(/^b-/, ''))
+                        + '&k=' + encodeURIComponent(h.k);
+          } else {
+            /* まだページに出ていないもの（届いたばかり／別のページにあるもの） */
+            li.innerHTML = '<span class="jibun-a jibun-a--mada"></span>'
+                         + '<span class="jibun-hi"></span>';
+            li.querySelector('.jibun-a').textContent = dai + '（まだ出ていません）';
+          }
+          li.querySelector('.jibun-hi').textContent = h.d || '';
+          l.appendChild(li);
+          deta++;
+        });
+        if(deta) jibunTana.hidden = false;
+      });
+    })();
+  }
+
   /* ══ みんなの実践を、絞る・並べかえる・さがす（2026-09-22 夜）══
      届いたものが増えるほど、上から順に見るのが しんどくなります。
      ★ぜんぶ、このページの中だけで動きます。何も出ていきません。
