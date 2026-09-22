@@ -1800,8 +1800,15 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   border:2px solid var(--rule);border-radius:14px;
 }
 .bfuda-mado figure{margin:0}
+/* ★高さにも天井を付けます（2026-09-22 夜）。
+   前は width:100% だけでした。**幅だけで大きさが決まり、高さは成り行き**です。
+   板書は横長なので気づきませんでしたが、たて長の紙（学級会新聞・指導案）が
+   来ると 1030×1370px になり、1枚で画面の8割を占めました。
+   max-height:78vh は入れ物のほうなので、中の写真は縮みません。
+   ここで「入るところまで」に収め、細かく読むのは［大きく見る］に渡します。 */
 .bfuda-mado img{
-  display:block;width:100%;height:auto;
+  display:block;width:auto;max-width:100%;height:auto;
+  max-height:min(62vh,540px);margin-inline:auto;
   border:2px solid var(--ink);border-radius:10px;background:var(--bg);
 }
 .bfuda-mado figcaption{
@@ -2562,3 +2569,36 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .aiko-yo{margin:0 0 12px;font-size:12.5px;line-height:1.8;color:var(--mute)}
 .aiko-te{display:flex;gap:10px;margin:0;flex-wrap:wrap}
 .aiko-te .bansho-b{font-size:13px}
+
+/* ══ 写真・資料が何枚もあるときは、横に送る（2026-09-22 夜 依頼）══
+   前は たてに積んでいました。2枚めを見るのに、1枚ぶん（たて長なら
+   画面1つぶん）スクロールしないと たどり着きません。読んでいる人から
+   見ると「長い札」になり、次の実践までが遠くなります。
+
+   横に1枚ずつ送る形にします。図の下にもともと「1 / 2」が出ているので、
+   何枚めかも分かります。
+
+   ★1枚ずつ ぴたりと止まります（scroll-snap）。半端な位置で止まると、
+     2枚の切れはしが並んで、どちらも読めません。
+   ★overscroll-behavior-x:contain … 端まで送ったときに、ページごと
+     戻ってしまう（スマホの「前に戻る」）のを止めます。
+   ★1枚しか無いときも同じ形でかまいません（送る先が無いだけです）。 */
+.bfuda-mado,.shiryo-mado{
+  grid-auto-flow:column;grid-auto-columns:100%;
+  max-height:none;
+  overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scrollbar-width:thin;
+}
+.bfuda-mado > figure,.shiryo-mado > figure{
+  scroll-snap-align:center;scroll-snap-stop:always;
+  display:grid;align-content:start;min-width:0;
+}
+.shiryo-mado img{
+  width:auto;max-width:100%;max-height:min(62vh,540px);margin-inline:auto;
+}
+@media (max-width:719px){
+  .bfuda-mado,.shiryo-mado{max-height:none}
+  .bfuda-mado img,.shiryo-mado img{max-height:56vh}
+}

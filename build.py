@@ -2736,8 +2736,24 @@ def build_bansho(jissen):
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             mado=mado, shiryo=sh, more=more, by=esc_html(a['by']),
             ima=esc_html(ima)))
-    return sagasu_obi(aru) + '\n    <div class="bantana" id="bantana">\n' \
-           + '\n'.join(fuda) + '\n    </div>'
+    return (JIBUN_TANA + '\n' + sagasu_obi(aru)
+            + '\n    <div class="bantana" id="bantana">\n'
+            + '\n'.join(fuda) + '\n    </div>')
+
+
+# ══ 自分が送ったもの（2026-09-22 夜 依頼）════════════════════
+#   ログインが無いので、こちらは「誰が誰か」を1つも持っていません。
+#   だから **送った人のブラウザに聞きます**。
+#   送るときに作った合いことばが、その端末の中に残っています。
+#   その合いことばのハッシュと、札に付いている data-nushi を突き合わせて、
+#   合ったものだけを ここに並べます。
+#   ★この棚は、空のときは出しません（JavaScriptが外します）。
+#   ★見えるのは、その端末の人だけです。ほかの人の画面には出ません。
+JIBUN_TANA = """    <section class="jibun" id="jibun" hidden aria-labelledby="jibun-h">
+      <h3 class="jibun-h" id="jibun-h">あなたが送ったもの</h3>
+      <p class="jibun-yo">この端末から送ったものだけが出ています。ほかの人には見えません。</p>
+      <ul class="jibun-l" id="jibun-l"></ul>
+    </section>"""
 
 
 # ══ 絞りこみ・並べかえ・さがす（2026-09-22 夜 依頼）════════════
