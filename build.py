@@ -2650,7 +2650,7 @@ def build_jissen_hiroba(jissen, goods):
 #   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
-BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi}>
+BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
@@ -2729,6 +2729,12 @@ def build_bansho(jissen):
             toki=a['todoita'].strftime('%Y%m%d%H%M'),
             nen=' '.join(nen_bunkai(a['grade'])),
             nushi=(' data-nushi="%s"' % a['nushi']) if a.get('nushi') else '',
+            # ── なおすとき、フォームに戻すための「もとの字」（2026-09-22 夜）──
+            #   画面に出ている字から拾い直すと、太字などの印が消えます。
+            #   届いたままの字をここに持たせて、そのまま欄へ戻します。
+            dai=esc_html(a['title']), grade=esc_html(a['grade']),
+            scene=esc_html(a['scene']), oshi_nama=esc_html(a.get('oshi') or ''),
+            hon_nama=esc_html(a['summary'].strip()),
             oshi=('        <p class="bfuda-oshi">%s</p>\n' % inline_md(a['oshi'])
                   if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'

@@ -997,7 +997,13 @@
         return b.filter(function(x){ return x.getAttribute('aria-pressed') === 'true'; })
                 .map(function(x){ return x.textContent; }).join('・');
       },
-      kesu: function(){ b.forEach(function(x){ osu(x, false); }); }
+      kesu: function(){ b.forEach(function(x){ osu(x, false); }); },
+      /* なおすとき、もとの学年に戻すため（2026-09-22 夜）。
+         「5年・6年」でも「全学年」でも、字が合う札を押します。 */
+      ireru: function(ji){
+        var a = String(ji || '').split('・').map(function(x){ return x.trim(); });
+        b.forEach(function(x){ osu(x, a.indexOf(x.textContent.trim()) >= 0); });
+      }
     };
   }
 
@@ -1023,6 +1029,10 @@
         return '';
       },
       kesu: function(){ b.forEach(function(x){ osu(x, false); }); },
+      /* なおすとき、もとの値に戻すため（2026-09-22 夜） */
+      ireru: function(atai){
+        b.forEach(function(x){ osu(x, x.getAttribute('data-n') === atai); });
+      },
       /* 書いていないときに、そこへ連れていくため */
       moto: bako, saki: b[0]
     };
@@ -1095,6 +1105,49 @@
 
       var gakunen = nen_fuda('okuru-gn'), nen = gakunen.yomu, nen_kesu = gakunen.kesu;
       var naiyo = hitotsu_fuda('okuru-nn');
+
+      /* ══ なおす（2026-09-22 夜 依頼）══════════════════════
+         「みんなの実践」の［なおす］から、もとの字を持って ここへ来ます。
+         **送るフォームを、そのまま なおすフォームにします**。
+         画面をもう1つ作ると、直す所が2か所になって ずれていくためです。
+
+         ★写真とPDFは「送りなおしたときだけ」差しかわります。
+           選ばなければ、いまの写真がそのまま残ります。
+         ★やめれば、ふつうの「送る」に戻ります。                */
+      var NAOSHI_KAGI = 'tokkatsu-naoshi';
+      var NAIYO_SCENE = {
+        '学級活動(1)': 'gakkyu1', '学級活動(2)': 'gakkyu2', '学級活動(3)': 'gakkyu3',
+        '学校行事': 'gyoji', '児童会活動': 'jidokai', 'クラブ活動': 'club'
+      };
+      function naoshi_ima(){
+        try{ return JSON.parse(sessionStorage.getItem(NAOSHI_KAGI) || 'null'); }
+        catch(e){ return null; }
+      }
+      function naoshi_yameru(){
+        try{ sessionStorage.removeItem(NAOSHI_KAGI); }catch(e){}
+        location.reload();
+      }
+      function naoshi_shitaku(n){
+        document.getElementById('okuru-t').value = n.t || '';
+        document.getElementById('okuru-o').value = n.o || '';
+        document.getElementById('okuru-m').value = n.m || '';
+        if(kazu) kazu.textContent = (n.m || '').length + ' / 1000字';
+        gakunen.ireru(n.g || '');
+        var n6 = NAIYO_SCENE[String(n.s || '').trim()];
+        if(n6) naiyo.ireru(n6);
+        botan.innerHTML = 'なおす<span class="btn-ya">→</span>';
+        var shirase2 = document.createElement('p');
+        shirase2.className = 'naoshi-obi';
+        shirase2.innerHTML = '<b>なおしています</b><span></span>'
+                           + '<button type="button" class="bansho-b">やめる</button>';
+        shirase2.querySelector('span').textContent = n.t || n.v;
+        shirase2.querySelector('button').addEventListener('click', naoshi_yameru);
+        okuruF.insertBefore(shirase2, okuruF.firstChild);
+        /* 写真は「差しかえたいときだけ」。だから、ここの言葉も変えます */
+        var chu = document.querySelector('.okuru-shashin-chu');
+        if(chu) chu.innerHTML = '<b>写真はそのままでよければ、えらばなくて大丈夫です</b><br>'
+                              + 'えらぶと、いまの写真と入れかわります';
+      }
 
       var OSHI_SHIRUSHI = '★推しポイント：';
       var oshi_tsukeru = function(o, m){
@@ -1437,6 +1490,11 @@
         return btoa(ji);
       }
 
+      /* ★外がわで持ちます。送るときの中（then の中）で var すると、
+           したくをするここからは見えません（2026-09-22 実測で踏みました）。 */
+      var naoshi = naoshi_ima();
+      if(naoshi) naoshi_shitaku(naoshi);
+
       eIn.addEventListener('change', function(){
         var w = wakeru(), n = eIn.files.length, ji = [];
         if(w.e.length) ji.push('写真' + w.e.length + '枚');
@@ -1451,7 +1509,7 @@
       okuruF.addEventListener('submit', function(ev){
         ev.preventDefault();
         var w = wakeru();
-        if(!w.e.length && !w.p.length){
+        if(!naoshi && !w.e.length && !w.p.length){
           shirase.textContent = '写真かPDFを1つえらんでください。'; return;
         }
         /* 必須の2つ（2026-09-22）。novalidate なので、ここで自分で見ます。
@@ -1521,7 +1579,11 @@
             /* text/plain にすると、前置きの問い合わせ（preflight）が飛びません */
             headers: {'Content-Type': 'text/plain;charset=utf-8'},
             body: JSON.stringify({
-              kind: 'bansho', e: e, p: p,   /* p … 組み直したPDF（base64） */
+              /* なおしているときは kind を変え、どの1件かと合いことばを添えます。
+                 受け口はハッシュと突き合わせて、本人と管理人だけ通します。 */
+              kind: naoshi ? 'naosu' : 'bansho', e: e, p: p,
+              v:   naoshi ? naoshi.v : '',
+              key: naoshi ? naoshi.key : '',
               nushi: nushi,                 /* 合いことばのハッシュ（本体は送らない） */
               n:  naiyo.yomu(),                                /* 6つの内容（1つだけ） */
               t:  document.getElementById('okuru-t').value.slice(0, 60),
@@ -1538,6 +1600,14 @@
             })
           });
         }).then(function(){
+          if(naoshi){
+            /* なおしたときは、合いことばを新しく作りません（もとのままです）。
+               控えを足すと、同じ1件が2つ並んでしまいます。 */
+            try{ sessionStorage.removeItem(NAOSHI_KAGI); }catch(e){}
+            shirase.textContent = 'なおしました。数分で「みんなの実践」に出ます。';
+            botan.disabled = false;
+            return;
+          }
           var dai = document.getElementById('okuru-t').value.trim();
           var shimaeta = nushi && aikotoba_shimau(
             {k: aikotoba, n: nushi, t: dai, d: new Date().toISOString().slice(0, 10)});
@@ -1599,9 +1669,27 @@
             f.insertBefore(shirushi, f.firstChild);
             li.innerHTML = '<a class="jibun-a"></a>'
                          + '<span class="jibun-hi"></span>'
+                         + '<button type="button" class="jibun-naosu">なおす</button>'
                          + '<a class="jibun-kesu" target="_blank" rel="noopener">消す</a>';
             li.querySelector('.jibun-a').textContent = dai;
             li.querySelector('.jibun-a').href = '#' + f.id;
+            /* なおす … 送るフォームをそのまま使います。新しい画面を作りません。
+               もとの字を持っていって、送るところで欄に戻します。 */
+            li.querySelector('.jibun-naosu').addEventListener('click', function(){
+              try{
+                sessionStorage.setItem('tokkatsu-naoshi', JSON.stringify({
+                  v: f.id.replace(/^b-/, ''), key: h.k,
+                  t: f.getAttribute('data-t') || '',
+                  g: f.getAttribute('data-grade') || '',
+                  s: f.getAttribute('data-scene') || '',
+                  o: f.getAttribute('data-oshi') || '',
+                  m: f.getAttribute('data-hon') || ''
+                }));
+                location.href = 'index.html#okuru';
+              }catch(e){
+                alert('この端末では、なおすところを開けませんでした。');
+              }
+            });
             li.querySelector('.jibun-kesu').href =
               OKURU_URL + '?v=' + encodeURIComponent(f.id.replace(/^b-/, ''))
                         + '&k=' + encodeURIComponent(h.k);

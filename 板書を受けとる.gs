@@ -154,6 +154,9 @@ function doPost(e) {
     // 研究日程（2026-09-22）。これも字だけです。
     if (d.kind === 'nittei') return _nittei(d);
 
+    // なおす（2026-09-22 夜）。本人と管理人だけ通ります（→ _naosu）
+    if (d.kind === 'naosu') return _naosu(d);
+
     var shashin = (d.e || []).slice(0, MAI_MAX);
     var pdfs    = (d.p || []).slice(0, 1);        // PDFは1つまで（2026-09-21 夜）
     if (!shashin.length && !pdfs.length) {
@@ -634,6 +637,119 @@ function doGet(e) {
   return _html('消しました（' + keshita + '件）。数分でページから消えます。<br><br>' +
                '<small>GitHub の履歴には残ります。Driveの写真も残っています。</small>');
 }
+
+/* ══ 4. なおす（2026-09-22 夜 依頼）══════════════════════════
+   送った本人（合いことばが合う人）と管理人だけが、あとから直せます。
+
+   直せるもの … 題・推しポイント・実践内容・学年・内容・写真／PDF
+   ★写真を送りなおしたときは、**古い写真を先に消します**。
+     消さずに足すと、1枚めが古いまま残って、直したつもりが直りません。
+   ★写真を送ってこなければ、写真はそのままです（字だけ直せます）。
+   ★front matter は作りなおしますが、**届いた日と時こく（date・todoita）
+     と 合いことば（nushi）は、はじめのものを引きつぎます**。
+     直すたびに新しくなると、並びが変わって別ものに見えるためです。      */
+function _naosu(d) {
+  var slug = String(d.v || '').trim();
+  if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
+    return _kotae({ ok: false, riyu: '行き先がありません' });
+  }
+  var key = String(d.key || '').trim();
+  var moto = _md_yomu(slug);
+  if (!moto.hon) return _kotae({ ok: false, riyu: 'もう残っていません' });
+  if (!(key && key === _kanri_key())) {
+    if (!moto.nushi)  return _kotae({ ok: false, riyu: 'この1件には合いことばが付いていません' });
+    if (!key || _hash(key) !== moto.nushi) {
+      return _kotae({ ok: false, riyu: '合いことばが ちがいます' });
+    }
+  }
+  if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
+
+  var shashin = (d.e || []).slice(0, MAI_MAX);
+  var pdfs    = (d.p || []).slice(0, 1);
+  var folder  = _folder(slug);
+  var uri = [];
+  if (shashin.length) {
+    _kesu_folder('src/bansho/' + slug, slug);          // 古いぶんを先に消す
+    for (var i = 0; i < shashin.length; i++) {
+      var b = _dataURI(shashin[i]);
+      if (!b) return _kotae({ ok: false, riyu: '写真の形が読めません' });
+      if (b.getBytes().length > KB_MAX * 1024) {
+        return _kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
+      }
+      var na = ('0' + (i + 1)).slice(-2) + '.jpg';
+      folder.createFile(b.setName(na));
+      uri.push({ na: na, b64: Utilities.base64Encode(b.getBytes()) });
+    }
+  }
+  var pdf = null;
+  if (pdfs.length) {
+    var pb = _dataURI_pdf(pdfs[0]);
+    if (!pb) return _kotae({ ok: false, riyu: 'PDFの形が読めません' });
+    if (pb.getBytes().length > PDF_MB_MAX * 1024 * 1024) {
+      return _kotae({ ok: false, riyu: 'PDFが大きすぎます（' + PDF_MB_MAX + 'MBまで）' });
+    }
+    _kesu_folder('src/shiryo/' + slug, slug);          // 古いぶんを先に消す
+    folder.createFile(pb.setName('shiryo.pdf'));
+    pdf = Utilities.base64Encode(pb.getBytes());
+  }
+
+  var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '',
+            n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,
+            nushi: moto.nushi };
+  var md = _md(slug, n);
+  md = _hikitsugu(md, moto.hon, ['date', 'todoita']);
+  if (!uri.length && moto.bansho) md = md.replace(/\n---\n/, '\nbansho: ' + slug + '\n---\n');
+  if (!pdf && moto.shiryo)        md = md.replace(/\n---\n/, '\nshiryo: 送ってもらった資料|' + slug + '\n---\n');
+  _github('src/jissen/' + moto.michi_na, Utilities.base64Encode(md, Utilities.Charset.UTF_8),
+          '実践を1件 なおす（' + slug + '）');
+  _shiraseru_naoshita(slug, d, n);
+  return _kotae({ ok: true });
+}
+
+/* もとの .md を読んで、引きつぐものを取り出します */
+function _md_yomu(slug) {
+  var ichiran = _github_miru('src/jissen');
+  if (!ichiran) return {};
+  for (var i = 0; i < ichiran.length; i++) {
+    var na = ichiran[i].name || '';
+    if (na.slice(-3) === '.md' && na.indexOf('_' + slug + '.') >= 0) {
+      var hon = _github_yomu(ichiran[i].path);
+      var m = hon && hon.match(/^nushi:\s*([0-9a-f]{64})\s*$/m);
+      return { michi_na: na, hon: hon, nushi: m ? m[1] : '',
+               bansho: /^bansho:\s*\S/m.test(hon || ''),
+               shiryo: /^shiryo:\s*\S/m.test(hon || '') };
+    }
+  }
+  return {};
+}
+
+/* 新しい front matter の中の、決めた行だけを もとの値に戻します */
+function _hikitsugu(atarashii, moto, kagi) {
+  for (var i = 0; i < kagi.length; i++) {
+    var m = moto.match(new RegExp('^' + kagi[i] + ':.*$', 'm'));
+    if (!m) continue;
+    if (new RegExp('^' + kagi[i] + ':.*$', 'm').test(atarashii)) {
+      atarashii = atarashii.replace(new RegExp('^' + kagi[i] + ':.*$', 'm'), m[0]);
+    } else {
+      atarashii = atarashii.replace(/\n---\n/, '\n' + m[0] + '\n---\n');
+    }
+  }
+  return atarashii;
+}
+
+function _shiraseru_naoshita(slug, d, n) {
+  var url = _webapp();
+  var mail = _mail();
+  if (!mail) return;
+  MailApp.sendEmail(mail, '【TOKKATSU広場】実践が1件 なおされました',
+    '送った人（または管理人）が、1件をなおしました。数分でページに出ます。\n\n' +
+    '　議題名：' + (_arau(d.t) || '（なし）') + '\n' +
+    '　学年　：' + (_arau(d.g) || '（なし）') + '\n' +
+    '　写真　：' + (n.uri.length ? n.uri.length + '枚に差しかえ' : 'そのまま') + '\n' +
+    '　PDF　 ：' + (n.pdf ? '差しかえ' : 'そのまま') + '\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&k=' + _kanri_key() + '\n' : ''));
+}
+
 
 /* その1件の .md から、合いことばのハッシュ（nushi:）を読みます。
    無ければ空。★受け口を貼り直す前に届いたものは、これを持っていません。
