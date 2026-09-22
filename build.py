@@ -2792,11 +2792,29 @@ def build_kanri_list(jissen):
     return '\n'.join(out) if out else '      <p class="karappo">届いた実践はまだありません。</p>'
 
 
+NURU_ME = '/*BUILD:NURU*/'
+
+
+def nuru_js(doko):
+    """塗る面（src/nuru.js）。**送る画面と管理画面の両方**に、同じものを
+       入れます。隠す道具が2つに分かれると、いつか片方だけ直って、
+       もう片方から漏れます。"""
+    return rd('src/nuru.js')
+
+
+def nuru_ireru(body, doko):
+    if NURU_ME not in body:
+        raise Tomeru('%s に目じるし %s がありません（塗る面が入りません）'
+                     % (doko, NURU_ME))
+    return body.replace(NURU_ME, nuru_js(doko))
+
+
 def build_kanri_page(jissen):
     """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
     body = rd('src/kanri.html')
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
     body = body.replace('{{OKURU_URL}}', OKURU_URL)
+    body = nuru_ireru(body, 'src/kanri.html')
     if re.findall(r'<!--BUILD:[^>]*-->|\{\{[A-Z_]+\}\}', body):
         raise Tomeru('管理画面に差しこまれていない目じるしが残っています')
     head = rd('src/head-hiroba.html')
@@ -3257,9 +3275,16 @@ def uchi_kodomo(sec_html):
 #   「準備中です」の知らせも飛ばします。まだ何も無い、という知らせは
 #   中身ではないので、窓の1枚めに来ると札がいちばん弱く見えます
 #   （実測：学ぶの札が「準備中です」で始まっていました）。
+#   2026-09-22 夜：窓を2段にして1枚が低くなったので、頭の何行かの重みが
+#   増えました。実機で見たら、6枚のうち2枚が **中身でないもの** で始まって
+#   いました（困りごと＝「まだ1件も届いていません」、はじめかた＝ボタン1つ）。
+#   なので、次の2つも飛ばします。
+#     ・class に mada が付くもの（--mada だけでなく komari-mada も）
+#     ・<p> の中が ボタン1つだけのもの（行き先であって、中身ではない）
 _TOBASU = re.compile(r'^\s*<(?:h2[^>]*class="[^"]*\bmidashi\b'
                      r'|p[^>]*class="[^"]*\byomi\b'
-                     r'|[a-z0-9]+[^>]*class="[^"]*--mada\b)', re.S)
+                     r'|[a-z0-9]+[^>]*class="[^"]*[\w-]*mada\b'
+                     r'|p[^>]*>\s*<a[^>]*class="[^"]*\bbtn\b)', re.S)
 
 
 def atama_kezuru(ko):
@@ -3566,6 +3591,7 @@ def build_shin():
             raise Tomeru('src/hiroba.html に目じるし %s がありません' % mark.strip())
         body = body.replace(mark, html)
 
+    body = nuru_ireru(body, 'src/hiroba.html')
     body, _ = build_kazari(body, buhin, kyara)
 
     for k, v in LINKS.items():

@@ -451,8 +451,8 @@
   <div class="uchi">
     <h2 class="midashi"><span class="en">SHARED</span><span class="ja">みんなの実践</span></h2>
     <p class="yomi">
-      先生方から送っていただいたものを、消さずに<strong>溜めていきます</strong>。<br>
-      ここが<strong>この広場の主役</strong>です。板書の写真1枚でも、指導案のPDFでも、議題ひとつでも。
+      日本各地の実践を<strong>シェア</strong>！<br>
+      お気軽に投稿してください！
     </p>
     <!--BUILD:BANSHO-->
   </div>
@@ -778,7 +778,6 @@
          押せるものはページの中と同じ丸いボタンの形にそろえます。 -->
     <div class="foot-botan">
       <a class="btn btn--yoru btn--nuri" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">みんなの特活ひろば（LINE）<span class="btn-ya">↗</span></a>
-      <a class="btn btn--yoru" href="#manabu">学習指導要領・資料を見る<span class="btn-ya">→</span></a>
     </div>
 
     <p class="kanri">管理者：伊藤 優<span aria-hidden="true">　／　</span><a href="kanri.html">管理画面</a></p>
@@ -786,6 +785,7 @@
 </footer>
 
 <script>
+/*BUILD:NURU*/
 (function(){
   'use strict';
   var reduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -1058,28 +1058,10 @@
          だから 質を落とし、それでもだめなら 小さくして、収まるまで試します。 */
       var DAN = [[1400, .72], [1400, .60], [1200, .58], [1000, .55], [800, .50]];
 
-      var kaku = function(im, hen, omosa, shikaku){
-        var w = im.width, h = im.height, r = Math.min(1, hen / Math.max(w, h));
-        var c = document.createElement('canvas');
-        c.width = Math.round(w * r); c.height = Math.round(h * r);
-        var ctx = c.getContext('2d');
-        ctx.drawImage(im, 0, 0, c.width, c.height);
-        /* 隠すところ（0〜1で持っているので、どの大きさに縮めても同じ所が塗れます）。
-           ★縮める前ではなく、縮めたあとの canvas に塗ります。順番を逆にすると、
-             質を落とす段でにじんで、ふちから中身が透けます。 */
-        if(shikaku && shikaku.length){
-          ctx.fillStyle = '#000';
-          shikaku.forEach(function(k){
-            ctx.fillRect(Math.floor(k.x * c.width), Math.floor(k.y * c.height),
-                         Math.ceil(k.w * c.width), Math.ceil(k.h * c.height));
-          });
-        }
-        return c.toDataURL('image/jpeg', omosa);
-      };
-      /* data URI の base64 部分から、おおよその KB を出します */
-      var nanKB = function(uri){
-        return (uri.length - uri.indexOf(',') - 1) * 3 / 4 / 1024;
-      };
+      /* 縮めて塗るのも、KBを数えるのも、塗る面（NURU）のものを使います。
+         管理画面（載ったあとに塗るところ）と、同じ1本の道です。 */
+      var kaku  = NURU.kaku;
+      var nanKB = NURU.nanKB;
       var kotowaru = function(ji){ var e = new Error(ji); e.bansho = true; return e; };
 
       var chijimeru = function(file){
@@ -1194,15 +1176,20 @@
          元の写真は1バイトも出ていきません。送ってから消すのでは遅いためです
          （送られた写真は Drive と、公開のリポジトリの両方に残ります）。
 
-         ★四角は 0〜1 の割合で持ちます。あとで 1400px にも 800px にも
-           縮めますが、割合なら どの大きさでも同じ所が塗れます。
-         ★塗るのは「縮めたあと」です（→ kaku）。
-         ★モザイクにはしません。粗さが足りないと元の字が読めることがあり、
-           隠したつもりが隠れていない、がいちばん困るためです。        */
+         ★塗る面そのものは src/nuru.js（NURU）です。**管理画面（載ったあとに
+           塗るところ）と同じ部品**を使います。隠す道具を2つ持つと、いつか
+           片方だけ直って、もう片方から漏れます。
+         ★四角は 0〜1 の割合。塗るのは「縮めたあと」（→ NURU.kaku）。
+         ★拡大しても、割合は変わりません（→ nuru.js の「拡大」）。    */
       var kakusuBako = document.getElementById('okuru-kakusu');
       var kakusuList = document.getElementById('okuru-kakusu-l');
-      var KAKUSU_HABA = 900;   /* 塗る面の幅。表示はCSSが100%にします */
-      var KAKUSU_SAI = .012;   /* これより小さい四角は、押しまちがいとみなします */
+      /* 面の画の数。写真は送る大きさ（1400px）と同じにします。小さくすると、
+         拡大したときに、送るものより粗いものを見ながら塗ることになります。
+         ★PDFのページだけは 1000px に落とします。20ページぶんの面を
+           1400px で持つと、それだけで 200MB を超え、スマホが落ちます。
+           送るものの細かさは変わりません（送るときは n.im から作り直すので、
+           面の画の数は「見るため」だけです）。 */
+      var KAKUSU_HABA = 1400, KAKUSU_HABA_PDF = 1000;
       var nuri = [];
 
       function nuri_no(file){
@@ -1211,105 +1198,13 @@
         }
         return null;
       }
-      function shikaku_tsukuru(a, b){
-        return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y),
-                 w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) };
-      }
-      function nuri_egaku(n){
-        var c = n.canvas, ctx = c.getContext('2d');
-        ctx.drawImage(n.im, 0, 0, c.width, c.height);
-        ctx.fillStyle = '#000';
-        n.shikaku.forEach(function(k){
-          ctx.fillRect(k.x * c.width, k.y * c.height, k.w * c.width, k.h * c.height);
-        });
-        if(n.ima){   /* なぞっている最中のもの。ふちを白くして、分かるようにします */
-          ctx.fillRect(n.ima.x * c.width, n.ima.y * c.height,
-                       n.ima.w * c.width, n.ima.h * c.height);
-          ctx.strokeStyle = '#FCFBF7'; ctx.lineWidth = 3;
-          ctx.strokeRect(n.ima.x * c.width, n.ima.y * c.height,
-                         n.ima.w * c.width, n.ima.h * c.height);
-        }
-      }
-      function nuri_kazu(n){
-        n.kazu.textContent = n.shikaku.length
-          ? (n.shikaku.length + 'か所 ぬりました') : 'まだ ぬっていません';
-        n.modosu.disabled = n.zen.disabled = !n.shikaku.length;
-      }
-      function nuri_ten(ev, c){
-        var r = c.getBoundingClientRect();
-        return { x: Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)),
-                 y: Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height)) };
-      }
       function nuri_hitotsu(file, na, moto){
         /* file … 写真のときは File そのもの（あとで見分けるため）。
                   PDFのページのときは null。
            na   … 画面に出す名前（「1ページめ」など）。
            moto … 絵のもと。写真なら File、PDFのページなら data URI の字。 */
-        var waku = document.createElement('figure');
-        waku.className = 'kakusu-1';
-        waku.innerHTML =
-          '<canvas class="kakusu-c"></canvas>'
-        + '<figcaption class="kakusu-b">'
-        +   '<span class="kakusu-na"></span>'
-        +   '<span class="kakusu-kazu" aria-live="polite">まだ ぬっていません</span>'
-        +   '<button type="button" class="kakusu-x kakusu-modosu">ひとつ戻す</button>'
-        +   '<button type="button" class="kakusu-x kakusu-zen">ぜんぶ消す</button>'
-        + '</figcaption>';
-        var n = { file: file, shikaku: [], ima: null, hajime: null,
-                  canvas: waku.querySelector('.kakusu-c'),
-                  kazu:   waku.querySelector('.kakusu-kazu'),
-                  modosu: waku.querySelector('.kakusu-modosu'),
-                  zen:    waku.querySelector('.kakusu-zen') };
-        n.canvas.setAttribute('aria-label', na + ' … 隠したいところを なぞる');
-        waku.querySelector('.kakusu-na').textContent = na;
-        var noseru = function(uri){
-          var im = new Image();
-          im.onload = function(){
-            n.im = im;
-            n.canvas.width  = Math.min(KAKUSU_HABA, im.width);
-            n.canvas.height = Math.round(n.canvas.width * im.height / im.width);
-            nuri_egaku(n);
-          };
-          im.src = uri;
-        };
-        if(typeof moto === 'string'){
-          noseru(moto);
-        } else {
-          var fr = new FileReader();
-          fr.onload = function(){ noseru(fr.result); };
-          fr.readAsDataURL(moto);
-        }
-
-        n.canvas.addEventListener('pointerdown', function(ev){
-          if(!n.im) return;
-          ev.preventDefault();
-          n.hajime = nuri_ten(ev, n.canvas);
-          n.canvas.setPointerCapture(ev.pointerId);
-        });
-        n.canvas.addEventListener('pointermove', function(ev){
-          if(!n.hajime) return;
-          n.ima = shikaku_tsukuru(n.hajime, nuri_ten(ev, n.canvas));
-          nuri_egaku(n);
-        });
-        var oeru = function(ev){
-          if(!n.hajime) return;
-          var k = shikaku_tsukuru(n.hajime, nuri_ten(ev, n.canvas));
-          n.hajime = null; n.ima = null;
-          if(k.w > KAKUSU_SAI && k.h > KAKUSU_SAI) n.shikaku.push(k);
-          nuri_egaku(n); nuri_kazu(n);
-        };
-        n.canvas.addEventListener('pointerup', oeru);
-        n.canvas.addEventListener('pointercancel', oeru);
-
-        n.modosu.addEventListener('click', function(){
-          n.shikaku.pop(); nuri_egaku(n); nuri_kazu(n);
-        });
-        n.zen.addEventListener('click', function(){
-          n.shikaku = []; nuri_egaku(n); nuri_kazu(n);
-        });
-        nuri_kazu(n);
-        nuri.push(n);
-        kakusuList.appendChild(waku);
+        nuri.push(NURU.men({ file: file, na: na, moto: moto, oya: kakusuList,
+                             haba: file ? KAKUSU_HABA : KAKUSU_HABA_PDF }));
       }
       function nuri_naraberu(shashin){
         nuri = [];

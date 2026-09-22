@@ -2472,29 +2472,47 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   background:var(--ink);color:var(--bg);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink);
 }
 .kakusu-m[aria-pressed="true"]::before{content:"\2713 "}
-.kakusu-1{margin:0 0 14px}
-.kakusu-1:last-child{margin-bottom:0}
-.kakusu-c{
-  display:block;width:100%;height:auto;
+/* 塗る面（src/nuru.js）。**送る画面と管理画面で同じもの**を使います。
+   ★canvas は touch-action:none。これが無いと、スマホでなぞったときに
+     ページごと動いて、1本も線が引けません。
+   ★拡大は canvas の**CSSの幅だけ**を変えます。はみ出したぶんは、
+     入れ物（.nuru-mado）がふつうにスクロールして動きます。だから
+     マウスの人は、いつもの2本指スクロールで動かせます。
+   ★入れ物に高さの天井を付けます。付けないと、4倍にしたときに
+     ページの丈がとんでもなく伸びて、ボタンが画面の外へ出ます。 */
+.nuru-1{margin:0 0 14px}
+.nuru-1:last-child{margin-bottom:0}
+.nuru-mado{
+  overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  max-height:70vh;
   background:var(--bg);border:2px solid var(--ink);border-radius:10px;
-  touch-action:none;cursor:crosshair;
 }
-.kakusu-b{
+.nuru-c{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.nuru-b{
   display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 0;
 }
-.kakusu-kazu{
+.nuru-na{
+  flex:1 1 100%;font-family:var(--f-maru);font-weight:700;
+  font-size:13px;color:var(--ink);word-break:break-all;
+}
+.nuru-kazu{
   flex:1 1 100%;font-family:var(--f-maru);font-weight:700;
   font-size:12.5px;color:var(--mute);
 }
-.kakusu-x{
-  min-height:40px;padding:8px 14px;
+.nuru-zoom{display:inline-flex;align-items:center;gap:6px}
+.nuru-bai{
+  min-width:3.6em;text-align:center;
+  font-family:var(--f-maru);font-weight:700;font-size:12.5px;color:var(--ink);
+}
+.nuru-x{
+  min-height:40px;min-width:40px;padding:8px 14px;
   background:var(--bg);color:var(--ink);
   border:2px solid var(--ink);border-radius:999px;
   font-family:var(--f-maru);font-weight:700;font-size:13px;cursor:pointer;
 }
-.kakusu-x:hover{background:var(--men-ki)}
-.kakusu-x:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
-.kakusu-x[disabled]{opacity:.4;cursor:default}
+.nuru-x:hover{background:var(--men-ki)}
+.nuru-x:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.nuru-x[disabled]{opacity:.4;cursor:default}
 
 /* 困りごとの「提供」。名乗ってくださった人だけ、小さく出ます。
    名乗らないのが既定なので、無い札のほうが多くて当たり前です。 */
@@ -2790,7 +2808,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-naosu-naka>.kanri-kago,.kanri-naosu-naka>h2{grid-column:1/-1}
 .kanri-naosu-naka>h2{margin:0;font:900 clamp(21px,4vw,28px)/1.4 var(--f-maru)}
 .kanri-naosu-g{display:grid;align-content:start;gap:6px}
-.kanri-naosu-g>label{font-weight:700;font-size:14px}
+.kanri-naosu-g>label,.kanri-naosu-l{font-weight:700;font-size:14px}
 .kanri-naosu-g--zen{grid-column:1/-1}
 .kanri-naosu-chu{margin:0;padding:10px 12px;background:var(--men-midori);border-radius:10px;font-size:13px}
 .kanri-naosu-te{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:2px 0 0}

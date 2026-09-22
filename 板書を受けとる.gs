@@ -161,6 +161,16 @@ function doPost(e) {
     if (e.parameter && e.parameter.kind === 'kanri-naosu') {
       e.parameter.kanri = '1';
       e.parameter.by_atarashii = '1';
+      /* 管理画面から、載ったあとに塗った写真が来ることがあります（2026-09-22 夜）。
+         form POST なので、同じ名前の欄が写真の枚数だけ並びます。
+         ★e.parameter は1つめの**字**しか持ちません。そのまま _naosu へ渡すと
+           (d.e||[]).slice(0,3) が「字の先頭3文字」を切り出し、写真が壊れます。
+           何枚めかを持っている e.parameters のほうを渡します。 */
+      if (e.parameters && e.parameters.e && e.parameters.e.length) {
+        e.parameter.e = e.parameters.e;
+      } else {
+        delete e.parameter.e;      // 空の欄が来ても「差しかえ」にしない
+      }
       return _naosu(e.parameter, true);
     }
     var d = JSON.parse(e.postData.contents);

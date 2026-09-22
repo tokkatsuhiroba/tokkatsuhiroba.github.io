@@ -96,7 +96,20 @@
         <span>サイトに<b>名前と所属を出す</b></span></label>
       <span class="okuru-check-chu">外すと「提供：送ってくださった先生」になります。</span>
     </p>
-    <p class="kanri-naosu-chu kanri-naosu-g--zen">写真とPDFは、そのまま残ります。</p>
+    <!-- 写真（2026-09-22 夜 依頼）。**載ったあとに隠す**ところです。
+         送る前の画面と同じ塗る面（src/nuru.js）を使います。 -->
+    <div class="kanri-naosu-g kanri-naosu-g--zen">
+      <span class="kanri-naosu-l">写真</span>
+      <p class="kanri-naosu-chu" id="kanri-e-chu">写真を読んでいます…</p>
+      <div class="kakusu" id="kanri-e-bako" hidden>
+        <p class="kakusu-yomi"><b>隠したいところを、指でなぞってください。</b>
+          小さいものは［＋］で大きくしてから なぞれます（指なら2本でつまみます）。<br>
+          <b>1か所も ぬらなければ、写真はそのままです。</b>
+          ぬって保存すると、公開ページの写真が<b>ぬったものに入れかわります</b>。
+          <b>元の写真には戻せません。</b></p>
+        <div id="kanri-e-l"></div>
+      </div>
+    </div>
     <p class="okuru-shirase kanri-naosu-g--zen" id="kanri-naosu-shirase"
        role="status" aria-live="polite"></p>
     <p class="kanri-naosu-te kanri-naosu-g--zen">
@@ -130,6 +143,7 @@
 </form>
 
 <script>
+/*BUILD:NURU*/
 (function(){
   'use strict';
   var OKURU_URL = '{{OKURU_URL}}';
@@ -157,6 +171,76 @@
   var kesuF = document.getElementById('kanri-kesu-f');
   var kesuKakutei = document.getElementById('kanri-kesu-kakutei');
   var kesuShirase = document.getElementById('kanri-kesu-shirase');
+
+  /* ══ 載ったあとに、写真を隠す（2026-09-22 夜 依頼）════════
+     ここには写真の実体がありません。写真は bansho.html の中に
+     data URI で埋まっています（同じ絵を2ページに入れないため）。
+     だから、この画面は **公開ページを1回読んで**、その1件の写真を
+     取り出し、塗る面（NURU）にのせます。
+     ★塗ったら、その写真を送り直します。受け口（_naosu）は写真が
+       来たとき、古いぶんを先に消してから置きます。だから
+       **塗った1枚だけでなく、その実践の写真をぜんぶ送ります**。
+       1枚だけ送ると、残りが消えます。
+     ★PDFの資料は、ここでは塗れません（ページの絵から組み直す道が
+       別に要ります）。消すか、送り直してもらうかになります。      */
+  var E_KB_MAX = 380;                 /* 受け口は400KBで断ります。その内がわ */
+  var E_DAN = [[1400, .72], [1400, .60], [1200, .58], [1000, .55], [800, .50]];
+  var eBako = document.getElementById('kanri-e-bako');
+  var eList = document.getElementById('kanri-e-l');
+  var eChu  = document.getElementById('kanri-e-chu');
+  var eMen  = [];                     /* いま出ている塗る面 */
+  var banshoP = null;                 /* 公開ページ。1回読んだら覚えます */
+
+  function e_kesu(){
+    eMen = []; eList.innerHTML = ''; eBako.hidden = true;
+    [].slice.call(naosuF.querySelectorAll('input[name="e"]')).forEach(function(x){
+      x.remove();
+    });
+  }
+  function e_yomu(v){
+    e_kesu();
+    eChu.textContent = '写真を読んでいます…';
+    if(!banshoP){
+      banshoP = fetch('bansho.html', { credentials: 'omit' })
+        .then(function(r){ return r.text(); });
+    }
+    banshoP.then(function(html){
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var fuda = doc.getElementById('b-' + v);
+      var e = fuda ? [].slice.call(fuda.querySelectorAll('.bfuda-mado .shot img')) : [];
+      if(!e.length){
+        eChu.textContent = 'この実践に写真はありません。';
+        return;
+      }
+      eChu.textContent = '写真が' + e.length + '枚あります。'
+        + (fuda.querySelector('.shiryo-mado') ? '（PDFの資料は、ここでは塗れません）' : '');
+      e.forEach(function(im, i){
+        eMen.push(NURU.men({ na: (i + 1) + '枚め', moto: im.getAttribute('src'),
+                             oya: eList, haba: 1400 }));
+      });
+      eBako.hidden = false;
+    })['catch'](function(){
+      banshoP = null;
+      eChu.textContent = '写真を読めませんでした（公開ページが開けません）。'
+                       + '字だけなら、このまま保存できます。';
+    });
+  }
+  /* 塗ったものを、送る形（data URI）にします。
+     1か所も塗られていなければ null＝写真は送りません（そのまま残ります）。 */
+  function e_tsukuru(){
+    if(!eMen.length) return null;
+    var nutta = eMen.some(function(n){ return n.shikaku.length; });
+    if(!nutta) return null;
+    var out = [];
+    for(var i = 0; i < eMen.length; i++){
+      var n = eMen[i];
+      if(!n.im) return { dame: (i + 1) + '枚めが、まだ読めていません。' };
+      var uri = NURU.osameru(n.im, E_DAN, E_KB_MAX, n.shikaku);
+      if(!uri) return { dame: (i + 1) + '枚めを、小さくしきれませんでした。' };
+      out.push(uri);
+    }
+    return { e: out };
+  }
 
   form.action = OKURU_URL;
   naosuF.action = OKURU_URL;
@@ -207,6 +291,8 @@
           naosuIma.querySelector('[data-naosu]').setAttribute('data-naosu', JSON.stringify(d));
           naosuIma.querySelector('[data-kesu]').setAttribute('data-title', d.t);
         }
+        if(naosuF.querySelector('input[name="e"]')) banshoP = null;
+        e_kesu();
         naosuMado.hidden = true; naosuIma = null; shiboru();
         kazu.textContent += '（保存しました。公開ページへの反映は数分後です）';
       }else{
@@ -265,6 +351,7 @@
       var d = JSON.parse(b.getAttribute('data-naosu'));
       naosuIma = b.closest('.kanri-card');
       naosu_ireru(d); naosuShirase.textContent = ''; naosuMado.hidden = false;
+      e_yomu(d.v || '');
       document.getElementById('kanri-naosu-t').focus();
     }catch(e){
       kazu.textContent = 'この1件を開けませんでした。';
@@ -296,6 +383,7 @@
   }
   document.getElementById('kanri-naosu-yameru').addEventListener('click', function(){
     naosuMado.hidden = true; naosuIma = null; naosuShirase.textContent = '';
+    e_kesu();
   });
   naosuF.addEventListener('submit', function(ev){
     ev.preventDefault();
@@ -309,8 +397,23 @@
       document.getElementById('kanri-naosu-na').focus(); return;
     }
     if(!k || !naosuIma){ naosuMado.hidden = true; naka.hidden = true; lock.hidden = false; return; }
+    /* 塗った写真。前に付けたぶんは、必ず外してから付け直します
+       （2回押したときに、同じ写真が二重に付くのを防ぎます）。 */
+    [].slice.call(naosuF.querySelectorAll('input[name="e"]')).forEach(function(x){
+      x.remove();
+    });
+    var e = e_tsukuru();
+    if(e && e.dame){ naosuShirase.textContent = e.dame; return; }
+    if(e && e.e){
+      e.e.forEach(function(uri){
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'e'; inp.value = uri;
+        naosuF.appendChild(inp);
+      });
+    }
     naosuMatte = nonce(); naosuKakutei.disabled = true;
-    naosuShirase.textContent = '保存しています…';
+    naosuShirase.textContent = (e && e.e)
+      ? '保存しています…（写真' + e.e.length + '枚も送っています）' : '保存しています…';
     document.getElementById('kanri-naosu-key').value = k;
     document.getElementById('kanri-naosu-nonce').value = naosuMatte;
     naosuF.submit();
