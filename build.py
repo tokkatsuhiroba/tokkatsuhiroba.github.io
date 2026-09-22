@@ -1008,15 +1008,19 @@ def shiryo_yomu(oki, moto=None, page='manabu.html'):
     return mai
 
 
-SHIRYO_MADO = """        <details class="hiraku shiryo-hiraku">
-          <summary><span class="a">{midashi}を見る（{n}ページ）</span><span class="b">とじる</span></summary>
+# 2026-09-22 夜（依頼）：ふた（<details>）をやめて、はじめから出します。
+#   板書の中身を ふたに入れずそのまま出すと決めたのと、同じ理由です
+#   （「わざわざ押したくない」）。資料だけ ふたの中に残っていました。
+#   ★画像は loading="lazy" のままなので、画面に入るまで読みません。
+SHIRYO_MADO = """        <div class="shiryo-hiraku">
+          <p class="shiryo-midashi">{midashi}<span class="shiryo-n">{n}ページ</span></p>
           <div class="shiryo-naka">
             <p class="shiryo-chu">このページの中に入っています。押しても外にはつながりません。</p>
             <div class="shiryo-mado">
 {gazou}
             </div>
           </div>
-        </details>
+        </div>
 """
 
 
