@@ -2779,17 +2779,104 @@ def build_kanri_list(jissen):
         meta = '・'.join(x for x in (a['scene'], a['grade'], ja_md(a['d']), '提供：' + a['by']) if x)
         out.append(
             '      <article class="kanri-card" data-v="%s" data-date="%s" data-sagasu="%s">\n'
-            '        <div><h3>%s</h3><p data-kanri-meta>%s</p></div>\n'
+            '        <div><h3>%s</h3><p data-kanri-meta>%s</p>'
+            # 管理人だけのメモ（2026-09-22）。公開ページには出ません。
+            #   中身は受け口の覚え書きにあるので、ここは入れ物だけ置きます。
+            '<p class="kanri-memo-p" data-memo-p hidden></p></div>\n'
             '        <div class="kanri-card-te">'
+            '<button type="button" class="kanri-memo-b" data-memo data-title="%s">メモ</button>'
             '<button type="button" class="jibun-naosu" data-naosu="%s">なおす</button>'
             '<button type="button" class="kanri-kesu" data-kesu data-title="%s">消す</button>'
             '</div>\n'
             '      </article>'
             % (esc_html(a['slug']), esc_html(ja_md(a['d'])), esc_html(sagasu),
                esc_html(a['title']), esc_html(meta),
+               esc_html(a['title']),
                esc_html(json.dumps(d, ensure_ascii=False, separators=(',', ':'))),
                esc_html(a['title'])))
     return '\n'.join(out) if out else '      <p class="karappo">届いた実践はまだありません。</p>'
+
+
+# ══ 管理画面の「かたより」（2026-09-22 依頼）════════════════
+#   届いた実践を、学習指導要領の6つ × 学年 のますめに置きます。
+#
+#   ★これは成績表ではありません。**空いているますが、そのまま発見**です。
+#     「学級活動(2)が1件も来ない」「クラブ活動が誰からも出てこない」は、
+#     この界隈で何が語られていないかを示しています。
+#
+#   ★数えるのは **届いたぶんだけ**です。サイトが自分で書いた見本を混ぜると、
+#     「誰が語っていないか」が見えなくなります。
+#
+#   ★scene は「学級活動(1)ア」「学級活動(1)・計画委員会」のように
+#     後ろが伸びることがあるので、**頭の一致**で6つに寄せます。
+
+KATAYORI_NAIYO = ('学級活動(1)', '学級活動(2)', '学級活動(3)',
+                  '学校行事', '児童会活動', 'クラブ活動')
+KATAYORI_NEN = ('1年', '2年', '3年', '4年', '5年', '6年', '中学校', '全学年')
+
+
+def _katayori_naiyo(scene):
+    """scene を6つのどれかに寄せる。当たらなければ None。"""
+    s = (scene or '').strip()
+    for na in KATAYORI_NAIYO:
+        if s.startswith(na):
+            return na
+    return None
+
+
+def build_katayori(jissen):
+    todoita = bansho_aru(jissen)
+    hoka = len(jissen) - len(todoita)
+
+    masu = {na: {nen: 0 for nen in KATAYORI_NEN + ('なし',)}
+            for na in KATAYORI_NAIYO}
+    yoso = 0          # 6つに寄せられなかったもの
+    for a in todoita:
+        na = _katayori_naiyo(a.get('scene'))
+        if not na:
+            yoso += 1
+            continue
+        g = a.get('grade') or ''
+        atta = [nen for nen in KATAYORI_NEN if nen in g]
+        # 「1年」は「11年」には出てきません。ここは素直な含みで足ります。
+        for nen in (atta or ['なし']):
+            masu[na][nen] += 1
+
+    kei = {na: sum(masu[na].values()) for na in KATAYORI_NAIYO}
+    kara = [na for na in KATAYORI_NAIYO if kei[na] == 0]
+
+    out = ['      <div class="kata-hyo"><table>',
+           '        <thead><tr><th>内容</th>'
+           + ''.join('<th>%s</th>' % esc_html(n) for n in KATAYORI_NEN)
+           + '<th>なし</th><th>計</th></tr></thead>',
+           '        <tbody>']
+    for na in KATAYORI_NAIYO:
+        tds = ''.join(
+            '<td>%s</td>' % (masu[na][n] if masu[na][n]
+                             else '<span class="zero">·</span>')
+            for n in KATAYORI_NEN + ('なし',))
+        out.append('          <tr%s><th>%s</th>%s<td><b>%d</b></td></tr>'
+                   % (' class="kata-kara"' if kei[na] == 0 else '',
+                      esc_html(na), tds, kei[na]))
+    out.append('        </tbody></table></div>')
+
+    if kara:
+        out.append('      <p class="kata-yomi kata-yomi--kara">'
+                   '<b>まだ1件も届いていない内容：%s</b><br>'
+                   'ここが、いまの空白です。</p>'
+                   % esc_html('・'.join(kara)))
+    else:
+        out.append('      <p class="kata-yomi">6つとも、1件以上 届いています。</p>')
+
+    shita = ['届いた実践 %d件を数えました。' % len(todoita)]
+    if hoka:
+        shita.append('サイトが自分で書いているぶん（%d件）は数えていません。' % hoka)
+    if yoso:
+        shita.append('6つのどれにも寄らなかったものが %d件あります。' % yoso)
+    shita.append('学年は いくつでも押せるので、'
+                 '1件が何年かのますに重なって入ります（計は のべの数です）。')
+    out.append('      <p class="kata-yomi">%s</p>' % esc_html('　'.join(shita)))
+    return '\n'.join(out)
 
 
 # ══ 管理画面の「実践のほか」（2026-09-22 依頼）════════════
@@ -2895,6 +2982,7 @@ def build_kanri_page(jissen, komari, ken, tobashita):
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
     body = body.replace('      <!--BUILD:KANRI_HOKA-->',
                         build_kanri_hoka(komari, ken, tobashita))
+    body = body.replace('      <!--BUILD:KATAYORI-->', build_katayori(jissen))
     body = body.replace('{{OKURU_URL}}', OKURU_URL)
     body = nuru_ireru(body, 'src/kanri.html')
     if re.findall(r'<!--BUILD:[^>]*-->|\{\{[A-Z_]+\}\}', body):

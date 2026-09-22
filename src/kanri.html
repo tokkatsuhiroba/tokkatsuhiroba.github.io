@@ -43,6 +43,16 @@
       <!--BUILD:KANRI_LIST-->
     </div>
 
+    <!-- ══ かたより（2026-09-22 依頼）══════════════════════════
+         成績表ではありません。空いているますが、そのまま発見です。 -->
+    <section class="kanri-kata" id="kanri-kata" aria-labelledby="kanri-kata-h">
+      <h2 id="kanri-kata-h">何が集まって、何が空いているか</h2>
+      <p class="kanri-hoka-yo">届いた実践を、学習指導要領の6つ × 学年 のますめに置いています。
+        <b>空いているますが、そのまま発見です。</b>
+        「この内容は、誰からも語られていない」ということなので。</p>
+      <!--BUILD:KATAYORI-->
+    </section>
+
     <!-- ══ 実践のほか（2026-09-22 依頼）══════════════════════════
          困りごとと研究日程は、送られたら そのまま公開ページに出ます。
          ここに出すまで、下ろす道は知らせメールのリンク1本だけでした。
@@ -153,6 +163,39 @@
       <button type="button" class="bansho-b" id="kanri-naosu-yameru">やめる</button>
       <button type="submit" class="btn" id="kanri-naosu-kakutei">保存する<span class="btn-ya">→</span></button>
     </p>
+  </form>
+</div>
+
+<!-- ══ 管理人だけのメモ（2026-09-22 依頼）══════════════════════
+     どこにも公開しません。公開ページにもGitHubにも出ず、受け口の
+     覚え書きにだけ残ります。送ってくださった先生にも見えません。 -->
+<form id="kanri-memo-yomu-f" method="post" target="kanri-kakunin" hidden>
+  <input type="hidden" name="kind" value="kanri-memo-yomu">
+  <input type="hidden" name="key" id="kanri-memo-yomu-key" value="">
+  <input type="hidden" name="nonce" id="kanri-memo-yomu-nonce" value="">
+</form>
+
+<div class="kanri-memo-mado" id="kanri-memo-mado" hidden role="dialog"
+     aria-modal="true" aria-labelledby="kanri-memo-h">
+  <form class="kanri-memo-naka" id="kanri-memo-f" method="post" target="kanri-kakunin">
+    <input type="hidden" name="kind" value="kanri-memo-kaku">
+    <input type="hidden" name="key" id="kanri-memo-key" value="">
+    <input type="hidden" name="v" id="kanri-memo-v" value="">
+    <input type="hidden" name="nonce" id="kanri-memo-nonce" value="">
+    <p class="kanri-kago">管理人だけのメモ</p>
+    <h2 id="kanri-memo-h">この実践から、何を読み取ったか</h2>
+    <p class="kanri-memo-dai" id="kanri-memo-dai"></p>
+    <p class="kanri-memo-chu"><b>どこにも公開されません。</b>
+      公開ページにもGitHubにも出ません。送ってくださった先生にも見えません。<br>
+      例：「合意形成が、賛成多数ではなく歩み寄りで終わっている。ここが学級活動(1)の肝」</p>
+    <textarea class="okuru-i kanri-memo-t" id="kanri-memo-m" name="m"
+              rows="6" maxlength="800"></textarea>
+    <p class="kanri-memo-kazu" id="kanri-memo-kazu"></p>
+    <p class="kanri-kesu-te">
+      <button type="button" class="bansho-b" id="kanri-memo-yameru">やめる</button>
+      <button type="submit" class="jibun-naosu" id="kanri-memo-kakutei">保存する</button>
+    </p>
+    <p class="okuru-shirase" id="kanri-memo-shirase" role="status" aria-live="polite"></p>
   </form>
 </div>
 
@@ -282,12 +325,22 @@
   form.action = OKURU_URL;
   naosuF.action = OKURU_URL;
   kesuF.action = OKURU_URL;
+  var memoMado = document.getElementById('kanri-memo-mado');
+  var memoF = document.getElementById('kanri-memo-f');
+  var memoM = document.getElementById('kanri-memo-m');
+  var memoKakutei = document.getElementById('kanri-memo-kakutei');
+  var memoShirase = document.getElementById('kanri-memo-shirase');
+  var memoKazu = document.getElementById('kanri-memo-kazu');
+  var memoMatte = '', memoYomuMatte = '', memoIma = null, memoZen = {};
   var miruF = document.getElementById('kanri-miru-f');
   var miruB = document.getElementById('kanri-miru-b');
   var miruShirase = document.getElementById('kanri-miru-shirase');
   var miruHyo = document.getElementById('kanri-miru-hyo');
   var miruMatte = '';
   miruF.action = OKURU_URL;
+  memoF.action = OKURU_URL;
+  var memoYomuF = document.getElementById('kanri-memo-yomu-f');
+  memoYomuF.action = OKURU_URL;
 
   function nonce(){
     var b = new Uint8Array(16);
@@ -303,6 +356,7 @@
     key_shimau(k); keyIn.value = '';
     lock.hidden = true; naka.hidden = false;
     sagasu.value = ''; shiboru();
+    memo_yomu();          // 管理人だけのメモを、入ったとき1回だけ読む
     sagasu.focus();
   }
   function kakunin(k){
@@ -355,6 +409,24 @@
         kazu.textContent += '（削除しました。公開ページへの反映は数分後です）';
       }else{
         kesuShirase.textContent = ev.data.riyu || '削除できませんでした。';
+      }
+      return;
+    }
+    if(ev.data.action === 'memo-yomu'){
+      if(ev.data.nonce !== memoYomuMatte) return;
+      if(ev.data.ok){ memoZen = ev.data.memo || {}; memo_narabu(); }
+      return;
+    }
+    if(ev.data.action === 'memo-kaku'){
+      if(ev.data.nonce !== memoMatte) return;
+      memoKakutei.disabled = false;
+      if(ev.data.ok){
+        if(ev.data.m){ memoZen[ev.data.v] = ev.data.m; }
+        else { delete memoZen[ev.data.v]; }
+        memo_narabu();
+        memoMado.hidden = true; memoIma = null;
+      }else{
+        memoShirase.textContent = ev.data.riyu || '保存できませんでした。';
       }
       return;
     }
@@ -454,6 +526,58 @@
     key_kesu(); naka.hidden = true; lock.hidden = false; shirase.textContent = '';
     keyIn.focus();
   });
+  /* ══ 管理人だけのメモ（2026-09-22）════════════════════════
+     どこにも公開しません。受け口の覚え書きにだけ残ります。
+     ★入るとき1回だけ読みこみ、あとは手もとの memoZen を直します
+       （1件保存するたびに全部を読み直すと、待ち時間が増えるため）。 */
+  function memo_yomu(){
+    var k = key_yomu();
+    if(!k) return;
+    memoYomuMatte = nonce();
+    document.getElementById('kanri-memo-yomu-nonce').value = memoYomuMatte;
+    document.getElementById('kanri-memo-yomu-key').value = k;
+    memoYomuF.submit();
+  }
+  function memo_narabu(){
+    cards.forEach(function(c){
+      var p = c.querySelector('[data-memo-p]');
+      if(!p) return;
+      var m = memoZen[c.getAttribute('data-v')] || '';
+      p.textContent = m ? 'メモ：' + m : '';
+      p.hidden = !m;
+      var b = c.querySelector('[data-memo]');
+      if(b) b.textContent = m ? 'メモ ●' : 'メモ';
+    });
+  }
+  function memo_kazu(){
+    memoKazu.textContent = memoM.value.length + ' / 800字';
+  }
+  function memo_hiraku(b){
+    var k = key_yomu();
+    if(!k){ naka.hidden = true; lock.hidden = false; shirase.textContent = 'もう1度、確認が必要です。'; return; }
+    memoIma = b.closest('.kanri-card');
+    document.getElementById('kanri-memo-dai').textContent = b.getAttribute('data-title') || '';
+    memoM.value = memoZen[memoIma.getAttribute('data-v')] || '';
+    memo_kazu();
+    memoShirase.textContent = ''; memoKakutei.disabled = false;
+    memoMado.hidden = false; memoM.focus();
+  }
+  memoM.addEventListener('input', memo_kazu);
+  document.getElementById('kanri-memo-yameru').addEventListener('click', function(){
+    memoMado.hidden = true; memoIma = null;
+  });
+  memoF.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var k = key_yomu();
+    if(!k || !memoIma){ memoMado.hidden = true; naka.hidden = true; lock.hidden = false; return; }
+    memoMatte = nonce();
+    document.getElementById('kanri-memo-nonce').value = memoMatte;
+    document.getElementById('kanri-memo-key').value = k;
+    document.getElementById('kanri-memo-v').value = memoIma.getAttribute('data-v') || '';
+    memoKakutei.disabled = true; memoShirase.textContent = '保存しています…';
+    memoF.submit();
+  });
+
   /* 消す確認の窓を ひらく。実践・困りごと・研究日程で見出しだけ変えます
      （「この実践を削除しますか」と出たまま困りごとを消すと、手が止まります）。 */
   function kesu_hiraku(kb){
@@ -483,6 +607,8 @@
       kesu_hiraku(kb);
       return;
     }
+    var mb = ev.target.closest('[data-memo]');
+    if(mb){ memo_hiraku(mb); return; }
     var b = ev.target.closest('[data-naosu]');
     if(!b) return;
     var k = key_yomu();

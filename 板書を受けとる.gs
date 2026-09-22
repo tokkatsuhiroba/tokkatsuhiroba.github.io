@@ -160,6 +160,13 @@ function doPost(e) {
     if (e.parameter && e.parameter.kind === 'kanri-miru') {
       return _kanri_miru(e.parameter);
     }
+    /* 管理人だけのメモ（2026-09-22）。公開ページにも GitHub にも出ません。 */
+    if (e.parameter && e.parameter.kind === 'kanri-memo-yomu') {
+      return _kanri_memo_yomu(e.parameter);
+    }
+    if (e.parameter && e.parameter.kind === 'kanri-memo-kaku') {
+      return _kanri_memo_kaku(e.parameter);
+    }
     /* 管理画面内の編集。通常のJSON送信と違い、form POSTで
        送るので、ここで受ける。返事はpostMessageで元の画面へ戻す。 */
     if (e.parameter && e.parameter.kind === 'kanri-naosu') {
@@ -409,6 +416,84 @@ function _kanri_miru(d) {
   kotae.ok = true;
   kotae.hi = hi;
   kotae.na = Object.keys(MIRU_PAGE);
+  return _kanri_mado(kotae);
+}
+
+
+/* ══ 1の2の3. 管理人だけのメモ（2026-09-22 依頼）════════════
+   届いた1件ごとに、管理人が自分の読み取りを書きとめておく所です。
+
+   ★**どこにも公開しません。**
+     ・公開ページ（bansho.html など）には1文字も出ません
+     ・GitHub にも置きません。ここ（スクリプトの覚え書き）にだけ残ります
+     ・送ってくださった先生にも見えません
+   ★だから、実践そのものを直すのではなく、**自分の言葉を溜める**ための欄です。
+
+   ★入れ物の大きさ … 覚え書きは ぜんぶで 500KB までです。閲覧数の分と
+     取り合いになるので、1件 MEMO_MOJI_MAX 字までにし、合計が近づいたら
+     書くのを断ります（黙って消えるより、断られたほうがいいためです）。   */
+
+var MEMO_MOJI_MAX = 800;        // メモ1件の字数
+var MEMO_ZEN_MAX  = 380000;     // 覚え書き全体が、これを超えたら断る（500KBの手前）
+var MEMO_SLUG = /^(bansho|komari|nittei)-[0-9]{8}-[0-9a-z]+$/;
+
+function _kanri_memo_yomu(d) {
+  var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
+  var kotae = { source: 'tokkatsu-kanri', action: 'memo-yomu', ok: false,
+                nonce: nonce, riyu: '' };
+  if (String(d.key || '').trim() !== _kanri_key()) {
+    kotae.riyu = '合いことばがちがいます';
+    return _kanri_mado(kotae);
+  }
+  var subete = P.getProperties();
+  var memo = {};
+  for (var k in subete) {
+    if (k.slice(0, 5) === 'memo_') memo[k.slice(5)] = subete[k];
+  }
+  kotae.ok = true;
+  kotae.memo = memo;
+  return _kanri_mado(kotae);
+}
+
+function _kanri_memo_kaku(d) {
+  var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
+  var slug = String(d.v || '').trim();
+  var kotae = { source: 'tokkatsu-kanri', action: 'memo-kaku', ok: false,
+                nonce: nonce, v: slug, riyu: '' };
+  if (String(d.key || '').trim() !== _kanri_key()) {
+    kotae.riyu = '合いことばがちがいます';
+    return _kanri_mado(kotae);
+  }
+  if (!MEMO_SLUG.test(slug)) {
+    kotae.riyu = '行き先がありません';
+    return _kanri_mado(kotae);
+  }
+  var m = String(d.m || '').slice(0, MEMO_MOJI_MAX).trim();
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(10000); } catch (e) {
+    kotae.riyu = '混み合っています。少し待ってから もう一度。';
+    return _kanri_mado(kotae);
+  }
+  try {
+    if (!m) {
+      P.deleteProperty('memo_' + slug);      // 空にしたら、消す
+    } else {
+      /* 入れ物の残りを見ます。書いてから溢れると、**黙って消えます**。
+         それがいちばん困るので、書くまえに断ります。 */
+      var subete = P.getProperties(), zen = 0;
+      for (var k in subete) zen += k.length + String(subete[k]).length;
+      var ima = String(subete['memo_' + slug] || '').length;
+      if (zen - ima + m.length > MEMO_ZEN_MAX) {
+        kotae.riyu = '覚え書きがいっぱいです。古いメモを消してから もう一度。';
+        return _kanri_mado(kotae);
+      }
+      P.setProperty('memo_' + slug, m);
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  kotae.ok = true;
+  kotae.m = m;
   return _kanri_mado(kotae);
 }
 

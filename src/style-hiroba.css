@@ -2812,6 +2812,55 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-kazu{margin:0 0 18px;color:var(--mute);font-size:13px}
 .kanri-list{display:grid;gap:12px}
 
+/* ── 管理人だけのメモ（2026-09-22）──────────────────────
+   どこにも公開しません。だから見た目も、公開ページの言葉とは
+   はっきり変えます（うすい地 ＋ 左の縦棒）。 */
+.kanri-memo-b{
+  min-height:40px;padding:8px 16px;background:var(--bg);color:var(--mute);
+  border:2px solid var(--rule);border-radius:999px;
+  font:700 13px/1.4 var(--f-maru);cursor:pointer;white-space:nowrap;
+}
+.kanri-memo-b:hover,.kanri-memo-b:focus-visible{border-color:var(--ink);color:var(--ink)}
+.kanri-memo-p{
+  margin:8px 0 0;padding:8px 12px;border-left:4px solid var(--ki);
+  background:var(--men-ki);border-radius:0 8px 8px 0;
+  font-size:13px;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.kanri-memo-p[hidden]{display:none}
+.kanri-memo-mado{
+  position:fixed;z-index:1002;inset:0;display:grid;place-items:center;
+  padding:18px;background:rgba(28,28,26,.7);overflow:auto;
+}
+.kanri-memo-mado[hidden]{display:none}
+.kanri-memo-naka{
+  width:min(600px,100%);margin:auto;padding:clamp(20px,5vw,34px);background:var(--bg);
+  border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ki);
+}
+.kanri-memo-naka h2{margin:0 0 12px;font:900 clamp(19px,3.4vw,25px)/1.4 var(--f-maru)}
+.kanri-memo-dai{margin:0 0 12px;padding:12px;background:var(--men-ki);border-radius:10px;font-weight:700}
+.kanri-memo-chu{margin:0 0 12px;font-size:13px;line-height:1.85;color:var(--mute)}
+.kanri-memo-t{width:100%;min-height:150px;resize:vertical;line-height:1.85}
+.kanri-memo-kazu{margin:6px 0 0;text-align:right;font-size:12px;color:var(--mute)}
+
+/* ── 何が集まって、何が空いているか（2026-09-22）────────────
+   ★空の行は、色だけでなく**字（0）と行の地**の2つで示します。
+   ★せまい画面では よこにスクロールします（縮めると読めないため）。 */
+.kanri-kata{margin-top:clamp(36px,5vw,56px);padding-top:clamp(24px,3.4vw,34px);border-top:2px solid var(--rule)}
+.kanri-kata h2{margin:0 0 8px;font-family:var(--f-maru);font-size:clamp(18px,2.3vw,22px)}
+.kata-hyo{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0 12px}
+.kata-hyo table{border-collapse:collapse;font-size:13px;min-width:560px}
+.kata-hyo th,.kata-hyo td{padding:7px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.kata-hyo thead th{font-size:12px;color:var(--mute);text-align:end;border-bottom:2px solid var(--rule)}
+.kata-hyo thead th:first-child,.kata-hyo tbody th{text-align:start}
+.kata-hyo tbody th{font-weight:700}
+.kata-hyo td{text-align:end;font-variant-numeric:tabular-nums}
+.kata-hyo .zero{color:var(--rule)}
+.kata-hyo .kata-kara{background:var(--men-ki)}
+.kata-hyo .kata-kara th{color:var(--shu)}
+.kata-yomi{margin:0 0 8px;font-size:13px;line-height:1.9;color:var(--mute)}
+.kata-yomi--kara{color:var(--ink)}
+.kata-yomi--kara b{color:var(--shu)}
+
 /* ── 実践のほかに、届いたもの（2026-09-22）──────────────── */
 .kanri-hoka{margin-top:clamp(36px,5vw,56px);padding-top:clamp(24px,3.4vw,34px);border-top:2px solid var(--rule)}
 .kanri-hoka h2{margin:0 0 8px;font-family:var(--f-maru);font-size:clamp(18px,2.3vw,22px)}
