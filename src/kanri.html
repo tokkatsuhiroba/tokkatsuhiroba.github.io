@@ -92,7 +92,9 @@
     ev.preventDefault(); kakunin(keyIn.value.trim());
   });
   window.addEventListener('message', function(ev){
-    if(ev.source !== iframe.contentWindow || !ev.data || ev.data.source !== 'tokkatsu-kanri'
+    /* Apps Script の返事は Google の内側フレームから来るため、
+       source ではなく、128ビットの使い捨て nonce でこの回の返事だけを受ける。 */
+    if(!ev.data || ev.data.source !== 'tokkatsu-kanri'
        || ev.data.nonce !== matte) return;
     hairu.disabled = false;
     if(ev.data.ok){ shirase.textContent = ''; hiraku(keyIn.value.trim()); }

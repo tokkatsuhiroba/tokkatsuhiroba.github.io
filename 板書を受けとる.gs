@@ -723,7 +723,9 @@ function _kanri_check(d) {
   var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
   var ok = !!(String(d.key || '').trim() === _kanri_key());
   var js = '<!doctype html><meta charset="utf-8"><script>'
-    + 'parent.postMessage({source:"tokkatsu-kanri",ok:' + (ok ? 'true' : 'false')
+    /* Apps Script の HtmlService は、返したHTMLを Google の内側フレームに
+       もう1枚入れる。parent だとそこで止まるので、最上位の管理画面へ戻す。 */
+    + 'top.postMessage({source:"tokkatsu-kanri",ok:' + (ok ? 'true' : 'false')
     + ',nonce:' + JSON.stringify(nonce) + '},"*");<\/script>';
   return HtmlService.createHtmlOutput(js)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
