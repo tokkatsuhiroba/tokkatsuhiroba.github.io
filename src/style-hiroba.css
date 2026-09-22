@@ -2145,35 +2145,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   to  {transform:translateX(118vw)}
 }
 
-/* ── A 広場が、スクロールに合わせて横に流れる（2026-09-22）──
-   スマホで見えているのは 3200px ある絵の真ん中だけでした。左の学級会も
-   右のクラブ活動も、誰も見ていません。下にスクロールするだけで、校庭を
-   左から右へ歩いて見ていく形にします。
-
-   ★絵を1.2倍にして、はみ出したぶんの中で左右に振ります。
-     ・拡大の起点は下（50% 100%）。だから地面は動かず、切れるのは上の空だけ。
-       空の色は .hero の地と同じなので、切れても見えません。
-     ・はみ出しは .hero の overflow:hidden が切ります。
-     ・振り幅は片側8%。拡大1.2倍のあそび（片側10%）より内がわです。
-   ★scale と translate は「単独の指定」で書きます。transform でまとめると
-     2つの動きがぶつかって、片方が消えます。 */
-.hero-e svg{transform-origin:50% 100%;scale:1}
-
-@supports (animation-timeline:view()){
-  .hero-e--animated svg{
-    animation:hero-nagare linear both;
-    /* ★view() ではなく scroll()。ヒーローはページのいちばん上にあるので、
-       view() だと読み込んだ時点でもう8割すすんでいて、流れが見えません
-       （実測。開いた直後に translate が -4.6% まで来ていました）。
-       いちばん上から1画面ぶんスクロールするあいだに、8% → -8% を使いきります。 */
-    animation-timeline:scroll(root block);
-    animation-range:0 92vh;
-  }
-  @keyframes hero-nagare{
-    from{translate:8% 0}
-    to  {translate:-8% 0}
-  }
-}
+/* 採用した全景の左右を切らない。4つの活動が同時に見える倍率にする。 */
+.hero-e svg{scale:1;translate:none;animation:none}
 
 /* ── B 校庭を走る子 ───────────────────────────────
    絵の中の子は動かせないので、上に重ねた子が走ります。

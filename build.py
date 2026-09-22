@@ -21,6 +21,7 @@ TOKKATSU広場 ビルド
 """
 
 import io, os, re, sys, glob, datetime, calendar, json
+import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC  = os.path.join(ROOT, 'src')
@@ -1324,6 +1325,35 @@ def load_buhin():
     return hako, hyo
 
 
+def load_approved_svg(relative_path):
+    """採用済みの完成イラストを読み、負の viewBox も <use> 用に正規化する。"""
+    path = os.path.join(SRC, 'ill', 'approved', relative_path)
+    try:
+        root = ET.parse(path).getroot()
+        x, y, w, h = (float(v) for v in root.attrib['viewBox'].split())
+    except (OSError, ET.ParseError, KeyError, ValueError) as e:
+        raise Tomeru('採用イラストを読めません：%s（%s）' % (relative_path, e))
+    if w <= 0 or h <= 0:
+        raise Tomeru('採用イラストの大きさが不正です：%s' % relative_path)
+    # 完成画は旧部品の色・線幅制限とは別。スクリプトや外部参照は入れない。
+    allowed = {'svg', 'g', 'path', 'rect', 'circle', 'ellipse', 'line',
+               'polyline', 'polygon', 'defs', 'clipPath', 'title', 'text'}
+    for node in root.iter():
+        if node.tag.split('}')[-1] not in allowed:
+            raise Tomeru('採用イラストに使えない要素があります：%s' % relative_path)
+        for attr, value in node.attrib.items():
+            name = attr.split('}')[-1]
+            if name.lower().startswith('on') or name in ('href', 'style'):
+                raise Tomeru('採用イラストに外部参照・動作があります：%s' % relative_path)
+            if 'url(' in value and not re.fullmatch(r'url\(#[\w-]+\)', value):
+                raise Tomeru('採用イラストに外部参照があります：%s' % relative_path)
+    ET.register_namespace('', 'http://www.w3.org/2000/svg')
+    body = ''.join(ET.tostring(n, encoding='unicode') for n in root)
+    if x or y:
+        body = '<g transform="translate(%g %g)">%s</g>' % (-x, -y, body)
+    return w, h, body
+
+
 def load_kyara():
     """キャラクター（学活くん・行人・児童会ちゃん・クラブマン）を読む。
        検問は部品とまったく同じ。画風がずれた1人だけを許すと、4人が別物に見えます。"""
@@ -1339,6 +1369,10 @@ def load_kyara():
         raise Tomeru('キャラクターの絵がありません： %s'
                      '（src/ill/kyara/◯◯.svg を置いてください）'
                      % '、'.join('src/ill/kyara/%s.svg' % n for n in inai))
+    # 各ポーズは別名で登録する。同じポーズはページ内に1回だけ埋め込まれる。
+    for path in sorted(glob.glob(os.path.join(SRC, 'ill', 'approved', 'characters', '*.svg'))):
+        name = os.path.splitext(os.path.basename(path))[0]
+        hako[name] = load_approved_svg('characters/' + name + '.svg')
     return hako
 
 
@@ -2629,7 +2663,7 @@ def build_kai():
 # 3-4. 新版（縦スクロール1枚）を組み立てる
 # ══════════════════════════════════════════════════════════
 
-# 4つの内容。絵のどこを切り出すか（x y 幅 高さ。どれも 5:2）
+# 4つの内容。採用した学校全景の各活動を切り出す（x y 幅 高さ）。
 #
 # このサイトの背骨です。広場で出た悩みも、届いた実践も、ぜんぶこの4つに集めます。
 #
@@ -2638,13 +2672,13 @@ def build_kai():
 # だから、いまは **どこへも飛ばしません**。カードの中で、その内容の
 # 悩み（src/komari の naiyo）と実践（src/jissen の naiyo）が、その場で開きます。
 YOTSU = (
-    ('n-gakkyu',  'GAKKYU KATSUDO',  '学級活動',   '30 900 1000 400',
+    ('n-gakkyu',  'GAKKYU KATSUDO',  '学級活動',   '35 740 935 725',
      '学級会・係・当番・給食。子どもが自分たちで決める時間です。'),
-    ('n-gyoji',   'GAKKO GYOJI',     '学校行事',   '800 820 1000 400',
+    ('n-gyoji',   'GAKKO GYOJI',     '学校行事',   '1020 755 1150 790',
      '運動会・卒業式・遠足。思い出をつくる時間ではなく、子どもが育つ時間です。'),
-    ('n-jidokai', 'JIDOKAI KATSUDO', '児童会活動', '1740 860 1000 400',
+    ('n-jidokai', 'JIDOKAI KATSUDO', '児童会活動', '2280 550 875 560',
      '代表委員会・集会・あいさつ運動。学年をこえて学校をつくります。'),
-    ('n-club',    'CLUB KATSUDO',    'クラブ活動', '2420 860 780 312',
+    ('n-club',    'CLUB KATSUDO',    'クラブ活動', '2280 1100 875 445',
      '音楽・図工・科学・運動。好きなことを、学年をこえて。'),
 )
 
@@ -3752,14 +3786,14 @@ IGI_MEN = (
 
 IGI_T = """      <li class="igi-h h--{n}">
         <a class="igi-a" href="#{saki}">
-          <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{n}"/></svg></span>
+          <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{asset}"/></svg></span>
           <b>{chotto}</b><span class="t">{dekiru}</span>
           <span class="igi-ya" aria-hidden="true">→</span>
         </a>
       </li>"""
 
 IGI_T_NASHI = """      <li class="igi-h h--{n}">
-        <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{n}"/></svg></span>
+        <span class="e"><svg viewBox="0 0 {w} {h}" aria-hidden="true" focusable="false"><use href="#ill-k-{asset}"/></svg></span>
         <b>{chotto}</b><span class="t">{dekiru}</span>
       </li>"""
 
@@ -3767,12 +3801,14 @@ IGI_T_NASHI = """      <li class="igi-h h--{n}">
 def build_igi(kyara):
     """ホームのいちばん上。このサイトが何のためにあるかを、4人で短く渡します。"""
     men = []
+    poses = {'gakkatsu': 'listen', 'gyoji': 'calendar', 'jidokai': 'share', 'club': 'try'}
     for n, chotto, dekiru, saki in IGI_MEN:
         if n not in kyara:
             raise Tomeru('意義の節が %s.svg を呼んでいますが、その絵がありません' % n)
+        asset = n + '-' + poses[n]
         men.append((IGI_T if saki else IGI_T_NASHI).format(
             n=n, chotto=esc_html(chotto), dekiru=esc_html(dekiru),
-            saki=saki, w=kyara[n][0], h=kyara[n][1]))
+            asset=asset, saki=saki, w=kyara[asset][0], h=kyara[asset][1]))
     return ('<section class="sec" id="igi">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">WHY</span>'
@@ -3780,13 +3816,15 @@ def build_igi(kyara):
             # 1文＝1行。<span> を1つずつ立てて、行の折れ目を文の切れ目に
             # そろえます（2026-09-22）。<br> だと、画面が狭いときに文の
             # 途中でも折れて「みんなの特／活ひろば」のように割れます。
-            '    <p class="igi-bun">'
+            '    <div class="igi-intro"><p class="igi-bun">'
             '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
             '<span>LINEオープンチャット<b>「みんなの特活ひろば（仮）」</b>と'
             '連携しています。</span>'
             '<span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span>'
             '<span>そのためにお使いください。</span>'
-            '</p>\n'
+            '</p><div class="igi-friends" aria-hidden="true">'
+            '<svg viewBox="0 0 345 143" focusable="false">'
+            '<use href="#ill-k-group-shoulders"/></svg></div></div>\n'
             '    <ul class="igi-l">\n' + '\n'.join(men) + '\n    </ul>\n'
             # ★ここは切り分けたあとに作るので、{{◯◯}} は置きかわりません。
             #   LINKS から直に入れます。
@@ -3810,20 +3848,20 @@ HOME_FUDA = (
     #   板書を送る → 研究日程 → 学ぶ・実践 → ニュース・研究会 → 特活とは・4つの内容
     #   （2026-09-21。いちばん下の2つは「読みもの」なので、いちばん後ろ）
     # index（このページ自身）。板書を送るところが、いちばん上です
-    ('okuru',  'b', 'ko-te',    '写真もPDFも、送るとそのまま出ます。'),
+    ('okuru',  'k', 'jidokai-upload', '写真もPDFも、送るとそのまま出ます。'),
     # 送る の すぐ次が 見る。この2つで1組です（2026-09-22）
-    ('bansho', 'b', 'kokuban',  '先生方から届いた実践が、そのまま並びます。'),
-    ('ima',    'k', 'gyoji',    'つぎの研究会と、申込の締切。'),
+    ('bansho', 'k', 'jidokai-share', '先生方から届いた実践が、そのまま並びます。'),
+    ('ima',    'k', 'gyoji-calendar', 'つぎの研究会と、申込の締切。'),
     # komari（困っている → 学ぶ、の順に並べます。2026-09-22）
-    ('komari', 'b', 'sensei',   '送られた困りごとが、そのまま並びます。'),
+    ('komari', 'k', 'gakkatsu-listen', '送られた困りごとが、そのまま並びます。'),
     # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
-    ('manabu', 'k', 'club',     '①から⑤の学習過程と、一次資料と、道具。'),
+    ('manabu', 'k', 'club-tools', '①から⑤の学習過程と、一次資料と、道具。'),
     # atsumaru
-    ('news',   'b', 'keijiban', '一次情報だけ。要約は、こちらの言葉で。'),
-    ('kai',    'b', 'bankokki', '1つずつ開いて、いま見られるものだけ。'),
+    ('news',   'k', 'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
+    ('kai',    'k', 'jidokai-speak', '1つずつ開いて、いま見られるものだけ。'),
     # shiru（2026-09-22：特活とは と 4つの内容 は同じページなので、1つにまとめました。
     #        4つの内容は、この札から入った先にそのまま置いてあります）
-    ('about',  'k', 'gakkatsu', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
+    ('about',  'k', 'gakkatsu-board', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
 )
 
 HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
@@ -4312,51 +4350,13 @@ def build_shin():
 
     ken = load_kenkyukai()
     komari, tobashita_k = load_komari()
-    # 絵は1ページに1回だけ埋めこみ、4つの内容は <use> で別の場所を切り出す
-    e_naka = hiroba_naka(buhin)
-
-    # ── 空を流れる雲（2026-09-22）──────────────────────────
-    #   絵そのものは <defs> ＋ <use> なので、中に動きを付けても出ません
-    #   （実測ずみ）。そこで「絵の上に重ねた入れ物」を動かします。
-    #   1つずつ 高さ・大きさ・速さ・出る間 を変えます。そろうと列車に見えます。
-    #   （上からの位置, はば, 1周の秒数, 出るまでの秒数, うすさ）
-    kw, kh, _ = buhin['kumo']
-    hero_kumo = ''.join(
-        '<i class="hkumo" aria-hidden="true" '
-        'style="--y:%s;--w:%dpx;--t:%ds;--d:-%ds;--o:%s">'
-        '<svg viewBox="0 0 %g %g" focusable="false"><use href="#ill-b-kumo"/></svg></i>'
-        % (y, w, t, d, o, kw, kh)
-        for y, w, t, d, o in (('16%', 108, 74, 0,  '.62'),
-                              ('34%', 150, 96, 34, '.5'),
-                              ('7%',   80, 62, 58, '.42')))
-
-    # ── 校庭を走る子（2026-09-22）──────────────────────────
-    #   これも雲と同じで「絵の上に重ねた入れ物」。絵の中の子は動かせません。
-    #   ★絵の中の子と同じ大きさに見えるよう、はばを px で決め打ちにします。
-    #     広い窓（3200）でもスマホの窓（1450）でも、画面上の子は同じくらいの
-    #     大きさになるので（実測、どちらも約0.25倍）、1つの値で足ります。
-    #   （下からの位置, はば, 横切る秒数, 出るまでの秒数）
-    hw, hh, _ = buhin['ko-hashiru']
-    hero_ko = ''.join(
-        '<i class="hko" aria-hidden="true" style="--b:%s;--w:%dpx;--t:%ds;--d:-%ds;--h:%ss">'
-        '<svg viewBox="0 0 %g %g" focusable="false"><use href="#ill-b-ko-hashiru"/></svg></i>'
-        % (b, w, t, d, h, hw, hh)
-        for b, w, t, d, h in (('6%',  17, 21, 0,  '.30'),
-                              ('2%',  21, 17, 9,  '.26')))
-
-    hero = (hero_kumo + hero_ko
-            + '<svg viewBox="0 0 %d %d" role="img" aria-label="校庭で学級活動・学校行事・'
-            '児童会活動・クラブ活動をしている学校の広場のイラスト">'
-            '<use href="#ill-hiroba"/></svg>' % (HIROBA_W, HIROBA_H))
-
-    # スマホ用の切り出し（2026-09-21 直し）。
-    #   前は 620 500 1400 700。空を1ドットも入れず、校舎の屋根と
-    #   右の時計台を切っていました（「空と学校が切れている」）。
-    #   いまは 空と雲・校舎まるごと・右の時計台まるごと・下の子どもたち、
-    #   が1枚に入る窓です（1450:1060 ＝ たて長め）。
-    hero_s = (hero_kumo + hero_ko
-              + '<svg viewBox="760 140 1450 1060" role="img" aria-label="校庭で学校行事を'
-              'している学校のイラスト"><use href="#ill-hiroba"/></svg>')
+    # 採用済みの学校全景。文字や動く部品を絵に重ねず、4つの活動を保つ。
+    hero_w, hero_h, e_naka = load_approved_svg('school.svg')
+    hero = ('<svg viewBox="0 0 %g %g" role="img" '
+            'aria-label="花の咲く学校で、学級会・運動会・児童会の集会・クラブの共同制作をする子どもたち">'
+            '<use href="#ill-hiroba"/></svg>' % (hero_w, hero_h))
+    # スマホでも同じ全景。細部は「4つの内容」の拡大図で見られる。
+    hero_s = hero
 
     for mark, html in (('<!--BUILD:HIROBA-->', hero),
                        ('<!--BUILD:HIROBA_S-->', hero_s),
