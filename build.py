@@ -2912,7 +2912,10 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span><button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
+{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
+<button class="bansho-b bansho-b--hoshi" type="button" data-hoshi="{slug}" aria-pressed="false" hidden>あとで見る<i aria-hidden="true">☆</i></button>\
+<button class="bansho-b bansho-b--yatta" type="button" data-yatta="{slug}" hidden>やってみた<span class="yatta-n" data-yatta-n="{slug}"></span></button>\
+<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
       </article>"""
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
@@ -3227,6 +3230,24 @@ def build_kanri_hoka(komari, ken, tobashita):
     return '\n'.join(out)
 
 
+# ══ storage.js を、いまのビルドにも入れる（2026-09-23 依頼）════
+#   9月21日にページを7枚へ組み直したとき、storage.js は古い body.html の
+#   経路にしか繋がっておらず、**1バイトも入っていませんでした**。
+#   だから ⭐ストックも、読む人のメモも、動いていませんでした。
+#   ここで繋ぎ直します。保存を触るのは、これまでどおり storage.js だけです。
+STORAGE_ME = '/*BUILD:STORAGE*/'
+
+
+def storage_ireru(body, doko):
+    if STORAGE_ME not in body:
+        raise Tomeru('%s に %s がありません（⭐ストックの保存が入りません）'
+                     % (doko, STORAGE_ME))
+    return body.replace(
+        STORAGE_ME,
+        '/* ══ storage.js を取りこみ（保存はここだけ。'
+        '差しかえるときはこのブロックごと） ══ */\n' + rd('src/storage.js'))
+
+
 NURU_ME = '/*BUILD:NURU*/'
 
 
@@ -3445,6 +3466,13 @@ SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
         <div class="okuru-nen" role="group" aria-labelledby="sagasu-g-l" id="sagasu-g">
           <button type="button" class="okuru-nen-b" data-g="" aria-pressed="true">ぜんぶ</button>
 {nen}        </div>
+      </div>
+      <div class="sagasu-gyo" id="sagasu-h-gyo" hidden>
+        <span class="sagasu-l" id="sagasu-h-l">あとで見る</span>
+        <div class="okuru-nen" role="group" aria-labelledby="sagasu-h-l" id="sagasu-h">
+          <button type="button" class="okuru-nen-b" data-h="" aria-pressed="true">ぜんぶ</button>
+          <button type="button" class="okuru-nen-b" data-h="1" aria-pressed="false">☆だけ<span class="sagasu-b-kazu" id="sagasu-h-kazu">0</span></button>
+        </div>
       </div>
       <div class="sagasu-gyo">
         <span class="sagasu-l" id="sagasu-j-l">並び</span>
@@ -4227,6 +4255,7 @@ def build_shin():
             raise Tomeru('src/hiroba.html に目じるし %s がありません' % mark.strip())
         body = body.replace(mark, html)
 
+    body = storage_ireru(body, 'src/hiroba.html')
     body = nuru_ireru(body, 'src/hiroba.html')
     body, _ = build_kazari(body, buhin, kyara)
 

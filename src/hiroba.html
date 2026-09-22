@@ -824,6 +824,7 @@
 </footer>
 
 <script>
+/*BUILD:STORAGE*/
 /*BUILD:NURU*/
 (function(){
   'use strict';
@@ -930,27 +931,37 @@
 
      ★次のときは、送りません。
        ・ブラウザが「追跡しないで」と言っている（GPC／DNT）
-       ・ファイルを直に開いている（file:／作っている最中の確かめ）
+       ・http(s) で開いていない（file: / data: ／作っている最中の確かめ）
        ・管理画面（kanri.html）。管理人自身の動きだからです
 
      ★失敗しても、ページは何も変わりません。黙って捨てます。       */
   (function(){
     if (!OKURU_URL) return;
-    if (location.protocol === 'file:') return;
+    /* http(s) のときだけ。file: / data: / about: は、作っている最中か
+       確かめている最中です。そこから数えると、本物の数が濁ります。 */
+    if (location.protocol !== 'http:' && location.protocol !== 'https:') return;
     if (navigator.globalPrivacyControl === true) return;
     if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
     var na = (location.pathname.split('/').pop() || 'index.html')
                .replace(/\.html$/, '') || 'index';
     if (!/^(index|shiru|manabu|atsumaru|bansho|komari)$/.test(na)) return;
     var bun = JSON.stringify({ kind: 'miru', p: na });
+    /* 「やってみた」の札がある画面では、**返事を読みます**。
+       受け口が、見られた数を足したついでに、やってみた の数を返します。
+       どうせ1回投げるので、通信を2回にはしません。
+       札が無い画面では、返事は要らないので sendBeacon（軽い・速い）。 */
+    var iru = !!document.querySelector('[data-yatta]');
     try {
-      if (navigator.sendBeacon) {
+      if (!iru && navigator.sendBeacon) {
         navigator.sendBeacon(OKURU_URL, new Blob([bun], {type:'text/plain;charset=UTF-8'}));
-      } else {
-        fetch(OKURU_URL, { method:'POST', mode:'no-cors', keepalive:true,
-                           headers:{'Content-Type':'text/plain;charset=UTF-8'},
-                           body: bun }).catch(function(){});
+        return;
       }
+      fetch(OKURU_URL, { method:'POST',
+                         headers:{'Content-Type':'text/plain;charset=UTF-8'},
+                         body: bun })
+        .then(function(r){ return r.json(); })
+        .then(function(o){ if(o && o.yatta && window.YATTA_KAKU) YATTA_KAKU(o.yatta); })
+        ['catch'](function(){});
     } catch (e) {}
   })();
 
@@ -1707,6 +1718,89 @@
     })();
   }
 
+  /* ══ あとで見る（☆）と やってみた（2026-09-23 依頼）════════
+     いままで、このサイトで何かできるのは **送る人だけ** でした。
+     読む人は読むだけ。ここを両方あけます。
+
+       ☆あとで見る … 端末の中（storage.js）にだけ残ります。
+                      **外へは1バイトも出ません。**ほかの人にも見えません。
+       やってみた   … 押した1回を受け口に足します。残るのは
+                      「実践の slug と、のべの回数」だけ。誰が押したかは
+                      受けとりませんし、残しません。
+
+     ★どちらも、押せるようになってから出します（JSが動かない人には
+       出しません。押しても何も起きない札を、画面に置かないため）。      */
+  (function(){
+    var hoshiB = [].slice.call(document.querySelectorAll('[data-hoshi]'));
+    var yattaB = [].slice.call(document.querySelectorAll('[data-yatta]'));
+    if(!hoshiB.length && !yattaB.length) return;
+
+    function yomu(na){
+      var a = Store.get(na, []);
+      return Object.prototype.toString.call(a) === '[object Array]' ? a : [];
+    }
+
+    /* ── ☆あとで見る ───────────────────────────── */
+    var hoshi = yomu('stock');
+    function hoshi_utsusu(){
+      hoshiB.forEach(function(b){
+        var iru = hoshi.indexOf(b.getAttribute('data-hoshi')) >= 0;
+        b.setAttribute('aria-pressed', iru ? 'true' : 'false');
+        b.querySelector('i').textContent = iru ? '★' : '☆';
+        b.hidden = false;
+      });
+      if(window.HOSHI_KAWATTA) HOSHI_KAWATTA(hoshi);
+    }
+    hoshiB.forEach(function(b){
+      b.addEventListener('click', function(){
+        var v = b.getAttribute('data-hoshi'), i = hoshi.indexOf(v);
+        if(i < 0) hoshi.push(v); else hoshi.splice(i, 1);
+        Store.set('stock', hoshi);
+        hoshi_utsusu();
+      });
+    });
+    hoshi_utsusu();
+
+    /* ── やってみた ─────────────────────────────
+       数は、開いたときに受け口から返ってきます（上のビーコンの返事）。
+       返ってくるまでは、数を出しません（0と出すと、0件なのか
+       まだ来ていないのか 分からないためです）。                       */
+    var oshita = yomu('yatta');
+    var kazu = null;
+    function yatta_utsusu(){
+      yattaB.forEach(function(b){
+        var v = b.getAttribute('data-yatta');
+        var sumi = oshita.indexOf(v) >= 0;
+        b.hidden = false;
+        b.disabled = sumi;
+        b.setAttribute('aria-pressed', sumi ? 'true' : 'false');
+        b.firstChild.nodeValue = sumi ? 'やってみた ✓' : 'やってみた';
+        var n = b.querySelector('[data-yatta-n]');
+        if(n && kazu) n.textContent = kazu[v] ? kazu[v] : '';
+      });
+    }
+    /* 受け口の返事が来たら、数を入れます（上のビーコンから呼ばれます） */
+    window.YATTA_KAKU = function(y){ kazu = y || {}; yatta_utsusu(); };
+
+    yattaB.forEach(function(b){
+      b.addEventListener('click', function(){
+        var v = b.getAttribute('data-yatta');
+        if(oshita.indexOf(v) >= 0) return;
+        oshita.push(v); Store.set('yatta', oshita);
+        if(kazu) kazu[v] = (kazu[v] || 0) + 1;     // 待たずに1つ増やす
+        yatta_utsusu();
+        if(!OKURU_URL) return;
+        try{
+          fetch(OKURU_URL, { method:'POST',
+                             headers:{'Content-Type':'text/plain;charset=UTF-8'},
+                             body: JSON.stringify({ kind:'yatta', v:v }) })
+            ['catch'](function(){});
+        }catch(e){}
+      });
+    });
+    yatta_utsusu();
+  })();
+
   /* ══ みんなの実践を、絞る・並べかえる・さがす（2026-09-22 夜）══
      届いたものが増えるほど、上から順に見るのが しんどくなります。
      ★ぜんぶ、このページの中だけで動きます。何も出ていきません。
@@ -1727,6 +1821,10 @@
     var sgK    = document.getElementById('sagasu-k');      /* 日本の地図 */
     var sgFuda = [].slice.call(sgTana.querySelectorAll('.bfuda'));
     var sgNai = '', sgNen = '', sgKen = '', sgShi = '', sgJun_ima = 'atarashii';
+    var sgH = document.getElementById('sagasu-h');
+    var sgHgyo = document.getElementById('sagasu-h-gyo');
+    var sgHkazu = document.getElementById('sagasu-h-kazu');
+    var sgHoshi = '', sgHoshiL = [];
     /* 学年の札が1つも無いとき（学年を書かずに届いたものばかりのとき）は、
        その行ごと出しません。「ぜんぶ」しか無い行は、押す意味がないためです。 */
     if(sgGgyo && sgG.querySelectorAll('[data-g]').length < 2) sgGgyo.hidden = true;
@@ -1761,6 +1859,9 @@
         if(sgKen && f.getAttribute('data-ken') !== sgKen) return false;
         /* 自治体（2026-09-22 依頼）。県を押したときだけ出る、もう1段の札です。 */
         if(sgShi && f.getAttribute('data-shi') !== sgShi) return false;
+        /* ☆あとで見る（2026-09-23）。端末の中だけの印なので、
+           ほかの人の画面では、この絞りこみは何も変えません。 */
+        if(sgHoshi && sgHoshiL.indexOf(f.id.replace(/^b-/, '')) < 0) return false;
         if(ji && f._ji.indexOf(ji) < 0) return false;
         return true;
       });
@@ -1790,6 +1891,28 @@
       }
     }
 
+    /* ☆の数が変わったら、ここに知らせが来ます（上の あとで見る から）。
+       1つも付いていないときは、行ごと出しません。押す意味がないためです。 */
+    window.HOSHI_KAWATTA = function(l){
+      sgHoshiL = l || [];
+      if(sgHkazu) sgHkazu.textContent = sgHoshiL.length;
+      if(sgHgyo) sgHgyo.hidden = !sgHoshiL.length;
+      if(!sgHoshiL.length && sgHoshi){         // 最後の1つを外したら、ぜんぶに戻す
+        sgHoshi = ''; sg_osu(sgH, '', 'data-h');
+      }
+      sg_utsusu();
+    };
+    /* ☆の帯は、上の「あとで見る」より **あとに** 作られます。
+       だから初回の知らせを取りこぼします。ここで1回、自分で読みます。 */
+    (function(){
+      var l = Store.get('stock', []);
+      HOSHI_KAWATTA(Object.prototype.toString.call(l) === '[object Array]' ? l : []);
+    })();
+    if(sgH) sgH.addEventListener('click', function(ev){
+      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
+      sgHoshi = b.getAttribute('data-h') || '';
+      sg_osu(sgH, sgHoshi, 'data-h'); sg_utsusu();
+    });
     sgN.addEventListener('click', function(ev){
       var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
       sgNai = b.getAttribute('data-n') || '';

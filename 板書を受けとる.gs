@@ -189,6 +189,9 @@ function doPost(e) {
     // 見られた数（2026-09-22）。いちばん軽いので、いちばん先に返します。
     if (d.kind === 'miru') return _miru(d);
 
+    // やってみた（2026-09-23 依頼）。押した1回を、その実践に足します。
+    if (d.kind === 'yatta') return _yatta(d);
+
     // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
     if (d.kind === 'komari') return _komari(d);
 
@@ -387,7 +390,43 @@ function _miru(d) {
   } finally {
     lock.releaseLock();
   }
-  return _kotae({ ok: true });
+  /* 「やってみた」の数も、いっしょに返します（2026-09-23）。
+     サイトは固定のページなので、数は開いたときに入れるしかありません。
+     ★ここで返すことで、**通信が2回にならずに済みます**。
+       どうせ1回投げているのだから、その返事に のせます。 */
+  return _kotae({ ok: true, yatta: _yatta_yomu() });
+}
+
+/* ══ 1の2の4. やってみた（2026-09-23 依頼）════════════════════
+   届いた実践に「うちでもやってみた」を返せるようにするものです。
+
+   ★残すのは **実践の slug と、その回数だけ**。
+     誰が押したかは、受けとりませんし、残しません。
+     同じ端末から2回押せないようにしているのは、サイト側（localStorage）
+     です。だから厳密な人数ではありません。**のべの回数**です。
+   ★1つの覚え書き（yatta）に、まとめて入れます。
+     1件30字ほどなので、300件ぶんまでは 9KB の上限に当たりません。       */
+
+function _yatta_yomu() {
+  try { return JSON.parse(P.getProperty('yatta') || '{}') || {}; }
+  catch (e) { return {}; }
+}
+
+function _yatta(d) {
+  var slug = String(d.v || '').trim();
+  if (!/^bansho-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _kotae({ ok: false });
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(5000); } catch (e) { return _kotae({ ok: false }); }
+  try {
+    var y = _yatta_yomu();
+    y[slug] = (y[slug] || 0) + 1;
+    var moji = JSON.stringify(y);
+    if (moji.length > 8500) return _kotae({ ok: false });   // 覚え書きの上限の手前
+    P.setProperty('yatta', moji);
+    return _kotae({ ok: true, n: y[slug] });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /* 管理画面へ返す。ここでいちど、古い日を捨てます（掃除の場所はここ1か所）。 */
