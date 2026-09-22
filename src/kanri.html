@@ -184,13 +184,29 @@
     <input type="hidden" name="nonce" id="kanri-memo-nonce" value="">
     <p class="kanri-kago">管理人だけのメモ</p>
     <h2 id="kanri-memo-h">この実践から、何を読み取ったか</h2>
-    <p class="kanri-memo-dai" id="kanri-memo-dai"></p>
-    <p class="kanri-memo-chu"><b>どこにも公開されません。</b>
-      公開ページにもGitHubにも出ません。送ってくださった先生にも見えません。<br>
-      例：「合意形成が、賛成多数ではなく歩み寄りで終わっている。ここが学級活動(1)の肝」</p>
-    <textarea class="okuru-i kanri-memo-t" id="kanri-memo-m" name="m"
-              rows="6" maxlength="800"></textarea>
-    <p class="kanri-memo-kazu" id="kanri-memo-kazu"></p>
+    <div class="kanri-memo-futatsu">
+      <!-- 左：その実践（読むだけ）。見ながら書けるように、ここに出します。
+           写真は公開ページの中にあるので、押されたときだけ取りに行きます
+           （1.7MBあるため、開くたびに読むと重くなります）。 -->
+      <div class="kanri-memo-mi">
+        <p class="kanri-memo-dai" id="kanri-memo-dai"></p>
+        <p class="kanri-memo-meta" id="kanri-memo-meta"></p>
+        <p class="kanri-memo-oshi" id="kanri-memo-oshi" hidden></p>
+        <p class="kanri-memo-hon" id="kanri-memo-hon"></p>
+        <button type="button" class="bansho-b kanri-memo-e-b" id="kanri-memo-e-b">写真を見る</button>
+        <p class="kanri-memo-e-chu" id="kanri-memo-e-chu"></p>
+        <div class="kanri-memo-e" id="kanri-memo-e"></div>
+      </div>
+      <!-- 右：メモ -->
+      <div class="kanri-memo-kaku">
+        <p class="kanri-memo-chu"><b>どこにも公開されません。</b>
+          公開ページにもGitHubにも出ません。送ってくださった先生にも見えません。<br>
+          例：「合意形成が、賛成多数ではなく歩み寄りで終わっている。ここが学級活動(1)の肝」</p>
+        <textarea class="okuru-i kanri-memo-t" id="kanri-memo-m" name="m"
+                  rows="6" maxlength="800"></textarea>
+        <p class="kanri-memo-kazu" id="kanri-memo-kazu"></p>
+      </div>
+    </div>
     <p class="kanri-kesu-te">
       <button type="button" class="bansho-b" id="kanri-memo-yameru">やめる</button>
       <button type="submit" class="jibun-naosu" id="kanri-memo-kakutei">保存する</button>
@@ -331,6 +347,9 @@
   var memoKakutei = document.getElementById('kanri-memo-kakutei');
   var memoShirase = document.getElementById('kanri-memo-shirase');
   var memoKazu = document.getElementById('kanri-memo-kazu');
+  var memoE = document.getElementById('kanri-memo-e');
+  var memoEB = document.getElementById('kanri-memo-e-b');
+  var memoEChu = document.getElementById('kanri-memo-e-chu');
   var memoMatte = '', memoYomuMatte = '', memoIma = null, memoZen = {};
   var miruF = document.getElementById('kanri-miru-f');
   var miruB = document.getElementById('kanri-miru-b');
@@ -552,11 +571,69 @@
   function memo_kazu(){
     memoKazu.textContent = memoM.value.length + ' / 800字';
   }
+  /* その実践を、メモの左に出します（見ながら書けるように）。
+     中身は カードが持っている data-naosu の JSON から取ります。
+     ★写真だけは公開ページの中にあるので、押されたときだけ取りに行きます
+       （bansho.html は1.7MBあり、開くたびに読むと重くなるため）。
+       読んだものは なおす と同じ banshoP で覚えるので、2回は読みません。 */
+  function memo_mi(card){
+    var dai = document.getElementById('kanri-memo-dai');
+    var meta = document.getElementById('kanri-memo-meta');
+    var oshi = document.getElementById('kanri-memo-oshi');
+    var hon = document.getElementById('kanri-memo-hon');
+    var d = {};
+    try{ d = JSON.parse(card.querySelector('[data-naosu]').getAttribute('data-naosu')) || {}; }
+    catch(e){ d = {}; }
+    dai.textContent = d.t || '';
+    meta.textContent = [d.s, d.g || '学年なし', card.getAttribute('data-date'),
+                        d.by ? '提供：' + d.by : ''].filter(Boolean).join('・');
+    oshi.textContent = d.o || '';
+    oshi.hidden = !d.o;
+    hon.textContent = d.m || '（本文はありません）';
+    memoE.innerHTML = ''; memoEChu.textContent = '';
+    memoEB.hidden = false; memoEB.disabled = false;
+  }
+  function memo_e_yomu(){
+    var v = memoIma && memoIma.getAttribute('data-v');
+    if(!v) return;
+    memoEB.disabled = true;
+    memoEChu.textContent = '写真を読んでいます…';
+    if(!banshoP){
+      banshoP = fetch('bansho.html', { credentials: 'omit' })
+        .then(function(r){ return r.text(); });
+    }
+    banshoP.then(function(html){
+      if(!memoIma || memoIma.getAttribute('data-v') !== v) return;   // 別のを開いていたら捨てる
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var fuda = doc.getElementById('b-' + v);
+      var e = fuda ? [].slice.call(fuda.querySelectorAll('.bfuda-mado .shot img')) : [];
+      if(!e.length){
+        memoEChu.textContent = 'この実践に写真はありません。';
+        memoEB.hidden = true;
+        return;
+      }
+      memoEChu.textContent = '写真が' + e.length + '枚あります。';
+      memoEB.hidden = true;
+      e.forEach(function(im){
+        var x = document.createElement('img');
+        x.src = im.getAttribute('src');
+        x.alt = '';
+        memoE.appendChild(x);
+      });
+    })['catch'](function(){
+      banshoP = null;
+      memoEB.disabled = false;
+      memoEChu.textContent = '写真を読めませんでした（公開ページが開けません）。'
+                           + 'メモは、このまま書けます。';
+    });
+  }
+  memoEB.addEventListener('click', memo_e_yomu);
+
   function memo_hiraku(b){
     var k = key_yomu();
     if(!k){ naka.hidden = true; lock.hidden = false; shirase.textContent = 'もう1度、確認が必要です。'; return; }
     memoIma = b.closest('.kanri-card');
-    document.getElementById('kanri-memo-dai').textContent = b.getAttribute('data-title') || '';
+    memo_mi(memoIma);
     memoM.value = memoZen[memoIma.getAttribute('data-v')] || '';
     memo_kazu();
     memoShirase.textContent = ''; memoKakutei.disabled = false;

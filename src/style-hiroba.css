@@ -2833,13 +2833,33 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .kanri-memo-mado[hidden]{display:none}
 .kanri-memo-naka{
-  width:min(600px,100%);margin:auto;padding:clamp(20px,5vw,34px);background:var(--bg);
+  width:min(960px,100%);margin:auto;padding:clamp(20px,5vw,34px);background:var(--bg);
   border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ki);
 }
 .kanri-memo-naka h2{margin:0 0 12px;font:900 clamp(19px,3.4vw,25px)/1.4 var(--f-maru)}
-.kanri-memo-dai{margin:0 0 12px;padding:12px;background:var(--men-ki);border-radius:10px;font-weight:700}
+/* 左＝その実践（読むだけ）／右＝メモ。見ながら書けるように並べます。
+   せまい画面では たてに積みます（実践が先。読んでから書くため）。 */
+.kanri-memo-futatsu{display:grid;gap:18px}
+@media(min-width:840px){.kanri-memo-futatsu{grid-template-columns:1fr 1fr;gap:22px}}
+.kanri-memo-mi{
+  min-width:0;padding:14px 16px;background:var(--men-ki);border-radius:14px;
+  max-height:58vh;overflow:auto;-webkit-overflow-scrolling:touch;
+}
+.kanri-memo-dai{margin:0 0 6px;font:700 clamp(15px,2.2vw,18px)/1.5 var(--f-maru)}
+.kanri-memo-meta{margin:0 0 10px;font-size:12.5px;line-height:1.8;color:var(--mute)}
+.kanri-memo-oshi{
+  margin:0 0 10px;padding:8px 12px;background:var(--bg);border-radius:10px;
+  font-weight:700;font-size:14px;line-height:1.7;
+}
+.kanri-memo-oshi[hidden]{display:none}
+.kanri-memo-hon{margin:0 0 12px;font-size:13.5px;line-height:1.95;white-space:pre-wrap;overflow-wrap:anywhere}
+.kanri-memo-e-b{margin:0}
+.kanri-memo-e-chu{margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--mute)}
+.kanri-memo-e{display:grid;gap:10px;margin-top:10px}
+.kanri-memo-e img{width:100%;height:auto;border:2px solid var(--ink);border-radius:10px;display:block}
+.kanri-memo-kaku{min-width:0;display:flex;flex-direction:column}
 .kanri-memo-chu{margin:0 0 12px;font-size:13px;line-height:1.85;color:var(--mute)}
-.kanri-memo-t{width:100%;min-height:150px;resize:vertical;line-height:1.85}
+.kanri-memo-t{width:100%;flex:1 1 auto;min-height:190px;resize:vertical;line-height:1.85}
 .kanri-memo-kazu{margin:6px 0 0;text-align:right;font-size:12px;color:var(--mute)}
 
 /* ── 何が集まって、何が空いているか（2026-09-22）────────────
