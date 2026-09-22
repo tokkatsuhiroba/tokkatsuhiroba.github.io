@@ -26,9 +26,17 @@ permissions:
   pages: write
   id-token: write
 
+# ★ cancel-in-progress を false にしています（2026-09-22 夜）。
+#   1件 届くと、受け口は「写真」「写真」「.md」と **続けて3回** コミットします。
+#   true だと、この3つが押し合って **.md を入れた回が打ち切られました**
+#   （実測：23:53:14 打ち切り／:15 成功／:16 打ち切り。最後の .md の回が消え、
+#     送っていただいた実践がサイトに出ないままでした）。
+#   false にすると3回ぶん順番に走ります。むだに見えますが、**最後の回が
+#   いちばん新しい状態を組む**ので、取りこぼしません。
+#   1回1分ほど・1日に何件も来る場ではないので、これで困りません。
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
