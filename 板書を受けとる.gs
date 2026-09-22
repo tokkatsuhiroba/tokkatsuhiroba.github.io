@@ -146,6 +146,13 @@ function _webapp() {
 
 function doPost(e) {
   try {
+    /* 管理画面の入り口。管理キーはURLに入れず、POSTで受けます。
+       返事は隠し iframe から postMessage で親の画面へ戻します。
+       ここを通っても編集権限を渡すわけではありません。
+       実際の更新は _naosu がもう1度 KANRI_KEY を確かめます。 */
+    if (e.parameter && e.parameter.kind === 'kanri-check') {
+      return _kanri_check(e.parameter);
+    }
     var d = JSON.parse(e.postData.contents);
 
     // 困りごと（2026-09-21 夜）。字だけなので、Driveには残しません。
@@ -656,7 +663,8 @@ function _naosu(d) {
   var key = String(d.key || '').trim();
   var moto = _md_yomu(slug);
   if (!moto.hon) return _kotae({ ok: false, riyu: 'もう残っていません' });
-  if (!(key && key === _kanri_key())) {
+  var kanri = !!(key && key === _kanri_key());
+  if (!kanri) {
     if (!moto.nushi)  return _kotae({ ok: false, riyu: 'この1件には合いことばが付いていません' });
     if (!key || _hash(key) !== moto.nushi) {
       return _kotae({ ok: false, riyu: '合いことばが ちがいます' });
@@ -696,6 +704,9 @@ function _naosu(d) {
   var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '',
             n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,
             nushi: moto.nushi };
+  /* 表に出ている提供者名は、管理画面からなおすときも引きつぐ。
+     管理人ではない人がd.byを作っても、ここには入りません。 */
+  if (kanri && d.kanri) n.by_hyoji = _arau(d.by).slice(0, 100);
   var md = _md(slug, n);
   md = _hikitsugu(md, moto.hon, ['date', 'todoita']);
   if (!uri.length && moto.bansho) md = md.replace(/\n---\n/, '\nbansho: ' + slug + '\n---\n');
@@ -704,6 +715,18 @@ function _naosu(d) {
           '実践を1件 なおす（' + slug + '）');
   _shiraseru_naoshita(slug, d, n);
   return _kotae({ ok: true });
+}
+
+/* 管理画面の開錠結果。返すのは「合った／ちがう」だけで、
+   管理キーそのものやハッシュは画面へ戻しません。 */
+function _kanri_check(d) {
+  var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
+  var ok = !!(String(d.key || '').trim() === _kanri_key());
+  var js = '<!doctype html><meta charset="utf-8"><script>'
+    + 'parent.postMessage({source:"tokkatsu-kanri",ok:' + (ok ? 'true' : 'false')
+    + ',nonce:' + JSON.stringify(nonce) + '},"*");<\/script>';
+  return HtmlService.createHtmlOutput(js)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 /* もとの .md を読んで、引きつぐものを取り出します */
@@ -906,7 +929,8 @@ function _md(slug, n) {
   if (n.nushi)      gyo.push('nushi: ' + n.nushi);
   if (n.uri.length) gyo.push('bansho: ' + slug);
   if (n.pdf)        gyo.push('shiryo: 送ってもらった資料|' + slug);
-  gyo.push('by: ' + _by(n));
+  gyo.push('by: ' + (n.by_hyoji !== undefined
+                     ? (n.by_hyoji || '送ってくださった先生') : _by(n)));
   gyo.push('---');
   gyo.push('');
   gyo.push(m || (n.uri.length ? '送ってもらった板書です。' : '送ってもらった資料です。'));

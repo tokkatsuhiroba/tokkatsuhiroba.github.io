@@ -20,7 +20,7 @@ TOKKATSU広場 ビルド
    出来上がりのHTML（_復元の手がかり/）と作業記録から組み直したものです。
 """
 
-import io, os, re, sys, glob, datetime, calendar
+import io, os, re, sys, glob, datetime, calendar, json
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC  = os.path.join(ROOT, 'src')
@@ -61,6 +61,8 @@ SHIRYO_ZEN_MAX = 16.0    # 1ページに入る資料の合計
 #   そのとき慌てないよう、build の最後に「いま何MB・あと何枚」を出します。
 BANSHO_NOKORI_KB = 120.0  # 残り枚数を見つもるときの、板書1枚の目安（実測して直してよい）
 SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
+OKURU_URL = ('https://script.google.com/macros/s/'
+             'AKfycbwb0xkl5HpPDX2WqSov42N8L2FkAVD6ZYx5sbbs_7r332mmsRYY8_VYDyfD29yqKHCH/exec')
 
 # ══ ページの分け方（2026-09-21に決めなおし）════════════════
 #   もとは「index.html 1つだけ。外部ファイルを作らない」でした。
@@ -2747,6 +2749,45 @@ def build_bansho(jissen):
             + '\n'.join(fuda) + '\n    </div>')
 
 
+def build_kanri_list(jissen):
+    """管理画面の一覧。ここに入るのは、すでに公開ページに出ている字だけ。
+       編集の権限はこのHTMLではなく、Apps ScriptのKANRI_KEYが決める。"""
+    out = []
+    for a in bansho_aru(jissen):
+        d = {
+            'v': a['slug'], 't': a['title'], 'o': a.get('oshi') or '',
+            'm': a['summary'].strip(), 'g': a['grade'], 's': a['scene'],
+            'by': a['by'],
+        }
+        sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by']))
+        meta = '・'.join(x for x in (a['scene'], a['grade'], ja_md(a['d']), '提供：' + a['by']) if x)
+        out.append(
+            '      <article class="kanri-card" data-sagasu="%s">\n'
+            '        <div><h3>%s</h3><p>%s</p></div>\n'
+            '        <button type="button" class="jibun-naosu" data-naosu="%s">'
+            'なおす</button>\n'
+            '      </article>'
+            % (esc_html(sagasu), esc_html(a['title']), esc_html(meta),
+               esc_html(json.dumps(d, ensure_ascii=False, separators=(',', ':')))))
+    return '\n'.join(out) if out else '      <p class="karappo">届いた実践はまだありません。</p>'
+
+
+def build_kanri_page(jissen):
+    """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
+    body = rd('src/kanri.html')
+    body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
+    body = body.replace('{{OKURU_URL}}', OKURU_URL)
+    if re.findall(r'<!--BUILD:[^>]*-->|\{\{[A-Z_]+\}\}', body):
+        raise Tomeru('管理画面に差しこまれていない目じるしが残っています')
+    head = rd('src/head-hiroba.html')
+    head = head.replace('<title>TOKKATSU広場</title>', '<title>実践の管理｜TOKKATSU広場</title>')
+    head = re.sub(r'<meta property="og:[^>]+>\n?', '', head)
+    return '\n'.join([
+        '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>', head,
+        '<style>', rd(CSS_H), '</style>', '</head>', '<body>', body, '</body>', '</html>',
+    ])
+
+
 # ══ 自分が送ったもの（2026-09-22 夜 依頼）════════════════════
 #   ログインが無いので、こちらは「誰が誰か」を1つも持っていません。
 #   だから **送った人のブラウザに聞きます**。
@@ -3554,6 +3595,9 @@ def build_shin():
         ]) + '\n'
         ngword_check(html, '公開用/' + f)
         pages[f] = html
+    kanri = build_kanri_page(jissen)
+    ngword_check(kanri, '公開用/kanri.html')
+    pages['kanri.html'] = kanri
     return pages, hyo, kiji, jissen, komari, tobashita_k
 
 
@@ -3719,7 +3763,7 @@ def main_shin(check_only):
         print('')
         return 1
     print('')
-    print('  新版（ホーム＋%dページ）' % (len(PAGES) - 1))
+    print('  新版（ホーム＋%dページ＋管理画面）' % (len(PAGES) - 1))
     print('  広場　　　　… 部品%d種・図形%d個。ページごとに、呼んだ絵だけを埋めこみ'
           % (len(hyo), sum(h[3] for h in hyo)))
     print('  4つの内容　… %s'
@@ -3755,6 +3799,8 @@ def main_shin(check_only):
         print('　　%-14s %-8s %s%s'
               % (f, na, omo, ('　' + '・'.join(SETSU_NA[s] for s in setsu)) if setsu else
                  '　8つの札'))
+    print('　　%-14s %-8s %.0fKB　受け口で管理キーを確認'
+          % ('kanri.html', '実践の管理', len(pages['kanri.html'].encode('utf-8')) / 1024.0))
     # ── 板書の残り（2026-09-21）────────────────────────
     #   溜めると決めたので、**止まる前に教える**ほうを作ります。
     #   検問は16MBで止めますが、止まってから気づくのでは遅い。
@@ -3782,7 +3828,7 @@ def main_shin(check_only):
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
     print('  公開用/ は GitHubに上げません（.gitignore）。上げるのは src/ と build.py。')
     print('  push すると Actions が同じように組み立てて、%d枚とも Pages へ出します。'
-          % len(PAGES))
+          % len(pages))
     print('')
     return 0
 

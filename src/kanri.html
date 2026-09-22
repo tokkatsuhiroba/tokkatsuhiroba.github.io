@@ -1,0 +1,134 @@
+<header class="kanri-head" id="ue">
+  <div class="uchi">
+    <p class="ko-modoru"><a href="index.html">TOKKATSU広場</a></p>
+    <p class="kanri-kago" aria-hidden="true">管理</p>
+    <h1 class="kanri-h">実践の管理</h1>
+    <p class="kanri-yo">届いた実践をさがして、字や写真・PDFをなおす画面です。</p>
+  </div>
+</header>
+
+<main class="kanri-main">
+  <section class="kanri-lock" id="kanri-lock" aria-labelledby="kanri-lock-h">
+    <h2 id="kanri-lock-h">管理人の確認</h2>
+    <p>受け口から届いた「管理人の合いことば」を入れてください。<br>
+      合いことばはこの端末のタブの中にだけ残し、URLには入れません。</p>
+    <form class="kanri-login" id="kanri-login" method="post" target="kanri-kakunin">
+      <input type="hidden" name="kind" value="kanri-check">
+      <input type="hidden" name="nonce" id="kanri-nonce" value="">
+      <label for="kanri-key">管理人の合いことば</label>
+      <div class="kanri-login-gyo">
+        <input class="okuru-i" type="password" id="kanri-key" name="key"
+               autocomplete="current-password" required>
+        <button class="btn" type="submit" id="kanri-hairu">入る<span class="btn-ya">→</span></button>
+      </div>
+      <p class="okuru-shirase" id="kanri-shirase" role="status" aria-live="polite"></p>
+    </form>
+    <iframe class="kanri-kakunin" name="kanri-kakunin" id="kanri-kakunin"
+            title="管理人の確認結果"></iframe>
+  </section>
+
+  <section class="kanri-naka" id="kanri-naka" hidden aria-labelledby="kanri-naka-h">
+    <div class="kanri-ue">
+      <div>
+        <p class="kanri-kago">管理人として開いています</p>
+        <h2 id="kanri-naka-h">届いた実践</h2>
+      </div>
+      <button class="bansho-b" type="button" id="kanri-deru">管理画面から出る</button>
+    </div>
+    <label class="sagasu-l" for="kanri-sagasu">題・内容・学年からさがす</label>
+    <input class="sagasu-i kanri-sagasu" type="search" id="kanri-sagasu"
+           autocomplete="off" placeholder="例：学級会、5年、運動会">
+    <p class="kanri-kazu" id="kanri-kazu" aria-live="polite"></p>
+    <div class="kanri-list" id="kanri-list">
+      <!--BUILD:KANRI_LIST-->
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var OKURU_URL = '{{OKURU_URL}}';
+  var KEY_NA = 'tokkatsu-kanri-key';
+  var NAOSHI_NA = 'tokkatsu-naoshi';
+  var lock = document.getElementById('kanri-lock');
+  var naka = document.getElementById('kanri-naka');
+  var form = document.getElementById('kanri-login');
+  var keyIn = document.getElementById('kanri-key');
+  var nonceIn = document.getElementById('kanri-nonce');
+  var shirase = document.getElementById('kanri-shirase');
+  var hairu = document.getElementById('kanri-hairu');
+  var iframe = document.getElementById('kanri-kakunin');
+  var sagasu = document.getElementById('kanri-sagasu');
+  var kazu = document.getElementById('kanri-kazu');
+  var cards = [].slice.call(document.querySelectorAll('.kanri-card'));
+  var matte = '';
+
+  form.action = OKURU_URL;
+
+  function nonce(){
+    var b = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(b);
+    return [].map.call(b, function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
+  }
+  function key_yomu(){ try{ return sessionStorage.getItem(KEY_NA) || ''; }catch(e){ return ''; } }
+  function key_shimau(k){ try{ sessionStorage.setItem(KEY_NA, k); }catch(e){} }
+  function key_kesu(){
+    try{ sessionStorage.removeItem(KEY_NA); sessionStorage.removeItem(NAOSHI_NA); }catch(e){}
+  }
+  function hiraku(k){
+    key_shimau(k); keyIn.value = '';
+    lock.hidden = true; naka.hidden = false;
+    sagasu.value = ''; shiboru();
+    sagasu.focus();
+  }
+  function kakunin(k){
+    if(!k){ shirase.textContent = '管理人の合いことばを入れてください。'; return; }
+    matte = nonce(); nonceIn.value = matte; keyIn.value = k;
+    hairu.disabled = true; shirase.textContent = '確かめています…';
+    form.submit();
+  }
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault(); kakunin(keyIn.value.trim());
+  });
+  window.addEventListener('message', function(ev){
+    if(ev.source !== iframe.contentWindow || !ev.data || ev.data.source !== 'tokkatsu-kanri'
+       || ev.data.nonce !== matte) return;
+    hairu.disabled = false;
+    if(ev.data.ok){ shirase.textContent = ''; hiraku(keyIn.value.trim()); }
+    else { key_kesu(); shirase.textContent = '合いことばがちがいます。'; keyIn.select(); }
+  });
+
+  function shiboru(){
+    var q = sagasu.value.trim().toLowerCase(), n = 0;
+    cards.forEach(function(c){
+      var deru = !q || (c.getAttribute('data-sagasu') || '').toLowerCase().indexOf(q) >= 0;
+      c.hidden = !deru; if(deru) n++;
+    });
+    kazu.textContent = n + ' / ' + cards.length + '件';
+  }
+  sagasu.addEventListener('input', shiboru);
+  document.getElementById('kanri-deru').addEventListener('click', function(){
+    key_kesu(); naka.hidden = true; lock.hidden = false; shirase.textContent = '';
+    keyIn.focus();
+  });
+  document.getElementById('kanri-list').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-naosu]');
+    if(!b) return;
+    var k = key_yomu();
+    if(!k){ naka.hidden = true; lock.hidden = false; shirase.textContent = 'もう1度、確認が必要です。'; return; }
+    try{
+      var d = JSON.parse(b.getAttribute('data-naosu'));
+      d.key = k; d.kanri = true;
+      sessionStorage.setItem(NAOSHI_NA, JSON.stringify(d));
+      location.href = 'index.html#okuru';
+    }catch(e){
+      kazu.textContent = 'この1件を開けませんでした。';
+    }
+  });
+
+  var nokori = key_yomu();
+  if(nokori) kakunin(nokori);
+  else keyIn.focus();
+})();
+</script>

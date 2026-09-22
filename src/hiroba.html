@@ -781,7 +781,7 @@
       <a class="btn btn--yoru" href="#manabu">学習指導要領・資料を見る<span class="btn-ya">→</span></a>
     </div>
 
-    <p class="kanri">管理者：伊藤 優</p>
+    <p class="kanri">管理者：伊藤 優<span aria-hidden="true">　／　</span><a href="kanri.html">管理画面</a></p>
   </div>
 </footer>
 
@@ -1138,7 +1138,7 @@
         botan.innerHTML = 'なおす<span class="btn-ya">→</span>';
         var shirase2 = document.createElement('p');
         shirase2.className = 'naoshi-obi';
-        shirase2.innerHTML = '<b>なおしています</b><span></span>'
+        shirase2.innerHTML = '<b>' + (n.kanri ? '管理画面からなおしています' : 'なおしています') + '</b><span></span>'
                            + '<button type="button" class="bansho-b">やめる</button>';
         shirase2.querySelector('span').textContent = n.t || n.v;
         shirase2.querySelector('button').addEventListener('click', naoshi_yameru);
@@ -1529,7 +1529,7 @@
           ? [tIn, '議題名・題材名・行事名・タイトルを書いてください。あとで探すときの手がかりになります。']
           : (!mIn2.value.trim()
              ? [mIn2, '実践内容を書いてください。ひとことでも大丈夫です。']
-             : (!naIn.value.trim()
+             : (!naIn.value.trim() && !(naoshi && naoshi.kanri)
                 ? [naIn, 'お名前を書いてください。出すかどうかは、下のチェックで選べます。']
                 : null));
         if(tarinai){
@@ -1584,6 +1584,8 @@
               kind: naoshi ? 'naosu' : 'bansho', e: e, p: p,
               v:   naoshi ? naoshi.v : '',
               key: naoshi ? naoshi.key : '',
+              kanri: naoshi && naoshi.kanri ? 1 : 0,
+              by: naoshi && naoshi.kanri ? (naoshi.by || '') : '',
               nushi: nushi,                 /* 合いことばのハッシュ（本体は送らない） */
               n:  naiyo.yomu(),                                /* 6つの内容（1つだけ） */
               t:  document.getElementById('okuru-t').value.slice(0, 60),
