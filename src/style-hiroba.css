@@ -109,20 +109,16 @@ img,svg{max-width:100%}
    絵は下にそろえ、その上に空をのばす。
    こうしないと、1行が木や校舎に重なって読めない。 */
 .hero{
-  position:relative;background:var(--sora);overflow:hidden;
-  min-height:clamp(460px,78svh,820px);
-  display:flex;flex-direction:column;justify-content:flex-end;
-  /* 言葉のぶんの空は必ず確保する。画面が低いと絵が上がってきて、
-     ロゴと1行が校舎に重なるため（2026-09-21 実測） */
-  padding-top:clamp(190px,30vh,300px);
+  position:relative;background:#B4E8F4;overflow:hidden;
+  display:flex;flex-direction:column;
   border-bottom:2px solid var(--ink);
 }
 .hero-e{display:block;width:100%;height:auto}
-.hero-e--semai{display:none}          /* スマホだけ、絵を寄って切り出す */
+.hero-e--semai{display:none}
 .hero-e svg{display:block;width:100%;height:auto}
 .hero-koe{
-  position:absolute;z-index:2;inset-inline-start:0;top:clamp(20px,4vh,56px);width:100%;
-  text-align:center;pointer-events:none;padding-inline:var(--pad);
+  position:relative;order:-1;z-index:2;width:100%;max-width:1280px;margin-inline:auto;
+  text-align:center;padding:18px var(--pad) 10px;
 }
 .hero-koe .btn{pointer-events:auto;margin-top:clamp(18px,3vh,30px)}
 .hero-logo{
@@ -2161,10 +2157,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      ・振り幅は片側8%。拡大1.2倍のあそび（片側10%）より内がわです。
    ★scale と translate は「単独の指定」で書きます。transform でまとめると
      2つの動きがぶつかって、片方が消えます。 */
-.hero-e svg{transform-origin:50% 100%;scale:1.2}
+.hero-e svg{transform-origin:50% 100%;scale:1}
 
 @supports (animation-timeline:view()){
-  .hero-e svg{
+  .hero-e--animated svg{
     animation:hero-nagare linear both;
     /* ★view() ではなく scroll()。ヒーローはページのいちばん上にあるので、
        view() だと読み込んだ時点でもう8割すすんでいて、流れが見えません
@@ -3021,6 +3017,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 
 @media print{
   .kami-kakusu{display:none!important}
+  /* 親は隠しません（中に刷るものが入っているため）。**余白だけ**落とします。
+     ここが残ると、中身が241mmでも紙が279mmになり、まっ白な2枚めが出ます。 */
+  .kami-oya{
+    padding:0!important;margin:0!important;
+    background:#fff!important;border:0!important;box-shadow:none!important;
+    max-width:none!important;width:auto!important;min-height:0!important;
+  }
+  .kami-oya::before,.kami-oya::after{display:none!important}
   /* 押せるものは、紙には要りません */
   .kami-taisho .bansho-b,
   .kami-taisho .shot-b,
@@ -3043,9 +3047,17 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      紙は 297mm。ふち14mm×2・字の分・足もとを引くと、写真に使えるのは
      160mmほどです。ここを超えたら、幅ではなく高さで抑えます。
      ★2枚以上あるときは、割れずに次の紙へ送ります（break-inside）。 */
+  /* ★写真の高さの決め方（2026-09-23 実測）
+       紙で使えるのは 273mm（A4 297 − ふち12×2）。
+       字のぶんが 141mm（題・推し・本文・資料の見出し・提供・足もと）。
+       のこりは132mm。ただしブラウザの「ヘッダとフッタをプリント」が
+       入っていると15mmほど食べるので、**115mm** を天井にします。
+     ★たて長の資料は、高さで止めるので幅は細くなります。
+       幅いっぱいにすると、A4の紙をそのまま貼ることになり、
+       高さが263mmになって字が1文字も入りません。 */
   .kami-taisho .bfuda-mado img,
   .kami-taisho .shiryo-mado img{
-    max-height:100mm!important;width:auto!important;max-width:100%!important;
+    max-height:115mm!important;width:auto!important;max-width:100%!important;
     margin-inline:auto!important;
   }
   /* 写真が増えたら、1枚あたりの高さを下げます。
@@ -3281,4 +3293,39 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .kanri-naosu-naka>*{grid-column:1}
   .kanri-naosu-te{display:grid;grid-template-columns:1fr 1fr}
   .kanri-naosu-te .bansho-b,.kanri-naosu-te .btn{width:100%;justify-content:center}
+}
+
+/* 採用キャラクター：項目ごとの道具と表情を読み取れる大きさにする。 */
+.igi-intro{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:center}
+.igi-intro .igi-bun{margin:0}
+.igi-friends{max-width:390px;width:100%;justify-self:center}
+.igi-friends svg,.foot-friends svg{display:block;width:100%;height:auto}
+.igi-l{max-width:960px;align-items:stretch;margin-top:28px}
+.igi-h{min-width:0;padding:0;overflow:hidden}
+.igi-a{height:100%;padding:16px 10px 14px}
+.igi-h .e svg{display:block;width:100%;max-width:180px;height:146px;margin-inline:auto}
+.igi-h b{font-size:clamp(14px,1.3vw,17px)}
+.igi-h .t{font-size:13px;min-height:3.1em}
+.igi-h.h--gakkatsu{background:#EAF1E0}
+.igi-h.h--gyoji{background:#F8E5D8}
+.igi-h.h--jidokai{background:#E4EFF3}
+.igi-h.h--club{background:#FBF0C5}
+.hfuda-e{height:106px}
+.hfuda-e svg{max-width:100%;max-height:none}
+.hitori .e svg{max-width:100%;height:110px}
+.naiyo-e > svg{aspect-ratio:4 / 3;background:#F8DF9D}
+.foot-friends{width:min(100%,360px);margin:0 auto 24px;padding:16px 12px;background:#FCFBF7;border-radius:20px}
+@media(max-width:719px){
+  .hero-koe{padding-block:16px 8px}
+  .hero-logo{font-size:clamp(28px,7.3vw,46px);letter-spacing:.04em}
+  .hero-copy{font-size:16px;letter-spacing:.04em;margin-top:10px}
+  .hero-botan{margin-block:18px 8px}
+  .hero .line-sumi{min-height:40px;max-width:100%;white-space:normal}
+  .igi-intro{grid-template-columns:1fr;gap:16px}
+  .igi-friends{max-width:310px}
+  .igi-a{padding:12px 8px}
+  .igi-h .e svg{height:120px}
+  .hfuda-e{height:90px}
+  .hfuda-e svg{max-height:none}
+  .hitori .e svg{height:100px}
 }
