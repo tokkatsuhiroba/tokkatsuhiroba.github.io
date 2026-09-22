@@ -3612,7 +3612,15 @@ def build_hyo_news(kiji):
                 '<span class="d">%s ・外部</span></a>'
                 % (a['url'], esc_html(a.get('home') or a['title']),
                    esc_html(a['source']), ja_md(a['d'])))
-    ue = ('    <div class="hyo">\n'
+    # いつまでのニュースが入っているか（2026-09-23 依頼）。
+    #   ★出すのは「いちばん新しい記事の日」です。**組んだ日ではありません。**
+    #     組んだ日を出すと、ほかの直しでビルドしただけで日が進み、
+    #     中身が2か月古くても「今日更新」と出てしまいます。
+    #   ★古いままなら、古いと分かるのが正しい出し方です。
+    atarashii = ('      <p class="news-hi">いちばん新しいニュースは '
+                 '<b>%s</b>。ぜんぶで %d件 あります。</p>\n'
+                 % (esc_html(ja_md(kiji[0]['d'])), len(kiji))) if kiji else ''
+    ue = (atarashii + '    <div class="hyo">\n'
           + '\n'.join(gyo(a) for a in kiji[:NEWS_H_N]) + '\n    </div>')
     nokori = kiji[NEWS_H_N:]
     naka = ('      <div class="hyo">\n'
