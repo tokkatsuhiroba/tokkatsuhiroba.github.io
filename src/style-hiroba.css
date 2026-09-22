@@ -1493,6 +1493,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    1枚に使える高さが増えるので、同じ場所のまま中身が倍ほど見えます。
    器は、こよみや一覧と同じ .yoko（スワイプでも ‹ › でも動きます）。 */
 .yoko-ban.gban{
+  /* 2段×2列＝1画面に4枚（2026-09-22 夜）。
+     6枚なので、列は3本。2列ぶん見えるので、送る先は1つ＝ぜんぶで2画面です。
+     ★段を決めるのは grid-template-rows だけ。器は もとから「列に流す」
+       作りなので、これを足すと 上→下→次の列 と並びます。 */
+  grid-template-rows:repeat(2,1fr);
   --yoko-w:calc((100% - clamp(14px,2vw,20px)) / 2);
   gap:clamp(14px,2vw,20px);
   /* 札のかげ（5px）と、浮いたとき（8px）のための逃げ場。
@@ -1520,20 +1525,27 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    中は inert なので、指も Tab も入りません（押すのは札ぜんたい）。 */
 .atama{
   position:relative;overflow:hidden;
-  max-height:clamp(300px,34vw,420px);
-  padding:clamp(14px,1.6vw,18px) clamp(13px,1.5vw,17px) 0;
+  /* 2段にしたぶん、1枚の窓は半分の高さです（2026-09-22 夜）。
+     実寸に戻したので、1行ぶんだけ高さを足してあります。 */
+  max-height:clamp(165px,19vw,225px);
+  padding:clamp(12px,1.4vw,16px) clamp(13px,1.5vw,17px) 0;
   background:var(--mi-ji,var(--bg));
   pointer-events:none;-webkit-user-select:none;user-select:none;
 }
-/* 窓の中だけ、まるごと少し小さくします（2026-09-22）。
-   「字が小さくなっていいから、ここの情報量を増やして」という話から。
+/* 窓の中の大きさ。1つの数（--mi-z）で決まります。
    中身は px で書かれているので、親の font-size では縮みません。
    だから入れ物ごと縮めます。先に幅を 1/倍率 に広げてから縮めるので、
    右が余ることも、はみ出すこともありません。
-   おまけ：縮めるぶん、中身は本物のページに近い幅で組まれます。
-   2つならびの札が1列に折れる、というのも起きにくくなりました。 */
+
+   2026-09-22 昼は .78 でした（「字が小さくなっていいから量を増やして」）。
+   同じ日の夜、1画面4枚にして窓が半分の高さになったところで
+   「概要が見にくい」となり、**実寸（1）に戻しました**。
+   ご本人に3つならべて選んでいただいた答えです：
+     字を大きく（本物のまま）／見出しだけの一覧にする／切れ方と枠を直す
+   → 1つめ。読める字を取り、映る行数が減るほうを受け入れています。
+   もう一度 量を増やしたくなったら、この数だけ下げれば戻せます。 */
 .atama-in{
-  --mi-z:.78;
+  --mi-z:1;
   width:calc(100% / var(--mi-z));
   transform:scale(var(--mi-z));transform-origin:top left;
 }
@@ -1553,7 +1565,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .atama .manabu-note{font-size:12.5px;line-height:1.75;margin-bottom:12px}
 /* 下ぶちをぼかして「まだ続く」と分かるようにする */
 .atama::after{
-  content:"";position:absolute;left:0;right:0;bottom:0;height:46px;
+  content:"";position:absolute;left:0;right:0;bottom:0;height:34px;
   background:linear-gradient(to bottom,transparent,var(--mi-ji,var(--bg)));
 }
 /* 窓の地も、行き先のページの色 */
@@ -1589,13 +1601,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 
 @media (max-width:719px){
   .yoko-hint{font-size:11.5px}
-  /* せまい画面では1枚ずつ。縮めかたも、ここだけ ゆるめます
-     （小さい画面で .78 まで縮めると、本文が10px を割ります） */
-  .yoko-ban.gban{--yoko-w:100%;gap:12px;padding:3px 8px 10px 3px}
+  /* せまい画面では1段・1枚ずつ */
+  .yoko-ban.gban{grid-template-rows:1fr;--yoko-w:100%;gap:12px;padding:3px 8px 10px 3px}
   #gaiyo .yoko{margin-top:18px}
   .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
-  .atama{max-height:280px;padding:13px 12px 0}
-  .atama-in{--mi-z:.86}
+  .atama{max-height:270px;padding:13px 12px 0}
   .gfuda-h{font-size:14px}
   .gfuda-yo{font-size:11px}
 }
