@@ -3017,7 +3017,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      ★「PDFに保存」を選べば、そのままPDFになります。
    ★隠し方は、押した札の**きょうだいだけ**に kami-kakusu を付ける形です
      （position で動かすと、位置を持つ親がいたときに崩れます）。 */
-@page{size:A4 portrait;margin:14mm}
+@page{size:A4 portrait;margin:12mm}
 
 @media print{
   .kami-kakusu{display:none!important}
@@ -3037,9 +3037,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
     max-height:none!important;overflow:visible!important;
     border:0!important;background:#fff!important;padding:0!important;
   }
+  /* ★写真の高さに天井を付けます（2026-09-23 直し）。
+     width:100% だけにしていたら、たて長の資料（学級だより・指導案）が
+     A4に入りきらず、**1枚の写真が2ページに割れました**（実測）。
+     紙は 297mm。ふち14mm×2・字の分・足もとを引くと、写真に使えるのは
+     160mmほどです。ここを超えたら、幅ではなく高さで抑えます。
+     ★2枚以上あるときは、割れずに次の紙へ送ります（break-inside）。 */
   .kami-taisho .bfuda-mado img,
-  .kami-taisho .shiryo-mado img{max-height:none!important;width:100%!important}
-  .kami-taisho figure{break-inside:avoid;page-break-inside:avoid}
+  .kami-taisho .shiryo-mado img{
+    max-height:100mm!important;width:auto!important;max-width:100%!important;
+    margin-inline:auto!important;
+  }
+  /* 写真が増えたら、1枚あたりの高さを下げます。
+     100mm のままだと、2枚で200mm。字を足すと1枚の紙に入りません。
+     ★それでも入らないときは、割らずに次の紙へ送ります（break-inside）。 */
+  .kami-taisho .bfuda-mado:has(.shot:nth-of-type(2)) img,
+  .kami-taisho .shiryo-mado:has(.shot:nth-of-type(2)) img{max-height:70mm!important}
+  .kami-taisho .bfuda-mado:has(.shot:nth-of-type(3)) img,
+  .kami-taisho .shiryo-mado:has(.shot:nth-of-type(3)) img{max-height:52mm!important}
+  .kami-taisho figure{break-inside:avoid;page-break-inside:avoid;text-align:center}
   /* ふたは、開いて出します（閉じたまま刷ると中身が消えます） */
   .kami-taisho details{display:block!important}
   .kami-taisho .shiryo-naka{display:block!important;height:auto!important;overflow:visible!important}
@@ -3049,11 +3065,21 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
     display:block;margin-top:8mm;padding-top:3mm;
     border-top:1px solid #999;font-size:9pt;color:#444;
   }
-  .kami-taisho .bfuda-h{font-size:16pt;line-height:1.5}
-  .kami-taisho .bfuda-lead,.kami-taisho .bfuda-oshi{font-size:11pt;line-height:1.8}
-  .kami-taisho .bfuda-me{font-size:9.5pt}
+  /* ★紙は 297mm。ふち12mm×2を引くと 273mm しか使えません。
+     画面のままの余白と字の大きさだと、写真1枚の実践でも 286mm になり
+     2枚に割れました（実測）。ここで詰めます。
+     ★字は 10.5pt を下回りません（読む人がいる紙のため）。
+       減らすのは **すきま** と **写真の高さ** です。 */
+  .kami-taisho > *{margin-block:0 4mm!important}
+  .kami-taisho .bfuda-h{font-size:15pt;line-height:1.45}
+  .kami-taisho .bfuda-lead,.kami-taisho .bfuda-oshi{font-size:10.5pt;line-height:1.7}
+  .kami-taisho .bfuda-me{font-size:9pt;line-height:1.5}
+  .kami-taisho .bfuda-by{font-size:9pt}
+  .kami-taisho .shiryo-midashi{font-size:10pt;margin:0 0 2mm!important}
+  .kami-taisho .shiryo-naka{padding:0!important;margin:0!important}
+  .kami-taisho .bfuda-mado,.kami-taisho .shiryo-mado{gap:4mm!important;margin:0!important}
+  .kami-taisho::after{margin-top:4mm!important;padding-top:2mm!important;font-size:8.5pt}
 }
-.bansho-b--kami i{font-style:normal;margin-inline-start:6px}
 
 /* ── ニュースは いつまで入っているか（2026-09-23）────────────
    出しているのは「いちばん新しい記事の日」です。組んだ日ではありません。 */
@@ -3064,7 +3090,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .news-hi b{color:var(--ink)}
 
-/* ── あとで見る（☆）と やってみた（2026-09-23）──────────────
+/* ── あとで見る（☆）と やってみたい（2026-09-23）──────────────
    ★どちらも「押したか／押していないか」を、色だけでなく
      **形（☆と★・✓）**でも出します。
    ★押せる大きさは、ほかの札と同じ 40px 以上を保ちます。 */
@@ -3072,19 +3098,19 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   background:var(--men-ki);border-color:var(--ink);color:var(--ink);
 }
 .bansho-b--hoshi i{font-style:normal;font-size:15px;line-height:1;margin-inline-start:6px}
-.bansho-b--yatta[aria-pressed="true"],.bansho-b--yatta:disabled{
+.bansho-b--yaritai[aria-pressed="true"],.bansho-b--yaritai:disabled{
   background:var(--accent);border-color:var(--accent);color:var(--bg);
   opacity:1;cursor:default;
 }
-.yatta-n{
+.yaritai-n{
   display:inline-block;margin-inline-start:7px;padding:0 7px;
   min-width:1.6em;border-radius:999px;
   background:var(--ink);color:var(--bg);
   font-size:11.5px;font-variant-numeric:tabular-nums;
 }
-.yatta-n:empty{display:none}
-.bansho-b--yatta[aria-pressed="true"] .yatta-n,
-.bansho-b--yatta:disabled .yatta-n{background:var(--bg);color:var(--accent)}
+.yaritai-n:empty{display:none}
+.bansho-b--yaritai[aria-pressed="true"] .yaritai-n,
+.bansho-b--yaritai:disabled .yaritai-n{background:var(--bg);color:var(--accent)}
 
 /* ── 管理人だけのメモ（2026-09-22）──────────────────────
    どこにも公開しません。だから見た目も、公開ページの言葉とは

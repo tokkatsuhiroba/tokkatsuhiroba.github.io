@@ -25,6 +25,18 @@ import io, os, re, sys, glob, datetime, calendar, json
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC  = os.path.join(ROOT, 'src')
 # 公開するのはこの1つだけ。2026-09-21 から、中身は新版（縦スクロール1枚）です。
+# ══ 「今日」は、日本の今日（2026-09-23）════════════════════
+#   GitHub Actions のサーバーは UTC で動きます。日本時間の朝9時までは
+#   向こうはまだ前の日で、`date.today()` が1日ずれます。
+#   こよみの「日が過ぎたか」も、sitemap の lastmod も、
+#   見るのは日本にいる人なので、日本の今日で数えます。
+JST = datetime.timezone(datetime.timedelta(hours=9))
+
+
+def kyou_jst():
+    return datetime.datetime.now(JST).date()
+
+
 OUT  = os.path.join(ROOT, '公開用', 'index.html')
 # 旧・本体（タブで切りかえる版）。残してあるだけで、公開はしません
 OUT_KYU = os.path.join(ROOT, '公開用', 'index-kyu.html')
@@ -1959,7 +1971,7 @@ def load_kenkyukai(kyou=None):
     m = re.search(r'var EVENTS = \[(.*?)\n  \];', src, re.S)
     if not m:
         raise Tomeru('src/app.js に EVENTS の配列が見あたりません（カレンダーが作れません）')
-    kyou = kyou or datetime.date.today()
+    kyou = kyou or kyou_jst()
     out = []
     for blk in re.findall(r'\{(.*?)\}', m.group(1), re.S):
         def hiku(k):
@@ -2031,7 +2043,7 @@ def _nittei_hi(s):
 def load_nittei(kyou=None):
     """src/nittei/*.md を読む。戻りは load_kenkyukai() と同じ形の並びと、
        飛ばした理由の並び。日が過ぎたものは、こよみに出しません。"""
-    kyou = kyou or datetime.date.today()
+    kyou = kyou or kyou_jst()
     out, tobashita = [], []
     for path in sorted(glob.glob(os.path.join(NITTEI, '*.md'))):
         f = os.path.basename(path)
@@ -2251,7 +2263,7 @@ def ken_moto(a):
 
 
 def build_kenkyukai(ken, kyara, buhin, kyou=None):
-    kyou = kyou or datetime.date.today()
+    kyou = kyou or kyou_jst()
 
     def gyo(a, i):
         ref, kao, win = ken_kao(a, kyara, buhin)
@@ -2915,9 +2927,9 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
 {oshi}        <p class="bfuda-lead">{lead}</p>
 {mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
 <button class="bansho-b bansho-b--hoshi" type="button" data-hoshi="{slug}" aria-pressed="false" hidden>あとで見る<i aria-hidden="true">☆</i></button>\
-<button class="bansho-b bansho-b--yatta" type="button" data-yatta="{slug}" hidden>やってみた<span class="yatta-n" data-yatta-n="{slug}"></span></button>\
-<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>紙に出す（A4）<i aria-hidden="true">🖶</i></button>\
-<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">この実践を画像で保存<i>↓</i></button></p>
+<button class="bansho-b bansho-b--yaritai" type="button" data-yaritai="{slug}" hidden>やってみたい<span class="yaritai-n" data-yaritai-n="{slug}"></span></button>\
+<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>印刷</button>\
+<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">画像保存<i>↓</i></button></p>
       </article>"""
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
@@ -4687,7 +4699,7 @@ def main_shin(check_only):
 
 def sitemap_kaku(pages):
     dasu = [f for f in pages if f not in DASANAI]
-    hi = datetime.date.today().isoformat()
+    hi = kyou_jst().isoformat()
     url = ''.join(
         '  <url><loc>%s%s</loc><lastmod>%s</lastmod></url>\n'
         % (SITE_URL, '' if f == HOME else f, hi)

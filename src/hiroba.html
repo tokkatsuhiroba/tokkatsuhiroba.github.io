@@ -959,11 +959,11 @@
                .replace(/\.html$/, '') || 'index';
     if (!/^(index|shiru|manabu|atsumaru|bansho|komari)$/.test(na)) return;
     var bun = JSON.stringify({ kind: 'miru', p: na });
-    /* 「やってみた」の札がある画面では、**返事を読みます**。
-       受け口が、見られた数を足したついでに、やってみた の数を返します。
+    /* 「やってみたい」の札がある画面では、**返事を読みます**。
+       受け口が、見られた数を足したついでに、やってみたい の数を返します。
        どうせ1回投げるので、通信を2回にはしません。
        札が無い画面では、返事は要らないので sendBeacon（軽い・速い）。 */
-    var iru = !!document.querySelector('[data-yatta]');
+    var iru = !!document.querySelector('[data-yaritai]');
     try {
       if (!iru && navigator.sendBeacon) {
         navigator.sendBeacon(OKURU_URL, new Blob([bun], {type:'text/plain;charset=UTF-8'}));
@@ -973,7 +973,7 @@
                          headers:{'Content-Type':'text/plain;charset=UTF-8'},
                          body: bun })
         .then(function(r){ return r.json(); })
-        .then(function(o){ if(o && o.yatta && window.YATTA_KAKU) YATTA_KAKU(o.yatta); })
+        .then(function(o){ if(o && o.yaritai && window.YARITAI_KAKU) YARITAI_KAKU(o.yaritai); })
         ['catch'](function(){});
     } catch (e) {}
   })();
@@ -1731,13 +1731,13 @@
     })();
   }
 
-  /* ══ あとで見る（☆）と やってみた（2026-09-23 依頼）════════
+  /* ══ あとで見る（☆）と やってみたい（2026-09-23 依頼）══════
      いままで、このサイトで何かできるのは **送る人だけ** でした。
      読む人は読むだけ。ここを両方あけます。
 
        ☆あとで見る … 端末の中（storage.js）にだけ残ります。
                       **外へは1バイトも出ません。**ほかの人にも見えません。
-       やってみた   … 押した1回を受け口に足します。残るのは
+       やってみたい … 押した1回を受け口に足します。残るのは
                       「実践の slug と、のべの回数」だけ。誰が押したかは
                       受けとりませんし、残しません。
 
@@ -1745,8 +1745,8 @@
        出しません。押しても何も起きない札を、画面に置かないため）。      */
   (function(){
     var hoshiB = [].slice.call(document.querySelectorAll('[data-hoshi]'));
-    var yattaB = [].slice.call(document.querySelectorAll('[data-yatta]'));
-    if(!hoshiB.length && !yattaB.length) return;
+    var yaritaiB = [].slice.call(document.querySelectorAll('[data-yaritai]'));
+    if(!hoshiB.length && !yaritaiB.length) return;
 
     function yomu(na){
       var a = Store.get(na, []);
@@ -1774,44 +1774,44 @@
     });
     hoshi_utsusu();
 
-    /* ── やってみた ─────────────────────────────
+    /* ── やってみたい ─────────────────────────────
        数は、開いたときに受け口から返ってきます（上のビーコンの返事）。
        返ってくるまでは、数を出しません（0と出すと、0件なのか
        まだ来ていないのか 分からないためです）。                       */
-    var oshita = yomu('yatta');
+    var oshita = yomu('yaritai');
     var kazu = null;
-    function yatta_utsusu(){
-      yattaB.forEach(function(b){
-        var v = b.getAttribute('data-yatta');
+    function yaritai_utsusu(){
+      yaritaiB.forEach(function(b){
+        var v = b.getAttribute('data-yaritai');
         var sumi = oshita.indexOf(v) >= 0;
         b.hidden = false;
         b.disabled = sumi;
         b.setAttribute('aria-pressed', sumi ? 'true' : 'false');
-        b.firstChild.nodeValue = sumi ? 'やってみた ✓' : 'やってみた';
-        var n = b.querySelector('[data-yatta-n]');
+        b.firstChild.nodeValue = sumi ? 'やってみたい ✓' : 'やってみたい';
+        var n = b.querySelector('[data-yaritai-n]');
         if(n && kazu) n.textContent = kazu[v] ? kazu[v] : '';
       });
     }
     /* 受け口の返事が来たら、数を入れます（上のビーコンから呼ばれます） */
-    window.YATTA_KAKU = function(y){ kazu = y || {}; yatta_utsusu(); };
+    window.YARITAI_KAKU = function(y){ kazu = y || {}; yaritai_utsusu(); };
 
-    yattaB.forEach(function(b){
+    yaritaiB.forEach(function(b){
       b.addEventListener('click', function(){
-        var v = b.getAttribute('data-yatta');
+        var v = b.getAttribute('data-yaritai');
         if(oshita.indexOf(v) >= 0) return;
-        oshita.push(v); Store.set('yatta', oshita);
+        oshita.push(v); Store.set('yaritai', oshita);
         if(kazu) kazu[v] = (kazu[v] || 0) + 1;     // 待たずに1つ増やす
-        yatta_utsusu();
+        yaritai_utsusu();
         if(!OKURU_URL) return;
         try{
           fetch(OKURU_URL, { method:'POST',
                              headers:{'Content-Type':'text/plain;charset=UTF-8'},
-                             body: JSON.stringify({ kind:'yatta', v:v }) })
+                             body: JSON.stringify({ kind:'yaritai', v:v }) })
             ['catch'](function(){});
         }catch(e){}
       });
     });
-    yatta_utsusu();
+    yaritai_utsusu();
   })();
 
   /* ══ ことばをさがす（2026-09-23 依頼）════════════════════
