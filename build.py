@@ -20,7 +20,7 @@ TOKKATSU広場 ビルド
    出来上がりのHTML（_復元の手がかり/）と作業記録から組み直したものです。
 """
 
-import io, os, re, sys, glob, math, datetime, calendar, json
+import io, os, re, sys, glob, math, datetime, calendar, json, urllib.parse
 import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -140,6 +140,8 @@ HOME = PAGES[0][0]
 #   名前を直に書かず、**「送る節が載っているページ」**として引きます
 #   （ページを分けなおしても、お題の行き先が迷子になりません）。
 OKURU_HTML = [f for f, _, _, ss in PAGES if 'okuru' in ss][0]
+# 研究会のページ（カレンダーに入れる ときの「出どころ」に付けます）
+ATSUMARU_HTML = [f for f, _, _, ss in PAGES if 'ima' in ss][0]
 
 # 親のページ（帯に出ないページだけ）。頭のところに「← 学ぶ」を出すために使います。
 #   帯で今どこにいるかが出ないぶん、ここで戻り道を見せます。
@@ -2899,8 +2901,48 @@ KEN_T = """      <details class="gyo ken{tsugi}" id="ken-{ban}">
         <span class="pm" aria-hidden="true"></span>
         </summary>
         <div class="ken-naka">
-{gyou}{soto}        </div>
+{gyou}{soto}{cal}        </div>
       </details>"""
+
+# ══ カレンダーに入れる（2026-09-23 依頼・共有とお題 v1.0 ⑤）════
+#   研究日程は「見た」で終わりがちです。**その場でカレンダーに入れば**、
+#   当日まで覚えていなくてよくなります。
+#
+#   ★原則2（何も送信しない）。Google を開くのは、ふつうのリンクと同じで、
+#     押した人が自分で出ていくだけです。.ics はその端末の中で作ります。
+#   ★時こくを持っている日程は1つもありません（days は日づけだけ）。
+#     だから **ぜんぶ終日** です。終日は「次の日まで」で1日ぶんになります。
+#   ★押すと選べます … Googleカレンダー ／ iPhone・そのほか（.ics）。
+#     どちらか一方だと、片方の人が入れられません。
+KEN_CAL = """          <div class="ken-cal">
+            <button class="bansho-b ken-cal-b" type="button" data-cal aria-expanded="false">{ICON_CAL}<span class="b-ji">カレンダーに入れる</span></button>
+            <div class="ken-cal-erabi" hidden data-cal-t="{dai}" data-cal-d="{hi}" data-cal-e="{tsugi}" data-cal-b="{naka}" data-cal-l="{basho}" data-cal-na="{na}">
+              <a class="bansho-b" href="{g}" target="_blank" rel="noopener noreferrer"><span class="b-ji">Googleカレンダー</span><i>↗</i></a>
+              <button class="bansho-b" type="button" data-ics><span class="b-ji">iPhone・そのほか（.ics）</span></button>
+            </div>
+          </div>
+"""
+
+def ken_cal(a):
+    """日程1つぶんの［カレンダーに入れる］。"""
+    d = a['d']
+    na = a['seishiki'] or a['ja']
+    dai = na if a['shurui'] == '当日' else '%s（%s）' % (na, a['shurui'])
+    basho = '　'.join(x for x in (a.get('venue'), a.get('basho')) if x)
+    naka = '\n'.join(x for x in (a.get('naka'), a.get('url'),
+                                 SITE_URL + ATSUMARU_HTML + '#ima') if x)
+    tsugi = d + datetime.timedelta(days=1)
+    q = urllib.parse.quote
+    g = ('https://calendar.google.com/calendar/render?action=TEMPLATE'
+         '&text=%s&dates=%s/%s&details=%s&location=%s'
+         % (q(dai), d.strftime('%Y%m%d'), tsugi.strftime('%Y%m%d'),
+            q(naka), q(basho)))
+    return KEN_CAL.format(
+        ICON_CAL=ICON_CAL, dai=esc_html(dai), hi=d.strftime('%Y%m%d'),
+        tsugi=tsugi.strftime('%Y%m%d'), naka=esc_html(naka).replace('\n', '&#10;'),
+        basho=esc_html(basho), na=esc_html(re.sub(r'[\\/:*?"<>|\s]+', '_', dai)[:40]),
+        g=esc_html(g))
+
 
 KEN_GYOU = """          <div class="ken-g"><dt>{na}</dt><dd>{atai}</dd></div>
 """
@@ -3051,7 +3093,7 @@ def build_kenkyukai(ken, kyara, buhin, kyou=None):
             md='%d/%d' % (d.month, d.day), youbi=youbi,
             ja=esc_html(a['seishiki'] or a['ja']), shurui=a['shurui'], ja_date=ja_md(d),
             basho=('・' + esc_html(a['basho'])) if a['basho'] else '',
-            nokori=a['nokori'], gyou=gyou, soto=soto)
+            nokori=a['nokori'], gyou=gyou, soto=soto, cal=ken_cal(a))
     # 2026-09-21：一覧も、こよみと同じ「よこにスライド」にしました。
     #   横に並ぶので、ぜんぶ出してもページは伸びません。ふたは要らなくなりました。
     hyo = yoko_ban([gyo(a, i) for i, a in enumerate(ken)],
@@ -3857,6 +3899,13 @@ BFUDA_SOTO = """        <p class="bfuda-soto"><a class="soto-b" href="{url}" tar
 
 ICON_SOTO = icon('<path d="M4 7a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>'
                  '<path d="M12 15V9m0 0-2.2 2.2M12 9l2.2 2.2"/>', 24)
+
+# 研究会を［カレンダーに入れる］のしるし（2026-09-23 依頼）。
+#   ★ken_cal() が呼びますが、あちらは 関数の中なので、しるしは
+#     ここ（icon() を作ったあと）に置きます。
+ICON_CAL = icon('<rect x="3" y="5" width="18" height="16" rx="2"/>'      # こよみ＋＋
+                '<path d="M8 3v4M16 3v4M3 10h18"/>'
+                '<path d="M12 13v5m-2.5-2.5h5"/>', 20)
 
 # ── 推しポイントの左に、その内容の案内役（2026-09-23 依頼）──────
 #   4つの内容 ↔ 4人。**画像保存で使っている表**（src/hiroba.html の
@@ -6784,6 +6833,9 @@ KOTOBA = {
     #   ★お題の中身（title・sub）は訳しません。毎週変わるので、表に置くと
     #     お題を1つ書きかえるたびにビルドが止まります。届いた実践の題を
     #     訳さないのと同じ決まりです。
+    'カレンダーに入れる': ('Add to calendar', 'أضف إلى التقويم'),
+    'Googleカレンダー': ('Google Calendar', 'تقويم Google'),
+    'iPhone・そのほか（.ics）': ('iPhone and others (.ics)', 'آيفون وغيره (.ics)'),
     '今週のお題': ("This week's theme", 'موضوع هذا الأسبوع'),
     'このお題で送る': ('Send for this theme', 'أرسل لهذا الموضوع'),
 }

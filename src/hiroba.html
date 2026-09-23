@@ -3214,6 +3214,59 @@
       });
   })();
 
+  /* ══ 研究会をカレンダーに入れる（2026-09-23 依頼）══════════════
+     研究日程は「見た」で終わりがちです。その場でカレンダーに入れば、
+     当日まで覚えていなくてよくなります。
+     ★原則2（何も送信しない）。Google を開くのは ふつうのリンクと同じで、
+       押した人が自分で出ていくだけです。**.ics は、この端末の中で作ります。**
+     ★時こくを持っている日程は1つもないので、**ぜんぶ終日**です。
+       終日は「次の日まで」で1日ぶんになります（DTEND は そこを指します）。 */
+  function ics_esc(ji){
+    return String(ji || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;')
+      .replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  }
+
+  function ics_tsukuru(e){
+    var ima = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    var uid = e.getAttribute('data-cal-d') + '-'
+            + Math.random().toString(16).slice(2) + '@tokkatsu-hiroba';
+    /* 行は CRLF でつなぎます（.ics の決まり）。
+       ★75字で折る決まりもありますが、日本語は1字3バイトで、
+         折る場所を1バイトでも間違えると字が壊れます。折りません
+         （iPhone・Google・Outlook で、折らないまま読めます）。 */
+    return ['BEGIN:VCALENDAR', 'VERSION:2.0',
+            'PRODID:-//TOKKATSU広場//JA', 'CALSCALE:GREGORIAN',
+            'BEGIN:VEVENT', 'UID:' + uid, 'DTSTAMP:' + ima,
+            'DTSTART;VALUE=DATE:' + e.getAttribute('data-cal-d'),
+            'DTEND;VALUE=DATE:' + e.getAttribute('data-cal-e'),
+            'SUMMARY:' + ics_esc(e.getAttribute('data-cal-t')),
+            'DESCRIPTION:' + ics_esc(e.getAttribute('data-cal-b')),
+            'LOCATION:' + ics_esc(e.getAttribute('data-cal-l')),
+            'END:VEVENT', 'END:VCALENDAR'].join('\r\n') + '\r\n';
+  }
+
+  function ics_hozon(b){
+    var e = b.closest('.ken-cal-erabi');
+    if(!e) return;
+    var bl = new Blob([ics_tsukuru(e)], {type: 'text/calendar;charset=utf-8'});
+    var u = URL.createObjectURL(bl);
+    var a = document.createElement('a');
+    a.href = u; a.download = (e.getAttribute('data-cal-na') || '研究会') + '.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(u); }, 4000);
+  }
+
+  document.addEventListener('click', function(ev){
+    var t = ev.target.closest && ev.target.closest('[data-ics]');
+    if(t){ ics_hozon(t); return; }
+    var b = ev.target.closest && ev.target.closest('[data-cal]');
+    if(!b) return;
+    var e = b.parentNode.querySelector('.ken-cal-erabi');
+    if(!e) return;
+    e.hidden = !e.hidden;
+    b.setAttribute('aria-expanded', e.hidden ? 'false' : 'true');
+  });
+
   /* ══ 今週のお題（2026-09-23 依頼）══════════════════════════
      「いつでも送れる」場所には、だれも送りません。お題と締め切りが
      あると、手が動きます。
