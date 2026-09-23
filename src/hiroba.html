@@ -2902,7 +2902,13 @@
 
     var kumi = ga_e_kumi(shashin || [], naka);
     if(kumi){ okiba.push({t:'e', y:y, k:kumi}); y += kumi.h + 40; }
-    ctx.font = '700 32px ' + GA_JI;
+    /* ★本文は UD の書体で（2026-09-23 依頼「実践の本文をUDにして」）。
+       前は丸ゴシック（GA_JI）でした。すぐ下に続く「つづき」（hon）は
+       はじめから GA_HON だったので、**1枚の絵の中で書体が2つ**に
+       なっていました。読むところは、ぜんぶ UD にそろえます。
+       ★測るときと描くときで、同じ字にしてください。ずれると折り返しが
+         合わず、絵の右はしから字がはみ出します。 */
+    ctx.font = '500 32px ' + GA_HON;
     var leadG = lead ? ga_oru(ctx, lead, naka) : [];
     if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 52 + 26; }
 
@@ -2996,7 +3002,7 @@
           ctx.stroke();
         });
       } else if(o.t === 'lead'){
-        ctx.fillStyle = '#1C1C1A'; ctx.font = '700 32px ' + GA_JI;
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '500 32px ' + GA_HON;
         ga_kaku(ctx, o.g, GA_P, o.y, 52);
       } else if(o.t === 'hon'){
         ctx.fillStyle = '#1C1C1A'; ctx.font = '400 29px ' + GA_HON;

@@ -3681,6 +3681,36 @@ BFUDA_SOTO = """        <p class="bfuda-soto"><a class="soto-b" href="{url}" tar
 ICON_SOTO = icon('<path d="M4 7a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>'
                  '<path d="M12 15V9m0 0-2.2 2.2M12 9l2.2 2.2"/>', 24)
 
+# ── 推しポイントの左に、その内容の案内役（2026-09-23 依頼）──────
+#   4つの内容 ↔ 4人。**画像保存で使っている表**（src/hiroba.html の
+#   GA_KYARA）と、同じ組み合わせにしてあります。ここだけ変えると、
+#   画面の中の人と、保存した絵の中の人が、別人になります。
+#   ★絵は1枚も増えていません。ページの <defs> にある1人を <use> で
+#     呼ぶだけです（同じ人を何枚置いても、重さは増えません）。
+NAIYO_KYARA = {'gakkyu': 'gakkatsu', 'gyoji': 'gyoji',
+               'jidokai': 'jidokai', 'club': 'club'}
+
+BFUDA_OSHI = """        <div class="bfuda-oshi-w">
+{kao}          <p class="bfuda-oshi"><span class="bfuda-oshi-l">推しポイント</span>{honbun}</p>
+        </div>
+"""
+
+BFUDA_OSHI_K = ('          <span class="bfuda-oshi-k" aria-hidden="true">'
+                '<svg viewBox="0 0 %g %g" focusable="false">'
+                '<use href="#ill-k-%s"/></svg></span>\n')
+
+
+def oshi_kao(nid, kyara):
+    """その札の内容を案内する1人を返す（決まっていなければ、人は立ちません）。"""
+    n = NAIYO_KYARA.get(nid)
+    if not n:
+        return ''
+    if n not in kyara:
+        raise Tomeru('推しポイントの案内役が %s.svg を呼んでいますが、'
+                     'その絵がありません（src/ill/kyara/）' % n)
+    return BFUDA_OSHI_K % (kyara[n][0], kyara[n][1], n)
+
+
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
 {gazou}
         </div>
@@ -3718,8 +3748,9 @@ def youi_shita(jissen):
     return [a for a in jissen if not a.get('okuri')]
 
 
-def build_bansho(jissen):
-    """板書のページの中身。写真の実体は、ここにだけ入ります。"""
+def build_bansho(jissen, kyara):
+    """板書のページの中身。写真の実体は、ここにだけ入ります。
+       kyara は、推しポイントの左に立つ案内役の大きさを知るために使います。"""
     aru = bansho_aru(jissen)
     if not aru:
         # 0件のときに、空の棚を押せる形で出さない（正直に書く）
@@ -3779,9 +3810,9 @@ def build_bansho(jissen):
             hon_nama=esc_html(a['summary'].strip()),
             # 「推しポイント」と、字でも名のります（2026-09-23 依頼）。
             #   緑の縦線だけでは、何の1行なのかが伝わりませんでした。
-            oshi=('        <p class="bfuda-oshi">'
-                  '<span class="bfuda-oshi-l">推しポイント</span>%s</p>\n'
-                  % ku_wakeru(a['oshi'])
+            #   左には、その内容の案内役が1人立ちます（→ NAIYO_KYARA）。
+            oshi=(BFUDA_OSHI.format(kao=oshi_kao(a['naiyo'], kyara),
+                                    honbun=ku_wakeru(a['oshi']))
                   if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
@@ -6328,7 +6359,7 @@ def build_shin():
                        ('    <!--BUILD:FUSHIME-->', build_fushime(jissen, buhin)),
                        ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
                        ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari)),
-                       ('    <!--BUILD:BANSHO-->',     build_bansho(jissen)),
+                       ('    <!--BUILD:BANSHO-->',     build_bansho(jissen, kyara)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
                        ('          <!--BUILD:KEN-->', build_ken_options()),
                        ('    <!--BUILD:KOTOBA-->',   build_kotoba(load_kotoba())),

@@ -3350,6 +3350,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      壊れません（text-wrap:pretty も同じ）。 */
   word-break:auto-phrase;text-wrap:pretty;
 }
+/* ── 推しポイントの左に、案内役が1人（2026-09-23 依頼）────────
+   4つの内容に合わせた1人が、推しポイントの横に立ちます。
+   ★人は **添えもの**です。主役は、書いてくださった1行のほうなので、
+     人の幅は40px前後にとどめ、文の幅をできるだけ減らしません
+     （スマホでは34px。1行の字数が2字ほどしか変わらない大きさです）。
+   ★aria-hidden。読み上げには出しません（意味は字のほうが持っています）。 */
+.bfuda-oshi-w{
+  display:flex;align-items:center;gap:9px;margin:0 0 8px;
+}
+.bfuda-oshi-w .bfuda-oshi{flex:1 1 auto;min-width:0;margin:0}
+.bfuda-oshi-k{
+  flex:none;width:40px;align-self:center;
+}
+.bfuda-oshi-k svg{display:block;width:100%;height:auto}
+@media (max-width:719px){
+  .bfuda-oshi-k{width:34px}
+  .bfuda-oshi-w{gap:7px}
+}
+
 /* 「、」「。」で切ったかたまり（2026-09-23）。
    ★いちど inline-block にして「かたまりの中では折らない」を試しましたが、
      **やめました**。かたまりが残り幅に入らないと まるごと次の行へ落ちて、
@@ -3363,8 +3382,12 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    ★14pxより小さくはしません。読めなくなるほうが困ります。
    ★変えるのは「送っていただいた中身」だけです。題・推しポイント・
      押すところの大きさは、そのままにします。 */
-.bfuda-lead{margin:0;font-size:calc(14.5px * var(--moji));line-height:1.62;
+/* ★本文は UD の書体（2026-09-23 依頼「実践の本文をUDにして」）。
+   いままでも body から受けついで UD でしたが、**ここに書いておきます**。
+   受けつぎだのみだと、札をどこかへ入れ子にした日に、黙って変わります。 */
+.bfuda-lead{margin:0;font-family:var(--f-hon);font-size:calc(14.5px * var(--moji));line-height:1.62;
   word-break:auto-phrase;text-wrap:pretty}
+.bfuda-naka p,.bfuda-naka li{font-family:var(--f-hon)}
 @media (max-width:719px){
   .bfuda-lead{font-size:calc(14px * var(--moji))}
   .bfuda-naka p,.bfuda-naka li{font-size:calc(14px * var(--moji))}
