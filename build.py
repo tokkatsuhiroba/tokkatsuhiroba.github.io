@@ -3362,6 +3362,23 @@ def naiyo_ichiran():
     return [(c[2:], ja) for c, _, ja, _, _ in YOTSU]
 
 
+# ── 札の「場」と、そのあとの字（2026-09-23 依頼）──────────────
+#   「これ被っているから一つにしてほしい。学級活動　学級活動（１）になっている」
+#   札に『学級活動』、すぐ右の字に『学級活動(1)』と、同じことばが2回
+#   ならんでいました。**くわしいほう（scene）を札に出して**、右の字からは
+#   外します。「学級活動(1)・計画委員会」のように「・」でつながっている
+#   ときは、頭の1つだけを札にして、残りは右の字に置きます。
+#   ★scene が見出し（学級活動・児童会活動…）で始まっていないときは、
+#     かぶっていないので、どちらもそのまま出します。
+def ba_wakeru(a):
+    na = naiyo_ja(a['naiyo'])
+    ba = (a.get('scene') or '').strip()
+    if not ba or not ba.startswith(na):
+        return na, ba
+    fuda, _, nokori = ba.partition('・')
+    return fuda, nokori.strip()
+
+
 def naiyo_ja(nid):
     return dict(naiyo_ichiran())[nid]
 
@@ -3591,10 +3608,11 @@ def build_jissen_hiroba(jissen, goods):
         ban = (JFUDA_BANSHO.format(slug=a['slug'], n=bansho_kazu(a['bansho']))
                if a.get('bansho') else '')
         gidai = (a['kind'] == 'gidai')
-        meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
+        ba, ba_nokori = ba_wakeru(a)
+        meta = '・'.join(x for x in (esc_html(ba_nokori), esc_html(a['grade']),
                                      esc_html(a['time'])) if x)
         fuda.append(JFUDA.format(
-            slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
+            slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(ba),
             kcls=' fuda--gidai' if gidai else '',
             # ★「議題」の札は出しません（2026-09-23 依頼
             #   「この議題っていう表記いらなくないか」）。
@@ -3792,7 +3810,8 @@ def build_bansho(jissen, kyara):
         if sh:
             zen += ZEN_B.format(doko='shiryo', na='資料を大きく' if futatsu else '大きく見る')
         more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
-        meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
+        ba, ba_nokori = ba_wakeru(a)
+        meta = '・'.join(x for x in (esc_html(ba_nokori), esc_html(a['grade']),
                                      ja_md(a['d'])) if x)
         # ── この実践を画像で保存（2026-09-22 夜。依頼で差しかえ）────────
         #   前は「LINEで聞く」でした。押すとLINEが開いて、題とURLが本文に
@@ -3805,7 +3824,7 @@ def build_bansho(jissen, kyara):
         #   ★画像の中に、この実践のURLを必ず入れます。見た人がここへ来られます。
         ima = SITE_URL + 'bansho.html#b-' + a['slug']
         fuda.append(BFUDA.format(
-            slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
+            slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(ba),
             toki=a['todoita'].strftime('%Y%m%d%H%M'),
             nen=' '.join(nen_bunkai(a['grade'])),
             nushi=(' data-nushi="%s"' % a['nushi']) if a.get('nushi') else '',
@@ -4468,6 +4487,49 @@ def build_okuru_miru(jissen):
     mai = sum(bansho_kazu(a['bansho']) for a in bansho_aru(jissen))
     return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#bansho">'
             '送られた実践を見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
+
+
+# ══ 足もとの4人（おじぎ）の、となりに出す数 ════════════════
+#   2026-09-23 依頼「下のこの4人のこのエリアを有効活用したい」。
+#   おじぎの相手を「送ってくださった先生」と決めて、**その人たちが
+#   足したぶん**だけを数で出します。
+#   ★ここに出すのは「届いたもの」だけです。研究日程やニュースは
+#     こちらで書いているぶんが混ざるので、「おかげさまで」の数には
+#     入れません（お礼の相手が、ぼやけるためです）。
+#   ★0のものは出しません。「困りごと 0」と出すと、お礼の列に
+#     空の札が1枚立ちます。
+#   ★訳（data-en / data-ar）は、この表ではなく ここで直に入れます。
+#     数と一緒に出たり消えたりする札なので、KOTOBA に置くと
+#     1件届くたびにビルドが止まります（home_kazu と同じ考え方）。
+FOOT_KAZU_MEN = (
+    ('実践',     'Practices',     'ممارسات'),
+    ('板書',     'Board photos',  'صور السبورة'),
+    ('都道府県', 'Prefectures',   'محافظات'),
+    ('困りごと', 'Questions',     'أسئلة'),
+)
+
+FOOT_KAZU_T = """        <p class="foot-rei-yo">{yo}</p>{kazu}
+        <p class="foot-rei-b"><a class="btn btn--yoru" href="#okuru"><span class="btn-ji">あなたの実践を送る</span><span class="btn-ya">→</span></a></p>"""
+
+
+def build_foot_kazu(jissen, komari):
+    """足もとの4人の となりに出す「おかげさまで、いま ここには」。
+       数は、その場で数えたものだけを出します。"""
+    okuri = bansho_aru(jissen)
+    kazu = (len(okuri),
+            sum(bansho_kazu(a['bansho']) for a in okuri if a.get('bansho')),
+            len({a['ken'] for a in okuri if a.get('ken')}),
+            len(komari))
+    fuda = ['          <li><b>%d</b><span data-en="%s" data-ar="%s">%s</span></li>'
+            % (n, esc_html(en), esc_html(ar), esc_html(ja))
+            for (ja, en, ar), n in zip(FOOT_KAZU_MEN, kazu) if n]
+    if not fuda:
+        # まだ1件も届いていないとき。「おかげさまで 0」とは書きません。
+        return FOOT_KAZU_T.format(yo='まだ1件も届いていません。いちばん乗りをどうぞ。',
+                                  kazu='')
+    return FOOT_KAZU_T.format(
+        yo='おかげさまで、いま ここには',
+        kazu='\n        <ul class="foot-kazu">\n%s\n        </ul>' % '\n'.join(fuda))
 
 
 NEWS_H_N = 5      # ニュースを、上から何件だけ出しておくか（のこりはふたの中）
@@ -5749,6 +5811,12 @@ KOTOBA = {
 
     # ── 足もと ──
     '特別活動で、輝く。': ('Shine through Tokkatsu.', 'تألّق مع الأنشطة الخاصة.'),
+    'おかげさまで、いま ここには': ('Thanks to you, this site now holds',
+                                'بفضلكم، يضمّ هذا الموقع الآن'),
+    'まだ1件も届いていません。いちばん乗りをどうぞ。':
+        ('Nothing has been sent yet. Be the first.',
+         'لم يصلنا شيء بعد. كن أول المشاركين.'),
+    'あなたの実践を送る': ('Send your practice', 'أرسل ممارستك'),
     '管理者：伊藤 優': ('Site owner: Yu Ito', 'مسؤول الموقع: يو إيتو'),
     '管理画面': ('Admin page', 'لوحة الإدارة'),
 
@@ -6202,6 +6270,7 @@ KOTOBA_TEKI = (
     (r'(<p class="ko-yo">)(.*?)(</p>)', 'ページのひとこと'),
     (r'(<a class="ko-oya"[^>]*>)(.*?)(</a>)', '親への戻り道'),
     (r'(<p class="foot-koe">)(.*?)(</p>)', '足もとの1行'),
+    (r'(<p class="foot-rei-yo">)(.*?)(</p>)', '足もとのお礼'),
     (r'(<p class="foot-shokai-yo">)(.*?)(</p>)', '足もとの紹介'),
     (r'(<p class="onegai-h">)(.*?)(</p>)', '実践紹介のお願い・見出し'),
     (r'(<p class="onegai-yo">)(.*?)(</p>)', '実践紹介のお願い・説明'),
@@ -6372,6 +6441,8 @@ def build_shin():
                        ('    <!--BUILD:KOTOBA-->',   build_kotoba(load_kotoba())),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
+                       ('        <!--BUILD:FOOT_KAZU-->',
+                        build_foot_kazu(jissen, komari)),
                        ('    <!--BUILD:KENKYUKAI-->',
                         build_kenkyukai(ken, kyara, buhin))):
         if mark not in body:
