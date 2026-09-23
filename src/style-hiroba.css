@@ -524,6 +524,12 @@ img,svg{max-width:100%}
   border:2.5px solid var(--ink);border-radius:999px;
 }
 .gyo--tsugi .nokori b{color:var(--bg)}
+/* ★2026-09-24：札をはじめから ひらいた形にしたので、ここを足しました。
+   ひらいた札は .hyo--ken .ken[open] が 墨の影(8px)で上書きします。前は
+   ひらくのが1枚だけだったので気になりませんでしたが、ぜんぶ ひらくと
+   **いちばん近い1件の朱が、いつも消えている**ことになります。
+   ひらいた大きさのまま、朱にもどします。 */
+.hyo--ken .gyo--tsugi[open]{box-shadow:8px 8px 0 var(--shu)}
 
 /* ── 4人ならび（特別活動って、なに の節） ── */
 .yomi--na{margin-bottom:18px}
@@ -943,6 +949,14 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
 .ima-2{min-width:0;display:grid;gap:clamp(20px,3vw,34px)}
 @media (min-width:860px){
   .ima-2{grid-template-columns:minmax(290px,330px) 1fr;align-items:start}
+  /* ★2026-09-24：左右の「よこにスライド →」と ‹ › が、22.5px ずれていました。
+     こよみの送りは **こよみの札の中**にあるので、札のふち(2.5px)と内よはく(20px)
+     のぶんだけ下から始まります。右の一覧の送りは札の外にあるので、行の頭から
+     始まります。その差がそのまま、ずれです（実測：左781px／右759px）。
+     右の列を、こよみの札の内よはくと同じだけ下げてそろえます。数は打たず、
+     .koyomi と同じ式を書きます（画面幅で伸び縮みするので、片方だけ直ると また
+     ずれます）。下に積む幅（859px以下）では、そもそも横に並ばないので要りません。 */
+  .ima-migi{padding-top:calc(2.5px + clamp(16px,2vw,20px))}
 }
 
 .koyomi{
