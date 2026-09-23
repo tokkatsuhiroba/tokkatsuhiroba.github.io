@@ -4516,14 +4516,20 @@ def build_igi(kyara):
     return ('<section class="sec" id="igi">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">WHY</span>'
-            '<span class="ja">このサイトは、なに</span></h2>\n'
+            '<span class="ja">TOKKATSU広場とは？</span></h2>\n'
             # 1文＝1行。<span> を1つずつ立てて、行の折れ目を文の切れ目に
             # そろえます（2026-09-22）。<br> だと、画面が狭いときに文の
             # 途中でも折れて「みんなの特／活ひろば」のように割れます。
             '    <div class="igi-intro"><p class="igi-bun">'
             '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
-            '<span>LINEオープンチャット<b>「みんなの特活ひろば（仮）」</b>と'
-            '連携しています。</span>'
+            # 2026-09-23 依頼：ここを押すとLINEへ飛びます。
+            #   ★{{LINE_OC}} は使えません（この節は切り分けたあとに作るので
+            #     置きかわらない）。LINKS から直に入れます。
+            #   ★外へ出るので「外部」と書いてから開きます（サイトの決まり）。
+            '<span>LINEオープンチャット'
+            '<a class="line-l" href="' + LINKS['LINE_OC'] + '" '
+            'target="_blank" rel="noopener noreferrer">'
+            '「みんなの特活ひろば（仮）」<i>外部</i></a>と連携しています。</span>'
             '<span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span>'
             '<span>そのためにお使いください。</span>'
             '</p><div class="igi-friends">'
@@ -4708,8 +4714,12 @@ def build_home(doko, sec, mark, kiji, jissen, ken, komari):
               '<span class="ja" data-en="%d things you can do here" '
               'data-ar="%d أشياء يمكنك فعلها هنا">%dつのできること</span></h2>\n'
               % (n, n, n) +
-              '    <p class="yomi">押すと、そのページがひらきます。'
-              '見た目も帯もそのままなので、いつでもここへ戻れます。</p>\n'
+              # 2026-09-23 依頼で書きかえ。2行で、行の折れ目を文の切れ目に
+              #   そろえます（<span> を1つずつ立てる。<br> だと狭い画面で
+              #   文の途中でも折れます）。
+              '    <p class="yomi yomi--nigyo">'
+              '<span>気になるところを、タップしてください。</span>'
+              '<span>そのページへ、そのまま飛びます。</span></p>\n'
               '    <div class="hban">\n' + '\n'.join(fuda) + '\n    </div>\n'
               '  </div>\n'
               '</section>')
@@ -5217,6 +5227,19 @@ def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
 #     新しい見出しや説明文を足したら、ここにも1行足してください。
 KOTOBA = {
     # ── 節の見出し ──
+    'TOKKATSU広場とは？': ('What TOKKATSU Hiroba is', 'ما هو ميدان توكّاتسو'),
+    # ★このかぎは HTML ごと入ります（<a> は訳の仕組みが外さないため）。
+    #   LINEの招待URLを変えたら、ここも一緒に直してください。
+    #   直し忘れても、ビルドが止まって「足す行」を出してくれます。
+    '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>LINEオープンチャット<a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">「みんなの特活ひろば（仮）」<i>外部</i></a>と連携しています。</span><span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span><span>そのためにお使いください。</span>':
+        ('<span>A site for sharing what works in Japanese <b>tokkatsu</b> (special activities).</span>'
+         '<span>It works together with the LINE OpenChat <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">“Minna no Tokkatsu Hiroba (tentative)”<i>external</i></a>.</span>'
+         '<span>Talk there; <b>check and take home</b> here.</span>'
+         '<span>That is what this site is for.</span>',
+         '<span>موقع لرفع <b>تبادل المعلومات</b> حول الأنشطة الخاصة في اليابان.</span>'
+         '<span>يعمل بالتعاون مع دردشة لاين المفتوحة <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">«ميدان تُكّاتسو للجميع (مؤقت)»<i>خارجي</i></a>.</span>'
+         '<span>هناك تتحدثون، وهنا <b>تتأكدون وتأخذون معكم</b>.</span>'
+         '<span>لهذا الغرض استعملوه.</span>'),
     'このサイトは、なに': ('What this site is', 'ما هذا الموقع'),
 
     'あなたの実践を、ここに': ('Your practice belongs here', 'شارك ممارستك هنا'),
@@ -5377,6 +5400,11 @@ KOTOBA = {
          'اقرأ ما أرسله غيرك، واكتب ما يصعب عليك.'),
 
     # ── 節の説明（.yomi） ──
+    '<span>気になるところを、タップしてください。</span><span>そのページへ、そのまま飛びます。</span>':
+        ('<span>Tap whatever catches your eye.</span>'
+         '<span>That page opens, just as it is.</span>',
+         '<span>اضغط على ما يثير اهتمامك.</span>'
+         '<span>فتُفتح تلك الصفحة كما هي.</span>'),
     '押すと、そのページがひらきます。見た目も帯もそのままなので、いつでもここへ戻れます。':
         ('Tap a card and that page opens. The look and the top bar stay the same, '
          'so you can always come back here.',
