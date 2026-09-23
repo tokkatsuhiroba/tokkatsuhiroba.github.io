@@ -3155,6 +3155,16 @@
     var moto = document.querySelector('meta[property="og:url"]');
     var ie = (moto && moto.content ? moto.content : '').replace(/[^/]*\.html$/, '');
     if(!ie){ b.hidden = true; return; }
+    /* ══ LINEの覚えを外すための、しっぽ（2026-09-23）══════════════
+       LINEは **一度見たアドレスのカード（絵と字）を、しばらく覚えています。**
+       絵を4人組に差しかえても、前に貼ったことのあるアドレスだと
+       古いカードが出つづけます（実物で確認。説明文がかなり前のものでした）。
+       うしろに ?2 を付けると「別のアドレス」と見て、取りに来ます。
+       中身はまったく同じページです（GitHub Pages は ? のうしろを見ません）。
+       ★LINEが忘れたころ（数日〜1週間）に、この1行を消してください。
+         消すと、素のアドレスに戻ります。 */
+    var SHIPPO = '?2';
+    ie = ie + SHIPPO;
     var shirase = document.getElementById('shokai-shirase');
     function owari(ok){
       if(!shirase) return;
