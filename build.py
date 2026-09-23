@@ -692,6 +692,26 @@ def kenmon_jissen(fm, goods):
     #     本文に混ぜて運べば、**受け口を1行も触らずに** 今日から効きます。
     #   ★手で書く .md では、front matter の oshi: も使えます（そちらが優先）。
     hon = fm['summary'].strip()
+
+    # ── デジタル資料のリンク（2026-09-23 依頼）────────────
+    #   運び方は 推しポイント・地域と同じ（本文の頭に混ぜる）。
+    #
+    #   ★はがす順は「付けた いちばん外がわから」です。ここが先頭なのは、
+    #     送るフォームが 資料リンク → 地域 → 推しポイント の順に
+    #     外から包むためです。順をまちがえると、いちばん内がわの
+    #     推しポイントが **頭4行の窓から外れて** はがれません
+    #     （2026-09-23、実物で1度踏みました）。目じるしを足すときは、
+    #     送るフォームの包む順と、ここのはがす順を必ずそろえてください。
+    #   ★受けない置き場のときは **止めずに、無かったことにします**。
+    #     1件の書き方でサイト全体のビルドが止まると、その間だれも
+    #     何も見られなくなるためです（手で書く shiryo: は今までどおり止めます）。
+    shiryo_url, hon = shirushi_hagasu(hon, SHIRYO_SHIRUSHI)
+    shiryo_url = ((fm.get('shiryo_url') or shiryo_url) or '').strip()[:SHIRYO_URL_MAX]
+    shiryo_na = shiryo_soto_na(shiryo_url)
+    fm['shiryo_url'] = shiryo_url if shiryo_na else ''
+    if fm['shiryo_url']:
+        fm['shiryo_list'].append((shiryo_na, 'soto', fm['shiryo_url']))
+
     oshi_shirushi, hon = shirushi_hagasu(hon, OSHI_SHIRUSHI)
     oshi = (fm.get('oshi') or '').strip() or oshi_shirushi
     fm['oshi'] = oshi[:OSHI_MOJI_MAX]
@@ -726,18 +746,6 @@ def kenmon_jissen(fm, goods):
     fm['ken'], fm['shi'] = ken, shi
     fm['chiiki'] = (ken + ('　' + shi if shi else '')) if ken else ''
     fm['chiho'] = KEN_CHIHO.get(ken, '')
-
-    # ── デジタル資料のリンク（2026-09-23 依頼）────────────
-    #   運び方は 推しポイント・地域と同じ（本文の頭に混ぜる）。
-    #   ★受けない置き場のときは **止めずに、無かったことにします**。
-    #     1件の書き方でサイト全体のビルドが止まると、その間だれも
-    #     何も見られなくなるためです（手で書く shiryo: は今までどおり止めます）。
-    shiryo_url, hon = shirushi_hagasu(hon, SHIRYO_SHIRUSHI)
-    shiryo_url = ((fm.get('shiryo_url') or shiryo_url) or '').strip()[:SHIRYO_URL_MAX]
-    shiryo_na = shiryo_soto_na(shiryo_url)
-    fm['shiryo_url'] = shiryo_url if shiryo_na else ''
-    if fm['shiryo_url']:
-        fm['shiryo_list'].append((shiryo_na, 'soto', fm['shiryo_url']))
 
     fm['summary'] = hon
     if not hon:
@@ -814,6 +822,9 @@ def shirushi_hagasu(hon, shirushi):
        ★手で書く .md では front matter（oshi:／ken:／shi:）も使えます。
          そちらのほうが読みやすいので、front matter があればそちらが勝ちます。
        ★見るのは頭の4行だけです。本文の途中に同じ字が出ても、はがしません。
+       ★だから **はがす順が効きます**。目じるしが3つ重なると、いちばん
+         内がわのものは5行めに来て、窓から外れます。付けた順の
+         いちばん外がわから はがしてください（→ kenmon_jissen の並び）。
     """
     gyo = hon.split('\n')
     for i, x in enumerate(gyo[:4]):
