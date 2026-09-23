@@ -1029,6 +1029,9 @@ a.maru:hover,a.maru:focus-visible{transform:scale(1.12)}
 
 /* 右の一覧は、こよみから飛んでも帯の下に隠れないように止める */
 .hyo--ken .gyo{scroll-margin-top:74px}
+/* 実践1件を指すURL（#b-…）で来た人。帯が貼りついているので、そのぶん
+   下げて止めます（2026-09-23。［リンク］と画像保存のQRの行き先です）。 */
+.bfuda{scroll-margin-top:74px}
 .ima-migi .hyo--ken{gap:12px}
 
 @media (max-width:859px){
@@ -2013,6 +2016,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      （2026-09-23：帯を 86→97px にしたので、ここも足しました） */
   .sec,.foot{scroll-margin-top:108px}
   .hyo--ken .gyo{scroll-margin-top:116px}
+  .bfuda{scroll-margin-top:116px}
 }
 
 /* 足もとの、いちばん下。だれが作っているかを、はっきり出す */
