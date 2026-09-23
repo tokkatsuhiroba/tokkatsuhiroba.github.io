@@ -1150,6 +1150,23 @@ def load_kotae():
             continue
         fm['hon'] = hon[:KOMARI_MOJI_MAX]
         fm['slug'] = slug_of(f)
+
+        # 添えられた写真・資料（2026-09-24 依頼）。実践と同じ置き場です
+        #   （src/bansho/<slug>/ と src/shiryo/<slug>/）。同じ場所にすると、
+        #   Actions の「JPEGをWebPにする」「PDFを画像にする」が、何も足さずに
+        #   そのまま効きます。
+        # ★フォルダが無いときは **その答えを飛ばさず、絵だけ落とします**。
+        #   答えの字は残したいためです（写真の消し忘れで字まで消えない）。
+        for kagi, moto in (('bansho', BANSHO), ('shiryo', SHIRYO)):
+            v = (fm.get(kagi) or '').strip()
+            if v and not re.match(r'^[a-z0-9-]+$', v):
+                tobashita.append('%s … %s が「%s」です（英小文字・数字・-）' % (f, kagi, v))
+                v = ''
+            if v and not os.path.isdir(os.path.join(moto, v)):
+                tobashita.append('%s … %s の「%s」が見あたらないので、絵は出しません'
+                                 % (f, kagi, v))
+                v = ''
+            fm[kagi] = v
         tsuki.setdefault(toi, []).append(fm)
     # 古い順（会話の順に読めるように）
     for v in tsuki.values():
@@ -1300,12 +1317,29 @@ def komari_line(a):
     return 'https://line.me/R/share?text=' + urllib.parse.quote('\n'.join(gyo))
 
 
+def kotae_e(k):
+    """答えに添えられた写真とPDFを、その答えの中に入れます。
+       ★実践の札と同じ窓（.bfuda-mado）を使うので、［大きく見る］も
+         よこスライドも、いまの仕掛けがそのまま効きます。"""
+    mai = shiryo_yomu(k['bansho'], BANSHO, KOMARI_HTML) if k.get('bansho') else []
+    g = [GAZOU.format(uri=uri, alt=esc_html('答えに添えられた写真 %d枚め' % (i + 1)),
+                      w=w, h=h,
+                      kazu=(GAZOU_KAZU.format(i=i + 1, n=len(mai))
+                            if len(mai) > 1 else ''))
+         for i, (uri, w, h) in enumerate(mai)]
+    out = BFUDA_MADO.format(gazou='\n'.join(g)) if g else ''
+    if k.get('shiryo'):
+        out += shiryo_mado(SHIRYO_JIDOU_NA, k['shiryo'], '答えに添えられた資料',
+                           page=KOMARI_HTML, zen=False)
+    return out
+
+
 def build_kotae(hairu):
     """1つのお悩みにぶら下がる答え。0件なら、棚ごと出しません。"""
     if not hairu:
         return ''
     naka = ''.join(
-        KOTAE_1.format(slug=k['slug'], hon=md_html(k['hon']),
+        KOTAE_1.format(slug=k['slug'], hon=md_html(k['hon']) + kotae_e(k),
                        by=esc_html(sensei_ja(k.get('by') or '') or '答えてくださった先生'),
                        hi=k['d'].strftime('%-m月%-d日'))
         for k in hairu)

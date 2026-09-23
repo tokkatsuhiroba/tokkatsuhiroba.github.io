@@ -661,6 +661,30 @@
         <p class="okuru-kazu" id="kotae-kazu" aria-live="polite">0 / 1000字</p>
       </div>
 
+      <!-- 写真・PDF（2026-09-24 依頼）───────────────────────
+           「この答える時もきっと資料を添付したい人がいるはずだから、
+             実践と同じシステムを入れて」
+           実践を送るところと**同じ仕組み**です（→ tenpu_tsukuru）。
+           ★隠すところも同じ（src/nuru.js）。黒くぬって、拡大もできます。
+           ★置き場も同じ src/bansho/ と src/shiryo/ なので、Actions の
+             「JPEGをWebPにする」「PDFを画像にする」が そのまま効きます。 -->
+      <div class="okuru-g">
+        <label class="okuru-shashin" for="kotae-e">
+          <span class="okuru-shashin-ji">写真・PDFをえらぶ</span>
+          <span class="okuru-shashin-chu">写真4枚まで／PDF1つまで／その場で撮ってもOK<br>
+            <b>隠したいところは、このページの上で消せます</b></span>
+          <input type="file" id="kotae-e" accept="image/*,application/pdf" multiple>
+        </label>
+        <p class="okuru-mihon" id="kotae-mihon" aria-live="polite"></p>
+
+        <div class="kakusu" id="kotae-kakusu" hidden>
+          <p class="kakusu-yomi"><b>隠したいところを、指でなぞってください。</b>
+            なぞった四角が、黒くぬりつぶされます。<br>
+            <b>ぬったものが送られます。</b>元の写真は、どこにも出ていきません。</p>
+          <div id="kotae-kakusu-l"></div>
+        </div>
+      </div>
+
       <div class="okuru-g">
         <label class="okuru-l" for="kotae-na">お名前<span class="okuru-nin">任意</span></label>
         <input class="okuru-i" type="text" id="kotae-na" maxlength="40" autocomplete="name"
@@ -1398,6 +1422,49 @@
     }catch(e){ return false; }   /* しまえなくても、送るのは止めません */
   }
 
+  /* 控えの1件を、あとから書きかえます（2026-09-23 依頼）。
+     なおしたときに、控えの お名前・所属・題も そろえるためです。
+     そろえないと、2回めの［なおす］で 古い名前が出てきます。 */
+  function aikotoba_kakikae(kagi, atai){
+    try{
+      var a = aikotoba_yomu(), kawatta = false;
+      a.forEach(function(h){
+        if(h.k !== kagi) return;
+        for(var k in atai) if(atai.hasOwnProperty(k)) h[k] = atai[k];
+        kawatta = true;
+      });
+      if(kawatta) localStorage.setItem(AIKOTOBA_KAGI, JSON.stringify(a));
+      return kawatta;
+    }catch(e){ return false; }
+  }
+
+  /* ══ お名前と所属を、この端末が覚えます（2026-09-23 依頼）════════
+     「再修正をするときに、名前と所属をもう一度入力しないといけない。
+       一度入力してあるものは覚えておいて」
+     ★覚えるのは **この端末の中（localStorage）だけ**です。合いことばと
+       同じで、どこにも送りません。送るのは［送る］を押したときだけ。
+       原則2（開いても外に1バイトも出ない）は そのままです。
+     ★共用の端末で 前の人の名前が残らないように、欄の下に［消す］を
+       付けます。押せば、覚えているものごと消えます。
+     ★なおすときは、**その1件に控えてある名前**を先に使います。
+       控えの無い古い1件だけ、この端末が覚えているものを使います。 */
+  var NANORI_KAGI = 'tokkatsu-nanori';
+  function nanori_yomu(){
+    try{ return JSON.parse(localStorage.getItem(NANORI_KAGI) || 'null'); }
+    catch(e){ return null; }
+  }
+  function nanori_shimau(n){
+    try{
+      if(!n || !String(n.na || '').trim()) return false;
+      localStorage.setItem(NANORI_KAGI, JSON.stringify(
+        {na: n.na || '', sh: n.sh || '', ko: n.ko ? 1 : 0}));
+      return true;
+    }catch(e){ return false; }   /* 覚えられなくても、送るのは止めません */
+  }
+  function nanori_wasureru(){
+    try{ localStorage.removeItem(NANORI_KAGI); }catch(e){}
+  }
+
   /* ══ 学年の札（2026-09-22）══════════════════════════════
      前は 1〜2年／3〜4年 のまとめ売りの選びでした。実践は「5年でやった」
      ものなので、まとめられると書けません。1年ずつ押せる札にして、
@@ -1517,6 +1584,337 @@
     if(hako && t.checked) hako.classList.remove('okuru-kakunin--yobu');
   });
 
+  /* ══ 添える写真とPDF（2026-09-24）════════════════════════
+     「この答える時もきっと資料を添付したい人がいるはずだから、実践と
+       同じシステムを入れて」。使い手が2つになったので、**1か所**に
+     まとめました。2つ書くと、いつか片方だけ直って、片方から元の写真が
+     漏れます（隠すところは、もともと src/nuru.js で1つにしてあります）。
+     opt … { eIn:ファイルの欄, mihon:えらんだものを出す所,
+             shirase:知らせを出す所, bako:隠す箱, list:塗る面を並べる所 } */
+  function tenpu_tsukuru(opt){
+    var eIn = opt.eIn, mihon = opt.mihon, shirase = opt.shirase;
+  /* 写真は4枚まで（2026-09-23 依頼。2枚 → 4枚）。
+     受け口（板書を受けとる.gs の MAI_MAX）は **6枚**にしてあります。
+     ★ここを 6より多くしてはいけません。受け口は超えたぶんを黙って
+       捨てますし、no-cors なので断られたことが画面に出ません。
+     ★ここを直したら、下の2か所の字も直してください。
+       ・上の案内（「写真4枚まで／PDF1つまで」）
+       ・build.py の訳（日本語・English・العربية の3つ）
+       えらんだあとの知らせは MAI をそのまま出すので、直りません。 */
+  var MAI = 4, KB_MAX = 380;
+
+  /* ★ここで必ず上限に収めます（2026-09-21）。
+     受け口は 400KB を超えた写真を断りますが、返事は読めない（no-cors）ので、
+     画面には「送りました」と出たまま、どこにも残りませんでした。
+     本物の板書の写真は、1400px でも 400KB を超えます。
+     だから 質を落とし、それでもだめなら 小さくして、収まるまで試します。 */
+  var DAN = [[1400, .72], [1400, .60], [1200, .58], [1000, .55], [800, .50]];
+
+  /* 縮めて塗るのも、KBを数えるのも、塗る面（NURU）のものを使います。
+     管理画面（載ったあとに塗るところ）と、同じ1本の道です。 */
+  var kaku  = NURU.kaku;
+  var nanKB = NURU.nanKB;
+  var kotowaru = function(ji){ var e = new Error(ji); e.bansho = true; return e; };
+
+  var chijimeru = function(file){
+    return new Promise(function(ok, dame){
+      var fr = new FileReader();
+      fr.onerror = function(){ dame(kotowaru('写真が読めませんでした。')); };
+      fr.onload = function(){
+        var im = new Image();
+        im.onerror = function(){ dame(kotowaru('画像ではないようです。')); };
+        im.onload = function(){
+          for(var i = 0; i < DAN.length; i++){
+            var uri = kaku(im, DAN[i][0], DAN[i][1], nuri_no(file));
+            if(nanKB(uri) <= KB_MAX) return ok(uri);
+          }
+          dame(kotowaru('写真を小さくしきれませんでした。'
+                      + 'カメラの設定を下げるか、1枚ずつ送ってみてください。'));
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  };
+
+  /* PDFは、そのまま送ります（縮めません）。
+     GitHubに置いたあと、Actions が1ページ＝1枚の画像に変えて、
+     HTMLの中に入れます。PDFのままでは外の閲覧器につながるためです。 */
+  var PDF_MB = 8;
+  var yomu_nama = function(file){
+    return new Promise(function(ok, dame){
+      if(file.size > PDF_MB * 1024 * 1024){
+        return dame(kotowaru('PDFが大きすぎます（' + PDF_MB + 'MBまで）。'));
+      }
+      var fr = new FileReader();
+      fr.onerror = function(){ dame(kotowaru('PDFが読めませんでした。')); };
+      fr.onload = function(){ ok(fr.result); };
+      fr.readAsDataURL(file);
+    });
+  };
+  var pdf_ka = function(f){ return /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name); };
+  var wakeru = function(){
+    var e = [], p = [];
+    [].slice.call(eIn.files).forEach(function(f){
+      if(pdf_ka(f)){ if(p.length < 1) p.push(f); }
+      else if(e.length < MAI){ e.push(f); }
+    });
+    return { e: e, p: p };
+  };
+
+  /* ══ 隠す（2026-09-22）══════════════════════════════
+     送る前に、**このブラウザの中だけ**で塗ります。塗ったものが送られ、
+     元の写真は1バイトも出ていきません。送ってから消すのでは遅いためです
+     （送られた写真は Drive と、公開のリポジトリの両方に残ります）。
+
+     ★塗る面そのものは src/nuru.js（NURU）です。**管理画面（載ったあとに
+       塗るところ）と同じ部品**を使います。隠す道具を2つ持つと、いつか
+       片方だけ直って、もう片方から漏れます。
+     ★四角は 0〜1 の割合。塗るのは「縮めたあと」（→ NURU.kaku）。
+     ★拡大しても、割合は変わりません（→ nuru.js の「拡大」）。    */
+  var kakusuBako = opt.bako;
+  var kakusuList = opt.list;
+  /* 面の画の数。写真は送る大きさ（1400px）と同じにします。小さくすると、
+     拡大したときに、送るものより粗いものを見ながら塗ることになります。
+     ★PDFのページだけは 1000px に落とします。20ページぶんの面を
+       1400px で持つと、それだけで 200MB を超え、スマホが落ちます。
+       送るものの細かさは変わりません（送るときは n.im から作り直すので、
+       面の画の数は「見るため」だけです）。 */
+  var KAKUSU_HABA = 1400, KAKUSU_HABA_PDF = 1000;
+  var nuri = [];
+
+  function nuri_no(file){
+    for(var i = 0; i < nuri.length; i++){
+      if(nuri[i].file === file) return nuri[i].shikaku;
+    }
+    return null;
+  }
+  function nuri_hitotsu(file, na, moto){
+    /* file … 写真のときは File そのもの（あとで見分けるため）。
+              PDFのページのときは null。
+       na   … 画面に出す名前（「1ページめ」など）。
+       moto … 絵のもと。写真なら File、PDFのページなら data URI の字。 */
+    nuri.push(NURU.men({ file: file, na: na, moto: moto, oya: kakusuList,
+                         haba: file ? KAKUSU_HABA : KAKUSU_HABA_PDF }));
+  }
+  function nuri_naraberu(shashin){
+    nuri = [];
+    kakusuList.innerHTML = '';
+    shashin.forEach(function(f){ nuri_hitotsu(f, f.name, f); });
+    kakusuBako.hidden = !nuri.length;
+  }
+  function nuri_kesu(){ nuri_naraberu([]); }
+  /* PDFのページを、写真のうしろに足す */
+  function nuri_pdf_tasu(uri, i, zen){
+    nuri_hitotsu(null, (i + 1) + 'ページめ（ぜんぶで' + zen + 'ページ）', uri);
+    kakusuBako.hidden = false;
+  }
+  function nuri_pdf(){
+    return nuri.filter(function(n){ return n.file === null; });
+  }
+
+  /* ══ PDFを、送る前に塗る（2026-09-22）══════════════════
+     PDFは canvas に描けないので、pdf.js でページを絵にしてから塗ります。
+     塗ったページで**PDFを組み直して**送ります。元のPDFは出ていきません。
+
+     ★道具（pdf.js）は、このページと同じ置き場から取ります。外のCDNは
+       使いません。学校のネットワークは外のCDNを止めていることがよくあり、
+       止められるとPDFが送れなくなるためです。
+     ★PDFを選んだときだけ取りに行きます。読むだけの人は1バイトも読みません。
+     ★読めなかったら、**その場で断ります**。元のPDFをそのまま送ると、
+       塗ったつもりのものが塗られないまま公開に出てしまうためです。 */
+  var PDF_PAGE_MAX = 20;      /* ここまで。Actions の pdftoppm と同じ枚数 */
+  var PDF_HABA = 1400;        /* ページを絵にするときの横はば */
+  var PDF_DAN = [[1400, .72], [1200, .66], [1000, .60], [860, .55]];
+  var PDF_KB_MAX = 450;       /* 1ページ。build.py の SHIRYO_KB_MAX(500) の内がわ */
+  var pdfjs = null;
+
+  function pdfjs_yomu(){
+    if(pdfjs) return Promise.resolve(pdfjs);
+    var moto = location.href.replace(/[^/]*$/, '') + 'pdfjs/';
+    return import(moto + 'pdf.min.js').then(function(m){
+      m.GlobalWorkerOptions.workerSrc = moto + 'pdf.worker.min.js';
+      pdfjs = m;
+      return m;
+    });
+  }
+
+  function pdf_hiraku(file){
+    shirase.textContent = 'PDFをひらいています…';
+    return pdfjs_yomu().then(function(m){
+      return new Promise(function(ok, dame){
+        var fr = new FileReader();
+        fr.onerror = function(){ dame(kotowaru('PDFが読めませんでした。')); };
+        fr.onload = function(){ ok(new Uint8Array(fr.result)); };
+        fr.readAsArrayBuffer(file);
+      }).then(function(bytes){
+        return m.getDocument({data: bytes}).promise;
+      });
+    }).then(function(doc){
+      var zen = Math.min(doc.numPages, PDF_PAGE_MAX), tsugi = Promise.resolve();
+      for(var i = 1; i <= zen; i++){
+        (function(no){
+          tsugi = tsugi.then(function(){
+            return doc.getPage(no).then(function(page){
+              var v1 = page.getViewport({scale: 1});
+              var v = page.getViewport({scale: PDF_HABA / v1.width});
+              var c = document.createElement('canvas');
+              c.width = Math.round(v.width); c.height = Math.round(v.height);
+              return page.render({canvasContext: c.getContext('2d'), viewport: v})
+                         .promise.then(function(){
+                nuri_pdf_tasu(c.toDataURL('image/jpeg', .85), no - 1, zen);
+              });
+            });
+          });
+        })(i);
+      }
+      return tsugi.then(function(){
+        shirase.textContent = 'PDFを ' + zen + 'ページ ひらきました。'
+          + (doc.numPages > zen ? '（' + PDF_PAGE_MAX + 'ページめまでです）' : '')
+          + ' 隠したいところを なぞってください。';
+      });
+    })['catch'](function(err){
+      eIn.value = ''; nuri_kesu(); mihon.textContent = '';
+      shirase.textContent = 'このPDFは、ひらけませんでした（'
+        + ((err && (err.message || err.name)) || '理由不明') + '）。'
+        + '隠せないPDFは送れません。写真にしてから送ってください。';
+    });
+  }
+
+  /* ══ 塗ったページから、PDFを組み直す ══════════════════
+     中身は「JPEGを1枚ずつ貼っただけのPDF」です。だから、いちばん簡単な
+     作りで足ります（JPEGは DCTDecode として、そのまま入れられます）。
+     外の道具は使いません。
+
+     ★どこに何バイトめから書いたか（xref）を1バイトでも間違えると、
+       Actions の pdftoppm が開けません。だから位置は、書きながら
+       その場で数えます（あとから数え直さない）。 */
+  function pdf_kumu(pages){
+    var enc = new TextEncoder();
+    var kake = [], nagasa = 0;
+    var kaku_ji = function(t){ var b = enc.encode(t); kake.push(b); nagasa += b.length; };
+    var kaku_nama = function(b){ kake.push(b); nagasa += b.length; };
+    var ichi = [0];                                  /* 物の位置。0番は使いません */
+    var hajimeru = function(){ ichi.push(nagasa); return ichi.length - 1; };
+
+    kaku_ji('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    var kodomo = [], mono = [];
+    pages.forEach(function(p){
+      var im = hajimeru();
+      kaku_ji(im + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + p.w
+            + ' /Height ' + p.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8'
+            + ' /Filter /DCTDecode /Length ' + p.b.length + ' >>\nstream\n');
+      kaku_nama(p.b);
+      kaku_ji('\nendstream\nendobj\n');
+      /* 紙の大きさは、絵の画そのものの数ではなく **A4の横はば** にそろえます。
+         画の数（1400など）をそのまま紙の大きさにすると、13インチの紙に
+         なってしまい、Actions の pdftoppm が とんでもなく大きな画像を作ります。
+         絵は、その紙いっぱいに敷きます（細かさは落ちません）。 */
+      var mw = 595, mh = Math.round(595 * p.h / p.w);
+      var naka = 'q ' + mw + ' 0 0 ' + mh + ' 0 0 cm /Im0 Do Q\n';
+      var ct = hajimeru();
+      kaku_ji(ct + ' 0 obj\n<< /Length ' + enc.encode(naka).length + ' >>\nstream\n'
+            + naka + 'endstream\nendobj\n');
+      mono.push({im: im, ct: ct, w: mw, h: mh});
+    });
+    var oya = ichi.length + mono.length;             /* Pages は、ページのあとに置きます */
+    mono.forEach(function(x){
+      var pg = hajimeru();
+      kaku_ji(pg + ' 0 obj\n<< /Type /Page /Parent ' + oya + ' 0 R'
+            + ' /MediaBox [0 0 ' + x.w + ' ' + x.h + ']'
+            + ' /Resources << /XObject << /Im0 ' + x.im + ' 0 R >> >>'
+            + ' /Contents ' + x.ct + ' 0 R >>\nendobj\n');
+      kodomo.push(pg + ' 0 R');
+    });
+    var oya2 = hajimeru();
+    kaku_ji(oya2 + ' 0 obj\n<< /Type /Pages /Count ' + kodomo.length
+          + ' /Kids [' + kodomo.join(' ') + '] >>\nendobj\n');
+    var moto = hajimeru();
+    kaku_ji(moto + ' 0 obj\n<< /Type /Catalog /Pages ' + oya2 + ' 0 R >>\nendobj\n');
+
+    var xref = nagasa;
+    var gyo = ['xref\n0 ' + ichi.length + '\n0000000000 65535 f \n'];
+    for(var i = 1; i < ichi.length; i++){
+      gyo.push(('0000000000' + ichi[i]).slice(-10) + ' 00000 n \n');
+    }
+    kaku_ji(gyo.join(''));
+    kaku_ji('trailer\n<< /Size ' + ichi.length + ' /Root ' + moto
+          + ' 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+
+    var zen = new Uint8Array(nagasa), i2 = 0;
+    kake.forEach(function(b){ zen.set(b, i2); i2 += b.length; });
+    return zen;
+  }
+
+  /* 塗ったページを、JPEGのバイトにして返します（上限に収まるまで質を落とす）。
+     ★大きさは kaku() と同じ数え方でそろえます。ここがずれると、
+       PDFの中の紙の大きさと絵の大きさが合わず、絵が伸びます。 */
+  function pdf_ookisa(im, hen){
+    var r = Math.min(1, hen / Math.max(im.width, im.height));
+    return { w: Math.round(im.width * r), h: Math.round(im.height * r) };
+  }
+  function pdf_pages(){
+    return nuri_pdf().map(function(n){
+      for(var i = 0; i < PDF_DAN.length; i++){
+        var uri = kaku(n.im, PDF_DAN[i][0], PDF_DAN[i][1], n.shikaku);
+        if(nanKB(uri) <= PDF_KB_MAX || i === PDF_DAN.length - 1){
+          var nama = atob(uri.slice(uri.indexOf(',') + 1));
+          var b = new Uint8Array(nama.length);
+          for(var j = 0; j < nama.length; j++) b[j] = nama.charCodeAt(j);
+          var o = pdf_ookisa(n.im, PDF_DAN[i][0]);
+          return { b: b, w: o.w, h: o.h };
+        }
+      }
+    });
+  }
+  /* Uint8Array → base64（大きいので、少しずつ字にします） */
+  function pdf_b64(u8){
+    var ji = '', n = 0x8000;
+    for(var i = 0; i < u8.length; i += n){
+      ji += String.fromCharCode.apply(null, u8.subarray(i, i + n));
+    }
+    return btoa(ji);
+  }
+
+  eIn.addEventListener('change', function(){
+    var w = wakeru(), n = eIn.files.length, ji = [];
+    if(w.e.length) ji.push('写真' + w.e.length + '枚');
+    if(w.p.length) ji.push('PDF1つ');
+    nuri_naraberu(w.e);
+    if(!n){ mihon.textContent = ''; return; }
+    mihon.textContent = ji.join('と') + 'をえらびました'
+      + (n > w.e.length + w.p.length ? '（写真' + MAI + '枚・PDF1つまでです）' : '');
+    if(w.p.length) pdf_hiraku(w.p[0]);
+  });
+
+
+    return {
+      wakeru: wakeru,
+      /* えらんだものを ぜんぶ捨てます（送ったあと・やめたとき） */
+      kesu: function(){
+        try{ eIn.value = ''; }catch(e){}
+        nuri_kesu(); mihon.textContent = '';
+      },
+      /* ひらけたPDFのページ数。0なら「ひらけなかった」ということです */
+      pdf_mai: function(){ return nuri_pdf().length; },
+      /* 送る形にまとめます。写真は収まるまで小さくして塗り、PDFは
+         **塗ったページから組み直します**（元のPDFは出ていきません）。 */
+      matomeru: function(){
+        var w = wakeru();
+        var pdfP = w.p.length
+          ? Promise.resolve().then(function(){
+              /* 受け口は data URI で受けます（板書を受けとる.gs の _dataURI_pdf） */
+              return 'data:application/pdf;base64,' + pdf_b64(pdf_kumu(pdf_pages()));
+            })
+          : null;
+        return Promise.all(w.e.map(chijimeru).concat(pdfP ? [pdfP] : []))
+          .then(function(zen){
+            return { e: zen.slice(0, w.e.length), p: zen.slice(w.e.length) };
+          });
+      }
+    };
+  }
+
   var okuruF = document.getElementById('okuru-f');
   if(okuruF){
     if(!OKURU_URL){
@@ -1528,49 +1926,13 @@
       var mihon = document.getElementById('okuru-mihon');
       var shirase = document.getElementById('okuru-shirase');
       var botan = document.getElementById('okuru-b');
-      /* 写真は4枚まで（2026-09-23 依頼。2枚 → 4枚）。
-         受け口（板書を受けとる.gs の MAI_MAX）は **6枚**にしてあります。
-         ★ここを 6より多くしてはいけません。受け口は超えたぶんを黙って
-           捨てますし、no-cors なので断られたことが画面に出ません。
-         ★ここを直したら、下の2か所の字も直してください。
-           ・上の案内（「写真4枚まで／PDF1つまで」）
-           ・build.py の訳（日本語・English・العربية の3つ）
-           えらんだあとの知らせは MAI をそのまま出すので、直りません。 */
-      var MAI = 4, KB_MAX = 380;
-
-      /* ★ここで必ず上限に収めます（2026-09-21）。
-         受け口は 400KB を超えた写真を断りますが、返事は読めない（no-cors）ので、
-         画面には「送りました」と出たまま、どこにも残りませんでした。
-         本物の板書の写真は、1400px でも 400KB を超えます。
-         だから 質を落とし、それでもだめなら 小さくして、収まるまで試します。 */
-      var DAN = [[1400, .72], [1400, .60], [1200, .58], [1000, .55], [800, .50]];
-
-      /* 縮めて塗るのも、KBを数えるのも、塗る面（NURU）のものを使います。
-         管理画面（載ったあとに塗るところ）と、同じ1本の道です。 */
-      var kaku  = NURU.kaku;
-      var nanKB = NURU.nanKB;
-      var kotowaru = function(ji){ var e = new Error(ji); e.bansho = true; return e; };
-
-      var chijimeru = function(file){
-        return new Promise(function(ok, dame){
-          var fr = new FileReader();
-          fr.onerror = function(){ dame(kotowaru('写真が読めませんでした。')); };
-          fr.onload = function(){
-            var im = new Image();
-            im.onerror = function(){ dame(kotowaru('画像ではないようです。')); };
-            im.onload = function(){
-              for(var i = 0; i < DAN.length; i++){
-                var uri = kaku(im, DAN[i][0], DAN[i][1], nuri_no(file));
-                if(nanKB(uri) <= KB_MAX) return ok(uri);
-              }
-              dame(kotowaru('写真を小さくしきれませんでした。'
-                          + 'カメラの設定を下げるか、1枚ずつ送ってみてください。'));
-            };
-            im.src = fr.result;
-          };
-          fr.readAsDataURL(file);
-        });
-      };
+      /* 写真とPDFの世話は、まとめたものに任せます（→ tenpu_tsukuru）。
+         お悩みに答えるフォームも、同じものを使います。 */
+      var tenpu = tenpu_tsukuru({
+        eIn: eIn, mihon: mihon, shirase: shirase,
+        bako: document.getElementById('okuru-kakusu'),
+        list: document.getElementById('okuru-kakusu-l')
+      });
 
       var gakunen = nen_fuda('okuru-gn'), nen = gakunen.yomu, nen_kesu = gakunen.kesu;
       /* 2026-09-23 依頼：内容を **押す札6つ → プルダウン** に戻しました。
@@ -1614,6 +1976,15 @@
         gakunen.ireru(n.g || '');
         var n6 = NAIYO_SCENE[String(n.s || '').trim()];
         if(n6) naiyo.ireru(n6);
+        /* お名前・所属・「名前を出してよい」の印（2026-09-23 依頼）。
+           この3つだけ、公開ページの札に載っていません（所属は出さないと
+           約束しているためです）。だから、なおすたびに空でした。
+           ★その1件の控え（合いことばと一緒にしまってあるもの）が先。
+           ★控えの無い古い1件は、この端末が覚えているものを入れます。
+           ★管理画面から来たときは入れません。送り主の名前を、
+             管理人の名前で上書きしてしまうためです。 */
+        nanori_ireru((n.na || n.sh || n.ko) ? {na: n.na, sh: n.sh, ko: n.ko}
+                                            : (n.kanri ? null : nanori_yomu()), false);
         botan.innerHTML = 'なおす<span class="btn-ya">→</span>';
         var shirase2 = document.createElement('p');
         shirase2.className = 'naoshi-obi';
@@ -1626,6 +1997,36 @@
         var chu = document.querySelector('.okuru-shashin-chu');
         if(chu) chu.innerHTML = '<b>写真はそのままでよければ、えらばなくて大丈夫です</b><br>'
                               + 'えらぶと、いまの写真と入れかわります';
+      }
+
+      /* お名前・所属・印を、欄に入れます（2026-09-23 依頼）。
+         shirasu が true のときだけ、欄の下に「まえに書いたものです」と
+         出して、［消す］を添えます（なおすときは、その1件のものなので
+         知らせません。知らせると、直しているのに前の話に見えます）。 */
+      function nanori_ireru(n, shirasu){
+        var naI = document.getElementById('okuru-na');
+        var shI = document.getElementById('okuru-sh');
+        var koI = document.getElementById('okuru-ko');
+        if(!n || !naI) return;
+        naI.value = n.na || '';
+        if(shI) shI.value = n.sh || '';
+        if(koI) koI.checked = !!n.ko;
+        if(!shirasu || !naI.value) return;
+        var oya = naI.parentNode;
+        if(!oya || document.getElementById('okuru-nanori')) return;
+        var p = document.createElement('p');
+        p.className = 'okuru-yomi okuru-yomi--sub okuru-nanori';
+        p.id = 'okuru-nanori';
+        p.innerHTML = '<span></span><button type="button" class="bansho-b">消す</button>';
+        p.querySelector('span').textContent =
+          'まえに この端末で書いたお名前と所属を入れてあります。ちがえば、書きかえてください。';
+        p.querySelector('button').addEventListener('click', function(){
+          nanori_wasureru();
+          nanori_ireru({na: '', sh: '', ko: 0}, false);
+          p.parentNode.removeChild(p);
+          naI.focus();
+        });
+        oya.appendChild(p);
       }
 
       var OSHI_SHIRUSHI = '★推しポイント：';
@@ -1764,264 +2165,18 @@
         o_kazoeru();
       }
 
-      /* PDFは、そのまま送ります（縮めません）。
-         GitHubに置いたあと、Actions が1ページ＝1枚の画像に変えて、
-         HTMLの中に入れます。PDFのままでは外の閲覧器につながるためです。 */
-      var PDF_MB = 8;
-      var yomu_nama = function(file){
-        return new Promise(function(ok, dame){
-          if(file.size > PDF_MB * 1024 * 1024){
-            return dame(kotowaru('PDFが大きすぎます（' + PDF_MB + 'MBまで）。'));
-          }
-          var fr = new FileReader();
-          fr.onerror = function(){ dame(kotowaru('PDFが読めませんでした。')); };
-          fr.onload = function(){ ok(fr.result); };
-          fr.readAsDataURL(file);
-        });
-      };
-      var pdf_ka = function(f){ return /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name); };
-      var wakeru = function(){
-        var e = [], p = [];
-        [].slice.call(eIn.files).forEach(function(f){
-          if(pdf_ka(f)){ if(p.length < 1) p.push(f); }
-          else if(e.length < MAI){ e.push(f); }
-        });
-        return { e: e, p: p };
-      };
-
-      /* ══ 隠す（2026-09-22）══════════════════════════════
-         送る前に、**このブラウザの中だけ**で塗ります。塗ったものが送られ、
-         元の写真は1バイトも出ていきません。送ってから消すのでは遅いためです
-         （送られた写真は Drive と、公開のリポジトリの両方に残ります）。
-
-         ★塗る面そのものは src/nuru.js（NURU）です。**管理画面（載ったあとに
-           塗るところ）と同じ部品**を使います。隠す道具を2つ持つと、いつか
-           片方だけ直って、もう片方から漏れます。
-         ★四角は 0〜1 の割合。塗るのは「縮めたあと」（→ NURU.kaku）。
-         ★拡大しても、割合は変わりません（→ nuru.js の「拡大」）。    */
-      var kakusuBako = document.getElementById('okuru-kakusu');
-      var kakusuList = document.getElementById('okuru-kakusu-l');
-      /* 面の画の数。写真は送る大きさ（1400px）と同じにします。小さくすると、
-         拡大したときに、送るものより粗いものを見ながら塗ることになります。
-         ★PDFのページだけは 1000px に落とします。20ページぶんの面を
-           1400px で持つと、それだけで 200MB を超え、スマホが落ちます。
-           送るものの細かさは変わりません（送るときは n.im から作り直すので、
-           面の画の数は「見るため」だけです）。 */
-      var KAKUSU_HABA = 1400, KAKUSU_HABA_PDF = 1000;
-      var nuri = [];
-
-      function nuri_no(file){
-        for(var i = 0; i < nuri.length; i++){
-          if(nuri[i].file === file) return nuri[i].shikaku;
-        }
-        return null;
-      }
-      function nuri_hitotsu(file, na, moto){
-        /* file … 写真のときは File そのもの（あとで見分けるため）。
-                  PDFのページのときは null。
-           na   … 画面に出す名前（「1ページめ」など）。
-           moto … 絵のもと。写真なら File、PDFのページなら data URI の字。 */
-        nuri.push(NURU.men({ file: file, na: na, moto: moto, oya: kakusuList,
-                             haba: file ? KAKUSU_HABA : KAKUSU_HABA_PDF }));
-      }
-      function nuri_naraberu(shashin){
-        nuri = [];
-        kakusuList.innerHTML = '';
-        shashin.forEach(function(f){ nuri_hitotsu(f, f.name, f); });
-        kakusuBako.hidden = !nuri.length;
-      }
-      function nuri_kesu(){ nuri_naraberu([]); }
-      /* PDFのページを、写真のうしろに足す */
-      function nuri_pdf_tasu(uri, i, zen){
-        nuri_hitotsu(null, (i + 1) + 'ページめ（ぜんぶで' + zen + 'ページ）', uri);
-        kakusuBako.hidden = false;
-      }
-      function nuri_pdf(){
-        return nuri.filter(function(n){ return n.file === null; });
-      }
-
-      /* ══ PDFを、送る前に塗る（2026-09-22）══════════════════
-         PDFは canvas に描けないので、pdf.js でページを絵にしてから塗ります。
-         塗ったページで**PDFを組み直して**送ります。元のPDFは出ていきません。
-
-         ★道具（pdf.js）は、このページと同じ置き場から取ります。外のCDNは
-           使いません。学校のネットワークは外のCDNを止めていることがよくあり、
-           止められるとPDFが送れなくなるためです。
-         ★PDFを選んだときだけ取りに行きます。読むだけの人は1バイトも読みません。
-         ★読めなかったら、**その場で断ります**。元のPDFをそのまま送ると、
-           塗ったつもりのものが塗られないまま公開に出てしまうためです。 */
-      var PDF_PAGE_MAX = 20;      /* ここまで。Actions の pdftoppm と同じ枚数 */
-      var PDF_HABA = 1400;        /* ページを絵にするときの横はば */
-      var PDF_DAN = [[1400, .72], [1200, .66], [1000, .60], [860, .55]];
-      var PDF_KB_MAX = 450;       /* 1ページ。build.py の SHIRYO_KB_MAX(500) の内がわ */
-      var pdfjs = null;
-
-      function pdfjs_yomu(){
-        if(pdfjs) return Promise.resolve(pdfjs);
-        var moto = location.href.replace(/[^/]*$/, '') + 'pdfjs/';
-        return import(moto + 'pdf.min.js').then(function(m){
-          m.GlobalWorkerOptions.workerSrc = moto + 'pdf.worker.min.js';
-          pdfjs = m;
-          return m;
-        });
-      }
-
-      function pdf_hiraku(file){
-        shirase.textContent = 'PDFをひらいています…';
-        return pdfjs_yomu().then(function(m){
-          return new Promise(function(ok, dame){
-            var fr = new FileReader();
-            fr.onerror = function(){ dame(kotowaru('PDFが読めませんでした。')); };
-            fr.onload = function(){ ok(new Uint8Array(fr.result)); };
-            fr.readAsArrayBuffer(file);
-          }).then(function(bytes){
-            return m.getDocument({data: bytes}).promise;
-          });
-        }).then(function(doc){
-          var zen = Math.min(doc.numPages, PDF_PAGE_MAX), tsugi = Promise.resolve();
-          for(var i = 1; i <= zen; i++){
-            (function(no){
-              tsugi = tsugi.then(function(){
-                return doc.getPage(no).then(function(page){
-                  var v1 = page.getViewport({scale: 1});
-                  var v = page.getViewport({scale: PDF_HABA / v1.width});
-                  var c = document.createElement('canvas');
-                  c.width = Math.round(v.width); c.height = Math.round(v.height);
-                  return page.render({canvasContext: c.getContext('2d'), viewport: v})
-                             .promise.then(function(){
-                    nuri_pdf_tasu(c.toDataURL('image/jpeg', .85), no - 1, zen);
-                  });
-                });
-              });
-            })(i);
-          }
-          return tsugi.then(function(){
-            shirase.textContent = 'PDFを ' + zen + 'ページ ひらきました。'
-              + (doc.numPages > zen ? '（' + PDF_PAGE_MAX + 'ページめまでです）' : '')
-              + ' 隠したいところを なぞってください。';
-          });
-        })['catch'](function(err){
-          eIn.value = ''; nuri_kesu(); mihon.textContent = '';
-          shirase.textContent = 'このPDFは、ひらけませんでした（'
-            + ((err && (err.message || err.name)) || '理由不明') + '）。'
-            + '隠せないPDFは送れません。写真にしてから送ってください。';
-        });
-      }
-
-      /* ══ 塗ったページから、PDFを組み直す ══════════════════
-         中身は「JPEGを1枚ずつ貼っただけのPDF」です。だから、いちばん簡単な
-         作りで足ります（JPEGは DCTDecode として、そのまま入れられます）。
-         外の道具は使いません。
-
-         ★どこに何バイトめから書いたか（xref）を1バイトでも間違えると、
-           Actions の pdftoppm が開けません。だから位置は、書きながら
-           その場で数えます（あとから数え直さない）。 */
-      function pdf_kumu(pages){
-        var enc = new TextEncoder();
-        var kake = [], nagasa = 0;
-        var kaku_ji = function(t){ var b = enc.encode(t); kake.push(b); nagasa += b.length; };
-        var kaku_nama = function(b){ kake.push(b); nagasa += b.length; };
-        var ichi = [0];                                  /* 物の位置。0番は使いません */
-        var hajimeru = function(){ ichi.push(nagasa); return ichi.length - 1; };
-
-        kaku_ji('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
-        var kodomo = [], mono = [];
-        pages.forEach(function(p){
-          var im = hajimeru();
-          kaku_ji(im + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + p.w
-                + ' /Height ' + p.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8'
-                + ' /Filter /DCTDecode /Length ' + p.b.length + ' >>\nstream\n');
-          kaku_nama(p.b);
-          kaku_ji('\nendstream\nendobj\n');
-          /* 紙の大きさは、絵の画そのものの数ではなく **A4の横はば** にそろえます。
-             画の数（1400など）をそのまま紙の大きさにすると、13インチの紙に
-             なってしまい、Actions の pdftoppm が とんでもなく大きな画像を作ります。
-             絵は、その紙いっぱいに敷きます（細かさは落ちません）。 */
-          var mw = 595, mh = Math.round(595 * p.h / p.w);
-          var naka = 'q ' + mw + ' 0 0 ' + mh + ' 0 0 cm /Im0 Do Q\n';
-          var ct = hajimeru();
-          kaku_ji(ct + ' 0 obj\n<< /Length ' + enc.encode(naka).length + ' >>\nstream\n'
-                + naka + 'endstream\nendobj\n');
-          mono.push({im: im, ct: ct, w: mw, h: mh});
-        });
-        var oya = ichi.length + mono.length;             /* Pages は、ページのあとに置きます */
-        mono.forEach(function(x){
-          var pg = hajimeru();
-          kaku_ji(pg + ' 0 obj\n<< /Type /Page /Parent ' + oya + ' 0 R'
-                + ' /MediaBox [0 0 ' + x.w + ' ' + x.h + ']'
-                + ' /Resources << /XObject << /Im0 ' + x.im + ' 0 R >> >>'
-                + ' /Contents ' + x.ct + ' 0 R >>\nendobj\n');
-          kodomo.push(pg + ' 0 R');
-        });
-        var oya2 = hajimeru();
-        kaku_ji(oya2 + ' 0 obj\n<< /Type /Pages /Count ' + kodomo.length
-              + ' /Kids [' + kodomo.join(' ') + '] >>\nendobj\n');
-        var moto = hajimeru();
-        kaku_ji(moto + ' 0 obj\n<< /Type /Catalog /Pages ' + oya2 + ' 0 R >>\nendobj\n');
-
-        var xref = nagasa;
-        var gyo = ['xref\n0 ' + ichi.length + '\n0000000000 65535 f \n'];
-        for(var i = 1; i < ichi.length; i++){
-          gyo.push(('0000000000' + ichi[i]).slice(-10) + ' 00000 n \n');
-        }
-        kaku_ji(gyo.join(''));
-        kaku_ji('trailer\n<< /Size ' + ichi.length + ' /Root ' + moto
-              + ' 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
-
-        var zen = new Uint8Array(nagasa), i2 = 0;
-        kake.forEach(function(b){ zen.set(b, i2); i2 += b.length; });
-        return zen;
-      }
-
-      /* 塗ったページを、JPEGのバイトにして返します（上限に収まるまで質を落とす）。
-         ★大きさは kaku() と同じ数え方でそろえます。ここがずれると、
-           PDFの中の紙の大きさと絵の大きさが合わず、絵が伸びます。 */
-      function pdf_ookisa(im, hen){
-        var r = Math.min(1, hen / Math.max(im.width, im.height));
-        return { w: Math.round(im.width * r), h: Math.round(im.height * r) };
-      }
-      function pdf_pages(){
-        return nuri_pdf().map(function(n){
-          for(var i = 0; i < PDF_DAN.length; i++){
-            var uri = kaku(n.im, PDF_DAN[i][0], PDF_DAN[i][1], n.shikaku);
-            if(nanKB(uri) <= PDF_KB_MAX || i === PDF_DAN.length - 1){
-              var nama = atob(uri.slice(uri.indexOf(',') + 1));
-              var b = new Uint8Array(nama.length);
-              for(var j = 0; j < nama.length; j++) b[j] = nama.charCodeAt(j);
-              var o = pdf_ookisa(n.im, PDF_DAN[i][0]);
-              return { b: b, w: o.w, h: o.h };
-            }
-          }
-        });
-      }
-      /* Uint8Array → base64（大きいので、少しずつ字にします） */
-      function pdf_b64(u8){
-        var ji = '', n = 0x8000;
-        for(var i = 0; i < u8.length; i += n){
-          ji += String.fromCharCode.apply(null, u8.subarray(i, i + n));
-        }
-        return btoa(ji);
-      }
 
       /* ★外がわで持ちます。送るときの中（then の中）で var すると、
            したくをするここからは見えません（2026-09-22 実測で踏みました）。 */
       var naoshi = naoshi_ima();
       if(naoshi) naoshi_shitaku(naoshi);
-
-      eIn.addEventListener('change', function(){
-        var w = wakeru(), n = eIn.files.length, ji = [];
-        if(w.e.length) ji.push('写真' + w.e.length + '枚');
-        if(w.p.length) ji.push('PDF1つ');
-        nuri_naraberu(w.e);
-        if(!n){ mihon.textContent = ''; return; }
-        mihon.textContent = ji.join('と') + 'をえらびました'
-          + (n > w.e.length + w.p.length ? '（写真' + MAI + '枚・PDF1つまでです）' : '');
-        if(w.p.length) pdf_hiraku(w.p[0]);
-      });
+      /* なおすのでなければ、この端末が覚えているお名前を入れます
+         （2026-09-23 依頼）。2件めからは、書かなくて済みます。 */
+      else nanori_ireru(nanori_yomu(), true);
 
       okuruF.addEventListener('submit', function(ev){
         ev.preventDefault();
-        var w = wakeru();
+        var w = tenpu.wakeru();
         if(!naoshi && !w.e.length && !w.p.length){
           shirase.textContent = '写真かPDFを1つえらんでください。'; return;
         }
@@ -2053,7 +2208,7 @@
         }
         /* PDFを選んだのに、ページが1枚も出ていない＝ひらけなかった、ということ。
            そのまま送ると、塗られていないPDFが公開に出ます。ここで止めます。 */
-        if(w.p.length && !nuri_pdf().length){
+        if(w.p.length && !tenpu.pdf_mai()){
           shirase.textContent = 'PDFがひらけていません。'
             + '隠せないPDFは送れないので、写真にしてから送ってください。';
           return;
@@ -2088,22 +2243,12 @@
         /* 合いことばを1つ作って、ハッシュだけを添えます（2026-09-22 夜）。
            これが無いと、あとから自分の1件を消せません。 */
         var aikotoba = aikotoba_tsukuru(), nushi = '';
-        var pdf_okuru = w.p.length
-          ? Promise.resolve().then(function(){
-              /* 受け口は data URI で受けます（板書を受けとる.gs の _dataURI_pdf）。
-                 だから、そちらは1行も触らずに済みます。 */
-              return 'data:application/pdf;base64,' + pdf_b64(pdf_kumu(pdf_pages()));
-            })
-          : null;
-        Promise.all([aikotoba_hash(aikotoba)]
-                    .concat(w.e.map(chijimeru))
-                    .concat(pdf_okuru ? [pdf_okuru] : []))
+        Promise.all([aikotoba_hash(aikotoba), tenpu.matomeru()])
         .then(function(zen){
           nushi = zen[0];          /* ★外がわで var してあります。ここで var を
                                       書くと、送れたあとの「しまう」ところから
                                       見えません（2026-09-22 実測で踏みました） */
-          zen = zen.slice(1);
-          var e = zen.slice(0, w.e.length), p = zen.slice(w.e.length);
+          var e = zen[1].e, p = zen[1].p;
           shirase.textContent = '送っています…';
           return fetch(OKURU_URL, {
             method: 'POST',
@@ -2142,18 +2287,34 @@
             })
           });
         }).then(function(){
+          /* 送れたお名前・所属・印を、この端末に覚えます（2026-09-23 依頼）。
+             次に送るときも、なおすときも、もう書かなくて済みます。
+             ★この端末の中だけです。どこにも送りません。
+             ★管理画面から直しているときは覚えません（送り主の名前です）。
+             ★reset() のまえに読みます。あとだと空になります。 */
+          var dai  = document.getElementById('okuru-t').value.trim();
+          var mina = {
+            na: naIn.value.trim().slice(0, 40),
+            sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
+            ko: document.getElementById('okuru-ko').checked ? 1 : 0
+          };
+          if(!(naoshi && naoshi.kanri)) nanori_shimau(mina);
           if(naoshi){
             /* なおしたときは、合いことばを新しく作りません（もとのままです）。
-               控えを足すと、同じ1件が2つ並んでしまいます。 */
+               控えを足すと、同じ1件が2つ並んでしまいます。
+               ★控えの中身だけ、いまの字にそろえます。そろえないと、
+                 2回めの［なおす］で 古い名前と題が出てきます。 */
+            if(naoshi.key) aikotoba_kakikae(naoshi.key,
+              {t: dai, na: mina.na, sh: mina.sh, ko: mina.ko});
             try{ sessionStorage.removeItem(NAOSHI_KAGI); }catch(e){}
             shirase.textContent = 'なおしました。数分で「みんなの実践」に出ます。';
             botan.disabled = false;
             return;
           }
-          var dai = document.getElementById('okuru-t').value.trim();
           var shimaeta = nushi && aikotoba_shimau(
-            {k: aikotoba, n: nushi, t: dai, d: new Date().toISOString().slice(0, 10)});
-          okuruF.reset(); mihon.textContent = ''; nen_kesu(); nuri_kesu(); naiyo.kesu();
+            {k: aikotoba, n: nushi, t: dai, d: new Date().toISOString().slice(0, 10),
+             na: mina.na, sh: mina.sh, ko: mina.ko});
+          okuruF.reset(); tenpu.kesu(); nen_kesu(); naiyo.kesu();
           if(kazu) kazu.textContent = '0 / 1000字';
           if(uShirase) uShirase.textContent = '';
           shirase.textContent = '送りました。数分で「みんなの実践」に出ます。';
@@ -2229,7 +2390,11 @@
                   ken: f.getAttribute('data-ken') || '',
                   shk: f.getAttribute('data-shi') || '',
                   u: f.getAttribute('data-shiryo') || '',
-                  m: f.getAttribute('data-hon') || ''
+                  m: f.getAttribute('data-hon') || '',
+                  /* お名前・所属・印は、札に載っていません（所属はサイトに
+                     出さないと約束しているためです）。だから、送ったときの
+                     控えから持っていきます（2026-09-23 依頼）。 */
+                  na: h.na || '', sh: h.sh || '', ko: h.ko ? 1 : 0
                 }));
                 location.href = 'index.html#okuru';
               }catch(e){
@@ -3670,6 +3835,15 @@
     var aShirase = document.getElementById('kotae-shirase');
     var aBotan = document.getElementById('kotae-b');
     var aIma = null;              /* いま答えている相手（お悩みの名前） */
+    /* 写真とPDFは、実践を送るところと**同じもの**を使います（2026-09-24 依頼）。
+       隠す・拡大・小さくする・PDFを組み直す、ぜんぶ同じ道です。 */
+    var aTenpu = tenpu_tsukuru({
+      eIn: document.getElementById('kotae-e'),
+      mihon: document.getElementById('kotae-mihon'),
+      shirase: aShirase,
+      bako: document.getElementById('kotae-kakusu'),
+      list: document.getElementById('kotae-kakusu-l')
+    });
 
     aM.addEventListener('input', function(){
       aKazu.textContent = aM.value.length + ' / 1000字';
@@ -3677,6 +3851,7 @@
 
     var aTojiru = function(){
       kotaeF.hidden = true; aIma = null; aShirase.textContent = '';
+      aTenpu.kesu();
     };
     document.getElementById('kotae-yameru').addEventListener('click', aTojiru);
 
@@ -3709,16 +3884,27 @@
         aMita.focus();
         return;
       }
+      /* PDFを選んだのに、ページが1枚も出ていない＝ひらけなかった、ということ。
+         そのまま送ると、塗られていないPDFが公開に出ます。ここで止めます。 */
+      var aW = aTenpu.wakeru();
+      if(aW.p.length && !aTenpu.pdf_mai()){
+        aShirase.textContent = 'PDFがひらけていません。'
+          + '隠せないPDFは送れないので、写真にしてから送ってください。';
+        return;
+      }
       aBotan.disabled = true;
+      aShirase.textContent = (aW.e.length || aW.p.length) ? '小さくしています…' : '送っています…';
+      var aAi = aikotoba_tsukuru(), aNushi = '';
+      Promise.all([aikotoba_hash(aAi), aTenpu.matomeru()]).then(function(zen){
+      aNushi = zen[0];
       aShirase.textContent = '送っています…';
-      var aAi = aikotoba_tsukuru();
-      aikotoba_hash(aAi).then(function(aNushi){
       return fetch(OKURU_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: JSON.stringify({ kind: 'kotae', nushi: aNushi, toi: aIma,
                                m: m.slice(0, 1000),
+                               e: zen[1].e, p: zen[1].p,
                                na: aNa.value.trim().slice(0, 40),
                                sh: aSh.value.trim().slice(0, 60),
                                ko: aKo.checked ? 1 : 0 })
@@ -3727,7 +3913,7 @@
           {k: aAi, n: aNushi, t: '答え（' + (aToi.textContent || 'お悩み') + '）',
            d: new Date().toISOString().slice(0, 10)});
         var dai = aToi.textContent;
-        kotaeF.reset(); aKazu.textContent = '0 / 1000字';
+        kotaeF.reset(); aTenpu.kesu(); aKazu.textContent = '0 / 1000字';
         aShirase.textContent = '送りました。数分で、このお悩みの下に出ます。';
         aikotoba_miseru(aAi, shimaeta);
         aToi.textContent = dai;

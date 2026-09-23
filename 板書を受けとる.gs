@@ -325,11 +325,61 @@ function _kotae_okuru(d) {
   }
   if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
 
+  /* 添えられた写真とPDF（2026-09-24 依頼）。実践と**同じ置き場**に入れます
+     （src/bansho/<slug>/ と src/shiryo/<slug>/）。同じ場所にすると、Actions の
+     「JPEGをWebPにする」「PDFを画像にする」が、何も足さずにそのまま効きます。
+     ★順番は なおすときと同じです。**先に ぜんぶ検めます**。
+       途中で断ると、置きかけのフォルダだけが残るためです。 */
+  var shashin = (d.e || []).slice(0, MAI_MAX);
+  var pdfs    = (d.p || []).slice(0, 1);
   var slug = _slug('kotae');
+  var uri = [];
+  for (var i = 0; i < shashin.length; i++) {
+    var b = _dataURI(shashin[i]);
+    if (!b) return _kotae({ ok: false, riyu: '写真の形が読めません' });
+    var shippo = _shippo(b);
+    if (!shippo) {
+      return _kotae({ ok: false, riyu: 'この形の写真は受けとれません（JPEG・PNG・WebPだけ）' });
+    }
+    if (b.getBytes().length > KB_MAX * 1024) {
+      return _kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
+    }
+    uri.push({ na: ('0' + (i + 1)).slice(-2) + shippo, b: b,
+               b64: Utilities.base64Encode(b.getBytes()) });
+  }
+  var pdf = null, pdfB = null;
+  if (pdfs.length) {
+    var pb = _dataURI_pdf(pdfs[0]);
+    if (!pb) return _kotae({ ok: false, riyu: 'PDFの形が読めません' });
+    if (pb.getBytes().length > PDF_MB_MAX * 1024 * 1024) {
+      return _kotae({ ok: false, riyu: 'PDFが大きすぎます（' + PDF_MB_MAX + 'MBまで）' });
+    }
+    pdf = Utilities.base64Encode(pb.getBytes());
+    pdfB = pb;
+  }
+  /* 手もとの控え（Drive）。ここから先は、もう断りません。 */
+  if (uri.length || pdfB) {
+    var folder = _folder(slug);
+    for (var i2 = 0; i2 < uri.length; i2++) {
+      folder.createFile(uri[i2].b.setName(uri[i2].na));
+    }
+    if (pdfB) folder.createFile(pdfB.setName('shiryo.pdf'));
+  }
+
   var nose = { ok: false, riyu: '' };
   try {
+    /* 絵が先。.md が先だと、絵の揃う前に組み立てが走ります */
+    for (var j = 0; j < uri.length; j++) {
+      _github('src/bansho/' + slug + '/' + uri[j].na, uri[j].b64,
+              '答えの写真を1枚のせる（' + slug + '）');
+    }
+    if (pdf) {
+      _github('src/shiryo/' + slug + '/shiryo.pdf', pdf,
+              '答えの資料を1つのせる（' + slug + '）');
+    }
     _github('src/kotae/' + _kyou() + '_' + slug + '.md',
-            Utilities.base64Encode(_md_kotae(d, m, toi), Utilities.Charset.UTF_8),
+            Utilities.base64Encode(_md_kotae(d, m, toi, uri.length ? slug : '',
+                                             pdf ? slug : ''), Utilities.Charset.UTF_8),
             'お悩みに答えを1つのせる（' + slug + '）');
     nose.ok = true;
   } catch (err) {
@@ -350,13 +400,16 @@ function _md_aru(doko, slug) {
   return false;
 }
 
-function _md_kotae(d, m, toi) {
+function _md_kotae(d, m, toi, bansho, shiryo) {
   return [
     '---',
     'share: true',
     'date: ' + _kyou(),
     /* どのお悩みへの答えか。build.py はこれで札の中に入れます */
     'toi: ' + toi,
+    /* 添えられた写真・資料の置き場（実践と同じ名前の欄・同じフォルダ） */
+    bansho ? 'bansho: ' + bansho : null,
+    shiryo ? 'shiryo: ' + shiryo : null,
     /* 送った人の合いことばのハッシュ。消すときの関門になります（→ doGet） */
     'nushi: ' + _nushi_arau(d.nushi),
     /* 名前は任意。印が入っているときだけ出します（困りごとと同じ） */
@@ -1326,6 +1379,9 @@ function _slug_kesu(slug) {
        出ない .md が溜まります（build.py は相手のいない答えを飛ばします）。 */
     n += _kotae_kesu(slug);
   } else if (slug.indexOf('kotae-') === 0) {
+    /* 答えに添えられた写真・資料も、一緒に落とします */
+    n += _kesu_folder('src/bansho/' + slug, slug);
+    n += _kesu_folder('src/shiryo/' + slug, slug);
     n += _kesu_md(slug, 'src/kotae');
   } else if (slug.indexOf('nittei-') === 0) {
     n += _kesu_md(slug, 'src/nittei');
@@ -1349,6 +1405,13 @@ function _kotae_kesu(toi) {
     var hon = _github_yomu(ichiran[i].path);
     if (!hon) continue;
     if (new RegExp('^toi:\\s*' + toi + '\\s*$', 'm').test(hon)) {
+      /* その答えに添えられた写真・資料も一緒に。ファイル名から名前を取ります
+         （2026-09-24_kotae-…….md の、_ から後ろ・.md の手前）。 */
+      var ko = na.replace(/^.*?_/, '').replace(/\.md$/, '');
+      if (ko.indexOf('kotae-') === 0) {
+        n += _kesu_folder('src/bansho/' + ko, ko);
+        n += _kesu_folder('src/shiryo/' + ko, ko);
+      }
       _github_kesu(ichiran[i].path, ichiran[i].sha, '答えを1つ消す（' + toi + '）');
       n++;
     }

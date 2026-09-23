@@ -2366,6 +2366,24 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .okuru-hiroi::placeholder{color:var(--mute);opacity:.75}
 .okuru-yomi--sub{margin:0 0 8px;font-size:12.5px}
+
+/* ── まえに書いたお名前を入れた、という知らせ（2026-09-23 依頼）────
+   「再修正をするときに、名前と所属をもう一度入力しないといけない」。
+   この端末が覚えていたものを入れた、と1行で言います。
+   ★共用の端末で 前の人の名前が残らないように［消す］を添えます。
+   ★押せる大きさ（min-height:44px）は削りません。字だけ小さくします。 */
+.okuru-nanori{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  margin:8px 0 0;
+}
+.okuru-nanori>span{flex:1 1 220px;min-width:0}
+.okuru-nanori .bansho-b{
+  /* スマホの .bansho-b は「display:block／width:100%」です（帯の中の
+     大きな渡り札のため）。ここは 欄の脇に添える小さな札なので、
+     幅いっぱいには広げません。押せる高さ（44px）はそのままです。 */
+  flex:0 0 auto;display:inline-flex;width:auto;
+  padding:7px 15px;font-size:13px;box-shadow:2px 2px 0 var(--ink);
+}
 .okuru-kazu{margin:6px 0 0;text-align:right;font-size:12px;color:var(--mute)}
 
 /* ── 節目のお祝い（2026-09-22）──────────────────────────
@@ -2430,6 +2448,12 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 /* 答えるフォームは、押された札の中へ入ります。札の白地から浮かせます。 */
 .kotae-f{margin:16px 0 0}
+/* 足は、ボタンが2つ縦に並びます（2026-09-24 依頼で直したところ）。
+   すき間を空けないと、上のボタンの影（4px）に下のボタンが重なります。 */
+.kotae-f .okuru-botan{
+  display:flex;flex-direction:column;align-items:stretch;gap:12px;
+}
+.kotae-f .okuru-botan .bansho-b{justify-content:center}
 .kotae-f[hidden]{display:none}
 .kotae-toi{
   margin:0 0 10px;padding:8px 12px;
