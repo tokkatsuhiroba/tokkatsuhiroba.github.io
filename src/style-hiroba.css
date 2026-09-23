@@ -1604,6 +1604,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   border:2px solid var(--ink);border-radius:999px;
   font-family:var(--f-maru);font-weight:700;font-size:12px;letter-spacing:.04em;
 }
+
+/* ══ NEW と 新着（2026-09-23 依頼）════════════════════════════
+   「いつ来ても同じ」に見えるのが、いちばん人を遠ざけます。
+   14日以内のものに「NEW」を出して、動いていることを見せます。
+   ★色だけにしません。**字で「NEW」**と書いてあります。
+   ★地は黄（--ki）＋墨字で 10.1:1。朱（--shu）は白字でも墨字でも
+     4.1:1 しか出ないので、小さい字には使いません。 */
+.new-fuda{
+  display:inline-block;margin-inline-end:6px;padding:1px 7px;
+  background:var(--ki);border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--f-en);font-weight:700;font-size:10.5px;letter-spacing:.08em;
+  line-height:1.6;color:var(--ink);vertical-align:middle;
+}
+.new-fuda[hidden]{display:none}
+.hfuda-shin{
+  justify-self:start;margin-top:6px;padding:2px 9px;
+  background:var(--ki);border:2px solid var(--ink);border-radius:999px;
+  font-family:var(--f-maru);font-weight:700;font-size:11px;letter-spacing:.04em;
+}
 /* ★札の地は ぜんぶ同じ（2026-09-23 依頼）。見分けるのは **しるし（絵）** です。
    前はページごとに色を敷いていました。行き先が7つに増えて、色が5つ＋白2つ。
    7つに7色を当てても同じで、**色の数がふえるほど 1つ1つの意味は薄くなります**。
@@ -1632,6 +1651,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hfuda-h{font-size:calc(14.5px * var(--moji));line-height:1.45}
   .hfuda-yo{margin-top:5px;font-size:calc(11.5px * var(--moji));line-height:1.65}
   .hfuda-kazu{margin-top:9px;padding:2px 9px;font-size:11px}
+  .hfuda-shin{margin-top:5px;padding:1px 8px;font-size:10px}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -4347,6 +4367,11 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
     border-radius:8px;border-width:1.5px;
     font-size:calc(9px * var(--moji));letter-spacing:0;line-height:1.4;
   }
+  .hfuda-shin{
+    justify-self:stretch;align-self:start;text-align:center;
+    margin-top:3px;padding:1px 4px;border-radius:8px;border-width:1.5px;
+    font-size:calc(9px * var(--moji));letter-spacing:0;line-height:1.4;
+  }
 
   .igi-intro{gap:8px}
   /* 4人の絵。名前が1行に収まる幅にします（「児童会ちゃん」が
@@ -4542,20 +4567,15 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
    足のボタンは **3つとはかぎりません**。［大きく見る］が窓のぶんだけ
    増える（0〜2）ので、3つ・4つ・5つの3通りがあります。
    build.py が数えて .bfuda-te--3 / --4 / --5 を付けてきます。
-   ★せまい画面では **2つずつ**（4つなら 2×2）。390px に4つ横ならびだと、
-     1つ 80px を切って「画像保存」の字が切れます（実測）。
+   ★スマホでも **横1列**です（2026-09-23 依頼：「4列1行に変えて」）。
+     そのために字を短くしました（画像保存→保存、大きく見る→大きく）。
+     390px で1つ 77px。3字（11px）でも 33px なので、収まります。
    ★［印刷］は、刷れない端末では hidden です。そのときは列を1つ減らして、
      すき間が空かないようにします（もとからある :has の考え方と同じ）。 */
 .bfuda-te--4{grid-template-columns:repeat(4,1fr)}
 .bfuda-te--4:has(.bansho-b[hidden]){grid-template-columns:repeat(3,1fr)}
-.bfuda-te--5{grid-template-columns:repeat(3,1fr)}
-.bfuda-te--5:has(.bansho-b[hidden]){grid-template-columns:repeat(2,1fr)}
-@media (max-width:479px){
-  .bfuda-te--4,.bfuda-te--4:has(.bansho-b[hidden]),
-  .bfuda-te--5,.bfuda-te--5:has(.bansho-b[hidden]){
-    grid-template-columns:repeat(2,1fr);
-  }
-}
+.bfuda-te--5{grid-template-columns:repeat(5,1fr)}
+.bfuda-te--5:has(.bansho-b[hidden]){grid-template-columns:repeat(4,1fr)}
 @media (max-width:379px){
   .bfuda-te{gap:6px}
   .bfuda-te .bansho-b{padding:7px 3px;font-size:calc(11px * var(--moji))}

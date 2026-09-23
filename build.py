@@ -314,6 +314,35 @@ def ja_md(d):   return '%d月%d日' % (d.month, d.day)
 def ar_date(d): return '%d %s %d' % (d.day, AR_MONTH[d.month - 1], d.year)
 
 
+# ══ NEW（2026-09-23 依頼・共有とお題 v1.0 ④）════════════════
+#   「いつ来ても同じ」に見えるのが、いちばん人を遠ざけます。
+#   14日以内に出たものに「NEW」の札を付けて、**動いていることを見せます**。
+#
+#   ★色だけにしません。**字で「NEW」**と書きます（色の見え方は人それぞれ）。
+#   ★日づけは **2回** 見ます。
+#     1回め … ここ（組み立てるとき）。古いものには、そもそも付けません。
+#     2回め … 見ている端末（src/hiroba.html）。組み立てたあと日が過ぎても
+#             「NEW」が残らないようにします。push が1週間空いても大丈夫です。
+NEW_HI = 14
+
+
+def atarashii(d, kyou=None):
+    """その日づけが NEW_HI 日以内なら True。先の日づけも「新しい」とします
+       （日程のように、これから来るものを古い扱いにしないため）。"""
+    if not d:
+        return False
+    return (kyou or kyou_jst()) - d <= datetime.timedelta(days=NEW_HI)
+
+
+def new_fuda(d, kyou=None):
+    """「NEW」の小さな札。付かないときは空です。
+       data-new-made は **この札が消える日**。端末の日付で、もう1度見ます。"""
+    if not atarashii(d, kyou):
+        return ''
+    return ('<span class="new-fuda" data-new-made="%s">NEW</span>'
+            % (d + datetime.timedelta(days=NEW_HI)).isoformat())
+
+
 def esc_html(x):
     return (str(x).replace('&', '&amp;').replace('<', '&lt;')
                   .replace('>', '&gt;').replace('"', '&quot;'))
@@ -497,7 +526,7 @@ def load_news():
 
 
 KIJI_T = """  <article>
-    <div class="src"><span class="name" data-ar="{ar_source}">{source}</span><span class="dot"></span><span data-ar="{ar_date}">{ja_date}</span></div>
+    <div class="src">{new}<span class="name" data-ar="{ar_source}">{source}</span><span class="dot"></span><span data-ar="{ar_date}">{ja_date}</span></div>
     <h3><a href="{url}" target="_blank" rel="noopener noreferrer" data-ar="{ar_title}">{title}</a></h3>
     <p class="sum" data-ar="{ar_summary}">{summary}</p>
     <div class="foot">
@@ -515,6 +544,7 @@ def build_articles(kiji):
     for a in kiji:
         bars = ('<i class="on"></i>' * a['rank']) + ('<i></i>' * (5 - a['rank']))
         out.append(KIJI_T.format(
+            new=new_fuda(a['d']),
             ar_source=attr(a.get('ar_source', '')), source=esc_html(a['source']),
             ar_date=attr(ar_date(a['d'])), ja_date=ja_date(a['d']),
             url=esc_html(a['url']), ar_title=attr(a.get('ar_title', '')),
@@ -571,6 +601,13 @@ def load_goods():
             fm['order'] = int(fm.get('order', '99'))
         except ValueError:
             raise Tomeru('%s：order が数字ではありません' % f)
+        # date: は書かなくてかまいません。書いたときだけ、14日のあいだ
+        #   「NEW」が付きます（2026-09-23）。
+        if fm.get('date'):
+            try:
+                fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
+            except ValueError:
+                raise Tomeru('%s：date が 2026-09-21 の形ではありません' % f)
         fm['id'] = gid
         fm['used'] = []            # この後、実践側から埋める
         goods[gid] = fm
@@ -1366,9 +1403,12 @@ def build_goods(goods):
         if g['used']:
             links = '、'.join('<a href="#manabu/j-%s">%s</a>' % (a['slug'], esc_html(a['title'])) for a in g['used'])
             use = '<span class="use"><span data-ar="الممارسات التي تستخدمه">使う実践</span>：%s</span>' % links
+        # グッズに date: はまだ1つも入っていません。書いたぶんだけ NEW が付きます
+        #   （書かなければ、これまでどおり何も出ません）。
         out.append('      <li><div class="tile goods" id="goods-%s"><svg class="gthumb" aria-hidden="true"><use href="#%s"/></svg>'
-                   '<span class="tl"><b class="tt" data-ar="%s">%s</b><span class="ts" data-ar="%s">%s</span>%s</span>%s</div></li>'
+                   '<span class="tl"><b class="tt" data-ar="%s">%s</b>%s<span class="ts" data-ar="%s">%s</span>%s</span>%s</div></li>'
                    % (g['id'], esc_html(g['icon']), attr(g.get('ar_title', '')), esc_html(g['title']),
+                      new_fuda(g.get('d')),
                       attr(g.get('ar_desc', '')), esc_html(g['desc']), use, dl))
     return '    <ul class="tiles">\n' + '\n'.join(out) + '\n    </ul>'
 
@@ -3680,14 +3720,14 @@ def build_jissen_hiroba(jissen, goods):
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
 BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}" data-shiryo="{shiryo_url}">
-        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
+        <p class="bfuda-me">{new}<span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-by bfuda-by--ue">{by}</p>
         <p class="bfuda-lead">{lead}</p>
 {more}{mado}{shiryo}{soto}        <p class="bfuda-ashi">\
 <span class="bfuda-te{te}">{zen}\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span class="b-ji">印刷</span></button>\
-<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span class="b-ji">画像保存</span></button>\
+<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span class="b-ji">保存</span></button>\
 <button class="bansho-b bansho-b--link" type="button" data-link data-url="{ima}"{ok}>{ICON_LINK}<span class="b-ji">リンク</span></button></span></p>
       </article>"""
 
@@ -3868,9 +3908,9 @@ def build_bansho(jissen, kyara):
         futatsu = bool(mado) and bool(sh)
         zen = ''
         if mado:
-            zen += ZEN_B.format(doko='hiro', na='写真を大きく' if futatsu else '大きく見る')
+            zen += ZEN_B.format(doko='hiro', na='写真' if futatsu else '大きく')
         if sh:
-            zen += ZEN_B.format(doko='shiryo', na='資料を大きく' if futatsu else '大きく見る')
+            zen += ZEN_B.format(doko='shiryo', na='資料' if futatsu else '大きく')
         more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         ba, ba_nokori = ba_wakeru(a)
         meta = '・'.join(x for x in (esc_html(ba_nokori), esc_html(a['grade']),
@@ -3920,6 +3960,7 @@ def build_bansho(jissen, kyara):
             by=esc_html(sensei_ja(a['by'])),
             shiryo_url=esc_html(a.get('shiryo_url') or ''),
             ICON_KAMI=ICON_KAMI, ICON_GA=ICON_GA, ICON_LINK=ICON_LINK,
+            new=new_fuda(a['d']),
             te=te, ok=(kotoba_ok('コピーしました')
                        + kotoba_ok('コピーできません', 'ng')),
             ima=esc_html(ima)))
@@ -5148,7 +5189,7 @@ HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
         <span class="hfuda-e" aria-hidden="true"><svg viewBox="0 0 {w} {h}" focusable="false"><use href="#ill-m-{na}"/></svg></span>
         <b class="hfuda-h">{midashi}</b>
         <span class="hfuda-yo">{yo}</span>
-        <span class="hfuda-kazu" data-en="{kazu_en}" data-ar="{kazu_ar}">{kazu}</span>
+        <span class="hfuda-kazu" data-en="{kazu_en}" data-ar="{kazu_ar}">{kazu}</span>{shin}
       </a>"""
 
 
@@ -5205,6 +5246,27 @@ def home_kazu(sid, sec, kiji, jissen, ken, komari):
     raise Tomeru('ホームの札 %s に、数の出し方がありません' % sid)
 
 
+def home_shin(sid, kiji, jissen, komari):
+    """札に出す「新着 ◯件」。0件のときは空（札を出しません）。
+       ★数えるのは **日づけを持っているもの** だけです。
+         グッズと研究日程には、届いた日がありません。
+       ★ことばは KOTOBA['新着'] から取ります（字を2か所に書かないため）。
+         数はその場で変わるので、KOTOBA には置けません（→ home_kazu）。"""
+    if sid == 'bansho':
+        n = len([a for a in bansho_aru(jissen) if atarashii(a['d'])])
+    elif sid == 'news':
+        n = len([a for a in kiji if atarashii(a['d'])])
+    elif sid == 'komari':
+        n = len([a for a in komari if atarashii(a.get('d'))])
+    else:
+        return ''
+    if not n:
+        return ''
+    en, ar = KOTOBA['新着']
+    return ('<span class="hfuda-shin" data-en="%s %d" data-ar="%s %d">新着 %d件</span>'
+            % (esc_html(en), n, esc_html(ar), n, n))
+
+
 def kazu_hiku(sid, sec, kiji, jissen, ken, komari):
     """札の数を、3つのことばぶん、型に入れられる形で返す。"""
     ja, en, ar = home_kazu(sid, sec, kiji, jissen, ken, komari)
@@ -5226,6 +5288,7 @@ def build_home(doko, sec, mark, kiji, jissen, ken, komari):
             page=doko[sid].replace('.html', ''),
             saki='%s#%s' % (doko[sid], sid), na=na, w=w, h=h,
             midashi=esc_html(SETSU_NA[sid]), yo=esc_html(yo),
+            shin=home_shin(sid, kiji, jissen, komari),
             **kazu_hiku(sid, sec, kiji, jissen, ken, komari)))
     # 2026-09-23 依頼：「「７つのできること」の表記にして」
     #   数は **その場で数えます**（手で書くと、札を足したとき古い数が残ります。
@@ -6611,16 +6674,24 @@ KOTOBA = {
     # ── 実践の札の足（4つのボタン）　★2026-09-23 ──────────────
     #   しるし（絵）だけでは伝わらないので、字も出しています。
     #   その字を、ここで3つのことばにします。
-    '大きく見る': ('View larger', 'عرض بحجم أكبر'),
-    '写真を大きく': ('Photo, larger', 'الصورة بحجم أكبر'),
-    '資料を大きく': ('Handout, larger', 'المرفق بحجم أكبر'),
+    # 2026-09-23 依頼：4つを **横1列**に収めるため、字を短くしました
+    #   （「画像保存」→「保存」、「大きく見る」→「大きく」）。
+    #   しるし（絵）が上に付くので、短い字でも何をするボタンか分かります。
+    '大きく': ('Larger', 'أكبر'),
+    '写真': ('Photo', 'صورة'),
+    '資料': ('Handout', 'مرفق'),
     '印刷': ('Print', 'طباعة'),
-    '画像保存': ('Save image', 'حفظ كصورة'),
+    '保存': ('Save', 'حفظ'),
     'リンク': ('Link', 'رابط'),
     # ★これは押したあとに2秒だけ出す字です。出すのは JavaScript なので、
     #   kotoba_ok() が属性にして札へ持たせます（→ BFUDA の {ok}）。
     'コピーしました': ('Copied', 'تم النسخ'),
     'コピーできません': ('Cannot copy', 'تعذّر النسخ'),
+
+    # ── NEW と 新着（2026-09-23）──────────────────────────
+    #   「新着」は home_shin が数と組にして出します（数は表に置けません）。
+    'NEW': ('NEW', 'جديد'),
+    '新着': ('New', 'جديد'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
@@ -6682,6 +6753,9 @@ KOTOBA_TEKI = (
     # ── 実践の札の足のボタン（2026-09-23 追加）──────────────
     #   しるしは絵（svg）なので、**字の span だけ**を見ます。
     (r'(<span class="b-ji">)(.*?)(</span>)', '札の足のボタン'),
+
+    # ── NEW の札（2026-09-23 追加）──────────────────────────
+    (r'(<span class="new-fuda"[^>]*>)(.*?)(</span>)', 'NEWの札'),
 )
 
 

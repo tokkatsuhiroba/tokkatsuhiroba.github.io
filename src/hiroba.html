@@ -3196,6 +3196,24 @@
     if(b) ga_hozon(b);
   });
 
+  /* ══ 古くなった「NEW」を消す（2026-09-23 依頼）══════════════
+     日づけは **2回** 見ます。1回めは build.py（組み立てるとき）。
+     ここが2回めで、**見ている端末の今日**で もう一度見ます。
+     組み立ててから1週間 push が無くても、15日めの札に「NEW」が
+     残りません。
+     ★消えるだけです。付け足しはしません（新しくなったかどうかは、
+       こちら（組み立て）でしか分からないため）。 */
+  (function(){
+    var kyou = new Date();
+    kyou = kyou.getFullYear() + '-' + ('0' + (kyou.getMonth() + 1)).slice(-2)
+         + '-' + ('0' + kyou.getDate()).slice(-2);
+    [].slice.call(document.querySelectorAll('.new-fuda[data-new-made]'))
+      .forEach(function(f){
+        /* 字の並びで比べられます（2026-10-07 の形にそろえてあるので）。 */
+        if(f.getAttribute('data-new-made') < kyou) f.hidden = true;
+      });
+  })();
+
   /* ══ LINEの覚えを外す しっぽ（2026-09-23）── ここ1か所だけ ══════
      LINEは **一度見たアドレスのカード（絵と字）を、しばらく覚えています。**
      絵を差しかえても、前に貼ったことのあるアドレスだと古いカードが出ます。
