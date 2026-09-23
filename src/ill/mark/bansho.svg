@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><title>重なった実践の写真</title><g stroke="#1C1C1A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+<g transform="rotate(-9 48 50)"><rect x="18" y="22" width="56" height="50" rx="4" fill="#FCFBF7"/></g>
+<g transform="rotate(7 48 50)"><rect x="20" y="20" width="56" height="50" rx="4" fill="#FCFBF7"/></g>
+<rect x="20" y="28" width="56" height="48" rx="4" fill="#FCFBF7"/>
+<rect x="26" y="34" width="44" height="26" rx="2" fill="#A9E1F5"/>
+<path d="M26 60 40 44l10 10 10-12 10 18z" fill="#1F5C3F" stroke-width="2.2"/>
+<circle cx="62" cy="39" r="4" fill="#E8C547" stroke-width="2.2"/>
+<path d="M28 67h30M28 72h20" fill="none" stroke-width="2.6"/>
+</g></svg>

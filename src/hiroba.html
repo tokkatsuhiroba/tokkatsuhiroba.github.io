@@ -1,9 +1,17 @@
 
 <header class="hero" id="ue">
+  <!-- 絵は1枚だけ。スマホでも同じ全景を出します（2026-09-23）。
+       ここは <use> ではなく絵の本物です。動かすために本物が要ります。 -->
   <div class="hero-e hero-e--hiro"><!--BUILD:HIROBA--></div>
-  <div class="hero-e hero-e--semai"><!--BUILD:HIROBA_S--></div>
   <div class="hero-koe">
-    <a class="line-sumi" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer"><b>LINE</b>みんなの特活ひろば<i aria-hidden="true">↗</i></a>
+    <!-- LINEの案内と、字の大きさのつまみ（2026-09-23 依頼）。
+         つまみは JavaScript がこの中へ入れます。
+         ★置くのは ここ1か所だけです。前は画面の右下に出しっぱなし
+           でしたが、「常時表示ではなく」という話でここへ移しました。
+         ★選んだ大きさは、ほかのページにも効きます（端末に残るため）。 -->
+    <div class="ue-migi">
+      <a class="line-sumi" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer"><b>LINE</b>みんなの特活ひろば<i aria-hidden="true">↗</i></a>
+    </div>
     <h1 class="hero-logo">TOKKATSU広場</h1>
     <p class="hero-copy"><!--BUILD:COPY--></p>
     <p class="hero-botan">
@@ -830,16 +838,113 @@
     <!-- 夜の地なので、ふちと影は墨ではなく地の色（--bg）で出します。
          押せるものはページの中と同じ丸いボタンの形にそろえます。 -->
     <div class="foot-botan">
-      <a class="btn btn--yoru btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">みんなの特活ひろば（LINE）<span class="btn-ya">↗</span></a>
+      <a class="btn btn--yoru btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer"><span class="btn-ji">みんなの特活ひろば（LINE）</span><span class="btn-ya">↗</span></a>
     </div>
 
-    <p class="kanri">管理者：伊藤 優<span aria-hidden="true">　／　</span><a href="kanri.html">管理画面</a></p>
+    <!-- ことばの切りかえ（2026-09-23 依頼）。いちばん下、管理者のところに置きます。
+         ★外の翻訳サービスは使いません（原則2＝何も送信しない）。
+           訳はページの中に data-en / data-ar として入っていて、
+           押すと入れかわるだけです。選んだことばは この端末にだけ残ります。
+         ★訳すのは「このサイトが書いた言葉」だけ。先生方から届いた
+           実践・困りごと・ニュースの題は日本語のままです。そのことは
+           切りかえたときに .kotoba-chu で断ります。 -->
+    <div class="kirikae">
+      <p class="kirikae-l" role="group" aria-label="Language ／ اللغة">
+        <button type="button" class="kirikae-b" data-lang="ja" aria-pressed="true" lang="ja">日本語</button>
+        <button type="button" class="kirikae-b" data-lang="en" aria-pressed="false" lang="en">English</button>
+        <button type="button" class="kirikae-b" data-lang="ar" aria-pressed="false" lang="ar">العربية</button>
+      </p>
+      <p class="kirikae-chu" hidden></p>
+    </div>
+
+    <p class="kanri"><span class="kanri-na">管理者：伊藤 優</span><span aria-hidden="true">　／　</span><a class="kanri-a" href="kanri.html">管理画面</a></p>
   </div>
 </footer>
 
 <script>
 /*BUILD:STORAGE*/
 /*BUILD:NURU*/
+
+/* ══ 字の大きさのつまみ（2026-09-23 依頼）══════════════════
+   「おいおい調整できるように」という話から、読む人が自分で
+   変えられるボタンを、画面の右下に置きます。
+
+   ★変わるのは **字だけ** です（CSSの --moji）。枠・余白・ボタンの
+     大きさは動きません。だから、大きくしても形がくずれません。
+   ★選んだものは、その端末の中だけに残ります（localStorage）。
+     外へは1バイトも出ません（原則2）。ほかの人には関わりません。
+   ★出すのは JavaScript が動くときだけ。動かない端末では、
+     押しても何も起きないボタンを置きません。
+   ★開いた瞬間に効かせるぶんは head に入れてあります。ここは入れ物と
+     押したときの動きだけです。                                    */
+(function(){
+  'use strict';
+  var KAGI = 'tokkatsu-moji';
+  var DAN = [
+    ['chiisai', '小'], ['futsuu', '中'], ['ookii', '大'], ['totemo', '特大']
+  ];
+  var ima = 'futsuu';
+  try{
+    var y = localStorage.getItem(KAGI);
+    if(y && /^(chiisai|futsuu|ookii|totemo)$/.test(y)) ima = y;
+  }catch(e){}
+
+  /* 置き場所は「LINEの案内の右」だけです（2026-09-23 依頼）。
+     その入れ物が無いページ（ホーム以外）には、つまみを作りません。
+     ★でも、選んだ大きさは そちらのページにも効いています。
+       head で data-moji を入れているためです。 */
+  var oya = document.querySelector('.ue-migi');
+  if(!oya) return;
+
+  var waku = document.createElement('div');
+  waku.className = 'moji';
+  var hiraku = document.createElement('button');
+  hiraku.type = 'button';
+  hiraku.className = 'moji-b';
+  hiraku.setAttribute('aria-expanded', 'false');
+  hiraku.innerHTML = '<span class="moji-a" aria-hidden="true">あ</span>'
+                   + '<span class="kakure">字の大きさを変える</span>';
+  var tana = document.createElement('div');
+  tana.className = 'moji-tana';
+  tana.hidden = true;
+  tana.setAttribute('role', 'group');
+  tana.setAttribute('aria-label', '字の大きさ');
+  tana.innerHTML = '<span class="moji-l">字の大きさ</span>'
+    + DAN.map(function(d){
+        return '<button type="button" class="moji-d" data-moji="' + d[0] + '">'
+             + d[1] + '</button>';
+      }).join('');
+  waku.appendChild(hiraku); waku.appendChild(tana);
+  oya.appendChild(waku);
+
+  function ireru(atai){
+    ima = atai;
+    document.documentElement.setAttribute('data-moji', atai);
+    try{ localStorage.setItem(KAGI, atai); }catch(e){}
+    [].slice.call(tana.querySelectorAll('.moji-d')).forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-moji') === atai ? 'true' : 'false');
+    });
+  }
+  function akeru(on){
+    tana.hidden = !on;
+    hiraku.setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+  ireru(ima); akeru(false);
+
+  hiraku.addEventListener('click', function(){ akeru(tana.hidden); });
+  tana.addEventListener('click', function(ev){
+    var b = ev.target.closest('.moji-d'); if(!b) return;
+    ireru(b.getAttribute('data-moji'));
+  });
+  /* よそを押したら閉じます（つまみが出しっぱなしで、読むのを邪魔しない） */
+  document.addEventListener('click', function(ev){
+    if(!tana.hidden && !waku.contains(ev.target)) akeru(false);
+  });
+  document.addEventListener('keydown', function(ev){
+    if(ev.key === 'Escape' && !tana.hidden){ akeru(false); hiraku.focus(); }
+  });
+})();
+
 (function(){
   'use strict';
   var reduced = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -2836,5 +2941,71 @@
   document.addEventListener('keydown', function(ev){
     if(ev.key === 'Escape') tojiru();
   });
+})();
+
+/* ══ ことばの切りかえ（2026-09-23 依頼）══════════════════════
+   日本語 ／ English ／ العربية。ボタンは いちばん下、管理者のところです。
+
+   ★外の翻訳サービスは使いません（原則2＝何も送信しない）。
+     訳は data-en / data-ar として **ページの中にもう入っています**。
+     押すと入れかわるだけなので、開いた人の端末から1バイトも外へ出ません。
+   ★訳してあるのは「このサイトが書いた言葉」だけです。先生方から届いた
+     実践・困りごと・ニュースの題は日本語のままです（訳すには外へ送るしか
+     ないため）。そのことを、切りかえたときに画面で断ります。
+   ★選んだことばは、この端末にだけ残ります（Store＝localStorage）。 */
+(function(){
+  'use strict';
+  var CHU = {
+    en: 'What teachers send in — practices, questions and news titles — stays in Japanese.',
+    ar: 'ما يرسله المعلمون من ممارسات وأسئلة وعناوين أخبار يبقى باللغة اليابانية.'
+  };
+  var botan = document.querySelectorAll('.kirikae-b');
+  if(!botan.length) return;
+
+  function kaeru(l){
+    if(l !== 'en' && l !== 'ar') l = 'ja';
+    var d = document.documentElement, i, el;
+    d.setAttribute('data-kotoba', l);
+    /* ★ページ全体は、アラビア語のときも左→右のままにします。
+       <html dir="rtl"> にすると、**訳していない日本語**（先生方から届いた
+       実践・困りごと・ニュースの題、送る欄）まで右そろえになり、
+       句点が行のあたまに来て読めなくなります（2026-09-23 実機で確認）。
+       右→左にするのは、いま訳した ところだけ。文字の向きは
+       その場所ごとに決まるので、これでアラビア語は正しく右から読めます。 */
+    var ba = document.querySelectorAll('[data-en]');
+    for(i = 0; i < ba.length; i++){
+      el = ba[i];
+      /* もとの日本語は、はじめて切りかえるときに取っておきます */
+      if(el.dataset.ja === undefined) el.dataset.ja = el.innerHTML;
+      el.innerHTML = (l === 'ja') ? el.dataset.ja
+                   : (l === 'ar') ? el.dataset.ar : el.dataset.en;
+      if(l === 'ja'){ el.removeAttribute('dir'); el.removeAttribute('lang'); }
+      else { el.setAttribute('dir', (l === 'ar') ? 'rtl' : 'ltr'); el.lang = l; }
+    }
+    for(i = 0; i < botan.length; i++){
+      botan[i].setAttribute('aria-pressed', botan[i].dataset.lang === l ? 'true' : 'false');
+    }
+    var chu = document.querySelector('.kirikae-chu');
+    if(chu){
+      if(l === 'ja'){
+        chu.hidden = true; chu.textContent = '';
+        chu.removeAttribute('dir'); chu.removeAttribute('lang');
+      }
+      else {
+        chu.hidden = false;
+        chu.textContent = CHU[l];
+        chu.lang = l;
+        chu.dir = (l === 'ar') ? 'rtl' : 'ltr';
+      }
+    }
+    if(window.Store) Store.set('lang', l);
+  }
+
+  for(var i = 0; i < botan.length; i++){
+    botan[i].addEventListener('click', function(){ kaeru(this.dataset.lang); });
+  }
+  /* 前に選んだことばを、そのまま出します */
+  var nokori = window.Store ? Store.get('lang', 'ja') : 'ja';
+  if(nokori && nokori !== 'ja') kaeru(nokori);
 })();
 </script>

@@ -20,7 +20,7 @@ TOKKATSU広場 ビルド
    出来上がりのHTML（_復元の手がかり/）と作業記録から組み直したものです。
 """
 
-import io, os, re, sys, glob, datetime, calendar, json
+import io, os, re, sys, glob, math, datetime, calendar, json
 import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -210,6 +210,19 @@ KYARA_SAKI = {
     'jidokai':  '自治会、議会へ',
     'club':     'サークル、同好会へ',
 }
+
+# ── しるし（8つの札に出す、モノの絵）──
+#   2026-09-23：札の絵が8枚とも人になっていて、ぱっと見て何の札か
+#   分かりませんでした。札は **モノ**（カレンダー・地図・封筒…）にして、
+#   人（4人のキャラクター）は **行き先の節の見出し** に立たせます。
+#   押すまえに「何の場所か」、着いてから「だれが案内するか」の順です。
+MARK = os.path.join(SRC, 'ill', 'mark')
+# しるしで使ってよい色。採用イラストと同じ並びです（#B4D9E5 は使いません。
+# 空の色 #A9E1F5 と見分けがつかず、2つある意味がないため）。
+MARK_IRO = ('#FCFBF7', '#1C1C1A', '#A9E1F5', '#2FBA68', '#1F5C3F',
+            '#D2552A', '#E8C547', '#3A6EA5', '#F6D8B8')
+MARK_KB = 3.0         # しるし1枚の上限
+MARK_BOX = 96         # しるしは、ぜんぶ 0 0 96 96。札に並べたとき大きさがそろう
 
 # 広場で使ってよい色。地と墨をのぞいて6色まで。
 HIROBA_IRO = {
@@ -1026,10 +1039,17 @@ def shiryo_yomu(oki, moto=None, page='manabu.html'):
 #   板書の中身を ふたに入れずそのまま出すと決めたのと、同じ理由です
 #   （「わざわざ押したくない」）。資料だけ ふたの中に残っていました。
 #   ★画像は loading="lazy" のままなので、画面に入るまで読みません。
+# 受け口が自動で付ける名前。これのときは、見出しごと出しません
+#   （2026-09-23 依頼：「送ってもらった資料」という文言はいらない）。
+#   実践の札の中では、言わなくても何の資料か分かるためです。
+#   指導案など、自分で名前を付けた資料のときは、その名前を出します。
+SHIRYO_JIDOU_NA = '送ってもらった資料'
+
+SHIRYO_MIDASHI = """          <p class="shiryo-midashi">{midashi}<span class="shiryo-n">{n}ページ</span></p>
+"""
+
 SHIRYO_MADO = """        <div class="shiryo-hiraku">
-          <p class="shiryo-midashi">{midashi}<span class="shiryo-n">{n}ページ</span></p>
-          <div class="shiryo-naka">
-            <p class="shiryo-chu">このページの中に入っています。押しても外にはつながりません。</p>
+{midashi}          <div class="shiryo-naka">
             <div class="shiryo-mado">
 {gazou}
             </div>
@@ -1044,7 +1064,10 @@ def shiryo_mado(midashi, oki, alt, moto=None, page='manabu.html'):
     g = [GAZOU.format(uri=uri, alt=esc_html('%s %dページめ' % (alt, i + 1)),
                       w=w, h=h, i=i + 1, n=len(mai))
          for i, (uri, w, h) in enumerate(mai)]
-    return SHIRYO_MADO.format(midashi=esc_html(midashi), n=len(mai), gazou='\n'.join(g))
+    return SHIRYO_MADO.format(
+        midashi=('' if midashi.strip() == SHIRYO_JIDOU_NA
+                 else SHIRYO_MIDASHI.format(midashi=esc_html(midashi), n=len(mai))),
+        n=len(mai), gazou='\n'.join(g))
 
 
 def goods_status(g):
@@ -1325,7 +1348,325 @@ def load_buhin():
     return hako, hyo
 
 
-def load_approved_svg(relative_path):
+# ── 絵を動かす入れ物（2026-09-23 依頼）────────────────────
+# 人と雲を <g class="…"> で包みます。包むだけで、絵そのものは1本も変えません。
+# 動かし方は src/style-hiroba.css の「広場の絵の動き」で決めます。
+HADA = '#F6D8B8'          # 顔と手の色。これが入っていれば「人」
+
+# 校庭のトラック（絵の中の3本の白い楕円のうち、真ん中のレーン）。
+# 走る子4人は、もともとこの線の上に立っています。だから同じ線を走らせます。
+TRACK = (1580.0, 1104.0, 478.0, 212.0)      # 中心x, 中心y, 横半径, 縦半径
+TRACK_BYO = 28.0                            # 1周の秒数（2026-09-23 2回目：速すぎたので16→28秒）
+# 青い服の2人は、1周したあと校舎の玄関へ入っていきます（2026-09-23 依頼）。
+AO       = '#3A6EA5'                        # 青い服。この色を着ている子が入ります
+GENKAN   = (2470.0, 604.0)                  # 校舎の玄関（緑の両開き戸の下まんなか。実測）
+GENKAN_MICHI = ((2300.0, 1000.0),           # トラックを出てから玄関までの通り道。
+                (2480.0, 820.0),            # 掲示板の右がわを通ります
+                (2492.0, 700.0))
+GENKAN_BYO = 8.0                            # トラックを出てから、入るまでの秒数
+# 入れかわりに、黄色の2人が玄関から出てきます（2026-09-23 依頼）。
+KI        = '#E8C547'                       # 黄色。出てくる2人の服の色
+DERU_BYO  = 8.0                             # 玄関から校庭に出てくるのにかかる秒数
+DERU_MA   = 1.6                             # 青が入ってから、黄が出るまでの間
+DERU_ZURE = 1.3                             # 2人めが、1人めより遅れて出る秒数
+# 玄関の戸（校舎の緑の両開き戸）。絵の中では、この値の四角として描かれています。
+TOBIRA    = ('275', '407', '70', '85')      # x, y, 幅, 高さ
+TOBIRA_TE = 'M310 407v85M298 447v13M322 447v13'   # まん中の線と、2つの取っ手
+TOBIRA_ZEN = 60.0                           # 戸の開け閉めぜんぶの長さ（秒）
+# 行人（鉢巻をした学校行事の案内役）は、走路のまんなかに立っていました。
+# 子どもが回ると、必ずぶつかります。走路の外（手前）へ下がってもらいます。
+GYOJIN  = 'M23 25c5-7'                      # 行人の鉢巻の帯。これで見分けます
+GYOJIN_YOKE = (-60.0, 290.0)                # どれだけ動かすか（右へ、下へ）
+TOBIRA_MA  = 1.4                            # 開くのにかかる秒数（閉まるのも同じ）
+UGOKI_CSS = []                              # 1人ぶんずつの道（build_page が <style> に足す）
+# 走る子の絵の「足もと」＝絵の中での位置（実測：translate＋scale×この値）。
+# CSS の transform-origin:50% 100%（＝囲みの下まんなか）と同じ点です。
+ASHI = (30.03, 82.0)
+# 頭の上に「別置き」されていた白い鉢巻の弧。子どもと別の部品なので、
+# 子どもが動くと鉢巻だけ取り残されます（2026-09-23 依頼で外しました）。
+HACHIMAKI = 'q20-11 42 0'
+UGOKI_KATA = (
+    ('走っている',     'ug ug--hashiru'),   # はずむ
+    ('手を挙げている', 'ug ug--te'),        # 手を上げ下げ
+    ('椅子に座っている', 'ug ug--suwaru'),  # 小さくゆれる
+)
+
+
+def hachimaki_kesu(root):
+    """子どもと別に置かれた鉢巻の弧を外す。戻り値は外した数。
+
+       絵では、鉢巻が走る子の「上に重ねた別の部品」として置かれています。
+       子どもを動かすと鉢巻だけが空中に残るので、動かすなら外すしかありません。"""
+    kesu = [n for n in list(root)
+            if n.tag.split('}')[-1] == 'path'
+            and HACHIMAKI in (n.attrib.get('d') or '')
+            and n.attrib.get('stroke') in ('#FFFEF4', '#FCFBF7')]
+    for n in kesu:
+        root.remove(n)
+    return len(kesu)
+
+
+def mawaru_suji(g):
+    """走る子1人ぶんの「トラックのどこから走り出すか」を決める。
+
+       返すのは (--sx, --sy, 出だしの遅れ)。
+       --sx --sy は「その子の足もと → トラックの中心」までの差。
+       これを足すと、どの子も同じ1本の線の上を回ります（CSSの ug-mawaru）。"""
+    m = re.search(r'translate\(([-\d.]+)[ ,]([-\d.]+)\)', g.attrib.get('transform', ''))
+    sc = re.search(r'scale\(([\d.]+)\)', g.attrib.get('transform', ''))
+    if not m:
+        return None
+    s_ = float(sc.group(1)) if sc else 1.0
+    ashi_x = float(m.group(1)) + s_ * ASHI[0]
+    ashi_y = float(m.group(2)) + s_ * ASHI[1]
+    cx, cy, rx, ry = TRACK
+    # いま立っている場所が、楕円の何度のあたりかを出す（画面のyは下向き）
+    kaku = math.degrees(math.atan2((ashi_y - cy) / ry, (ashi_x - cx) / rx))
+    # 左回り（θが減る向き）に走らせる。1コマめは、いまの立ち位置とぴったり同じ。
+    okure = -TRACK_BYO * (((360.0 - kaku) % 360.0) / 360.0)
+    return cx - ashi_x, cy - ashi_y, okure, ashi_x, ashi_y, kaku
+
+
+def hairu_michi(namae, ashi_x, ashi_y, kaku0):
+    """「トラックを1周してから、校舎へ入っていく」1人ぶんの道をCSSにする。
+
+       戻り値は (キーフレームの文, ぜんぶで何秒か)。
+       玄関は絵の奥にあるので、近づくほど小さくして、最後に戸の前で消えます。"""
+    cx, cy, rx, ry = TRACK
+    zen = 360.0 + kaku0                      # 1周まわって、右はし（出口）まで
+    hashiru = TRACK_BYO * zen / 360.0
+    zenbu = hashiru + GENKAN_BYO
+    de = hashiru / zenbu                     # 走っているあいだの割合
+    gyo = []
+    n = max(24, int(zen / 15.0))             # 15度ごとに1点
+    for i in range(n + 1):
+        w = i / float(n)
+        k = math.radians(kaku0 - zen * w)
+        gyo.append('  %.4f%%{translate:%.0fpx %.0fpx}'
+                   % (de * 100 * w,
+                      cx + rx * math.cos(k) - ashi_x,
+                      cy + ry * math.sin(k) - ashi_y))
+    michi = list(GENKAN_MICHI) + [GENKAN]
+    for j, (mx, my) in enumerate(michi):
+        w = (j + 1) / float(len(michi))
+        gyo.append('  %.4f%%{translate:%.0fpx %.0fpx;scale:%.2f;opacity:1}'
+                   % ((de + (0.96 - de) * w) * 100,
+                      mx - ashi_x, my - ashi_y, 1.0 - 0.42 * w))
+    gyo.append('  100%%{translate:%.0fpx %.0fpx;scale:.58;opacity:0}'
+               % (GENKAN[0] - ashi_x, GENKAN[1] - ashi_y))
+    return '@keyframes %s{\n%s\n}\n' % (namae, '\n'.join(gyo)), zenbu
+
+
+def deru_michi(namae):
+    """玄関から校庭へ出てくる道。hairu_michi の逆をたどります。
+       戻り値は (キーフレームの文, トラックに着くまでの秒数)。
+       足もとは玄関に置くので、translate は玄関からの差になります。"""
+    cx, cy, rx, ry = TRACK
+    deguchi = (cx + rx, cy)                      # トラックの右はし
+    michi = [GENKAN] + list(reversed(GENKAN_MICHI)) + [deguchi]
+    gx, gy = GENKAN
+    gyo = ['  0%{translate:0px 0px;scale:.58;opacity:0}',
+           '  6%{translate:0px 0px;scale:.58;opacity:1}']   # 戸のところで、ふっと現れる
+    for j, (mx, my) in enumerate(michi):
+        w = j / float(len(michi) - 1)
+        gyo.append('  %.4f%%{translate:%.0fpx %.0fpx;scale:%.2f;opacity:1}'
+                   % (6 + 94 * w, mx - gx, my - gy, 0.58 + 0.42 * w))
+    return '@keyframes %s{\n%s\n}\n' % (namae, '\n'.join(gyo)), DERU_BYO
+
+
+def tobira_css(aku, shimaru):
+    """玄関の戸の開け閉め。aku＝開ききる秒、shimaru＝閉まりきる秒。"""
+    p = lambda t: max(0.0, min(100.0, t / TOBIRA_ZEN * 100.0))
+    return ('@keyframes ug-tobira{\n'
+            '  0%%,%.3f%%{scale:1 1}\n'
+            '  %.3f%%,%.3f%%{scale:.08 1}\n'
+            '  %.3f%%,100%%{scale:1 1}\n}\n'
+            % (p(aku - TOBIRA_MA), p(aku), p(shimaru - TOBIRA_MA), p(shimaru)))
+
+
+def gyojin_sagaru(root):
+    """行人を、走路の外（手前）へ下げる。
+
+       絵では走路のまんなかに立っていて、回る子と必ず重なります（依頼）。
+       絵そのものは直さず、置く場所だけをずらします。
+       いちばん後ろに置きなおすので、もし近くを通っても、行人が手前に出ます。"""
+    ns = '{http://www.w3.org/2000/svg}'
+    for node in list(root):
+        if node.tag != ns + 'g':
+            continue
+        moji = ET.tostring(node, encoding='unicode')
+        if GYOJIN not in moji or HADA not in moji:
+            continue
+        naka = node[0] if node.get('class') else node      # 包んである場合は中身
+        m = re.search(r'translate\(([-\d.]+)[ ,]([-\d.]+)\)', naka.attrib.get('transform', ''))
+        if not m:
+            return False
+        x, y = float(m.group(1)) + GYOJIN_YOKE[0], float(m.group(2)) + GYOJIN_YOKE[1]
+        naka.set('transform', re.sub(r'translate\([-\d., ]+\)',
+                                     'translate(%g,%g)' % (x, y),
+                                     naka.attrib['transform'], count=1))
+        root.remove(node)
+        root.append(node)
+        return True
+    return False
+
+
+def tobira_wakeru(root):
+    """1枚の四角で描かれている玄関の戸を、開けられる「両開き」に組みなおす。
+
+       絵は直しません。同じ形を、奥（暗い中）・左の戸・右の戸の3つに分けて置きかえます。
+       見た目は閉じているあいだ、前とまったく同じです。"""
+    ns = '{http://www.w3.org/2000/svg}'
+    oya_no = dict((c, p) for p in root.iter() for c in p)
+    x, y, w, h = (float(v) for v in TOBIRA)
+    for node in root.iter():
+        if node.tag != ns + 'rect' or node.attrib.get('fill') != '#1F5C3F':
+            continue
+        if (node.attrib.get('x'), node.attrib.get('y'),
+                node.attrib.get('width'), node.attrib.get('height')) != TOBIRA:
+            continue
+        oya = oya_no.get(node)
+        if oya is None:
+            continue
+        ko = list(oya)
+        i = ko.index(node)
+        te = None
+        for k in ko[i:i + 3]:
+            if k.tag == ns + 'path' and k.attrib.get('d') == TOBIRA_TE:
+                te = k
+                break
+        sen = dict(stroke='#1C1C1A', stroke_width='2.5')
+        def yon(xx, ww, fill, cls=None, tex=None):
+            g = ET.Element(ns + 'g', {'class': cls} if cls else {})
+            r = ET.SubElement(g, ns + 'rect', {
+                'x': '%g' % xx, 'y': '%g' % y, 'width': '%g' % ww, 'height': '%g' % h,
+                'fill': fill, 'stroke': '#1C1C1A', 'stroke-width': '2.5',
+                'stroke-linejoin': 'round'})
+            if tex:
+                ET.SubElement(g, ns + 'path', {
+                    'd': tex, 'fill': 'none', 'stroke': '#FFFEF4',
+                    'stroke-width': '2.5', 'stroke-linecap': 'round'})
+            return g
+        matome = ET.Element(ns + 'g')
+        matome.append(yon(x, w, '#1C1C1A'))                       # 開けたときに見える、中の暗がり
+        matome.append(yon(x, w / 2, '#1F5C3F', 'tobira-h', 'M%g 447v13' % (x + 23)))
+        matome.append(yon(x + w / 2, w / 2, '#1F5C3F', 'tobira-m', 'M%g 447v13' % (x + 47)))
+        oya.remove(node)
+        if te is not None:
+            oya.remove(te)
+        oya.insert(i, matome)
+        return True
+    raise Tomeru('校舎の玄関の戸（%s の四角）が絵の中に見あたりません。'
+                 '絵を入れかえたときは、build.py の TOBIRA を合わせてください'
+                 % ' '.join(TOBIRA))
+
+
+def deru_futari(root, tane_g, hairu_owari):
+    """黄色の2人を、玄関の中から出てくるように置く。
+
+       青い2人が入ったあと、入れかわりに出てきて、そのままトラックを回ります。
+       絵には元から居ない2人なので、ここで作ります（走る子の絵を、黄色に着せかえ）。"""
+    import copy
+    ns = '{http://www.w3.org/2000/svg}'
+    cx, cy, rx, ry = TRACK
+    m = re.search(r'scale\(([\d.]+)\)', tane_g.attrib.get('transform', ''))
+    s_ = float(m.group(1)) if m else 1.0
+    gx = GENKAN[0] - s_ * ASHI[0]
+    gy = GENKAN[1] - s_ * ASHI[1]
+    owari = []
+    for i in range(2):
+        naka = copy.deepcopy(tane_g)
+        naka.set('transform', 'translate(%g,%g) scale(%g)' % (gx, gy, s_))
+        for e in naka.iter():
+            if e.get('fill') in ('#3A6EA5', '#D2552A') and e.tag == ns + 'path':
+                if e.get('fill') == '#3A6EA5' or 'M29 33C22' in (e.get('d') or ''):
+                    e.set('fill', KI)          # 服だけ黄色に着せかえる
+        ti = naka.find(ns + 'title')
+        if ti is not None:
+            ti.text = '校舎から出てくる子のイラスト'
+        namae = 'ug-deru-%d' % (i + 1)
+        css, byo = deru_michi(namae)
+        UGOKI_CSS.append(css)
+        deru = hairu_owari + DERU_MA + DERU_ZURE * i
+        soto = ET.Element(ns + 'g', {
+            'class': 'ug ug--hashiru ug--deru ug-p%d' % (i * 2),
+            'style': ('--nm:%s;--byo:%.1fs;--sx:%.1fpx;--sy:%.1fpx;'
+                      'animation-delay:%.2fs,%.2fs,-%.2fs'
+                      % (namae, byo, cx - GENKAN[0], cy - GENKAN[1],
+                         deru, deru + byo, .3 * i))})
+        soto.append(naka)
+        root.append(soto)
+        owari.append(deru + byo)
+    return owari
+
+
+def ugoki_ireru(root):
+    """人と雲を、動かせる入れ物に入れる。戻り値は包んだ数。
+
+       絵は <defs> の1つを <use> で使い回しています。
+       **この中にアニメーションを書いても <use> の側には出ません**（2026-09-22 実測）。
+       だから「入れ物」だけを足して、外から CSS で動かします。
+       ホームの絵は <use> ではなく、この本物を出すようにしてあります。"""
+    ns = '{http://www.w3.org/2000/svg}'
+    del UGOKI_CSS[:]
+    kazu = 0
+    ao_owari = []          # 青い子が、戸の中に消えきる秒
+    ao_tane = None         # 走る子の絵。黄色の2人は、これを着せかえて作ります
+    for i, node in enumerate(list(root)):
+        if node.tag != ns + 'g':
+            continue
+        ti = node.find(ns + 'title')
+        na = (ti.text or '') if ti is not None else ''
+        moji = ET.tostring(node, encoding='unicode')
+        if '雲' in na:
+            cls = 'ukumo'
+        elif HADA in moji:
+            cls = 'ug ug--tatsu'
+            for kotoba, c in UGOKI_KATA:
+                if kotoba in na:
+                    cls = c
+                    break
+        else:
+            continue
+        zokusei = {'class': '%s ug-p%d' % (cls, kazu % 6)}
+        if 'ug--hashiru' in cls:
+            suji = mawaru_suji(node)
+            if suji:
+                sx, sy, okure, ashi_x, ashi_y, kaku = suji
+                fumu = -.07 * (kazu % 5)     # 足のふみこみを、人ごとにばらす
+                if AO in moji:
+                    # 青い服の子。1周したら、校舎へ入って出てきません。
+                    namae = 'ug-hairu-%d' % (len(UGOKI_CSS) + 1)
+                    css, byo = hairu_michi(namae, ashi_x, ashi_y, kaku)
+                    UGOKI_CSS.append(css)
+                    zokusei['class'] += ' ug--hairu'
+                    zokusei['style'] = ('--nm:%s;--byo:%.1fs;animation-delay:0s,%.2fs'
+                                        % (namae, byo, fumu))
+                    ao_owari.append(byo)
+                    ao_tane = node
+                else:
+                    # 赤い服の子。トラックを回りつづけます。
+                    zokusei['style'] = ('--sx:%.1fpx;--sy:%.1fpx;animation-delay:%.2fs,%.2fs'
+                                        % (sx, sy, okure, fumu))
+        soto = ET.Element(ns + 'g', zokusei)
+        soto.append(node)
+        root[i] = soto
+        kazu += 1
+
+    # 青い2人が入るなら、戸を開けられるように組みなおして、
+    # 入れかわりに黄色の2人を出します（順番は 戸が開く → 入る → 出る → 戸が閉まる）。
+    if ao_owari and ao_tane is not None:
+        tobira_wakeru(root)
+        owari = deru_futari(root, ao_tane, max(ao_owari))
+        tsuku = min(ao_owari) * 0.96                 # 青が戸の前に着くころ
+        shimeru = max(owari) - DERU_BYO + 2.6        # 黄色が出きった少しあと
+        UGOKI_CSS.append(tobira_css(tsuku - 0.6, shimeru))
+        kazu += 2
+    gyojin_sagaru(root)
+    return kazu
+
+
+def load_approved_svg(relative_path, ugokasu=False):
     """採用済みの完成イラストを読み、負の viewBox も <use> 用に正規化する。"""
     path = os.path.join(SRC, 'ill', 'approved', relative_path)
     try:
@@ -1347,6 +1688,24 @@ def load_approved_svg(relative_path):
                 raise Tomeru('採用イラストに外部参照・動作があります：%s' % relative_path)
             if 'url(' in value and not re.fullmatch(r'url\(#[\w-]+\)', value):
                 raise Tomeru('採用イラストに外部参照があります：%s' % relative_path)
+    # 全面をおおう地の四角に枠線が付いていると、絵の上ふちが
+    # 「横に1本の線」になって出ます（2026-09-23 依頼）。線だけ外します。
+    for node in list(root):
+        if node.tag.split('}')[-1] != 'rect':
+            continue
+        try:
+            rx, ry = float(node.attrib.get('x', 0)), float(node.attrib.get('y', 0))
+            rw, rh = float(node.attrib['width']), float(node.attrib['height'])
+        except (KeyError, ValueError):
+            continue
+        if rx <= x and ry <= y and rw >= w and rh >= h and node.attrib.get('stroke'):
+            node.set('stroke', 'none')
+            node.attrib.pop('stroke-width', None)
+
+    if ugokasu:
+        hachimaki_kesu(root)
+        ugoki_ireru(root)
+
     ET.register_namespace('', 'http://www.w3.org/2000/svg')
     body = ''.join(ET.tostring(n, encoding='unicode') for n in root)
     if x or y:
@@ -1373,6 +1732,51 @@ def load_kyara():
     for path in sorted(glob.glob(os.path.join(SRC, 'ill', 'approved', 'characters', '*.svg'))):
         name = os.path.splitext(os.path.basename(path))[0]
         hako[name] = load_approved_svg('characters/' + name + '.svg')
+    return hako
+
+
+def kenmon_mark(name, s):
+    """しるし1枚ぶんの検問。札に並ぶので、大きさと色がそろっていないと崩れます。"""
+    f = 'src/ill/mark/%s.svg' % name
+    atama = s[:s.index('>') + 1] if '>' in s else s
+    if re.search(r'\b(width|height)\s*=', atama):
+        raise Tomeru('%s：<svg> に width / height が付いています。'
+                     'CSSで伸縮させるので外してください' % f)
+    if 'viewBox="0 0 %d %d"' % (MARK_BOX, MARK_BOX) not in s:
+        raise Tomeru('%s：viewBox は "0 0 %d %d" にしてください'
+                     '（8つの札で大きさがそろわなくなります）' % (f, MARK_BOX, MARK_BOX))
+    if '<title>' not in s:
+        raise Tomeru('%s：<title> がありません' % f)
+    for warui, riyuu in (('<image', '写真の混入'), ('data:image', '写真の混入'),
+                         ('<text', '書体の無い端末で崩れる'), ('<style', '属性で塗る'),
+                         ('Gradient', 'グラデーションは使わない'),
+                         ('<filter', 'ぼかし・影は使わない')):
+        if warui in s:
+            raise Tomeru('%s：%s が使われています（%s）' % (f, warui, riyuu))
+    warui_id = [i for i in re.findall(r'\sid="([^"]+)"', s) if not i.startswith('ill-')]
+    if warui_id:
+        raise Tomeru('%s：id は "ill-" で始めてください： %s' % (f, '、'.join(warui_id)))
+    soto = sorted(set(c.upper() for c in re.findall(r'#[0-9A-Fa-f]{6}', s))
+                  - set(MARK_IRO))
+    if soto:
+        raise Tomeru('%s：決めた%d色の外の色が使われています： %s'
+                     % (f, len(MARK_IRO), '、'.join(soto)))
+    kb = len(s.encode('utf-8')) / 1024.0
+    if kb > MARK_KB:
+        raise Tomeru('%s：%.1fKB あります（上限 %.0fKB）。'
+                     'しるしは、線を減らして simple にしてください' % (f, kb, MARK_KB))
+    return kb
+
+
+def load_mark():
+    """src/ill/mark/*.svg を読む。戻りは {名前: (幅, 高さ, 中身)}。"""
+    hako = {}
+    for path in sorted(glob.glob(os.path.join(MARK, '*.svg'))):
+        name = os.path.splitext(os.path.basename(path))[0]
+        s = io.open(path, encoding='utf-8').read().strip()
+        kenmon_mark(name, s)
+        naka = re.sub(r'^<svg[^>]*>', '', s).rsplit('</svg>', 1)[0].strip()
+        hako[name] = (MARK_BOX, MARK_BOX, naka)
     return hako
 
 
@@ -2959,7 +3363,7 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{mado}{shiryo}{more}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
+{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
 <button class="bansho-b bansho-b--hoshi" type="button" data-hoshi="{slug}" aria-pressed="false" hidden>あとで見る<i aria-hidden="true">☆</i></button>\
 <button class="bansho-b bansho-b--yaritai" type="button" data-yaritai="{slug}" hidden>やってみたい<span class="yaritai-n" data-yaritai-n="{slug}"></span></button>\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>印刷</button>\
@@ -3044,7 +3448,11 @@ def build_bansho(jissen):
             dai=esc_html(a['title']), grade=esc_html(a['grade']),
             scene=esc_html(a['scene']), oshi_nama=esc_html(a.get('oshi') or ''),
             hon_nama=esc_html(a['summary'].strip()),
-            oshi=('        <p class="bfuda-oshi">%s</p>\n' % inline_md(a['oshi'])
+            # 「推しポイント」と、字でも名のります（2026-09-23 依頼）。
+            #   緑の縦線だけでは、何の1行なのかが伝わりませんでした。
+            oshi=('        <p class="bfuda-oshi">'
+                  '<span class="bfuda-oshi-l">推しポイント</span>%s</p>\n'
+                  % inline_md(a['oshi'])
                   if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),
@@ -3498,13 +3906,21 @@ def build_chizu(aru):
     return CHIZU_T.format(e='\n'.join(e), fuda=''.join(fuda), nashi=esc_html(nashi))
 
 
-SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
+# 2026-09-23 依頼：**左に地図、右にさがす**の2段組みにします。
+#   地図が上にあると、スマホで内容・学年の札まで1画面ぶん遠くなります。
+#   ★書く順は「さがす → 地図」です。スマホではこの順に上から並びます
+#     （字で絞るほうが速いので、そちらを先に出します）。
+#     広い画面だけ、CSSが地図を左の列へ動かします。
+#   ★地域が1件も書かれていないときは地図が空なので、
+#     そのときは2段組みにしません（build_sagasu_obi が分けます）。
+SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
+      <div class="sagasu-migi">
       <div class="sagasu-gyo">
         <label class="sagasu-l" for="sagasu-ji">さがす</label>
         <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
                placeholder="題・中身・学年・提供者から（例：たてわり）">
       </div>
-{chizu}      <div class="sagasu-gyo">
+      <div class="sagasu-gyo">
         <span class="sagasu-l" id="sagasu-n-l">内容</span>
         <div class="okuru-nen" role="group" aria-labelledby="sagasu-n-l" id="sagasu-n">
           <button type="button" class="okuru-nen-b" data-n="" aria-pressed="true">ぜんぶ</button>
@@ -3531,6 +3947,9 @@ SAGASU_OBI = """    <div class="sagasu" id="sagasu" hidden>
         </div>
       </div>
       <p class="sagasu-kazu" id="sagasu-kazu" role="status" aria-live="polite"></p>
+      </div>
+      <div class="sagasu-hidari">
+{chizu}      </div>
     </div>"""
 
 
@@ -3610,7 +4029,9 @@ def sagasu_obi(aru):
         nen.append('          <button type="button" class="okuru-nen-b" data-g="%s" '
                    'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
                    % (k, esc_html(ja), kazu))
-    return SAGASU_OBI.format(naiyo=''.join(gyo), nen=''.join(nen), chizu=build_chizu(aru))
+    chizu = build_chizu(aru)
+    return SAGASU_OBI.format(naiyo=''.join(gyo), nen=''.join(nen), chizu=chizu,
+                             futatsu=' sagasu--futatsu' if chizu else '')
 
 
 def build_bansho_iriguchi(jissen):
@@ -3742,11 +4163,15 @@ def build_kazari(body, buhin, kyara):
     return body, tsukatta
 
 
-def kazari_defs(tsukatta, buhin, kyara):
-    """使った絵だけを、1回ずつ defs に入れる（同じ絵を何度置いても重さは増えません）。"""
+def kazari_defs(tsukatta, buhin, kyara, mark):
+    """使った絵だけを、1回ずつ defs に入れる（同じ絵を何度置いても重さは増えません）。
+       種は3つ … k＝キャラクター、b＝広場の部品、m＝札のしるし。"""
     g = []
+    hakos = {'k': (kyara, 'ill-k-'), 'b': (buhin, 'ill-b-'), 'm': (mark, 'ill-m-')}
     for tane, name in sorted(tsukatta):
-        hako, atama = (kyara, 'ill-k-') if tane == 'k' else (buhin, 'ill-b-')
+        hako, atama = hakos[tane]
+        if name not in hako:
+            raise Tomeru('#%s%s を呼んでいますが、その名前の絵がありません' % (atama, name))
         g.append('<g id="%s%s">%s</g>' % (atama, name, hako[name][2]))
     return ''.join(g)
 
@@ -3822,9 +4247,19 @@ def build_igi(kyara):
             '連携しています。</span>'
             '<span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span>'
             '<span>そのためにお使いください。</span>'
-            '</p><div class="igi-friends" aria-hidden="true">'
-            '<svg viewBox="0 0 345 143" focusable="false">'
-            '<use href="#ill-k-group-shoulders"/></svg></div></div>\n'
+            '</p><div class="igi-friends">'
+            '<svg viewBox="0 0 345 143" aria-hidden="true" focusable="false">'
+            '<use href="#ill-k-group-shoulders"/></svg>'
+            # 4人の名前（2026-09-23 依頼）。絵の下に小さく置きます。
+            #   ★並びは KYARA_MEN の順＝絵の左から右の順です
+            #     （服の色が 緑・赤・青・黄 で、group-shoulders.svg と同じ並び）。
+            #     KYARA_MEN を並べかえると、ここも一緒に動きます。
+            #   ★絵のほうだけ aria-hidden にしました。名前は字なので、
+            #     読み上げにも残します。
+            '<p class="igi-na">'
+            + ''.join('<span>%s</span>' % esc_html(na)
+                      for _, na, _, _ in KYARA_MEN)
+            + '</p></div></div>\n'
             '    <ul class="igi-l">\n' + '\n'.join(men) + '\n    </ul>\n'
             # ★ここは切り分けたあとに作るので、{{◯◯}} は置きかわりません。
             #   LINKS から直に入れます。
@@ -3847,80 +4282,136 @@ HOME_FUDA = (
     # ★並びは「明日すぐ使う順」。ページごとのまとまりより、使う順を先にします。
     #   板書を送る → 研究日程 → 学ぶ・実践 → ニュース・研究会 → 特活とは・4つの内容
     #   （2026-09-21。いちばん下の2つは「読みもの」なので、いちばん後ろ）
+    #
+    # 2026-09-23：札に出す絵を **人 → モノ** に入れかえました。
+    #   8枚ぜんぶが人だったころは、絵を見ても何の札か分からず、
+    #   けっきょく字を読むしかありませんでした（「ここが全部人になってしまった」）。
+    #   いまは 研究日程＝カレンダー、日本の研究会＝日本の地図 のように、
+    #   **その場所にあるモノ** を1つだけ出します。
+    #   3つめの欄は、行き先の節の見出しに立つ人です（→ SETSU_KYARA）。
+    #   （節のid, しるしの名前, 行き先で待つ人, 短い1行）
     # index（このページ自身）。板書を送るところが、いちばん上です
-    ('okuru',  'k', 'jidokai-upload', '写真もPDFも、送るとそのまま出ます。'),
+    ('okuru',  'okuru',  'jidokai-upload', '写真もPDFも、送るとそのまま出ます。'),
     # 送る の すぐ次が 見る。この2つで1組です（2026-09-22）
-    ('bansho', 'k', 'jidokai-share', '先生方から届いた実践が、そのまま並びます。'),
-    ('ima',    'k', 'gyoji-calendar', 'つぎの研究会と、申込の締切。'),
+    ('bansho', 'bansho', 'jidokai-share', '先生方から届いた実践が、そのまま並びます。'),
+    ('ima',    'nittei', 'gyoji-calendar', 'つぎの研究会と、申込の締切。'),
     # komari（困っている → 学ぶ、の順に並べます。2026-09-22）
-    ('komari', 'k', 'gakkatsu-listen', '送られた困りごとが、そのまま並びます。'),
+    ('komari', 'komari', 'gakkatsu-listen', '送られた困りごとが、そのまま並びます。'),
     # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
-    ('manabu', 'k', 'club-tools', '①から⑤の学習過程と、一次資料と、道具。'),
+    ('manabu', 'hajime', 'club-tools', '①から⑤の学習過程と、一次資料と、道具。'),
     # atsumaru
-    ('news',   'k', 'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
-    ('kai',    'k', 'jidokai-speak', '1つずつ開いて、いま見られるものだけ。'),
+    ('news',   'news',   'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
+    ('kai',    'kai',    'jidokai-speak', '1つずつ開いて、いま見られるものだけ。'),
     # shiru（2026-09-22：特活とは と 4つの内容 は同じページなので、1つにまとめました。
     #        4つの内容は、この札から入った先にそのまま置いてあります）
-    ('about',  'k', 'gakkatsu-board', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
+    ('about',  'about',  'gakkatsu-board', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
 )
 
+# 節の見出しに立つ人。ホームの札から入ってきた人を、行き先で迎えます。
+#   ★出どころは HOME_FUDA の3つめの欄ひとつだけです。ここで書き写しません
+#     （札の人と見出しの人がちがう、が起きないため）。
+SETSU_KYARA = {sid: kao for sid, _, kao, _ in HOME_FUDA}
+
+# 見出しの **反対がわ**（右）に立つ もう1人（2026-09-23 依頼）。
+#   見出しは3列（空き｜見出し｜空き）でできていて、右の空きがずっと
+#   から っぽでした。そこにもう1人入れます。**左右の列は同じ幅（1fr）**
+#   なので、2人になっても見出しの太字はまん中のままです。
+#   ★スマホでも出ます。まわりに立つ飾り（.kazari）は本文の欄の外に
+#     置くので、せまい画面では消えます。ここは列の中なので消えません。
+#   ★左と右で ちがう子にしています（同じ子が2人ならぶと、絵が1枚に見えます）。
+#     困りごとだけは、同じ学活くんの「聞く → 考える」でそろえています。
+SETSU_KYARA_MIGI = {
+    'okuru':  'gakkatsu-welcome',   # 送りに来た人を迎える
+    'bansho': 'club-cheer',         # 届いた実践に拍手
+    'ima':    'jidokai-guide',      # 日にちを案内する
+    'komari': 'gakkatsu-think',     # 聞いて（左）、考える（右）
+    'manabu': 'gakkatsu-guide',     # 学習過程を指す
+    'news':   'club-welcome',       # ニュースへ手まねき
+    'kai':    'gyoji-welcome',      # 各地の会へ手まねき
+    'about':  'club-try',           # やってみよう
+}
+
 HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
-        <span class="hfuda-e" aria-hidden="true"><svg viewBox="0 0 {w} {h}" focusable="false"><use href="#ill-{tane}-{na}"/></svg></span>
+        <span class="hfuda-e" aria-hidden="true"><svg viewBox="0 0 {w} {h}" focusable="false"><use href="#ill-m-{na}"/></svg></span>
         <b class="hfuda-h">{midashi}</b>
         <span class="hfuda-yo">{yo}</span>
-        <span class="hfuda-kazu">{kazu}</span>
+        <span class="hfuda-kazu" data-en="{kazu_en}" data-ar="{kazu_ar}">{kazu}</span>
       </a>"""
 
 
+def mitsu(ja, en, ar):
+    """3つのことばを、1つにまとめて持ちまわるための入れもの。"""
+    return (ja, en, ar)
+
+
 def home_kazu(sid, sec, kiji, jissen, ken, komari):
-    """札に出す数。その場で数えたものだけを出します。"""
+    """札に出す数。その場で数えたものだけを出します。
+       戻りは（日本語, English, العربية）の3つ。
+       ★数は毎日変わるので、KOTOBA の表には置けません（置くと、1件届くたびに
+         ビルドが止まります）。ここで3つのことばを一緒に作ります。"""
     def kazoe(pat):
         return len(re.findall(pat, sec.get(sid, '')))
     if sid == 'ima':
-        return '%d件' % len(ken)
+        return mitsu('%d件' % len(ken), '%d meetings' % len(ken), '%d لقاء' % len(ken))
     if sid == 'news':
-        return '%d件' % len(kiji)
+        return mitsu('%d件' % len(kiji), '%d items' % len(kiji), '%d خبر' % len(kiji))
     if sid == 'about':
-        return '話が%dつ' % kazoe(r'class="manabu-box"')
+        n = kazoe(r'class="manabu-box"')
+        return mitsu('話が%dつ' % n, '%d topics' % n, '%d موضوعات' % n)
     if sid == 'manabu':
-        return '%d段階と資料%d件' % (kazoe(r'data-learn-detail='),
-                                  kazoe(r'<li><a href="https?://[^"]*"[^>]*><span><b>'))
+        dan = kazoe(r'data-learn-detail=')
+        shi = kazoe(r'<li><a href="https?://[^"]*"[^>]*><span><b>')
+        return mitsu('%d段階と資料%d件' % (dan, shi),
+                     '%d steps, %d sources' % (dan, shi),
+                     '%d مراحل و%d مرجعًا' % (dan, shi))
     # 困りごとの数。2026-09-22 まで「4つの内容」の札に出していましたが、
     # 帯を1つにまとめたので、困りごとの札の数になりました。
     if sid in ('komari', 'yotsu'):
-        return '悩み%d件' % len(komari)
+        n = len(komari)
+        return mitsu('悩み%d件' % n, '%d questions' % n, '%d سؤال' % n)
     if sid == 'jissen':
-        return '%d件' % len(jissen)
+        return mitsu('%d件' % len(jissen), '%d items' % len(jissen),
+                     '%d عنصر' % len(jissen))
     if sid == 'kai':
-        return '%d会' % len(KAI)
+        return mitsu('%d会' % len(KAI), '%d societies' % len(KAI),
+                     '%d جمعية' % len(KAI))
     if sid == 'okuru':
         # 送るところの札には「いくつ届いたか」を出します。
         # （手順の数を出していましたが、手順の箇条書きをやめたので 0 になりました）
-        return '%d件とどいた' % len(bansho_aru(jissen))
+        n = len(bansho_aru(jissen))
+        return mitsu('%d件とどいた' % n, '%d received' % n, 'وصل %d' % n)
     if sid == 'bansho':
         # みんなの実践。届いた件数と、その中の写真の枚数（2026-09-22）
         aru = bansho_aru(jissen)
-        return '%d件・%d枚' % (aru and len(aru) or 0,
-                              sum(bansho_kazu(a['bansho']) for a in aru))
+        n = aru and len(aru) or 0
+        mai = sum(bansho_kazu(a['bansho']) for a in aru)
+        return mitsu('%d件・%d枚' % (n, mai), '%d posts, %d photos' % (n, mai),
+                     '%d مشاركة و%d صورة' % (n, mai))
     raise Tomeru('ホームの札 %s に、数の出し方がありません' % sid)
 
 
-def build_home(doko, sec, buhin, kyara, kiji, jissen, ken, komari):
+def kazu_hiku(sid, sec, kiji, jissen, ken, komari):
+    """札の数を、3つのことばぶん、型に入れられる形で返す。"""
+    ja, en, ar = home_kazu(sid, sec, kiji, jissen, ken, komari)
+    return {'kazu': esc_html(ja), 'kazu_en': esc_html(en), 'kazu_ar': esc_html(ar)}
+
+
+def build_home(doko, sec, mark, kiji, jissen, ken, komari):
     """ホームの8枚。使った絵の名前も返します（defs に入れるため）。"""
     fuda, tsukatta = [], set()
-    for sid, tane, na, yo in HOME_FUDA:
-        hako = kyara if tane == 'k' else buhin
-        if na not in hako:
-            raise Tomeru('ホームの札 %s が %s.svg を呼んでいますが、その絵がありません' % (sid, na))
+    for sid, na, _, yo in HOME_FUDA:
+        if na not in mark:
+            raise Tomeru('ホームの札 %s が src/ill/mark/%s.svg を呼んでいますが、'
+                         'その絵がありません' % (sid, na))
         if sid not in doko:
             raise Tomeru('ホームの札 %s に当たる節が、どのページにもありません' % sid)
-        w, h, _ = hako[na]
-        tsukatta.add((tane, na))
+        w, h, _ = mark[na]
+        tsukatta.add(('m', na))
         fuda.append(HOME_T.format(
             page=doko[sid].replace('.html', ''),
-            saki='%s#%s' % (doko[sid], sid), tane=tane, na=na, w=w, h=h,
+            saki='%s#%s' % (doko[sid], sid), na=na, w=w, h=h,
             midashi=esc_html(SETSU_NA[sid]), yo=esc_html(yo),
-            kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken, komari))))
+            **kazu_hiku(sid, sec, kiji, jissen, ken, komari)))
     honbun = ('<section class="sec sec--ki" id="ichiran">\n'
               '  <div class="uchi">\n'
               '    <h2 class="midashi"><span class="en">CONTENTS</span>'
@@ -3945,7 +4436,7 @@ GFUDA = """        <div class="gfuda p--{page}">
             </div>
           </div>
           <a class="gfuda-a" href="{saki}">
-            <span class="gfuda-ue"><b class="gfuda-h">{midashi}</b><span class="gfuda-kazu">{kazu}</span><span class="gfuda-go">開く</span></span>
+            <span class="gfuda-ue"><b class="gfuda-h">{midashi}</b><span class="gfuda-kazu" data-en="{kazu_en}" data-ar="{kazu_ar}">{kazu}</span><span class="gfuda-go">開く</span></span>
             <span class="gfuda-yo">{yo}</span>
           </a>
         </div>"""
@@ -4037,6 +4528,43 @@ def build_atama(sec_html):
     return naka
 
 
+# ── 行き先の節に、案内役を立たせる（2026-09-23 依頼）──────────
+#   札はモノ（封筒・カレンダー・地図…）。押して着いた先の見出しに、
+#   その節の人が立っています。「ぱっと見て何の場所か」は札のモノで、
+#   「だれが案内するか」は着いてから。絵は1枚も増やしていません。
+MIDASHI_KAO_T = ('<span class="midashi-kao%s" aria-hidden="true">'
+                 '<svg viewBox="0 0 %g %g" focusable="false">'
+                 '<use href="#ill-k-%s"/></svg></span>')
+
+
+def midashi_kao(sec, kyara):
+    """8つの節の見出しの左右に、その節を案内する人を2人ずつ置く。
+       見出しは3列（空き｜見出し｜空き）。人は左右の空きに入るので、
+       **太字はまん中のまま**です（2026-09-23 依頼）。"""
+    for sid, hidari in sorted(SETSU_KYARA.items()):
+        if sid not in sec:
+            raise Tomeru('見出しに人を立たせようとした節 %s が、'
+                         'src/hiroba.html にありません' % sid)
+        if sid not in SETSU_KYARA_MIGI:
+            raise Tomeru('節 %s の、見出しの右に立つ人が決まっていません'
+                         '（build.py の SETSU_KYARA_MIGI に1行足してください）' % sid)
+        migi = SETSU_KYARA_MIGI[sid]
+        for kao in (hidari, migi):
+            if kao not in kyara:
+                raise Tomeru('節 %s の案内役が %s.svg を呼んでいますが、'
+                             'その絵がありません' % (sid, kao))
+        m = re.search(r'<h2 class="midashi">', sec[sid])
+        if not m:
+            raise Tomeru('節 %s に <h2 class="midashi"> がありません'
+                         '（案内役を置く場所が決まりません）' % sid)
+        futari = (MIDASHI_KAO_T % ('', kyara[hidari][0], kyara[hidari][1], hidari)
+                  + MIDASHI_KAO_T % (' midashi-kao--migi',
+                                     kyara[migi][0], kyara[migi][1], migi))
+        sec[sid] = (sec[sid][:m.start()] + '<h2 class="midashi midashi--k">'
+                    + futari + sec[sid][m.end():])
+    return sec
+
+
 def build_gaiyo(sec, doko, kiji, jissen, ken, komari):
     """ホームの「中身を、ざっと」。
        2026-09-21：箇条書き→本物の縮小→読める箇条書き、と回ったあと、
@@ -4058,9 +4586,9 @@ def build_gaiyo(sec, doko, kiji, jissen, ken, komari):
             page=doko[sid].replace('.html', ''),
             saki='%s#%s' % (doko[sid], sid),
             midashi=esc_html(SETSU_NA[sid]),
-            kazu=esc_html(home_kazu(sid, sec, kiji, jissen, ken, komari)),
             yo=esc_html(yo),
-            atama=build_atama(sec[sid])))
+            atama=build_atama(sec[sid]),
+            **kazu_hiku(sid, sec, kiji, jissen, ken, komari)))
     return ('<section class="sec" id="gaiyo">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">SUMMARY</span>'
@@ -4125,9 +4653,17 @@ def build_obi(ima_file, doko):
             '</nav>')
 
 
+# 2026-09-23 依頼：字の大きさのつまみを、ほかのページの上部右にも置きます。
+#   ここに置くのは **空の入れ物だけ**です。中身は JavaScript が入れます
+#   （動かない端末に、押しても何も起きないボタンを置かないため）。
+#   ★ホームは src/hiroba.html の .ue-migi（LINEの案内といっしょ）。
+#     名前をそろえてあるので、JavaScript の側は1つの書き方で済みます。
 KO_T = """<header class="ko{uchi}" id="ue">
   <div class="uchi">
-    <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a>{oya}</p>
+    <div class="ko-ue">
+      <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a>{oya}</p>
+      <div class="ue-migi"></div>
+    </div>
     <h1 class="ko-h">{na}</h1>
     <p class="ko-yo">{yo}</p>
   </div>
@@ -4286,29 +4822,431 @@ def head_de(f, na):
 
 def tsukau_e(html):
     """そのページが実際に呼んでいる絵の名前だけを拾う。"""
-    return set(m.groups() for m in re.finditer(r'href="#ill-([kb])-([a-z0-9-]+)"', html))
+    return set(m.groups() for m in re.finditer(r'href="#ill-([kbm])-([a-z0-9-]+)"', html))
 
 
-def build_tane(html, e_naka, buhin, kyara, atama_naka=None):
+def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
     """ページが呼んでいる絵だけを、そのページの defs に入れる。
        呼んでいない絵は入りません（ページごとに軽くなります）。"""
     g = []
-    if 'href="#ill-hiroba"' in html:
+    # ホームは絵の本物をそのまま出しています（動かすため）。
+    # そこに同じ id をもう1つ作ると、リンクが迷子になるので入れません。
+    if 'href="#ill-hiroba"' in html and '<g id="ill-hiroba">' not in html:
         g.append('<g id="ill-hiroba">%s</g>' % e_naka)
     if 'href="#ill-atama"' in html and atama_naka:
         g.append('<g id="ill-atama">%s</g>' % atama_naka)
     # 絵の中にも地紋の <defs> があるので、いちばん外がわ（末尾）にだけ足します
-    g.append(kazari_defs(tsukau_e(html), buhin, kyara))
+    g.append(kazari_defs(tsukau_e(html), buhin, kyara, mark))
     tane = ('<svg class="tane" aria-hidden="true" focusable="false" width="0" height="0" '
             'style="position:absolute"><defs>%s</defs></svg>' % ''.join(g))
     # 呼んでいるのに入っていない絵が1つでもあれば、止める
-    aru = set(re.findall(r'<g id="(ill-[^"]+)">', tane))
+    aru = (set(re.findall(r'<g id="(ill-[^"]+)">', tane))
+           | set(re.findall(r'<g id="(ill-[^"]+)">', html)))
     yobu = set(re.findall(r'href="#(ill-[^"]+)"', html))
     nai = yobu - aru
     if nai:
         raise Tomeru('ページが #%s を呼んでいますが、そのページの絵の入れ物に入っていません'
                      % '、#'.join(sorted(nai)))
     return tane
+
+
+# ══════════════════════════════════════════════════════════
+# 2-5. ことばの切りかえ（日本語 / English / العربية）
+#      2026-09-23 依頼「アラビア語・英語変換ボタンを追加。
+#      一番下管理者のところに設置して」
+# ══════════════════════════════════════════════════════════
+#   ★原則2（何も送信しない）があるので、外の翻訳サービスは使いません。
+#     訳は **ぜんぶこの表に書いて、ページの中に入れて配ります**。
+#     開いた人の端末から、1バイトも外へ出ません。
+#
+#   ★訳すのは「このサイトが書いた言葉」だけです。
+#     先生方から届いた実践・困りごと・ニュースの題は日本語のままです
+#     （訳すには外へ送るしかなく、原則2に触れるため）。
+#     そのことは、切りかえたときに画面で断ります（KOTOBA_CHU）。
+#
+#   ★出どころは、この表1つだけ。
+#     下の KOTOBA_TEKI に当たる場所の字が表に無ければ、ビルドが止まります。
+#     新しい見出しや説明文を足したら、ここにも1行足してください。
+KOTOBA = {
+    # ── 節の見出し ──
+    'このサイトは、なに': ('What this site is', 'ما هذا الموقع'),
+    'ぜんぶで、8つ': ('Eight places in all', 'ثمانية أقسام'),
+    'あなたの実践を、ここに': ('Your practice belongs here', 'شارك ممارستك هنا'),
+    '中身を、ざっと': ('A quick look inside', 'نظرة سريعة على المحتوى'),
+    '特別活動って、なに': ('What is Tokkatsu?', 'ما هي الأنشطة الخاصة (توكاتسو)؟'),
+    '4つの内容': ('The four areas', 'المجالات الأربعة'),
+    'ことばの意味': ('What the words mean', 'معاني المصطلحات'),
+    '学ぶ': ('How to start', 'كيف تبدأ'),
+    'すぐ使える道具': ('Tools you can use tomorrow', 'أدوات جاهزة للاستخدام'),
+    '最新のニュース': ('Latest news', 'آخر الأخبار'),
+    '届いている困りごと': ('Questions that have arrived', 'الأسئلة الواردة'),
+
+    # ── 帯・札の名前（8つ） ──
+    '実践を送る': ('Send a practice', 'أرسل ممارسة'),
+    'みんなの実践': ('Everyone’s practices', 'ممارسات الجميع'),
+    '研究日程': ('Calendar', 'التقويم'),
+    '困りごと': ('Questions', 'الأسئلة'),
+    'はじめかた': ('How to start', 'كيف تبدأ'),
+    'ニュース': ('News', 'الأخبار'),
+    '日本の研究会': ('Societies in Japan', 'الجمعيات في اليابان'),
+    '特活とは': ('About Tokkatsu', 'عن توكاتسو'),
+
+    # ── 札のひとこと ──
+    '写真もPDFも、送るとそのまま出ます。':
+        ('Photos and PDFs go straight onto the site.',
+         'الصور وملفات PDF تُنشر مباشرة على الموقع.'),
+    '先生方から届いた実践が、そのまま並びます。':
+        ('Practices sent in by teachers, shown just as they arrived.',
+         'ممارسات أرسلها المعلمون، معروضة كما وصلت.'),
+    'つぎの研究会と、申込の締切。':
+        ('The next meetings, and the registration deadlines.',
+         'اللقاءات القادمة ومواعيد التسجيل.'),
+    '送られた困りごとが、そのまま並びます。':
+        ('Questions sent in, shown just as they arrived.',
+         'أسئلة وردت من المعلمين، معروضة كما وصلت.'),
+    '①から⑤の学習過程と、一次資料と、道具。':
+        ('The five steps of a class meeting, the source documents, and the tools.',
+         'مراحل مجلس الفصل الخمس، والمراجع الأصلية، والأدوات.'),
+    '一次情報だけ。要約は、こちらの言葉で。':
+        ('Primary sources only. The summaries are in our own words.',
+         'مصادر أولية فقط. الملخّصات بكلماتنا نحن.'),
+    '1つずつ開いて、いま見られるものだけ。':
+        ('Open them one by one — only what is online right now.',
+         'افتحها واحدة تلو الأخرى — ما هو متاح الآن فقط.'),
+    '教科書がない時間の、見るところ。4つの内容も、ここに。':
+        ('Where to look for the lesson that has no textbook. The four areas are here too.',
+         'دليلك إلى الحصة التي بلا كتاب مدرسي. والمجالات الأربعة هنا أيضًا.'),
+    '開く': ('Open', 'افتح'),
+
+    # ── ヒーロー（いちばん上） ──
+    '人間関係形成・社会参画・自己実現':
+        ('Building relationships · Taking part in society · Becoming yourself',
+         'بناء العلاقات · المشاركة في المجتمع · تحقيق الذات'),
+    'みんなの実践を見る': ('See everyone’s practices', 'شاهد ممارسات الجميع'),
+    'みんなの特活ひろば（LINE）':
+        ('Minna no Tokkatsu Hiroba (LINE)', 'ساحة توكاتسو للجميع (LINE)'),
+
+    # ── このサイトは、なに（4行） ──
+    '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
+    '<span>LINEオープンチャット<b>「みんなの特活ひろば（仮）」</b>と連携しています。</span>'
+    '<span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span>'
+    '<span>そのためにお使いください。</span>':
+        ('<span>A site for <b>sharing information</b> about Tokkatsu in Japan.</span>'
+         '<span>It works together with the LINE open chat '
+         '<b>“Minna no Tokkatsu Hiroba”</b>.</span>'
+         '<span>Talk over there; <b>check it and take it home</b> over here.</span>'
+         '<span>That is what this site is for.</span>',
+         '<span>موقع <b>لتبادل المعلومات</b> حول الأنشطة الخاصة (توكاتسو) في اليابان.</span>'
+         '<span>يعمل بالتعاون مع محادثة LINE المفتوحة '
+         '<b>«ساحة توكاتسو للجميع»</b>.</span>'
+         '<span>هناك تتحدّثون، وهنا <b>تتأكّدون وتأخذون ما ينفعكم</b>.</span>'
+         '<span>هذا هو الغرض من الموقع.</span>'),
+
+    # ── 4人の札 ──
+    'ちょっと聞きたい': ('A quick question', 'سؤال سريع'),
+    'いま困っていることを。': ('Whatever you are stuck on right now.',
+                              'ما يصعب عليك الآن.'),
+    'ちょっと知りたい': ('Something to know', 'ما يستحق المعرفة'),
+    '研究日程とニュース。': ('Meetings and news.', 'اللقاءات والأخبار.'),
+    'ちょっと試したい': ('Something to try', 'ما يستحق التجربة'),
+    '週案に貼る1行つき。': ('With one line you can paste into your weekly plan.',
+                            'مع سطر جاهز لخطتك الأسبوعية.'),
+    'ちょっと伝えたい': ('Something to pass on', 'ما يستحق المشاركة'),
+    '板書も資料も、ここから。': ('Blackboards and handouts — send them from here.',
+                                'السبورات والمواد — أرسلها من هنا.'),
+
+    # ── ページの名前とひとこと（子ページの頭） ──
+    'ホーム': ('Home', 'الرئيسية'),
+    '特活とは 4つの内容 ことばの意味':
+        ('About Tokkatsu · The four areas · What the words mean',
+         'عن توكاتسو · المجالات الأربعة · معاني المصطلحات'),
+    '特別活動って、なに。4つの内容は、どれ。ことばの意味も。':
+        ('What Tokkatsu is, what the four areas are, and what the words mean.',
+         'ما هي الأنشطة الخاصة، وما المجالات الأربعة، وماذا تعني المصطلحات.'),
+    'はじめかた すぐ使える道具':
+        ('How to start · Tools you can use tomorrow',
+         'كيف تبدأ · أدوات جاهزة للاستخدام'),
+    '学級会の学習過程と、一次資料と、持ち帰れる道具。':
+        ('The steps of a class meeting, the source documents, and tools to take home.',
+         'مراحل مجلس الفصل، والمراجع الأصلية، وأدوات تأخذها معك.'),
+    '研究日程 ニュース 日本の研究会':
+        ('Calendar · News · Societies in Japan',
+         'التقويم · الأخبار · الجمعيات في اليابان'),
+    '研究日程、ニュース、各地の研究会。':
+        ('Meetings, news, and societies across the country.',
+         'اللقاءات والأخبار والجمعيات في أنحاء البلاد.'),
+    '送ってもらった実践が、そのまま並びます。':
+        ('Practices that teachers sent in, shown just as they arrived.',
+         'ممارسات أرسلها المعلمون، معروضة كما وصلت.'),
+    'ちょっと聞きたい 困りごと':
+        ('A quick question · Questions', 'سؤال سريع · الأسئلة'),
+    'いま困っていることを書く。届いたものを読む。':
+        ('Write what you are stuck on. Read what others have sent.',
+         'اكتب ما يصعب عليك، واقرأ ما أرسله غيرك.'),
+
+    # ── 節の説明（.yomi） ──
+    '押すと、そのページがひらきます。見た目も帯もそのままなので、いつでもここへ戻れます。':
+        ('Tap a card and that page opens. The look and the top bar stay the same, '
+         'so you can always come back here.',
+         'اضغط على أي بطاقة لتُفتح صفحتها. المظهر وشريط التنقل لا يتغيّران، '
+         'فيمكنك العودة إلى هنا في أي وقت.'),
+    '板書の写真1枚でも、指導案のPDFでも。':
+        ('One photo of a blackboard, or a lesson-plan PDF — either is welcome.',
+         'صورة واحدة للسبورة، أو ملف PDF لخطة الدرس — كلاهما مرحّب به.'),
+    '<b>困っていること</b>は <a href="komari.html#komari">ちょっと聞きたい</a> へ。'
+    '書くと、そのまま並びます。<br> ただし<strong>答えが早いのは '
+    '<b>LINEオープンチャット「みんなの特活ひろば」</b></strong>のほうです。<br> '
+    'LINEなら<strong>505人</strong>が読んでいて、その日のうちに誰かが答えてくれます。':
+        ('<b>Something you are stuck on</b> goes to '
+         '<a href="komari.html#komari">A quick question</a>. '
+         'What you write appears straight away.<br> But <strong>answers come faster in the '
+         '<b>LINE open chat “Minna no Tokkatsu Hiroba”</b></strong>.<br> '
+         'There, <strong>505 teachers</strong> are reading, and someone usually '
+         'replies the same day.',
+         '<b>ما يصعب عليك</b> اكتبه في '
+         '<a href="komari.html#komari">سؤال سريع</a>. '
+         'يظهر ما تكتبه مباشرة.<br> لكنّ <strong>الردّ أسرع في '
+         '<b>محادثة LINE المفتوحة «ساحة توكاتسو للجميع»</b></strong>.<br> '
+         'هناك يقرأ <strong>505</strong> معلمين، وغالبًا يردّ أحدهم في اليوم نفسه.'),
+    'それぞれのページの、中身のはじまりです。写した絵ではなく本物なので、中身が変わればここも変わります。':
+        ('The opening of each page. This is the real content, not a copy of it, '
+         'so when a page changes this changes too.',
+         'بداية كل صفحة. هذا هو المحتوى نفسه لا نسخة عنه، '
+         'فإذا تغيّرت الصفحة تغيّر ما تراه هنا.'),
+    'あなたの困りごとも <a>ちょっと聞きたい</a> から送れます。<br> '
+    '<strong>答えが早いのはLINEのほう</strong>です。505人が読んでいます。':
+        ('You can send your own question from <a>A quick question</a>.<br> '
+         '<strong>Answers come faster on LINE</strong> — 505 teachers are reading there.',
+         'يمكنك إرسال سؤالك من <a>سؤال سريع</a>.<br> '
+         '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
+    '国語や算数とちがって、教科書がありません。<br> 決めるのも、やるのも、ふり返るのも、子どもです。<br> '
+    '先生の仕事は、教えることではなく、子どもが決められるようにすること。':
+        ('Unlike Japanese or mathematics, there is no textbook.<br> '
+         'The children decide, the children act, the children look back.<br> '
+         'The teacher’s work is not to teach, but to make it possible for children to decide.',
+         'على عكس اللغة أو الرياضيات، لا يوجد كتاب مدرسي.<br> '
+         'الأطفال هم من يقرّرون، ومن ينفّذون، ومن يراجعون.<br> '
+         'عمل المعلم ليس أن يُلقّن، بل أن يجعل القرار ممكنًا للأطفال.'),
+    'ここは、その手だてが溜まる場です。<br> 話す場は <a class="line-l" '
+    'href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation'
+    '&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">'
+    'LINEオープンチャット「みんなの特活ひろば」<i>外部</i></a>。<br> '
+    '<strong>あなたの実践も、<a href="index.html#okuru">送れば そのまま</a> ここに載ります。</strong>':
+        ('This is where those ways of doing it collect.<br> The place to talk is the '
+         '<a class="line-l" '
+         'href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation'
+         '&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">'
+         'LINE open chat “Minna no Tokkatsu Hiroba”<i>external</i></a>.<br> '
+         '<strong>Your practice too — <a href="index.html#okuru">send it and it appears</a> '
+         'right here.</strong>',
+         'هنا تتجمّع هذه الطرائق.<br> ومكان الحديث هو '
+         '<a class="line-l" '
+         'href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation'
+         '&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">'
+         'محادثة LINE المفتوحة «ساحة توكاتسو للجميع»<i>خارجي</i></a>.<br> '
+         '<strong>وممارستك أيضًا — <a href="index.html#okuru">أرسلها فتظهر</a> '
+         'هنا كما هي.</strong>'),
+    '特別活動は、この4つでできています。絵の中のどこにあるかを、切り出してあります。':
+        ('Tokkatsu is made of these four. Each one is cut out of the picture '
+         'to show where it happens.',
+         'تتكوّن الأنشطة الخاصة من هذه المجالات الأربعة، '
+         'وكلٌّ منها مقتطع من الرسم ليُظهر أين يحدث.'),
+    '送られた困りごとは <a href="komari.html#komari">困りごと</a>、届いた実践は '
+    '<a href="bansho.html#bansho">みんなの実践</a> にあります。<br>'
+    'どちらも、送るときにこの4つのどれかを選んでもらっています。':
+        ('Questions that were sent are in <a href="komari.html#komari">Questions</a>, '
+         'and practices that arrived are in '
+         '<a href="bansho.html#bansho">Everyone’s practices</a>.<br>'
+         'For both, the sender chooses one of these four areas.',
+         'الأسئلة المُرسلة في <a href="komari.html#komari">الأسئلة</a>، '
+         'والممارسات الواردة في '
+         '<a href="bansho.html#bansho">ممارسات الجميع</a>.<br>'
+         'وفي الحالتين يختار المُرسِل أحد هذه المجالات الأربعة.'),
+    '特別活動の会議や資料で出てくることばを、はじめての先生に向けて短く。<br> '
+    '言い方はこのサイトによるものです。引用ではありません。':
+        ('Words that come up in Tokkatsu meetings and documents, put briefly '
+         'for a teacher meeting them for the first time.<br> '
+         'The wording is this site’s own. These are not quotations.',
+         'مصطلحات تتكرّر في لقاءات الأنشطة الخاصة ووثائقها، مشروحة باختصار '
+         'لمن يلتقي بها لأول مرة.<br> '
+         'الصياغة من إعداد هذا الموقع، وليست اقتباسًا.'),
+    '困りごとから、いま必要なところへ。<br>'
+    '学級会の学習過程と、根拠になる一次資料をこのページの中で確かめられます。':
+        ('From what you are stuck on, straight to what you need now.<br>'
+         'The steps of a class meeting, and the source documents behind them, '
+         'are all on this page.',
+         'من المشكلة التي تواجهك إلى ما تحتاجه الآن مباشرة.<br>'
+         'مراحل مجلس الفصل والمراجع الأصلية التي تستند إليها، كلّها في هذه الصفحة.'),
+    'ここは<strong>こちらで用意したもの</strong>です。学級会グッズ、映像資料、<br> '
+    'よく出る困りごとに効く手だて。<strong>持ち帰って、明日そのまま使えるもの</strong>だけを置きます。':
+        ('This part is <strong>what we prepared</strong>: class-meeting kit, video material,<br> '
+         'and ways of handling the problems that come up most. '
+         'Only things you can <strong>take home and use tomorrow</strong>.',
+         'هذا القسم <strong>من إعدادنا</strong>: أدوات مجلس الفصل، ومواد مصوّرة،<br> '
+         'وطرائق لمعالجة أكثر المشكلات تكرارًا. '
+         'لا نضع هنا إلا ما <strong>يمكنك أخذه واستعماله غدًا</strong>.'),
+    '先生方から届いた実践は、こちらではなく <strong>「みんなの実践」</strong>にあります。<br> '
+    'あちらが本物の持ち寄り、ここが道具箱です。':
+        ('Practices sent in by teachers are not here — they are in '
+         '<strong>“Everyone’s practices”</strong>.<br> '
+         'That is the real potluck; this is the toolbox.',
+         'الممارسات التي أرسلها المعلمون ليست هنا، بل في '
+         '<strong>«ممارسات الجميع»</strong>.<br> '
+         'تلك هي المائدة المشتركة، وهذا هو صندوق الأدوات.'),
+    '研究会の当日と、申込の締切。':
+        ('The day of each meeting, and the registration deadline.',
+         'يوم انعقاد كل لقاء، وآخر موعد للتسجيل.'),
+    '特別活動にかかわる一次情報だけ。要約はこちらの言葉です。<br>'
+    '題を押したときだけ、出どころ（外部）がひらきます。':
+        ('Primary sources on Tokkatsu only. The summaries are in our own words.<br>'
+         'The source (an external site) opens only when you tap the title.',
+         'مصادر أولية عن الأنشطة الخاصة فقط. الملخّصات بكلماتنا نحن.<br>'
+         'ولا يُفتح المصدر (موقع خارجي) إلا عند الضغط على العنوان.'),
+    '全国と各地の会が、それぞれ何を置いているか。<br> '
+    '押すと、その会のサイトが<strong>新しいタブ</strong>で開きます（外部）。':
+        ('What the national and regional societies each make available.<br> '
+         'Tapping opens that society’s site in a <strong>new tab</strong> (external).',
+         'ما تتيحه كل جمعية وطنية أو محلّية.<br> '
+         'الضغط يفتح موقع تلك الجمعية في <strong>تبويب جديد</strong> (موقع خارجي).'),
+    '日本各地の実践を<strong>シェア</strong>！<br> お気軽に投稿してください！':
+        ('<strong>Share</strong> practices from all over Japan!<br> '
+         'Please post — anyone is welcome.',
+         '<strong>شارِك</strong> ممارسات من كل أنحاء اليابان!<br> '
+         'لا تتردّد في النشر — الباب مفتوح للجميع.'),
+    'いま困っていることを、そのまま書いてください。':
+        ('Write what you are stuck on, just as it is.',
+         'اكتب ما يصعب عليك الآن، كما هو.'),
+    '答えが見つかったものから、<a href="manabu.html#manabu">学ぶ</a>の入口で押せる札になっていきます。':
+        ('As answers are found, each one becomes a card you can tap at the entrance to '
+         '<a href="manabu.html#manabu">How to start</a>.',
+         'وكلّما وُجد جواب، صار سؤاله بطاقة يمكن الضغط عليها عند مدخل '
+         '<a href="manabu.html#manabu">كيف تبدأ</a>.'),
+    '送られてきたものを、そのまま並べています。<br> 答えが見つかったものは、'
+    '<a href="manabu.html#manabu">学ぶ</a>の入口で<strong>押せる札</strong>になります。':
+        ('Shown just as they were sent.<br> Once an answer is found, it becomes a '
+         '<strong>card you can tap</strong> at the entrance to '
+         '<a href="manabu.html#manabu">How to start</a>.',
+         'معروضة كما وردت تمامًا.<br> وإذا وُجد الجواب، صارت '
+         '<strong>بطاقة قابلة للضغط</strong> عند مدخل '
+         '<a href="manabu.html#manabu">كيف تبدأ</a>.'),
+    'あなたの困りごとも <a href="#kiku">ちょっと聞きたい</a> から送れます。<br> '
+    '<strong>答えが早いのはLINEのほう</strong>です。505人が読んでいます。':
+        ('You can send your own question from <a href="#kiku">A quick question</a>.<br> '
+         '<strong>Answers come faster on LINE</strong> — 505 teachers are reading there.',
+         'يمكنك إرسال سؤالك من <a href="#kiku">سؤال سريع</a>.<br> '
+         '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
+
+    # ── 足もと ──
+    '特別活動の情報が、溜まる場。<br>LINEで流れていく話も、ここには残ります。':
+        ('A place where information about Tokkatsu collects.<br>'
+         'What scrolls away on LINE stays here.',
+         'مكان تتجمّع فيه المعلومات عن الأنشطة الخاصة.<br>'
+         'ما يمضي سريعًا في LINE يبقى هنا.'),
+    '管理者：伊藤 優': ('Site owner: Yu Ito', 'مسؤول الموقع: يو إيتو'),
+    '管理画面': ('Admin page', 'لوحة الإدارة'),
+
+    # ── いちばん上の LINE の帯 ──
+    '<b>LINE</b>みんなの特活ひろば<i aria-hidden="true">↗</i>':
+        ('<b>LINE</b>Minna no Tokkatsu Hiroba<i aria-hidden="true">↗</i>',
+         '<b>LINE</b>ساحة توكاتسو للجميع<i aria-hidden="true">↗</i>'),
+}
+
+# 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
+#   正規表現は3つ以上の ( ) に分けます … 前の札／中の字／後ろの札。
+#   中の字を表で引いて、前の札に data-en / data-ar を足します。
+KOTOBA_TEKI = (
+    (r'(<span class="ja">)(.*?)(</span>)', '節の見出し'),
+    (r'(<p class="yomi[^"]*">)(.*?)(</p>)', '節の説明'),
+    (r'(<a class="obi-s[^"]*"[^>]*>)(.*?)(</a>)', '帯'),
+    (r'(<b class="hfuda-h">)(.*?)(</b>)', '札の名前'),
+    (r'(<span class="hfuda-yo">)(.*?)(</span>)', '札のひとこと'),
+    (r'(<b class="gfuda-h">)(.*?)(</b>)', '概要の札の名前'),
+    (r'(<span class="gfuda-yo">)(.*?)(</span>)', '概要の札のひとこと'),
+    (r'(<span class="gfuda-go">)(.*?)(</span>)', '概要の札のボタン'),
+    (r'(<p class="hero-copy">)(.*?)(</p>)', 'ヒーローのコピー', 'ji'),
+    (r'(<p class="igi-bun">)(.*?)(</p>)', 'このサイトは、なに'),
+    (r'(<b>)([^<]+)(</b><span class="t">)([^<]+)(</span>)', '4人の札'),
+    (r'(<h1 class="ko-h">)(.*?)(</h1>)', 'ページの名前'),
+    (r'(<p class="ko-yo">)(.*?)(</p>)', 'ページのひとこと'),
+    (r'(<a class="ko-oya"[^>]*>)(.*?)(</a>)', '親への戻り道'),
+    (r'(<p class="foot-koe">)(.*?)(</p>)', '足もとの1行'),
+    (r'(<span class="kanri-na">)(.*?)(</span>)', '管理者'),
+    (r'(<a class="btn"[^>]*href="\#okuru"[^>]*>)(実践を送る)(<span)', 'ヒーローのボタン1'),
+    (r'(<a class="btn btn--usu"[^>]*>)(みんなの実践を見る)(<span)', 'ヒーローのボタン2'),
+    (r'(<a class="kanri-a"[^>]*>)(.*?)(</a>)', '管理画面へ'),
+    (r'(<span class="btn-ji">)(.*?)(</span>)', 'ボタンの字'),
+    (r'(<a class="line-sumi"[^>]*>)(.*?)(</a>)', 'いちばん上のLINEの帯'),
+)
+
+
+# --kotoba のときだけ、止めずに集めます（ふだんは None ＝ 1個でも欠けたら止まる）
+KOTOBA_TARINAI = None
+
+
+def kotoba_hiku(ji, doko, nai):
+    """表から訳を引く。無ければ nai に積む（積んだぶんは、あとでまとめて出します）。"""
+    key = re.sub(r'\s+', ' ', ji).strip()
+    if key not in KOTOBA:
+        nai.append((doko, key))
+        return None
+    yaku = KOTOBA[key]
+    if not yaku[0] or not yaku[1]:
+        nai.append((doko, key))
+        return None
+    return yaku
+
+
+_TAGU = re.compile(r'<[^>]+>')
+
+
+def kotoba_ireru(html, f):
+    """訳を data-en / data-ar として、その場に足す。
+       ページの中の仕掛けは、この2つを入れかえるだけです。外へは何も出ません。
+
+       ★もう data-en を持っている場所（札の数など）は、そのままにします。
+         数はその場で数えるものなので、表ではなく home_kazu が訳を作ります。"""
+    nai, ima = [], ['', '']
+
+    def fuda(mae, yaku):
+        """開き札に data-en / data-ar を足す。"""
+        return '%s data-en="%s" data-ar="%s">' % (
+            mae[:-1], esc_html(yaku[0]), esc_html(yaku[1]))
+
+    def hen(m):
+        g = list(m.groups())
+        if 'data-en="' in g[0]:
+            return m.group(0)
+        if len(g) == 5:                     # 4人の札（<b>…</b><span class="t">…</span>）
+            a = kotoba_hiku(g[1], ima[0], nai)
+            b = kotoba_hiku(g[3], ima[0], nai)
+            if not a or not b:
+                return m.group(0)
+            return ('<b data-en="%s" data-ar="%s">%s</b>'
+                    '<span class="t" data-en="%s" data-ar="%s">%s</span>'
+                    % (esc_html(a[0]), esc_html(a[1]), g[1],
+                       esc_html(b[0]), esc_html(b[1]), g[3]))
+        key = _TAGU.sub('', g[1]) if ima[1] == 'ji' else g[1]
+        yaku = kotoba_hiku(key, ima[0], nai)
+        if not yaku:
+            return m.group(0)
+        return '%s%s%s' % (fuda(g[0], yaku), g[1], g[2])
+
+    for teki in KOTOBA_TEKI:
+        pat, na = teki[0], teki[1]
+        ima[0], ima[1] = na, (teki[2] if len(teki) > 2 else '')
+        html = re.sub(pat, hen, html, flags=re.S)
+    if nai and KOTOBA_TARINAI is not None:
+        # python3 build.py --kotoba … 6枚ぜんぶを1回で集めて、表に貼る形で出します
+        KOTOBA_TARINAI.extend(nai)
+        return html
+    if nai:
+        mi = ["    %s: ('', ''),   # %s" % (repr(key), doko)
+              for doko, key in sorted(set(nai))]
+        raise Tomeru('公開用/%s に、訳の無い言葉が %d 個あります。\n'
+                     '     build.py の KOTOBA に、下の行をそのまま足して、'
+                     "空の '' を埋めてください（英語, アラビア語）：\n\n%s\n"
+                     % (f, len(set(nai)), '\n'.join(mi)))
+    return html
 
 
 def tsunagi_naosu(html, ima_file, doko, tsune):
@@ -4338,6 +5276,7 @@ def build_shin():
     _GOUKEI.clear()
     buhin, hyo = load_buhin()
     kyara = load_kyara()
+    shirushi = load_mark()
     kiji, _ = load_news()
     goods = load_goods()
     jissen, _ = load_jissen(goods)
@@ -4350,16 +5289,17 @@ def build_shin():
 
     ken = load_kenkyukai()
     komari, tobashita_k = load_komari()
-    # 採用済みの学校全景。文字や動く部品を絵に重ねず、4つの活動を保つ。
-    hero_w, hero_h, e_naka = load_approved_svg('school.svg')
+    # 採用済みの学校全景。4つの活動を切らずに、そのまま見せる。
+    #   ★ホームだけは <use> ではなく「本物」を出します（2026-09-23 依頼）。
+    #     <use> の中は CSS が届かず、子どもも雲も動かせないためです。
+    #     絵は1枚しか入らないので、重さは前と変わりません
+    #     （build_tane が、本物がある版には入れ物を作りません）。
+    hero_w, hero_h, e_naka = load_approved_svg('school.svg', ugokasu=True)
     hero = ('<svg viewBox="0 0 %g %g" role="img" '
             'aria-label="花の咲く学校で、学級会・運動会・児童会の集会・クラブの共同制作をする子どもたち">'
-            '<use href="#ill-hiroba"/></svg>' % (hero_w, hero_h))
-    # スマホでも同じ全景。細部は「4つの内容」の拡大図で見られる。
-    hero_s = hero
+            '<g id="ill-hiroba">%s</g></svg>' % (hero_w, hero_h, e_naka))
 
     for mark, html in (('<!--BUILD:HIROBA-->', hero),
-                       ('<!--BUILD:HIROBA_S-->', hero_s),
                        ('<!--BUILD:COPY-->',   build_copy(TOBIRA_COPY)),
                        ('    <!--BUILD:YOTSU-->',  build_yotsu(kyara, jissen, komari)),
                        ('      <!--BUILD:NAYAMI-->', build_nayami(komari)),
@@ -4404,6 +5344,7 @@ def build_shin():
 
     # ── ここから、1枚をページごとに切り分けます ──────────────
     hero, sec, foot, shikake = wakeru(body)
+    sec = midashi_kao(sec, kyara)
 
     # どの id が、どのページに載るか。これで <a href="#◯◯"> を張りなおします
     doko = {}
@@ -4414,7 +5355,7 @@ def build_shin():
     # 頭と足もとは、どのページにも同じものが載ります（張りかえません）
     tsune = set(re.findall(r'\sid="([^"]+)"', hero + foot)) | {'ue'}
 
-    home_html, home_e = build_home(doko, sec, buhin, kyara, kiji, jissen, ken, komari)
+    home_html, home_e = build_home(doko, sec, shirushi, kiji, jissen, ken, komari)
     for i in re.findall(r'\sid="([^"]+)"', home_html):
         doko[i] = HOME
 
@@ -4439,11 +5380,16 @@ def build_shin():
         p = '\n'.join(['<a class="skip" href="#%s">本文へ進む</a>' % saki,
                        atama, build_obi(f, doko), naka_html, foot, shikake])
         p = tsunagi_naosu(p, f, doko, tsune)
+        # ことばの切りかえ（日本語 / English / العربية）。
+        # 訳を data-en / data-ar としてその場に足します。外へは何も出ません。
+        p = kotoba_ireru(p, f)
         html = '\n'.join([
             '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>',
-            head_de(f, na), '<style>', rd(CSS_H), '</style>', '</head>',
+            head_de(f, na), '<style>',
+            rd(CSS_H) + (''.join(UGOKI_CSS) if f == HOME else ''),
+            '</style>', '</head>',
             '<body>',
-            build_tane(p, e_naka, buhin, kyara,
+            build_tane(p, e_naka, buhin, kyara, shirushi,
                        None if f == HOME else ko_e_naka(f, buhin, kyara)),
             p, '</body>', '</html>',
         ]) + '\n'

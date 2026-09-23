@@ -1,6 +1,6 @@
 /* 特活広場｜保存はここだけ。localStorage 以外は触らない。
    将来ネイティブ化するときは、このファイルの中だけを差し替える。
-   扱うキー：stock / memo / read / mode / view / yaritai                      */
+   扱うキー：stock / memo / read / mode / view / yaritai / lang                      */
 (function (g) {
   'use strict';
   var NS = 'tokkatsu.';

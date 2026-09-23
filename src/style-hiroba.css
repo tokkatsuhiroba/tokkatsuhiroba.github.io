@@ -44,9 +44,30 @@
   --f-hon:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif;
 
   --uchi:960px;                     /* 内寸。参照元と同じ */
-  --pad:clamp(20px,4vw,40px);
-  --aki:clamp(72px,9vw,140px);      /* 節と節のあいだ。参照元は110〜155px */
+
+  /* ══ 字の大きさと、間のつめ方（2026-09-23 依頼）══════════
+     「近すぎる。Twitterぐらいの遠さで、スマホ1画面の情報量を上げて」
+     という話から、全体を詰めました。実測（375px）で、実践カード1枚が
+     942px ＝ 1.2画面ありました。1画面に1件も入っていませんでした。
+
+     詰めたのは3つ。**字の大きさは、ほとんど触っていません。**
+       ① 行間 1.9 → 1.62（Twitterは約1.33。日本語なのでもう少し空ける）
+       ② 節と節のあいだ 72〜140px → 40〜84px
+       ③ カードの内余白と、部品どうしのすきま
+
+     --moji … 読む人が変えられる「字の大きさのつまみ」。
+       1 がふつう。画面の右下のボタンで 0.9〜1.26 に動きます。
+       字を持つところは calc(◯px * var(--moji)) で書いてあるので、
+       ここが動くと **字だけ** がいっせいに動きます（枠や余白は動きません）。
+       新しく字の大きさを書くときは、同じ形で書いてください。 */
+  --moji:1;
+  --pad:clamp(14px,3.2vw,32px);
+  --aki:clamp(40px,5.4vw,84px);
 }
+html[data-moji="chiisai"]{--moji:.8}
+html[data-moji="futsuu"] {--moji:1}
+html[data-moji="ookii"]  {--moji:1.12}
+html[data-moji="totemo"] {--moji:1.26}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
@@ -63,7 +84,7 @@ body{max-width:100%;overflow-x:clip}
 body{
   background:var(--bg);color:var(--ink);
   font-family:var(--f-hon);
-  font-size:16px;line-height:1.9;letter-spacing:.03em;
+  font-size:calc(15px * var(--moji));line-height:1.62;letter-spacing:.02em;
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -90,19 +111,19 @@ img,svg{max-width:100%}
 .midashi{margin:0 0 8px;text-align:center}
 .midashi .en{
   display:block;font-family:var(--f-en);
-  font-size:13.5px;font-weight:700;letter-spacing:.26em;color:var(--mute);
-  margin-bottom:10px;
+  font-size:calc(12px * var(--moji));font-weight:700;letter-spacing:.24em;color:var(--mute);
+  margin-bottom:7px;
 }
 .midashi .ja{
   display:block;
   font-family:var(--f-maru);font-weight:700;
-  font-size:clamp(26px,4.4vw,44px);letter-spacing:.12em;line-height:1.6;
+  font-size:calc(clamp(21px,3.3vw,34px) * var(--moji));letter-spacing:.1em;line-height:1.42;
   text-indent:.15em;
 }
 .yomi{
-  max-width:640px;margin:0 auto clamp(32px,5vw,64px);
+  max-width:640px;margin:0 auto clamp(18px,2.8vw,32px);
   text-align:center;font-family:var(--f-te);font-weight:400;
-  font-size:clamp(15px,1.6vw,17.5px);line-height:2.1;color:var(--ink);
+  font-size:calc(clamp(13.5px,1.35vw,15px) * var(--moji));line-height:1.8;color:var(--ink);
 }
 
 /* ── ヒーロー ────────────────────────────────
@@ -114,7 +135,6 @@ img,svg{max-width:100%}
   border-bottom:2px solid var(--ink);
 }
 .hero-e{display:block;width:100%;height:auto}
-.hero-e--semai{display:none}
 .hero-e svg{display:block;width:100%;height:auto}
 .hero-koe{
   position:relative;order:-1;z-index:2;width:100%;max-width:1280px;margin-inline:auto;
@@ -127,7 +147,7 @@ img,svg{max-width:100%}
 }
 .hero-copy{
   margin:14px 0 0;font-family:var(--f-te);font-weight:600;
-  font-size:clamp(15px,2.2vw,23px);letter-spacing:.10em;
+  font-size:calc(clamp(15px,2.2vw,23px) * var(--moji));letter-spacing:.10em;
 }
 .hero-copy span{display:inline-block;animation:deru .5s ease both;animation-delay:calc(var(--i)*.04s)}
 @keyframes deru{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -205,8 +225,8 @@ img,svg{max-width:100%}
    広場ぜんぶを375pxに押しこむと、子どもが10pxになって読めない。
    ヒーローは「寄った1か所」を出し、4つの内容のカードで細部を見せる。 */
 @media (max-width:719px){
-  .hero-e--hiro{display:none}
-  .hero-e--semai{display:block}
+  /* 絵は1枚になりました（2026-09-23）。スマホでも同じ全景を出します。
+     切りかえていたころの .hero-e--semai は、もう作っていません。 */
   /* スマホの空は、言葉の高さで決める（2026-09-21 直し）。
      min-height を外しても、まだ空が余っていました。原因は2つあって、
      ① .hero-koe が position:absolute なので、空の高さに関われない
@@ -286,6 +306,36 @@ img,svg{max-width:100%}
 .kazari svg{display:block;width:100%;height:auto}
 @keyframes uku{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @media (max-width:1259px){.kazari{display:none}}
+
+/* ── せまい画面では、飾りを「節の足もと」に立たせる（2026-09-23 依頼）──
+   上の決まりのとおり、まわりに立つ飾りは本文の欄の外に置くので、
+   1260px より せまいと消えます。スマホでも会いたい、という話なので、
+   **節のいちばん下・波のふちに立たせます**。
+
+   ★ぶつからない作り方
+     ・置くのは節の下の余白の中だけ。:has() で「飾りのある節」にだけ
+       その余白を足すので、飾りの無い節は1pxも高くなりません。
+     ・:has() が使えない端末では、上の display:none のまま＝
+       いままでと同じです（出ないだけで、崩れません）。
+     ・本文（.uchi）より下に居るので、字と重なりません。 */
+@supports selector(:has(*)){
+  @media (max-width:1259px){
+    .sec:has(> .kazari){padding-bottom:calc(var(--aki) + 46px)}
+    .sec > .kazari{
+      display:block;
+      top:auto;bottom:-6px;
+      left:auto;right:var(--pad);
+      width:var(--w-sp,74px);
+      animation-duration:6s;
+    }
+    .sec > .kazari--migi{right:auto;left:var(--pad)}
+  }
+  /* いちばんせまいところでは、少し小さく */
+  @media (max-width:479px){
+    .sec:has(> .kazari){padding-bottom:calc(var(--aki) + 34px)}
+    .sec > .kazari{width:var(--w-sp,60px)}
+  }
+}
 
 /* ── 見出し（英字を丸い札に、下に3つの点） ── */
 .midashi .en{
@@ -1423,9 +1473,9 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .ko-modoru a:hover{text-decoration:underline}
 .ko-h{
   margin:0;font-family:var(--f-maru);font-weight:900;
-  font-size:clamp(30px,5.4vw,52px);line-height:1.35;letter-spacing:.08em;
+  font-size:calc(clamp(27px,4.4vw,42px) * var(--moji));line-height:1.3;letter-spacing:.08em;
 }
-.ko-yo{margin:10px 0 0;font-size:15px;line-height:1.9;color:var(--mute)}
+.ko-yo{margin:8px 0 0;font-size:calc(14px * var(--moji));line-height:1.7;color:var(--mute)}
 .ko-naka{
   margin:14px 0 0;font-family:var(--f-en);font-weight:500;
   font-size:12.5px;letter-spacing:.14em;color:var(--mute);
@@ -1449,11 +1499,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .hfuda-e{display:block;height:74px;margin-bottom:10px}
 .hfuda-e svg{display:block;width:auto;height:100%}
 .hfuda-h{
-  font-family:var(--f-maru);font-weight:700;font-size:17px;line-height:1.5;
+  font-family:var(--f-maru);font-weight:700;font-size:calc(17px * var(--moji));line-height:1.5;
   letter-spacing:.04em;
 }
 .hfuda-yo{
-  display:block;margin-top:7px;font-size:13px;line-height:1.8;color:var(--mute);
+  display:block;margin-top:7px;font-size:calc(13px * var(--moji));line-height:1.7;color:var(--mute);
 }
 .hfuda-kazu{
   justify-self:start;margin-top:12px;padding:3px 11px;
@@ -1481,8 +1531,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   }
   .hfuda-e{height:52px;margin:0 0 8px}
   .hfuda-e svg{width:auto;height:100%;max-height:52px}
-  .hfuda-h{font-size:14.5px;line-height:1.45}
-  .hfuda-yo{margin-top:5px;font-size:11.5px;line-height:1.65}
+  .hfuda-h{font-size:calc(14.5px * var(--moji));line-height:1.45}
+  .hfuda-yo{margin-top:5px;font-size:calc(11.5px * var(--moji));line-height:1.65}
   .hfuda-kazu{margin-top:9px;padding:2px 9px;font-size:11px}
 }
 
@@ -1524,7 +1574,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x mandatory;scroll-behavior:smooth;
   scrollbar-width:none;-webkit-overflow-scrolling:touch;
-  padding-bottom:2px;
+  /* ★札のベタ影（8px）と、浮いたとき（8px）のための逃げ場。
+     2026-09-23：ここが padding-bottom:2px しかなく、**器のふちで
+     札の黒い影と下の角が切られていました**（研究日程の札で実測）。
+     overflow:auto の器は、はみ出した影をそのまま切ります。
+     下と右に影のぶんだけ余白を取り、外がわは同じだけ引いて、
+     並びの位置は1pxも動かしません。 */
+  padding:4px 12px 14px 4px;
+  margin:-4px -12px -14px -4px;
 }
 .yoko-ban::-webkit-scrollbar{display:none}
 .yoko-ban:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
@@ -1557,8 +1614,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   --yoko-w:calc((100% - clamp(14px,2vw,20px)) / 2);
   gap:clamp(14px,2vw,20px);
   /* 札のかげ（5px）と、浮いたとき（8px）のための逃げ場。
-     これが無いと、器のふちでかげが切られます。 */
+     これが無いと、器のふちでかげが切られます。
+     （2026-09-23：同じ逃げ場を .yoko-ban ぜんぶに入れたので、
+       ここは外がわの引き算だけ合わせます） */
   padding:3px 10px 12px 3px;
+  margin:-3px -10px -12px -3px;
 }
 /* ここだけ「左ぞろえで止まる」にします。器の既定は真ん中ぞろえですが、
    同時に2枚見えるところで真ん中に寄せると、送るたびに左右が半分ずつ
@@ -1639,7 +1699,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .gfuda-a::after{content:"";position:absolute;inset:0}
 .gfuda-ue{display:flex;align-items:baseline;gap:8px}
 .gfuda-h{
-  font-family:var(--f-maru);font-weight:700;font-size:15px;letter-spacing:.04em;
+  font-family:var(--f-maru);font-weight:700;font-size:calc(15px * var(--moji));letter-spacing:.04em;
 }
 .gfuda-kazu{
   padding:2px 9px;border:2px solid var(--ink);border-radius:999px;
@@ -1647,11 +1707,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   white-space:nowrap;
 }
 .gfuda-yo{
-  display:block;margin-top:5px;font-size:11.5px;line-height:1.6;color:var(--mute);
+  display:block;margin-top:5px;font-size:calc(11.5px * var(--moji));line-height:1.6;color:var(--mute);
 }
 .gfuda-go{
   margin-inline-start:auto;font-family:var(--f-maru);font-weight:700;
-  font-size:12.5px;letter-spacing:.04em;color:var(--accent);white-space:nowrap;
+  font-size:calc(12.5px * var(--moji));letter-spacing:.04em;color:var(--accent);white-space:nowrap;
 }
 .gfuda-go::after{content:"　→"}
 
@@ -1883,15 +1943,21 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .shiryo-s i{font-style:normal;font-size:11px;letter-spacing:.08em}
 
 /* ── 板書のページ ── */
-.bantana{display:grid;gap:clamp(20px,3vw,32px)}
+.bantana{display:grid;gap:clamp(12px,1.8vw,18px)}
 .bfuda{
-  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
-  box-shadow:6px 6px 0 var(--ink);
-  padding:clamp(18px,2.4vw,26px);
+  /* ★内余白は、かならずこの --bfuda-pad を使ってください。
+     板書の窓（.bfuda-mado--hiro）が、同じ値ぶん外へ出て
+     「札のふちいっぱい」を作っています。ここに数を直接書くと、
+     2つがずれて **写真が札からはみ出し、ふちを隠します**
+     （2026-09-23、余白を詰めたときに実際に起きました）。 */
+  --bfuda-pad:clamp(12px,1.7vw,18px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:16px;
+  box-shadow:4px 4px 0 var(--ink);
+  padding:var(--bfuda-pad);
 }
 .bfuda-me{
-  margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  font-size:12.5px;line-height:1.7;color:var(--mute);letter-spacing:.04em;
+  margin:0;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  font-size:calc(11.5px * var(--moji));line-height:1.5;color:var(--mute);letter-spacing:.03em;
 }
 .bfuda-tag{
   font-family:var(--f-maru);font-size:12px;font-weight:700;letter-spacing:.08em;
@@ -1906,8 +1972,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   border:2px solid var(--ink);border-radius:999px;padding:2px 11px;
 }
 .bfuda-h{
-  margin:12px 0 14px;font-family:var(--f-maru);font-weight:700;
-  font-size:clamp(17px,2vw,22px);letter-spacing:.05em;line-height:1.6;
+  margin:7px 0 6px;font-family:var(--f-maru);font-weight:700;
+  font-size:calc(clamp(17px,1.8vw,20.5px) * var(--moji));letter-spacing:.04em;line-height:1.42;
 }
 /* 写真は、よこ1枚ずつ。黒板は横長なので、たてに積むと読めなくなります */
 .bfuda-mado{
@@ -1932,16 +1998,16 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:12px;color:var(--mute);
 }
 .bfuda-ashi{
-  margin:16px 0 0;display:flex;gap:14px;flex-wrap:wrap;
+  margin:10px 0 0;display:flex;gap:9px;flex-wrap:wrap;
   align-items:center;justify-content:space-between;
 }
-.bfuda-by{font-size:12.5px;color:var(--mute)}
+.bfuda-by{font-size:calc(11.5px * var(--moji));color:var(--mute)}
 
 /* まだ1枚も無いとき。空の棚を押せる形で出しません */
 .karappo{
-  margin:0;padding:clamp(20px,3vw,30px);
-  background:var(--bg);border:2px dashed var(--rule);border-radius:18px;
-  font-size:14.5px;line-height:1.95;color:var(--mute);
+  margin:0;padding:clamp(14px,2.2vw,22px);
+  background:var(--bg);border:2px dashed var(--rule);border-radius:16px;
+  font-size:calc(13.5px * var(--moji));line-height:1.72;color:var(--mute);
 }
 
 /* ── 帯に出ないページの、親への戻り道 ──
@@ -2086,7 +2152,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    4人ならびと見た目がそろいます。 */
 .igi-bun{
   max-width:640px;margin:0 auto;text-align:center;
-  font-size:15.5px;line-height:1.85;
+  font-size:calc(15px * var(--moji));line-height:1.72;
 }
 .igi-bun b{font-weight:700;border-bottom:3px solid var(--ki);padding-bottom:1px}
 /* 1文＝1行。狭い画面で1行に入りきらないときも、語の切れ目でしか折りません
@@ -2112,10 +2178,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .igi-h .e svg{width:auto;height:64px}
 .igi-h b{
   display:block;margin-top:6px;font-family:var(--f-maru);font-weight:700;
-  font-size:14.5px;letter-spacing:.03em;
+  font-size:calc(14.5px * var(--moji));letter-spacing:.03em;
 }
 .igi-h .t{
-  display:block;margin-top:4px;font-size:12.5px;line-height:1.55;color:var(--mute);
+  display:block;margin-top:4px;font-size:calc(12.5px * var(--moji));line-height:1.55;color:var(--mute);
   /* 日本語は語の切れ目で折る。効かないブラウザでも見た目は崩れません */
   word-break:auto-phrase;text-wrap:pretty;
 }
@@ -2128,10 +2194,153 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      出ません（実測。中身の書きかえ自体は反映されるのに、動きだけ出ない）。
      だから動かすのは「絵の上に重ねた入れ物」のほうです。
 
+   ★2026-09-23 に決めなおしました（依頼）
+     「4か所の子どもたちと、雲に動きをつけてほしい」
+     そこでホームの絵だけ <use> をやめ、**絵の本物**を出すようにしました。
+     本物なので、下の .ug .ukumo がそのまま効きます。
+
    ★決めごと
-     ・校舎・木・子どもは動かさない。建物が揺れると絵が不安定に見えます。
-     ・動くのは空にあるものだけ。雲が流れて、絵ぜんたいがゆっくり息をします。
-     ・字の後ろを通るので、雲はうすく（--o）。読みにくくしません。 */
+     ・校舎・木・花・黒板は動かさない。建物が揺れると絵が不安定に見えます。
+     ・動くのは「子ども」（58人ぜんぶ＝4か所ぜんぶ）と「雲」（4つ）だけ。
+     ・大きく動かさない。画面の上で2〜4pxぶん。遠くから見ている感じにします。
+     ・走る子ははずむ、手を挙げる子は手を上げ下げ、座る子と立つ子は小さくゆれる。
+     ・動きを減らす設定の人には、1つも動かしません（絵はそのまま出ます）。 */
+
+/* ── 絵の中の人と雲（build.py の ugoki_ireru が包みます）────
+   包んだ入れ物だけを動かします。絵そのものは1本も変えていません。
+   軸は足もと（transform-origin:50% 100%）。頭だけが小さく振れます。
+
+   ★2026-09-23 の直し（依頼2つ）
+     ① 雲がゆっくりすぎた → 26秒・26px を 9〜15秒・80px に。
+        4つとも速さを変えてあります（そろって流れると板に見えるため）。
+     ② 走る子の「跳ねる」が変だった。
+        理由がはっきりしていて、**まっすぐ浮くのに、鉢巻も髪も
+        ついてこない**からです。絵は1枚の紙なので、体の一部だけ
+        遅れて動かすことができません。
+        そこで **浮かせるのをやめて、ふみこみの「揺れ」に変えました。**
+        上下は5pxだけ残し、体を前後に倒します。地面から離れないので、
+        鉢巻が止まっていても おかしく見えません。
+     ③ ぜんたいに速く（依頼）。立つ 3.4→2.0秒、座る 2.8→1.7秒、
+        手を挙げる 1.5→0.85秒、走る 0.44→0.34秒。 */
+.ug,.ukumo{transform-box:fill-box}
+.ug{
+  transform-origin:50% 100%;
+  animation:ug-yure var(--t,2s) ease-in-out infinite alternate;
+}
+.ug--te     {animation:ug-te .85s ease-in-out infinite alternate}
+/* 走る子は、校庭のトラックを回りつづけます（2026-09-23 依頼）。
+   2つの動きを重ねています。
+     ug-mawaru … translate（位置）で、トラックを1周16秒
+     ug-fumu  … transform（かたむき）で、足のふみこみ
+   どこから走り出すかは、build.py が1人ずつ style に書きこみます
+   （--sx --sy ＝ その子の足もとから、トラックの中心までの差）。 */
+.ug--hashiru{
+  animation:ug-mawaru 28s linear infinite,
+            ug-fumu .48s ease-in-out infinite alternate;
+}
+/* 青い服の2人（2026-09-23 2回目の依頼）
+   1周したら、トラックを出て校舎の玄関へ入っていきます。**戻ってきません。**
+   道は1人ずつちがうので、build.py が1人ぶんずつ @keyframes を書き、
+   その名前を --nm に、かかる時間を --byo に入れます。
+   玄関は絵の奥なので、近づくほど小さくなって、戸の前で消えます。 */
+.ug--hashiru.ug--hairu{
+  animation:var(--nm) var(--byo) linear 1 forwards,
+            ug-fumu .48s ease-in-out infinite alternate;
+}
+/* 入れかわりに出てくる黄色の2人（2026-09-23 依頼）
+   3つを順ぐりに重ねています。
+     var(--nm) … 玄関から校庭へ出てくる道（1回だけ）
+     ug-mawaru … 出たあとは、赤い2人と同じトラックを回りつづける
+     ug-fumu  … 足のふみこみ
+   出はじめる秒・回りはじめる秒は build.py が animation-delay に書きます。 */
+.ug--hashiru.ug--deru{
+  animation:var(--nm) var(--byo) linear 1 both,
+            ug-mawaru 28s linear infinite,
+            ug-fumu .48s ease-in-out infinite alternate;
+}
+
+/* ── 玄関の両開き戸（2026-09-23 依頼）───────────────
+   絵では1枚の四角です。build.py の tobira_wakeru が
+   「奥の暗がり・左の戸・右の戸」の3つに組みなおします（絵は直しません）。
+   開くのは、戸を外がわへ縮める形（scale）です。回転より素直に見えます。 */
+.tobira-h,.tobira-m{
+  transform-box:fill-box;
+  animation:ug-tobira 60s linear 1 forwards;
+}
+.tobira-h{transform-origin:0% 50%}      /* 左の戸は、左はしを軸に開く */
+.tobira-m{transform-origin:100% 50%}    /* 右の戸は、右はしを軸に開く */
+.ug--suwaru {--r:1.9deg;--t:1.7s}
+.ukumo{
+  transform-origin:50% 50%;
+  animation:ukumo-nagare var(--kt,11s) ease-in-out infinite alternate;
+}
+/* 雲は4つとも速さを変える（同じだと、1枚の板が動いて見えます） */
+.ukumo.ug-p0{--kt:9s}  .ukumo.ug-p1{--kt:12s}
+.ukumo.ug-p2{--kt:15s} .ukumo.ug-p3{--kt:10.5s}
+
+/* そろって動くと機械に見えます。6組に分けて、出だしをずらします
+   （負の数＝はじめから途中の姿勢で立っている、という意味） */
+.ug-p0{animation-delay:-.2s} .ug-p1{animation-delay:-1.1s} .ug-p2{animation-delay:-2.0s}
+.ug-p3{animation-delay:-.7s} .ug-p4{animation-delay:-1.6s} .ug-p5{animation-delay:-2.4s}
+
+@keyframes ug-yure{
+  from{transform:rotate(calc(var(--r,3deg) * -1))}
+  to  {transform:rotate(var(--r,3deg))}
+}
+/* 手を挙げる子：ひじを軸にふるように、少し持ち上げて倒す */
+@keyframes ug-te{
+  from{transform:translateY(0)              rotate(calc(var(--rt,3.4deg) * -1))}
+  to  {transform:translateY(var(--h2,-5px)) rotate(var(--rt,3.4deg))}
+}
+/* 走る子：浮かさない。地面をふみながら、ほんの少しだけ前後に傾く
+   （2026-09-23 2回目の直し：横揺れが大きすぎたので 5.5度 → 2度） */
+@keyframes ug-fumu{
+  from{transform:translateY(0)             rotate(calc(var(--rh,2deg) * -1))}
+  to  {transform:translateY(var(--h,-5px)) rotate(var(--rh,2deg))}
+}
+
+/* 校庭のトラック（絵の中の真ん中のレーン）。
+   中心 1580,1104 ／ 横半径 478 ／ 縦半径 212 を、24個の点でなぞります。
+   左回り（日本の校庭と同じ向き）。1コマめは、絵に描かれた立ち位置と同じです。 */
+@keyframes ug-mawaru{
+  0%     {translate:calc(var(--sx) + 478px) calc(var(--sy) + 0px)}
+  4.1667%{translate:calc(var(--sx) + 462px) calc(var(--sy) - 55px)}
+  8.3333%{translate:calc(var(--sx) + 414px) calc(var(--sy) - 106px)}
+  12.5000%{translate:calc(var(--sx) + 338px) calc(var(--sy) - 150px)}
+  16.6667%{translate:calc(var(--sx) + 239px) calc(var(--sy) - 184px)}
+  20.8333%{translate:calc(var(--sx) + 124px) calc(var(--sy) - 205px)}
+  25.0000%{translate:calc(var(--sx) + 0px) calc(var(--sy) - 212px)}
+  29.1667%{translate:calc(var(--sx) - 124px) calc(var(--sy) - 205px)}
+  33.3333%{translate:calc(var(--sx) - 239px) calc(var(--sy) - 184px)}
+  37.5000%{translate:calc(var(--sx) - 338px) calc(var(--sy) - 150px)}
+  41.6667%{translate:calc(var(--sx) - 414px) calc(var(--sy) - 106px)}
+  45.8333%{translate:calc(var(--sx) - 462px) calc(var(--sy) - 55px)}
+  50.0000%{translate:calc(var(--sx) - 478px) calc(var(--sy) - 0px)}
+  54.1667%{translate:calc(var(--sx) - 462px) calc(var(--sy) + 55px)}
+  58.3333%{translate:calc(var(--sx) - 414px) calc(var(--sy) + 106px)}
+  62.5000%{translate:calc(var(--sx) - 338px) calc(var(--sy) + 150px)}
+  66.6667%{translate:calc(var(--sx) - 239px) calc(var(--sy) + 184px)}
+  70.8333%{translate:calc(var(--sx) - 124px) calc(var(--sy) + 205px)}
+  75.0000%{translate:calc(var(--sx) - 0px) calc(var(--sy) + 212px)}
+  79.1667%{translate:calc(var(--sx) + 124px) calc(var(--sy) + 205px)}
+  83.3333%{translate:calc(var(--sx) + 239px) calc(var(--sy) + 184px)}
+  87.5000%{translate:calc(var(--sx) + 338px) calc(var(--sy) + 150px)}
+  91.6667%{translate:calc(var(--sx) + 414px) calc(var(--sy) + 106px)}
+  95.8333%{translate:calc(var(--sx) + 462px) calc(var(--sy) + 55px)}
+  100%   {translate:calc(var(--sx) + 478px) calc(var(--sy) + 0px)}
+}
+@keyframes ukumo-nagare{
+  from{transform:translateX(calc(var(--kx,80px) * -1))}
+  to  {transform:translateX(var(--kx,80px))}
+}
+
+/* スマホは絵ぜんたいが小さく写るので、同じ数値だと動きが見えません。
+   絵の中での振れ幅を大きくして、画面の上では同じくらいに見せます。 */
+@media (max-width:719px){
+  .ug{--r:5.5deg;--rh:3.5deg;--rt:6deg;--h:-10px;--h2:-10px}
+  .ug--suwaru{--r:3.4deg}
+  .ukumo{--kx:120px}
+}
 
 /* 空を流れる雲。絵の上・字の下（z-index 1、.hero-koe が 2） */
 .hkumo{
@@ -2166,6 +2375,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* 動きを減らす設定の人には、1つも動かしません（絵はそのまま出ます） */
 @media (prefers-reduced-motion:reduce){
   .hkumo,.hko{animation:none;display:none}
+  .ug,.ukumo,.tobira-h,.tobira-m{animation:none}
   .hero-e svg{animation:none;scale:1;translate:none}
 }
 
@@ -2291,7 +2501,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .bfuda-mado--hiro{
   max-height:none;overflow:visible;
   /* 札の内ぶんだけ外へ出して、写真に幅をぜんぶ渡します */
-  margin-inline:calc(-1 * clamp(18px,2.4vw,26px));
+  margin-inline:calc(-1 * var(--bfuda-pad));
   padding:0;border-inline:0;border-radius:0;
   background:var(--men-ki);
 }
@@ -2427,15 +2637,15 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 
 /* みんなの実践の中身。ふたに入れず、そのまま出します（2026-09-22）。
    押す場所を作らないのが目的なので、見出しも本文も札の中にそのまま置きます。 */
-.bfuda-naka{margin:14px 0 0}
+.bfuda-naka{margin:9px 0 0}
 .bfuda-naka h4{
-  margin:20px 0 8px;font-family:var(--f-maru);font-weight:700;font-size:16px;
+  margin:12px 0 5px;font-family:var(--f-maru);font-weight:700;font-size:calc(14.5px * var(--moji));
   letter-spacing:.05em;padding-inline-start:12px;
   border-inline-start:6px solid var(--ki);
 }
-.bfuda-naka p{margin:0 0 12px;font-size:15px;line-height:1.95}
+.bfuda-naka p{margin:0 0 7px;font-size:calc(14px * var(--moji));line-height:1.62}
 .bfuda-naka ul,.bfuda-naka ol{margin:0 0 14px;padding-inline-start:1.5em}
-.bfuda-naka li{margin:0 0 7px;font-size:15px;line-height:1.9}
+.bfuda-naka li{margin:0 0 4px;font-size:calc(14px * var(--moji));line-height:1.6}
 .bfuda-naka > :last-child{margin-bottom:0}
 
 /* ══ 学年の札（2026-09-22）════════════════════════════════
@@ -2648,6 +2858,22 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .sagasu[hidden]{display:none}
 .sagasu-gyo{display:grid;gap:7px}
+/* ── 左に地図・右にさがす（2026-09-23 依頼）──────────────────
+   書く順は「さがす → 地図」です。スマホではこの順に上から積まれます
+   （字で絞るほうが速いので、そちらを先に）。広い画面のときだけ、
+   ここで地図を **左の列** へ動かします。
+   ★地域が1件も書かれていないときは .sagasu--futatsu が付かないので、
+     空の列ができません。 */
+.sagasu-migi{display:grid;gap:12px;min-width:0}
+.sagasu-hidari{min-width:0}
+@media (min-width:760px){
+  .sagasu--futatsu{
+    grid-template-columns:minmax(0,320px) minmax(0,1fr);
+    gap:18px;align-items:start;
+  }
+  .sagasu--futatsu .sagasu-hidari{grid-column:1;grid-row:1}
+  .sagasu--futatsu .sagasu-migi  {grid-column:2;grid-row:1}
+}
 .sagasu-l{
   font-family:var(--f-maru);font-weight:700;font-size:13px;letter-spacing:.06em;
   color:var(--mute);
@@ -2785,11 +3011,23 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    いちばん伝えたいことを、ひとことで。題のすぐ下に、本文より
    ひとまわり大きく出します。任意なので、無い札もあります。
    ★色だけで目立たせません。大きさと、左の太い線でも分かるようにします。 */
+/* 「推しポイント」の名のり（2026-09-23 依頼）。
+   緑の縦線だけでは、何の1行なのか伝わりませんでした。
+   ★札の中で いちばん目立たせたいのは中身のほうなので、
+     名のりは小さく・添え字の色にします。 */
+.bfuda-oshi-l{
+  display:inline-block;margin-inline-end:8px;
+  padding:1px 9px;border-radius:999px;
+  background:var(--accent);color:var(--bg);
+  font-family:var(--f-maru);font-weight:700;
+  font-size:calc(10.5px * var(--moji));letter-spacing:.06em;
+  vertical-align:.12em;white-space:nowrap;
+}
 .bfuda-oshi{
-  margin:0 0 14px;padding:2px 0 2px 14px;
+  margin:0 0 8px;padding:1px 0 1px 12px;
   border-inline-start:5px solid var(--accent);
   font-family:var(--f-maru);font-weight:700;
-  font-size:clamp(16px,1.9vw,19px);line-height:1.75;letter-spacing:.02em;
+  font-size:calc(clamp(14.5px,1.6vw,17px) * var(--moji));line-height:1.55;letter-spacing:.02em;
 }
 
 /* ══ スマホでの、実践の字の大きさ（2026-09-22 夜 依頼）══════
@@ -2797,10 +3035,129 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    ★14pxより小さくはしません。読めなくなるほうが困ります。
    ★変えるのは「送っていただいた中身」だけです。題・推しポイント・
      押すところの大きさは、そのままにします。 */
+.bfuda-lead{margin:0;font-size:calc(14.5px * var(--moji));line-height:1.62}
 @media (max-width:719px){
-  .bfuda-lead{font-size:14px;line-height:1.9}
-  .bfuda-naka p,.bfuda-naka li{font-size:14px;line-height:1.9}
-  .bfuda-oshi{font-size:15.5px;padding-inline-start:12px}
+  .bfuda-lead{font-size:calc(14px * var(--moji))}
+  .bfuda-naka p,.bfuda-naka li{font-size:calc(14px * var(--moji))}
+  .bfuda-oshi{padding-inline-start:10px}
+}
+
+/* ══ 実践カードの「足」と写真を詰める（2026-09-23 依頼）══════
+   実測（375px）で、足だけで 266px ありました。カードぜんぶで836pxの
+   3分の1です。中身（書いてくださった文）より、ボタンのほうが高い、
+   という形になっていました。原因は **全幅のボタンが4つ縦に積む**こと。
+
+   ★ボタンは減らしません。押せる大きさ（40px）も残します。
+     **2つずつ横に並べる**だけで、266px → 110px ほどになります。
+   ★写真は「ちら見せ」にします。小さくしたぶんは、［大きく見る］が
+     全画面で受けます（2026-09-23 にそちらを直しました）。       */
+@media (max-width:719px){
+  /* ★上のほうに .bfuda-ashi{flex-direction:column} があります。
+     それだと ボタンが1つずつ縦に積まれて、足だけで266pxになります。
+     ここで よこ並びに戻します（この行を消すと、また縦に積まれます）。 */
+  .bfuda-ashi{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
+  .bfuda-by{flex:1 1 100%}
+  /* .bansho-b の display:block／width:100% より強く当てるため、
+     2つ重ねの名前（.bfuda-ashi .bansho-b）で書いています。 */
+  .bfuda-ashi .bansho-b{
+    display:inline-flex;align-items:center;gap:6px;line-height:1.4;
+    /* ★1ますを ちょうど 50%-3px にすると、2つ＋すきま＝親の幅ぴったりに
+       なって、小数点の丸めで折り返します（実測で踏みました）。
+       少し小さめ（50%-8px）にして、必ず2つ入るようにします。 */
+    flex:1 1 calc(50% - 8px);width:auto;min-width:0;
+    min-height:40px;padding:7px 9px;justify-content:center;
+    font-size:calc(12.5px * var(--moji));
+  }
+  .bfuda-ashi .bansho-b i{font-size:13px}
+  /* 写真は ちら見せ。読むのを止めない高さにします */
+  .bfuda-mado img,.shiryo-mado img{max-height:40vh}
+}
+.bfuda-mado{max-height:56vh}
+.shiryo-mado img{max-height:min(46vh,420px)}
+
+/* ══ 写真とPDFで、見た目を分けない（2026-09-23 依頼）══════════
+   受け口は、送られたものを入れ物で振り分けています。
+     写真 → src/bansho/（front matter の bansho:）
+     PDF  → src/shiryo/（front matter の shiryo:）
+   そのまま CSS も2種類あって、**写真の窓は淡い黄、PDFの窓は淡い空色**に
+   なっていました。ところが PDFも Actions が画像に変えるので、
+   **見る人の画面に出るものは、どちらも同じ「写真」です。**
+   入れ物の都合が、そのまま画面に出ていました。そろえます。
+
+   ★変えるのは、実践の札の中（.bfuda）だけです。
+     「すぐ使える道具」（manabu）の資料は、周りの地色がちがうので
+     そちらは元の空色のままにしてあります。 */
+.bfuda .shiryo-mado{
+  max-height:56vh;padding:12px;gap:14px;
+  background:var(--men-ki);
+  border:2px solid var(--rule);border-radius:14px;
+}
+
+/* ══ 字の大きさのつまみ（2026-09-23 依頼）════════════════════
+   置き場所は **LINEの案内の右** だけです。
+   はじめは画面の右下に出しっぱなしにしていましたが、
+   「常時表示ではなく」という話で、ここへ移しました。
+
+   ★つまみ自身には --moji を掛けていません。字を小さくしたときに、
+     押せなくなるためです。
+   ★出る札（小・中・大・特大）は、ボタンの**下**に right づめで出ます。
+     よこに並べると、狭い画面で画面の外へ出ます。                */
+.ue-migi{
+  position:relative;z-index:3;
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  width:fit-content;margin:0 0 clamp(10px,1.4vh,16px) auto;
+  pointer-events:auto;
+}
+.ue-migi .line-sumi{margin:0}
+.moji{position:relative;flex:none}
+/* ほかのページ（ホーム以外）は、戻り道の行の右はしに置きます。
+   ★ホームは .ue-migi が LINEの案内といっしょに入っていて、
+     こちらは 空の .ue-migi だけが入っています。JavaScriptは
+     どちらも同じ `.ue-migi` を見つけて、その中へ入れます。 */
+.ko-ue{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin:0 0 10px;
+}
+.ko-ue .ko-modoru{margin:0;min-width:0}
+.ko-ue .ue-migi{margin:0;flex:none}
+.moji-b{
+  width:36px;height:36px;padding:0;
+  display:grid;place-items:center;
+  background:var(--bg);color:var(--ink);
+  border:2.5px solid var(--ink);border-radius:999px;
+  box-shadow:3px 3px 0 var(--ink);cursor:pointer;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.moji-a{font-family:var(--f-maru);font-weight:700;font-size:16px;line-height:1}
+.moji-b:hover,.moji-b:focus-visible{
+  background:var(--ki);transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink);
+}
+.moji-b:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.moji-tana{
+  position:absolute;top:calc(100% + 9px);inset-inline-end:0;z-index:6;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 10px;
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:999px;
+  box-shadow:3px 3px 0 var(--ink);
+}
+.moji-tana[hidden]{display:none}
+.moji-l{
+  font-family:var(--f-maru);font-weight:700;font-size:11.5px;
+  letter-spacing:.04em;color:var(--mute);white-space:nowrap;
+}
+.moji-d{
+  min-width:34px;min-height:34px;padding:0 7px;
+  background:var(--bg);color:var(--ink);
+  border:2px solid var(--ink);border-radius:999px;cursor:pointer;
+  font-family:var(--f-maru);font-weight:700;font-size:12.5px;white-space:nowrap;
+}
+.moji-d[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.moji-d:hover{background:var(--ki);color:var(--ink)}
+.moji-d:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+@media (max-width:440px){
+  .moji-l{display:none}          /* いちばん狭い画面では、札だけにします */
+  .moji-tana{padding:6px 8px;gap:5px}
+  .moji-d{min-width:32px;padding:0 5px}
 }
 
 /* ══ 合いことばの窓（2026-09-22 夜）════════════════════════
@@ -3273,12 +3630,22 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .igi-intro .igi-bun{margin:0}
 .igi-friends{max-width:390px;width:100%;justify-self:center}
 .igi-friends svg,.foot-friends svg{display:block;width:100%;height:auto}
+/* 4人の名前（2026-09-23 依頼）。絵の下に小さく。
+   絵の中の4人は横に等しく並んでいるので、4等分のますに入れると
+   それぞれの真下に来ます（数を手で書かずに済みます）。 */
+.igi-na{
+  margin:7px 0 0;display:grid;grid-template-columns:repeat(4,1fr);
+  font-family:var(--f-maru);font-weight:700;
+  font-size:11px;letter-spacing:.01em;line-height:1.45;
+  color:var(--mute);text-align:center;
+}
+.igi-na span{min-width:0}
 .igi-l{max-width:960px;align-items:stretch;margin-top:28px}
 .igi-h{min-width:0;padding:0;overflow:hidden}
 .igi-a{height:100%;padding:16px 10px 14px}
 .igi-h .e svg{display:block;width:100%;max-width:180px;height:146px;margin-inline:auto}
-.igi-h b{font-size:clamp(14px,1.3vw,17px)}
-.igi-h .t{font-size:13px;min-height:3.1em}
+.igi-h b{font-size:calc(clamp(14px,1.3vw,17px) * var(--moji))}
+.igi-h .t{font-size:calc(13px * var(--moji));min-height:3.1em}
 .igi-h.h--gakkatsu{background:#EAF1E0}
 .igi-h.h--gyoji{background:#F8E5D8}
 .igi-h.h--jidokai{background:#E4EFF3}
@@ -3291,7 +3658,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 @media(max-width:719px){
   .hero-koe{padding-block:16px 8px}
   .hero-logo{font-size:clamp(28px,7.3vw,46px);letter-spacing:.04em}
-  .hero-copy{font-size:16px;letter-spacing:.04em;margin-top:10px}
+  .hero-copy{font-size:calc(16px * var(--moji));letter-spacing:.04em;margin-top:10px}
   .hero-botan{margin-block:18px 8px}
   .hero .line-sumi{min-height:40px;max-width:100%;white-space:normal}
   .igi-intro{grid-template-columns:1fr;gap:16px}
@@ -3302,3 +3669,94 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hfuda-e svg{max-height:none}
   .hitori .e svg{height:100px}
 }
+
+/* ══ 節の案内役（2026-09-23 依頼）══════════════════════════
+   ホームの8つの札は「モノ」にしました（封筒・カレンダー・日本の地図…）。
+   ぜんぶ人だったころは、絵を見ても何の札か分からず、けっきょく
+   字を読むしかありませんでした。
+   人は消していません。押して着いた先の、見出しの上に立っています。
+   ★押すまえは「何の場所か」（モノ）、着いてからは「だれが案内するか」（人）。 */
+/* ★案内役は、見出しの **となり** に立たせます（2026-09-23 依頼）。
+   はじめは見出しの上に置いていました。人・英字・大きな見出し・3つの点・
+   説明文が ぜんぶ縦に積み上がって、**節のあたまだけで画面1枚ぶん**
+   流れていました（実測）。よこに寝かせると、同じものが入ったまま
+   高さが 110px ほど減ります。節は11あるので、ページ1枚ぶんの縦スクロールが消えます。 */
+.midashi--k{
+  /* ★3列にします。まん中の列に 英字・見出し・3つの点、
+     左右の列は同じ幅（1fr）の空きです。だから **見出しの太字は、
+     人がいてもいなくても、かならず画面のまん中**に来ます
+     （2026-09-23 依頼）。2列だと、人のぶんだけ見出しが右にずれていました。
+     人は左の空き列のいちばん右＝見出しのすぐ横に立ちます。 */
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  column-gap:clamp(10px,1.8vw,22px);
+}
+.midashi--k .midashi-kao{grid-area:1 / 1 / 4 / 2;justify-self:end;margin:0}
+/* 反対がわ（右）のもう1人。左右の列は同じ幅なので、2人でも太字はまん中です */
+.midashi--k .midashi-kao--migi{grid-area:1 / 3 / 4 / 4;justify-self:start}
+.midashi--k .en{grid-area:1 / 2 / 2 / 3;margin-bottom:6px}
+.midashi--k .ja{grid-area:2 / 2 / 3 / 3}
+.midashi--k::after{grid-area:3 / 2 / 4 / 3;margin:10px auto 0}
+/* 大きさの決め方 … **見出しがまん中に来ることが先**、人はその残りをもらう。
+   ・形（170×152）は aspect-ratio で固定。つぶれません。
+   ・幅は「空き列のぶん（100%）」と「上限」の小さいほう。
+     だから、見出しが長くて空きがせまい画面でも、人が見出しを
+     押しのけたり、画面の外へはみ出したりしません。小さくなるだけです。 */
+.midashi-kao{
+  display:block;aspect-ratio:170 / 152;
+  width:min(100%, clamp(64px,9.6vw,112px));height:auto;
+}
+.midashi-kao svg{
+  display:block;height:100%;width:100%;margin:0 auto;
+  transform-origin:50% 100%;
+  animation:fuda-e 4.2s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion:reduce){.midashi-kao svg{animation:none}}
+/* せまい画面では、人を小さくして見出しの幅を守ります
+   （「特別活動って、なに」が1字ずつ折れないぎりぎりの値） */
+@media(max-width:719px){
+  .midashi--k{column-gap:10px}
+  /* 研究日程は、せまい画面で「CALENDAR と 研究日程 を1行」にする
+     古い決まり（#ima .midashi ＝ flex）を持っています。そのままだと
+     見出しの太字が まん中から右にずれるので、ここだけ3列に戻します。
+     英字は見出しの上に重ねて、増える高さを20pxに抑えます。 */
+  #ima .midashi--k{
+    display:grid;align-items:center;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    column-gap:10px;
+  }
+  #ima .midashi--k .en{margin-bottom:3px}
+}
+
+/* ══ ことばの切りかえ（2026-09-23 依頼）══════════════════════
+   いちばん下、管理者のところ。地が墨なので、ふちと字は地の色（--bg）で出します。
+   ★外の翻訳サービスは使っていません（原則2＝何も送信しない）。
+     訳はページの中に data-en / data-ar として入っていて、押すと入れかわるだけです。 */
+.kirikae{margin:0 0 16px}
+.kirikae-l{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 9px}
+.kirikae-b{
+  min-height:40px;padding:8px 18px;
+  background:transparent;color:var(--bg);
+  border:2px solid var(--bg);border-radius:999px;
+  font:700 14px/1.4 var(--f-maru);cursor:pointer;
+}
+.kirikae-b:hover{background:rgba(252,251,247,.16)}
+.kirikae-b[aria-pressed="true"]{background:var(--bg);color:var(--ink)}
+.kirikae-b:focus-visible{outline:3px solid var(--bg);outline-offset:3px}
+.kirikae-chu{
+  margin:0;max-width:52em;
+  font-family:var(--f-te);font-size:13.5px;line-height:1.95;
+  color:rgba(252,251,247,.82);
+}
+/* アラビア語のとき。ページ全体は左→右のままで、**訳したところだけ**
+   dir="rtl" になります（訳していない日本語を右そろえにしないため）。
+   中の字が右から始まるので、ここだけ受け止めます。 */
+.kirikae-chu[dir="rtl"]{text-align:right}
+/* 英語・アラビア語は字が長くなるので、帯だけ少し詰めます。
+   （帯は overflow-x:auto なので、詰めなくても横に流れて読めます。
+     ただ、PCで8つとも見えているほうが「ぜんぶで8つ」が伝わります） */
+:root[data-kotoba="en"] .obi-l a,
+:root[data-kotoba="ar"] .obi-l a{font-size:12.5px;padding-inline:11px;letter-spacing:0}
+:root[data-kotoba="en"] .obi-l li + li,
+:root[data-kotoba="ar"] .obi-l li + li{padding-inline-start:8px;margin-inline-start:3px}
