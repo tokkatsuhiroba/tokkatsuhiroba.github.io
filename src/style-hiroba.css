@@ -839,10 +839,17 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
   padding-inline-end:44px;
 }
 /* 2つで1つの答えなので、横に並べます。
-   入る幅が無くなったら、ひとりでに縦へ落ちます（flex-wrap）。 */
-.okuru-chi{display:flex;gap:10px;flex-wrap:wrap}
-.okuru-g .okuru-ken{flex:1 1 15em;min-width:0}
-.okuru-g .okuru-shk{flex:1 1 13em;min-width:0}
+   2026-09-23 依頼：**スマホでも1行**にします。前は基準の幅が
+   15em／13em あって、375pxでは入りきらず縦に落ちていました（実測）。
+   ★幅を「半分ずつ」にして、中身でふくらまないよう min-width:0 を付けます。
+   ★都道府県のほうを少し広くします（「神奈川県」＋▼が入る幅が要るため）。 */
+.okuru-chi{display:flex;gap:8px;flex-wrap:nowrap}
+.okuru-g .okuru-ken{flex:1 1 54%;min-width:0}
+.okuru-g .okuru-shk{flex:1 1 46%;min-width:0}
+@media (max-width:719px){
+  .okuru-g .okuru-ken{padding-inline:12px 34px;background-position:right 12px center}
+  .okuru-g .okuru-shk{padding-inline:12px}
+}
 
 /* ══════════════════════════════════════════════════════════════
    上の帯（2026-09-21 に追加）
@@ -2207,8 +2214,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .okuru-i:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 /* 自由に書くところ。せまいと「ひとこと」で止まってしまうので、広くとります */
 .okuru-hiroi{
-  min-height:240px;line-height:1.95;resize:vertical;
-  padding:14px;white-space:pre-wrap;
+  /* 2026-09-23 依頼「ここも詰めて」。240px → 132px。
+     ★狭くすると「ひとこと」で止まってしまう、という心配は
+       **書くほど ひとりでに のびる**ことで受けます
+       （src/hiroba.html の sodateru）。はじめは4行ぶん、
+       書けば書いただけ伸びるので、窮屈にはなりません。
+     ★行間も 1.95 → 1.7。字の大きさは変えていません。 */
+  min-height:132px;line-height:1.7;resize:vertical;
+  padding:12px;white-space:pre-wrap;
 }
 .okuru-hiroi::placeholder{color:var(--mute);opacity:.75}
 .okuru-yomi--sub{margin:0 0 8px;font-size:12.5px}
@@ -3058,6 +3071,37 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .sagasu[hidden]{display:none}
 .sagasu-gyo{display:grid;gap:5px}
+/* ── 内容・学年・並びを、プルダウン3つ・1行に（2026-09-23 依頼）──
+   押し札のままだと 内容2行＋学年2行＋並び1行で216pxありました。
+   ★高さは 44px を保ちます（押せる大きさは減らしません）。
+   ★名前（内容／学年／並び）は消しません。何を選ぶ欄か分からなく
+     なるためです。プルダウンの上に、小さく残します。
+   ★せまい画面では3つが横に並びきらないので、2つ＋1つに折ります。
+     **字は小さくしません。**折るほうを選びます。 */
+.sagasu-gyo--eranbu{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+}
+@media (max-width:519px){
+  .sagasu-gyo--eranbu{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sagasu-gyo--eranbu .sagasu-e:last-child{grid-column:1 / -1}
+}
+.sagasu-e{display:grid;gap:3px;margin:0;min-width:0}
+.sagasu-s{
+  width:100%;min-height:44px;padding:8px 30px 8px 12px;
+  font-family:var(--f-maru);font-weight:700;font-size:14.5px;
+  color:var(--ink);background-color:var(--bg);
+  border:2.5px solid var(--ink);border-radius:999px;
+  -webkit-appearance:none;appearance:none;cursor:pointer;
+  /* ▼ は、字ではなく背景の絵で。字だと端末ごとに大きさが変わります */
+  background-image:
+    linear-gradient(45deg,transparent 50%,var(--ink) 50%),
+    linear-gradient(135deg,var(--ink) 50%,transparent 50%);
+  background-position:calc(100% - 17px) center,calc(100% - 11px) center;
+  background-size:6px 6px,6px 6px;
+  background-repeat:no-repeat;
+}
+.sagasu-s:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sagasu-e .sagasu-l{font-size:12px}
 /* ── 押し札は1行に（2026-09-23 依頼）──────────────────────
    スマホで「学年」は7つあり、2行に折れて120pxありました。
    ★字も押せる大きさも、減らしません（減らすと押せなくなります）。
@@ -3922,9 +3966,35 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hitori .e svg{height:64px}
   /* 節と節のあいだ。40→26 */
   .sec{padding-block:26px}
-  .midashi{margin-bottom:4px}
-  .midashi .en{margin-bottom:5px}
-  .yomi{margin-bottom:14px}
+
+  /* ══ 3回目のつめ（2026-09-23 依頼「詰めて」）════════════════
+     実測（375×812）で、のこっていたのは この3つでした。
+       ① 節の見出し 98px × 3節 ＝ 294px
+          英字の丸ラベル＋日本語の見出し＋余白。Twitterには
+          そもそも無い部品が、1画面の3分の1を使っていました。
+       ② ホームの札 179px × 8枚（絵50・題20・ひとこと36・件数25）
+       ③ 4人の絵まわり 285px
+     **消さずに、詰めます。** 字の大きさは変えていません。 */
+  .midashi{margin-bottom:3px}
+  /* 「●●●」の飾り。1つで34px、3節で102px 使っていました。
+     消しません（サイトの顔なので）。小さくして、上の余白を詰めます。 */
+  .midashi::after{width:44px;height:7px;margin-top:7px;
+    background:
+      radial-gradient(circle 3.5px at 3.5px 3.5px,var(--shu) 99%,transparent 100%) no-repeat,
+      radial-gradient(circle 3.5px at 22px 3.5px,var(--midori) 99%,transparent 100%) no-repeat,
+      radial-gradient(circle 3.5px at 40.5px 3.5px,var(--kon) 99%,transparent 100%) no-repeat;
+  }
+  .midashi .en{margin-bottom:4px;padding:2px 12px;font-size:calc(11px * var(--moji))}
+  .midashi .ja{line-height:1.3}
+  .yomi{margin-bottom:10px;line-height:1.7}
+
+  .hfuda-e{height:38px;margin-bottom:4px}   /* 52→38 */
+  .hfuda-kazu{margin-top:5px}
+  .hban{gap:8px}
+
+  .igi-intro{gap:8px}
+  .igi-friends{max-width:180px}             /* 210→180 */
+  .igi-b{margin-top:10px}
 }
 
 /* ══ 節の案内役（2026-09-23 依頼）══════════════════════════
@@ -4246,7 +4316,7 @@ html[data-moji="chiisai"] .okuru-kakunin{margin-bottom:10px;padding:8px 10px}
      **「小」をえらんだ人のときだけ**縮めます。書けば伸びます。 */
 html[data-moji="chiisai"] .okuru-yomi{line-height:1.6}
 html[data-moji="chiisai"] .okuru-l{margin-bottom:4px}
-html[data-moji="chiisai"] .okuru-hiroi{min-height:180px;line-height:1.75}
+html[data-moji="chiisai"] .okuru-hiroi{min-height:108px;line-height:1.6}
 html[data-moji="chiisai"] .okuru-kiwo,
 html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
 

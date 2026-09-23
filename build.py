@@ -4183,6 +4183,13 @@ def build_chizu(aru, mid='sagasu-k', yomi=None, nashi=None):
 #     広い画面だけ、CSSが地図を左の列へ動かします。
 #   ★地域が1件も書かれていないときは地図が空なので、
 #     そのときは2段組みにしません（build_sagasu_obi が分けます）。
+# 2026-09-23 依頼：内容・学年・並びを **プルダウン3つ・1行** にまとめます。
+#   押し札のままだと、内容2行＋学年2行＋並び1行で 216px ありました。
+#   ★プルダウンなら、スマホは端末の選ぶ画面が出るので、指で選ぶのは
+#     押し札より楽です。件数は（3）のように名前の中に入れます。
+#   ★高さは 44px を保ちます（押せる大きさは減らさない）。
+#   ★名前は消しません。プルダウンの上に小さく残します
+#     （何を選ぶ欄か分からなくなるため）。
 SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
       <div class="sagasu-migi">
       <div class="sagasu-gyo">
@@ -4190,24 +4197,26 @@ SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
         <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
                placeholder="題・中身・学年・実践者から（例：たてわり）">
       </div>
-      <div class="sagasu-gyo">
-        <span class="sagasu-l" id="sagasu-n-l">内容</span>
-        <div class="okuru-nen" role="group" aria-labelledby="sagasu-n-l" id="sagasu-n">
-          <button type="button" class="okuru-nen-b" data-n="" aria-pressed="true">ぜんぶ</button>
-{naiyo}        </div>
-      </div>
-      <div class="sagasu-gyo" id="sagasu-g-gyo">
-        <span class="sagasu-l" id="sagasu-g-l">学年</span>
-        <div class="okuru-nen" role="group" aria-labelledby="sagasu-g-l" id="sagasu-g">
-          <button type="button" class="okuru-nen-b" data-g="" aria-pressed="true">ぜんぶ</button>
-{nen}        </div>
-      </div>
-      <div class="sagasu-gyo">
-        <span class="sagasu-l" id="sagasu-j-l">並び</span>
-        <div class="okuru-nen" role="group" aria-labelledby="sagasu-j-l" id="sagasu-j">
-          <button type="button" class="okuru-nen-b" data-j="atarashii" aria-pressed="true">新しい順</button>
-          <button type="button" class="okuru-nen-b" data-j="furui" aria-pressed="false">古い順</button>
-        </div>
+      <div class="sagasu-gyo sagasu-gyo--eranbu">
+        <p class="sagasu-e">
+          <label class="sagasu-l" for="sagasu-n">内容</label>
+          <select class="sagasu-s" id="sagasu-n">
+            <option value="">ぜんぶ</option>
+{naiyo}          </select>
+        </p>
+        <p class="sagasu-e" id="sagasu-g-gyo">
+          <label class="sagasu-l" for="sagasu-g">学年</label>
+          <select class="sagasu-s" id="sagasu-g">
+            <option value="">ぜんぶ</option>
+{nen}          </select>
+        </p>
+        <p class="sagasu-e">
+          <label class="sagasu-l" for="sagasu-j">並び</label>
+          <select class="sagasu-s" id="sagasu-j">
+            <option value="atarashii">新しい順</option>
+            <option value="furui">古い順</option>
+          </select>
+        </p>
       </div>
       <p class="sagasu-kazu" id="sagasu-kazu" role="status" aria-live="polite"></p>
       </div>
@@ -4281,16 +4290,14 @@ def sagasu_obi(aru):
         kazu = sum(1 for a in aru_n if a['naiyo'] == nid)
         if not kazu:
             continue
-        gyo.append('          <button type="button" class="okuru-nen-b" data-n="%s" '
-                   'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
+        gyo.append('            <option value="%s">%s（%d）</option>\n'
                    % (nid, esc_html(ja), kazu))
     nen = []
     for k, ja in NEN_FUDA:
         kazu = sum(1 for a in aru_n if k in nen_bunkai(a['grade']))
         if not kazu:
             continue
-        nen.append('          <button type="button" class="okuru-nen-b" data-g="%s" '
-                   'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
+        nen.append('            <option value="%s">%s（%d）</option>\n'
                    % (k, esc_html(ja), kazu))
     # 2026-09-23 依頼：さがすのパネルが大きすぎるので、地図の下の説明4行を
     #   出しません（155pxありました）。押せば分かることを、4行かけて
@@ -5875,6 +5882,9 @@ KOTOBA = {
     '隠したいところを、指でなぞってください。 なぞった四角が、黒くぬりつぶされます。 ぬったものが送られます。元の写真は、どこにも出ていきません。':
         ('Trace over anything you want hidden. The rectangle you trace is filled in black. What is sent is the blacked-out version — the original photo never leaves your device.',
          'مرّر إصبعك على ما تريد إخفاءه، فيُملأ المستطيل الذي رسمته بالأسود. والمُرسَل هو النسخة المطموسة؛ أمّا الصورة الأصلية فلا تغادر جهازك أبدًا.'),
+    '学級活動(1)(2)(3)は、ぜんぶ「学級活動」のカードへ集まります。':
+        ('Classroom Activities (1), (2) and (3) all gather on the “Classroom Activities” card.',
+         'أنشطة الفصل (١) و(٢) و(٣) تُجمع جميعها في بطاقة «أنشطة الفصل».'),
     '1つだけ押してください。押したもののカードに集まります。 学級活動(1)(2)(3)は、ぜんぶ「学級活動」のカードへ。':
         ('Press one only. It will be gathered on that card. Classroom Activities (1), (2) and (3) all go to the “Classroom Activities” card.',
          'اضغط واحدًا فقط، فيُجمع على تلك البطاقة. وأنشطة الفصل (١) و(٢) و(٣) تذهب جميعها إلى بطاقة «أنشطة الفصل».'),
@@ -5970,6 +5980,7 @@ KOTOBA = {
     'ここは、その手だてが溜まる場です。<br> 話す場は <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINEオープンチャット「みんなの特活ひろば」<i>外部</i></a>。<br> <strong>あなたの実践も、<a href="okuru.html#okuru">送れば そのまま</a> ここに載ります。</strong>':
         ('This is where those ways of doing it collect.<br> The place to talk is the <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINE open chat “Minna no Tokkatsu Hiroba”<i>external</i></a>.<br> <strong>Your practice too — <a href="okuru.html#okuru">send it and it appears</a> right here.</strong>',
          'هنا تتجمّع هذه الطرائق.<br> ومكان الحديث هو <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">محادثة LINE المفتوحة «ساحة توكاتسو للجميع»<i>خارجي</i></a>.<br> <strong>وممارستك أيضًا — <a href="okuru.html#okuru">أرسلها فتظهر</a> هنا كما هي.</strong>'),
+    '並び': ('Order', 'الترتيب'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。

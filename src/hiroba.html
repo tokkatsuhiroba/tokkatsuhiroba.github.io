@@ -531,7 +531,7 @@
 
       <div class="okuru-g">
         <label class="okuru-l" for="komari-m">困っていること</label>
-        <textarea class="okuru-i okuru-hiroi" id="komari-m" maxlength="1000" rows="10"
+        <textarea class="okuru-i okuru-hiroi" id="komari-m" maxlength="1000" rows="4"
                   placeholder="例：
 学級会の話合いが、いつも司会だけで進んでしまいます。
 
@@ -751,17 +751,19 @@
         <!-- 内容（2026-09-22：プルダウン → 押す札）。学年と同じ形にしました。
              ★学年とちがって、**1つだけ**です。1つの実践は1つの内容に属します。
                押すと、前に押していたものが外れます。 -->
-        <span class="okuru-l" id="okuru-nn-l">内容<span class="okuru-hissu">必須</span></span>
-        <p class="okuru-yomi okuru-yomi--sub">1つだけ押してください。押したものの<b>カード</b>に集まります。<br>
-          学級活動(1)(2)(3)は、ぜんぶ<b>「学級活動」</b>のカードへ。</p>
-        <div class="okuru-nen okuru-nai" id="okuru-nn" role="group" aria-labelledby="okuru-nn-l">
-          <button type="button" class="okuru-nen-b" data-n="gakkyu1" aria-pressed="false">学級活動(1)<i>話合い活動・係活動</i></button>
-          <button type="button" class="okuru-nen-b" data-n="gakkyu2" aria-pressed="false">学級活動(2)<i>日常の生活・健康安全</i></button>
-          <button type="button" class="okuru-nen-b" data-n="gakkyu3" aria-pressed="false">学級活動(3)<i>キャリア形成・自己実現</i></button>
-          <button type="button" class="okuru-nen-b" data-n="gyoji" aria-pressed="false">学校行事</button>
-          <button type="button" class="okuru-nen-b" data-n="jidokai" aria-pressed="false">児童会活動</button>
-          <button type="button" class="okuru-nen-b" data-n="club" aria-pressed="false">クラブ活動</button>
-        </div>
+        <label class="okuru-l" for="okuru-nn">内容<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">学級活動(1)(2)(3)は、ぜんぶ<b>「学級活動」</b>のカードへ集まります。</p>
+        <select class="okuru-i okuru-ken" id="okuru-nn" name="n">
+          <option value="">えらんでください</option>
+          <optgroup label="学級活動">
+            <option value="gakkyu1">学級活動(1)　話合い活動・係活動</option>
+            <option value="gakkyu2">学級活動(2)　日常の生活・健康安全</option>
+            <option value="gakkyu3">学級活動(3)　キャリア形成・自己実現</option>
+          </optgroup>
+          <option value="gyoji">学校行事</option>
+          <option value="jidokai">児童会活動</option>
+          <option value="club">クラブ活動</option>
+        </select>
       </div>
 
       <div class="okuru-g">
@@ -812,7 +814,7 @@
           <!--BUILD:KEN-->
           </select>
           <input class="okuru-i okuru-shk" type="text" id="okuru-shk" name="shk" maxlength="20"
-                 placeholder="自治体（例：江東区）">
+                 placeholder="市区町村">
         </div>
       </div>
 
@@ -828,7 +830,7 @@
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-m">実践内容<span class="okuru-hissu">必須</span></label>
         <p class="okuru-yomi okuru-yomi--sub">ひとことでも大丈夫です。長く書く必要はありません。</p>
-        <textarea class="okuru-i okuru-hiroi" id="okuru-m" name="m" maxlength="1000" rows="10"
+        <textarea class="okuru-i okuru-hiroi" id="okuru-m" name="m" maxlength="1000" rows="4"
                   placeholder="例：
 どんな声から出た議題か。
 
@@ -1338,6 +1340,47 @@
   /* 1つだけ押せる札（2026-09-22）。学年（nen_fuda）は いくつでも押せますが、
      内容は **1つだけ** です。1つの実践は、1つの内容に属します。
      押すと、前に押していたものが外れます。もう一度押すと外れます。 */
+  /* プルダウンから1つ読む。押す札（hitotsu_fuda）と
+     **同じ使い方**（yomu／kesu／ireru）にそろえてあります。
+     どちらに差しかえても、呼ぶ側は1行も変わりません。 */
+  /* ══ 書くほど、ひとりでに のびる欄（2026-09-23 依頼）════════
+     自由に書く欄は 240px ありました。フォームの中でいちばん背が高く、
+     スマホでは それだけで半画面です。132px まで詰めましたが、
+     **狭いと「ひとこと」で止まってしまう**という心配があります。
+     だから、**書いた行数ぶん ひとりでに のばします。**
+     はじめは4行、書けば書いただけ伸びるので窮屈になりません。
+     ★人が手で広げたあと（resize:vertical）は、もう触りません。
+     ★JavaScript が動かない端末でも、4行ぶんは出ます（rows="4"）。 */
+  function sodateru(el){
+    if(!el) return;
+    var teppen = 0;
+    var nobasu = function(){
+      /* いちど縮めてから測らないと、縮む方向に動きません */
+      el.style.height = 'auto';
+      var h = Math.max(el.scrollHeight, teppen);
+      el.style.height = h + 'px';
+    };
+    /* CSSで決めた最低の高さを、下ざさえにします */
+    teppen = parseFloat(getComputedStyle(el).minHeight) || 0;
+    el.addEventListener('input', nobasu);
+    /* 人が自分で広げたら、そこから先は任せます */
+    el.addEventListener('mouseup', function(){
+      if(el.style.height) teppen = Math.max(teppen, el.getBoundingClientRect().height);
+    });
+    nobasu();
+  }
+  ['okuru-m', 'komari-m'].forEach(function(id){ sodateru(document.getElementById(id)); });
+
+  function hitotsu_select(id){
+    var s = document.getElementById(id);
+    return {
+      yomu:  function(){ return s ? s.value : ''; },
+      kesu:  function(){ if(s) s.value = ''; },
+      ireru: function(atai){ if(s) s.value = atai || ''; },
+      saki:  s, moto: s
+    };
+  }
+
   function hitotsu_fuda(id){
     var bako = document.getElementById(id);
     var b = bako ? [].slice.call(bako.querySelectorAll('.okuru-nen-b')) : [];
@@ -1425,7 +1468,12 @@
       };
 
       var gakunen = nen_fuda('okuru-gn'), nen = gakunen.yomu, nen_kesu = gakunen.kesu;
-      var naiyo = hitotsu_fuda('okuru-nn');
+      /* 2026-09-23 依頼：内容を **押す札6つ → プルダウン** に戻しました。
+         札6つは 301px（スマホ実測）使っていて、フォームの中で
+         いちばん背が高い部品でした。プルダウンなら1行です。
+         ★2026-09-22 に プルダウン→札 にしたのを、詰めるために戻した形です。
+           また札に戻すときは hitotsu_fuda('okuru-nn') に差しかえます。 */
+      var naiyo = hitotsu_select('okuru-nn');
 
       /* ══ なおす（2026-09-22 夜 依頼）══════════════════════
          「みんなの実践」の［なおす］から、もとの字を持って ここへ来ます。
@@ -1832,7 +1880,7 @@
            書いていないところへ連れていって、そこを光らせます。 */
         var naIn = document.getElementById('okuru-na');
         if(!naiyo.yomu()){
-          shirase.textContent = '内容を1つ押してください（4つの内容のどこに集めるかが決まります）。';
+          shirase.textContent = '内容をえらんでください（4つの内容のどこに集めるかが決まります）。';
           if(naiyo.saki) naiyo.saki.focus();
           if(naiyo.moto) naiyo.moto.scrollIntoView({block:'center'});
           return;
@@ -2221,7 +2269,9 @@
     var sgNai = '', sgNen = '', sgKen = '', sgShi = '', sgJun_ima = 'atarashii';
     /* 学年の札が1つも無いとき（学年を書かずに届いたものばかりのとき）は、
        その行ごと出しません。「ぜんぶ」しか無い行は、押す意味がないためです。 */
-    if(sgGgyo && sgG.querySelectorAll('[data-g]').length < 2) sgGgyo.hidden = true;
+    /* 学年が1つも書かれていないときは、その欄ごと出しません。
+       「ぜんぶ」しか無いプルダウンは、押す意味がないためです。 */
+    if(sgGgyo && sgG.options.length < 2) sgGgyo.hidden = true;
 
     /* さがす用の字は、1件につき1回だけ作ります（押すたびに作り直さない）。
        ★<details> の中も textContent には入ります。閉じていても さがせます。 */
@@ -2287,15 +2337,13 @@
     /* 2026-09-23：［あとで見る（☆）］をやめたので、「☆だけ」で絞る行も
        外しました。★を付ける所が無いのに絞りこみだけ残すと、
        いつまでも0件の行になります。 */
-    sgN.addEventListener('click', function(ev){
-      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
-      sgNai = b.getAttribute('data-n') || '';
-      sg_osu(sgN, sgNai, 'data-n'); sg_utsusu();
+    /* 2026-09-23 依頼：内容・学年・並びは **プルダウン** になりました。
+       押し札のときは click で拾っていましたが、選ぶ欄は change です。 */
+    sgN.addEventListener('change', function(){
+      sgNai = sgN.value || ''; sg_utsusu();
     });
-    sgG.addEventListener('click', function(ev){
-      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
-      sgNen = b.getAttribute('data-g') || '';
-      sg_osu(sgG, sgNen, 'data-g'); sg_utsusu();
+    sgG.addEventListener('change', function(){
+      sgNen = sgG.value || ''; sg_utsusu();
     });
     /* ══ 日本の地図から絞る（2026-09-22 依頼）══════════════
        ★押した県は、もう一度押すと外れます（「ぜんぶ」を別に置かずに済む）。
@@ -2397,10 +2445,8 @@
       });
     }
 
-    sgJun.addEventListener('click', function(ev){
-      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
-      sgJun_ima = b.getAttribute('data-j');
-      sg_osu(sgJun, sgJun_ima, 'data-j'); sg_utsusu();
+    sgJun.addEventListener('change', function(){
+      sgJun_ima = sgJun.value || 'atarashii'; sg_utsusu();
     });
     sgJi.addEventListener('input', sg_utsusu);
     /* さがしている途中で Enter を押しても、ページごと送らない */
