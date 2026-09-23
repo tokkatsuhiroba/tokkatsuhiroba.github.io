@@ -4461,6 +4461,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* 2つしか出ないとき（印刷が使えない端末）でも、すき間が空かないように */
 .bfuda-te:has(.bansho-b[hidden]){grid-template-columns:repeat(2,1fr)}
 .bfuda-te .bansho-b[hidden]{display:none}
+
+/* ══ ボタンが4つになりました（2026-09-23 依頼：［リンク］）════════
+   足のボタンは **3つとはかぎりません**。［大きく見る］が窓のぶんだけ
+   増える（0〜2）ので、3つ・4つ・5つの3通りがあります。
+   build.py が数えて .bfuda-te--3 / --4 / --5 を付けてきます。
+   ★せまい画面では **2つずつ**（4つなら 2×2）。390px に4つ横ならびだと、
+     1つ 80px を切って「画像保存」の字が切れます（実測）。
+   ★［印刷］は、刷れない端末では hidden です。そのときは列を1つ減らして、
+     すき間が空かないようにします（もとからある :has の考え方と同じ）。 */
+.bfuda-te--4{grid-template-columns:repeat(4,1fr)}
+.bfuda-te--4:has(.bansho-b[hidden]){grid-template-columns:repeat(3,1fr)}
+.bfuda-te--5{grid-template-columns:repeat(3,1fr)}
+.bfuda-te--5:has(.bansho-b[hidden]){grid-template-columns:repeat(2,1fr)}
+@media (max-width:479px){
+  .bfuda-te--4,.bfuda-te--4:has(.bansho-b[hidden]),
+  .bfuda-te--5,.bfuda-te--5:has(.bansho-b[hidden]){
+    grid-template-columns:repeat(2,1fr);
+  }
+}
 @media (max-width:379px){
   .bfuda-te{gap:6px}
   .bfuda-te .bansho-b{padding:7px 3px;font-size:calc(11px * var(--moji))}

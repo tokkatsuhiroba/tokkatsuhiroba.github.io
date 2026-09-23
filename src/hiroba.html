@@ -3196,6 +3196,99 @@
     if(b) ga_hozon(b);
   });
 
+  /* ══ LINEの覚えを外す しっぽ（2026-09-23）── ここ1か所だけ ══════
+     LINEは **一度見たアドレスのカード（絵と字）を、しばらく覚えています。**
+     絵を差しかえても、前に貼ったことのあるアドレスだと古いカードが出ます。
+     うしろに ?3 を付けると「別のアドレス」と見て、取りに来ます。
+     中身はまったく同じページです（GitHub Pages は ? のうしろを見ません）。
+     ★LINEが忘れたころ（数日〜1週間）に、SHIPPO を '' にしてください。
+       **写すボタンは ぜんぶ この関数を通します**。1行で素に戻ります。
+     ★#b-… より **前**に付けます（うしろに付けると、その札へ飛びません）。
+     ★もう ? が付いているアドレスには、足しません（二重にしない）。    */
+  var SHIPPO = '?3';
+  function shippo(u){
+    if(!u || !SHIPPO || u.indexOf('?') >= 0) return u;
+    var i = u.indexOf('#');
+    return i < 0 ? u + SHIPPO : u.slice(0, i) + SHIPPO + u.slice(i);
+  }
+
+  /* ══ 実践の札の［リンク］（2026-09-23 依頼）══════════════════
+     「見に来た先生」を「送る人」に変えるための1つめの道です。
+     ★スマホ（指で押す端末）では **共有**を開きます。LINEを選べば、
+       題とアドレスが入った状態で そのまま送れます。
+     ★パソコン・Chromebook では **写します**（題＋改行＋アドレス）。
+       共有の窓を持たない機種があり、押しても何も起きないと困るためです。
+       navigator.share があるかだけで決めないのは、パソコンの Chrome にも
+       共有がある（が、送り先が LINE ではない）ためです。
+     ★どちらも、外へは1バイトも出ません（原則2）。共有を開くのは、
+       押した人が自分で送り先を選ぶためです。                       */
+  function link_ji(botan, na, l){
+    return botan.getAttribute(l === 'en' ? na + '-en'
+                            : l === 'ar' ? na + '-ar' : na);
+  }
+
+  function link_shirase(botan, na){
+    var ji = botan.querySelector('.b-ji');
+    if(!ji || botan.dataset.matte) return;
+    var l = document.documentElement.getAttribute('data-kotoba') || 'ja';
+    var ok = link_ji(botan, na, l);
+    if(!ok) return;
+    /* ことばを切りかえたとき、もとの日本語を拾い直せるように
+       **先に**控えます（切りかえの仕組みが innerHTML から取るため、
+       「コピーしました」が日本語として焼きつくのを防ぎます）。 */
+    if(ji.dataset.ja === undefined) ji.dataset.ja = ji.innerHTML;
+    var moto = ji.innerHTML;
+    botan.dataset.matte = '1';
+    ji.textContent = ok;
+    setTimeout(function(){
+      ji.innerHTML = moto;
+      botan.removeAttribute('data-matte');
+    }, 2000);
+  }
+
+  /* 古い端末（clipboard が無い）でも写せるように。
+     新しい端末でも、clipboard が断られたとき（設定・古い接続）に、
+     ここへ落ちてきます。**黙って何も起きない**のがいちばん困るので。 */
+  function link_furui(ji){
+    try {
+      var t = document.createElement('textarea');
+      t.value = ji; t.setAttribute('readonly', '');
+      t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t);
+      t.select(); t.setSelectionRange(0, ji.length);
+      var ok = document.execCommand('copy');
+      t.remove();
+      return ok;
+    } catch(e) { return false; }
+  }
+
+  function link_utsusu(botan){
+    var fuda = botan.closest('.bfuda');
+    var dai = (fuda && ga_moji(fuda.querySelector('.bfuda-h'))) || '実践';
+    var url = shippo(botan.getAttribute('data-url') || location.href);
+    var sumi = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;
+    if(navigator.share && sumi){
+      /* 途中でやめたときは、何も出しません（catch で黙る） */
+      try {
+        navigator.share({title: dai, text: dai, url: url})['catch'](function(){});
+        return;
+      } catch(e) { /* 共有が使えない機種は、下の「写す」へ落ちます */ }
+    }
+    var ji = dai + '\n' + url;
+    var owari = function(ok){ link_shirase(botan, ok ? 'data-ok' : 'data-ng'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ji).then(function(){ owari(true); },
+        function(){ owari(link_furui(ji)); });
+      return;
+    }
+    owari(link_furui(ji));
+  }
+
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('[data-link]');
+    if(b) link_utsusu(b);
+  });
+
   /* ══ 実践紹介のお願い（2026-09-23 依頼）══════════════════════
      「実戦に関しては、リンクをコピーするだけのボタンだけでいい！
        画像を出力するQRは不要」
@@ -3254,16 +3347,9 @@
     var moto = document.querySelector('meta[property="og:url"]');
     var ie = (moto && moto.content ? moto.content : '').replace(/[^/]*\.html$/, '');
     if(!ie){ b.hidden = true; return; }
-    /* ══ LINEの覚えを外すための、しっぽ（2026-09-23）══════════════
-       LINEは **一度見たアドレスのカード（絵と字）を、しばらく覚えています。**
-       絵を4人組に差しかえても、前に貼ったことのあるアドレスだと
-       古いカードが出つづけます（実物で確認。説明文がかなり前のものでした）。
-       うしろに ?2 を付けると「別のアドレス」と見て、取りに来ます。
-       中身はまったく同じページです（GitHub Pages は ? のうしろを見ません）。
-       ★LINEが忘れたころ（数日〜1週間）に、この1行を消してください。
-         消すと、素のアドレスに戻ります。 */
-    var SHIPPO = '?3';
-    ie = ie + SHIPPO;
+    /* しっぽ（LINEの覚えを外す）は、札の［リンク］と **同じ関数**を
+       通します。書き方を2か所に持つと、片方だけ ?3 が残ります。 */
+    ie = shippo(ie);
     var shirase = document.getElementById('shokai-shirase');
     function owari(ok){
       if(!shirase) return;

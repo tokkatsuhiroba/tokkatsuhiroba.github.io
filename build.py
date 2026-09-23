@@ -3685,9 +3685,10 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
 {oshi}        <p class="bfuda-by bfuda-by--ue">{by}</p>
         <p class="bfuda-lead">{lead}</p>
 {more}{mado}{shiryo}{soto}        <p class="bfuda-ashi">\
-<span class="bfuda-te">{zen}\
-<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span>印刷</span></button>\
-<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span>画像保存</span></button></span></p>
+<span class="bfuda-te{te}">{zen}\
+<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span class="b-ji">印刷</span></button>\
+<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span class="b-ji">画像保存</span></button>\
+<button class="bansho-b bansho-b--link" type="button" data-link data-url="{ima}"{ok}>{ICON_LINK}<span class="b-ji">リンク</span></button></span></p>
       </article>"""
 
 # ── 札の足のボタンに付けるしるし（2026-09-23 依頼）────────────
@@ -3712,9 +3713,16 @@ ICON_GA   = icon('<rect x="3" y="3" width="18" height="12" rx="2"/>'   # 写真�
                  '<path d="m7 12 3-3 2.5 2.5"/><circle cx="15" cy="8" r="1.3"/>'
                  '<path d="M12 17v4m0 0-2.5-2.5M12 21l2.5-2.5"/>')
 
+# ── ［リンク］のしるし（2026-09-23 依頼）──────────────────
+#   「見に来た先生が、そのまま同僚へ渡せるように」。鎖のしるしです。
+#   ★［画像保存］は絵を作るぶんだけ待たされます。リンクだけ送りたい人には、
+#     こちらのほうが軽い。**どちらも残します**（送りたいものが違うので）。
+ICON_LINK = icon('<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4L11.5 6"/>'
+                 '<path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4L12.5 18"/>')
+
 # 札の足に置く［大きく見る］。どの窓を開くかを data-zen で渡します。
 ZEN_B = ('<button class="bansho-b bansho-b--zen" type="button" '
-         'data-zen="{doko}">' + ICON_ZEN + '<span>{na}</span></button>')
+         'data-zen="{doko}">' + ICON_ZEN + '<span class="b-ji">{na}</span></button>')
 
 # デジタル資料のリンク（2026-09-23 依頼）。「綺麗にタップできるように」。
 #   ★指で押す的は、高さ56px。字だけのリンクにしません。
@@ -3758,6 +3766,19 @@ BFUDA_OSHI_K = ('            <span class="bfuda-oshi-k" aria-hidden="true">'
                 '<use href="#ill-k-%s"/></svg></span>\n')
 
 
+def kotoba_ok(ja, na='ok'):
+    """押したあとに2秒だけ出す字を、3つのことばぶん属性に入れます。
+       ★字は KOTOBA の表から取ります。ここに書き写すと、表を直しても
+         ボタンだけ古い字のまま残ります（出どころは1つ）。
+       ★JavaScript が出す字なので、data-en を足して回る仕組み
+         （kotoba_ireru）は当たりません。だから属性で渡します。"""
+    if ja not in KOTOBA or not KOTOBA[ja][0] or not KOTOBA[ja][1]:
+        raise Tomeru('KOTOBA に「%s」の訳がありません（札の足のボタンが呼んでいます）' % ja)
+    en, ar = KOTOBA[ja]
+    return ' data-%s="%s" data-%s-en="%s" data-%s-ar="%s"' % (
+        na, esc_html(ja), na, esc_html(en), na, esc_html(ar))
+
+
 def oshi_kao(nid, kyara):
     """その札の内容を案内する1人を返す（決まっていなければ、人は立ちません）。"""
     n = NAIYO_KYARA.get(nid)
@@ -3792,6 +3813,14 @@ BFUDA_MORE = """        <div class="bfuda-naka">
 #   小さく重ねます（1枚しか無いときは、出す意味がありません）。
 GAZOU = """              <figure class="shot"><img src="{uri}" alt="{alt}" width="{w}" height="{h}" loading="lazy" decoding="async">{kazu}</figure>"""
 GAZOU_KAZU = '<span class="shot-kazu">{i} / {n}</span>'
+
+
+def jissen_url(a):
+    """その実践が、そのまま開くURL。**式はここ1か所だけ**です。
+       公開ページの札（data-url）も、管理画面の［LINE用の文］も、
+       画像保存のQRも、ぜんぶこの1行から出ます。2か所に書くと、
+       片方だけ直したときに「開かないリンク」が LINE に流れます。"""
+    return SITE_URL + 'bansho.html#b-' + a['slug']
 
 
 def bansho_aru(jissen):
@@ -3855,7 +3884,11 @@ def build_bansho(jissen, kyara):
         #   ぜんぶ分かります。あとはその画像を、好きな所へ送れます。
         #   ★画像は、押した人のブラウザの中で作ります。何も出ていきません。
         #   ★画像の中に、この実践のURLを必ず入れます。見た人がここへ来られます。
-        ima = SITE_URL + 'bansho.html#b-' + a['slug']
+        ima = jissen_url(a)
+        # 札の足のボタンの数。［大きく見る］は窓のぶんだけ増えるので、
+        #   0〜2 と幅があります。ここで数えて、CSS に列の数を渡します
+        #   （4つを 390px に横1列で押しこむと、字が切れます）。
+        te = ' bfuda-te--%d' % (zen.count('<button') + 3)
         fuda.append(BFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(ba),
             toki=a['todoita'].strftime('%Y%m%d%H%M'),
@@ -3886,7 +3919,9 @@ def build_bansho(jissen, kyara):
             mado=mado, shiryo=sh, soto=soto, zen=zen, more=more,
             by=esc_html(sensei_ja(a['by'])),
             shiryo_url=esc_html(a.get('shiryo_url') or ''),
-            ICON_KAMI=ICON_KAMI, ICON_GA=ICON_GA,
+            ICON_KAMI=ICON_KAMI, ICON_GA=ICON_GA, ICON_LINK=ICON_LINK,
+            te=te, ok=(kotoba_ok('コピーしました')
+                       + kotoba_ok('コピーできません', 'ng')),
             ima=esc_html(ima)))
     return (JIBUN_TANA + '\n' + sagasu_obi(aru)
             + '\n    <div class="bantana" id="bantana">\n'
@@ -6454,6 +6489,20 @@ KOTOBA = {
         ('This is where those ways of doing it collect.<br> The place to talk is the <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINE open chat “Minna no Tokkatsu Hiroba”<i>external</i></a>.<br> <strong>Your practice too — <a href="okuru.html#okuru">send it and it appears</a> right here.</strong>',
          'هنا تتجمّع هذه الطرائق.<br> ومكان الحديث هو <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">محادثة LINE المفتوحة «ساحة توكاتسو للجميع»<i>خارجي</i></a>.<br> <strong>وممارستك أيضًا — <a href="okuru.html#okuru">أرسلها فتظهر</a> هنا كما هي.</strong>'),
     '並び': ('Order', 'الترتيب'),
+
+    # ── 実践の札の足（4つのボタン）　★2026-09-23 ──────────────
+    #   しるし（絵）だけでは伝わらないので、字も出しています。
+    #   その字を、ここで3つのことばにします。
+    '大きく見る': ('View larger', 'عرض بحجم أكبر'),
+    '写真を大きく': ('Photo, larger', 'الصورة بحجم أكبر'),
+    '資料を大きく': ('Handout, larger', 'المرفق بحجم أكبر'),
+    '印刷': ('Print', 'طباعة'),
+    '画像保存': ('Save image', 'حفظ كصورة'),
+    'リンク': ('Link', 'رابط'),
+    # ★これは押したあとに2秒だけ出す字です。出すのは JavaScript なので、
+    #   kotoba_ok() が属性にして札へ持たせます（→ BFUDA の {ok}）。
+    'コピーしました': ('Copied', 'تم النسخ'),
+    'コピーできません': ('Cannot copy', 'تعذّر النسخ'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
@@ -6511,6 +6560,10 @@ KOTOBA_TEKI = (
     (r'(<p class="kotoba-setsu">)(.*?)(</p>)', 'ことば・説明', 'ji'),
     (r'(<label class="sagasu-l"[^>]*>)(.*?)(</label>)', 'さがす欄の名前'),
     (r'(<p class="shokai-yo">)(.*?)(</p>)', '紹介の説明'),
+
+    # ── 実践の札の足のボタン（2026-09-23 追加）──────────────
+    #   しるしは絵（svg）なので、**字の span だけ**を見ます。
+    (r'(<span class="b-ji">)(.*?)(</span>)', '札の足のボタン'),
 )
 
 
