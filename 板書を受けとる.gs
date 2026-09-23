@@ -989,6 +989,22 @@ function _naosu(d, kanriMado) {
      以前は古い by を必ず優先していたため、名前や所属を
      書き換えても更新されなかった。古い公開済み画面だけ互換用に by を引きつぐ。 */
   if (kanri && d.kanri && !d.by_atarashii) n.by_hyoji = _arau(d.by).slice(0, 100);
+  /* ★ 2026-09-23、ここが抜けていました（実際にビルドが止まりました）。
+     写真を送りなおすと、上で **GitHubの古い写真を消して**いるのに、
+     新しい写真は Drive（folder.createFile）にしか置いていませんでした。
+     .md は bansho: を指したままなので、写真の無いフォルダを指すことになり、
+     build.py の検問が「src/bansho/ にありません」で止まります。
+     ＝ なおした瞬間に、サイト全体が更新できなくなっていました。
+     ★.md より先に押します。.md が先だと、写真が揃う前に組み立てが走ります。 */
+  for (var j = 0; j < uri.length; j++) {
+    _github('src/bansho/' + slug + '/' + uri[j].na, uri[j].b64,
+            '板書を1枚ふやす（' + slug + '）');
+  }
+  if (pdf) {
+    _github('src/shiryo/' + slug + '/shiryo.pdf', pdf,
+            '資料を1つふやす（' + slug + '）');
+  }
+
   var md = _md(slug, n);
   md = _hikitsugu(md, moto.hon, ['date', 'todoita']);
   if (!uri.length && moto.bansho) md = md.replace(/\n---\n/, '\nbansho: ' + slug + '\n---\n');
