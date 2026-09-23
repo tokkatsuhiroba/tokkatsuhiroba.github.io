@@ -2228,6 +2228,22 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-family:var(--f-hon);font-size:16px;   /* 16px未満にしない。iPhoneが勝手に寄るため */
 }
 .okuru-i:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+/* ── 日づけの欄（2026-09-23 依頼「研究会のところが切れている」）──────
+   iPhone の Safari は input[type=date] を **中身の幅** で置きます。
+   width:100% と書いてあってもそちらが勝つことがあり、日づけの欄だけが
+   入れ物より広くなって、右が切れていました（送っていただいた画面）。
+   ★appearance:none で、その置き方をやめさせます。押したときに出る
+     日づけのホイールは、いままでどおりです（見た目の指定だけです）。
+   ★::-webkit-date-and-time-value は Safari が中の字を **まんなか** に
+     置くための決まりです。ほかの欄と同じ 左そろえに戻します。
+   ★この Mac（Chromium）では、もともと入れ物と同じ325pxで出ていて
+     再現しません。iPhone で確かめてください。 */
+.okuru-i[type="date"]{
+  -webkit-appearance:none;appearance:none;
+  display:block;width:100%;max-width:100%;min-width:0;
+  text-align:start;
+}
+.okuru-i[type="date"]::-webkit-date-and-time-value{text-align:start;margin:0}
 /* 推しポイント（2026-09-23 依頼）。1行の入れ物だと、幅を超えたぶんが
    横へ流れて、**書いた頭が左へ消えて**いました。折り返して、40字ぜんぶを
    見ながら書けるようにします。
