@@ -211,6 +211,9 @@ function doPost(e) {
     // 研究日程（2026-09-22）。これも字だけです。
     if (d.kind === 'nittei') return _nittei(d);
 
+    // お悩みへの答え（2026-09-24）。字だけ。お悩みにぶら下がります。
+    if (d.kind === 'kotae') return _kotae_okuru(d);
+
     // なおす（2026-09-22 夜）。本人と管理人だけ通ります（→ _naosu）
     if (d.kind === 'naosu') return _naosu(d);
 
@@ -300,6 +303,91 @@ function _komari(d) {
   }
   _shiraseru_komari(slug, d, m, nose);
   return _kotae({ ok: true, noseta: nose.ok });
+}
+
+/* ══ 1の3. お悩みへの答え（2026-09-24 依頼）════════════════
+   「外部から答えとか『こんなふうにやっています』って回答できるように」
+   LINEの答えは流れて消えます。ここに残れば、あとから同じ困りごとの人が
+   読めます。字だけなので、Driveには残しません（困りごとと同じ）。
+
+   ★ぶら下がる相手（toi）が、**いま本当にあるか**を確かめてから置きます。
+     消えたお悩みへの答えを置くと、どこにも出ない .md が溜まります
+     （build.py は相手のいない答えを飛ばすので、止まりはしません）。 */
+function _kotae_okuru(d) {
+  var m = _arau_hon(d.m);
+  if (!m) return _kotae({ ok: false, riyu: '中身がありません' });
+  var toi = String(d.toi || '').trim();
+  if (!/^komari-[0-9]{8}-[0-9a-z]+$/.test(toi)) {
+    return _kotae({ ok: false, riyu: '答える相手がありません' });
+  }
+  if (!_md_aru('src/komari', toi)) {
+    return _kotae({ ok: false, riyu: 'そのお悩みは、もう残っていません' });
+  }
+  if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
+
+  var slug = _slug('kotae');
+  var nose = { ok: false, riyu: '' };
+  try {
+    _github('src/kotae/' + _kyou() + '_' + slug + '.md',
+            Utilities.base64Encode(_md_kotae(d, m, toi), Utilities.Charset.UTF_8),
+            'お悩みに答えを1つのせる（' + slug + '）');
+    nose.ok = true;
+  } catch (err) {
+    nose.riyu = String(err);
+  }
+  _shiraseru_kotae(slug, d, m, toi, nose);
+  return _kotae({ ok: true, noseta: nose.ok });
+}
+
+/* その名前の .md が、いまあるか。答える相手を確かめるのに使います。 */
+function _md_aru(doko, slug) {
+  var ichiran = _github_miru(doko);
+  if (!ichiran) return false;
+  for (var i = 0; i < ichiran.length; i++) {
+    var na = ichiran[i].name || '';
+    if (na.slice(-3) === '.md' && na.indexOf('_' + slug + '.') >= 0) return true;
+  }
+  return false;
+}
+
+function _md_kotae(d, m, toi) {
+  return [
+    '---',
+    'share: true',
+    'date: ' + _kyou(),
+    /* どのお悩みへの答えか。build.py はこれで札の中に入れます */
+    'toi: ' + toi,
+    /* 送った人の合いことばのハッシュ。消すときの関門になります（→ doGet） */
+    'nushi: ' + _nushi_arau(d.nushi),
+    /* 名前は任意。印が入っているときだけ出します（困りごとと同じ） */
+    (d.ko && String(d.na || '').trim()) ? 'by: ' + _by(d) : null,
+    '---',
+    '',
+    m
+  ].filter(function (x) { return x !== null; }).join('\n');
+}
+
+function _shiraseru_kotae(slug, d, m, toi, nose) {
+  var url = _webapp();
+  var honbun =
+    (nose.ok ? 'お悩みに答えが1つとどき、そのまま載せました。数分でページに出ます。\n'
+             : 'お悩みに答えが1つとどきましたが、載せられませんでした。\n' +
+               '　理由：' + (nose.riyu || '（不明）') + '\n') +
+    '\n' +
+    '　答えた先：' + toi + '\n' +
+    '　お名前　：' + (d.na || '（名乗られていません）')
+      + (String(d.na || '').trim()
+           ? (d.ko ? '　← サイトにも出しています' : '　← サイトには出していません')
+           : '') + '\n' +
+    '　所属　　：' + (d.sh || '（なし）') + '\n\n' +
+    '＜中身＞\n' + m + '\n\n' +
+    '★ 学校名・子どもの名前・同僚の名前が入っていたら、いますぐ下から消してください。\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&k=' + _kanri_key() + '\n\n' +
+           '（公開ページからは消えます。GitHubの履歴には残ります）\n'
+         : '（WEBAPP_URL が空なので、消すところを出せていません）');
+
+  var mail = _mail();
+  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】お悩みに答えがとどきました', honbun);
 }
 
 /* 札に出す短い言葉。本文の1行目を、文の切れ目で切ります。
@@ -1234,12 +1322,36 @@ function _slug_kesu(slug) {
   var n = 0;
   if (slug.indexOf('komari-') === 0) {
     n += _kesu_md(slug, 'src/komari');
+    /* お悩みを消したら、その答えも一緒に消します。残すと、どこにも
+       出ない .md が溜まります（build.py は相手のいない答えを飛ばします）。 */
+    n += _kotae_kesu(slug);
+  } else if (slug.indexOf('kotae-') === 0) {
+    n += _kesu_md(slug, 'src/kotae');
   } else if (slug.indexOf('nittei-') === 0) {
     n += _kesu_md(slug, 'src/nittei');
   } else {
     n += _kesu_folder('src/bansho/' + slug, slug);
     n += _kesu_folder('src/shiryo/' + slug, slug);
     n += _kesu_md(slug, 'src/jissen');
+  }
+  return n;
+}
+
+/* あるお悩みにぶら下がっている答えを、ぜんぶ消します。
+   中身の toi を読んで選ぶので、名前だけでは分かりません。 */
+function _kotae_kesu(toi) {
+  var ichiran = _github_miru('src/kotae');
+  if (!ichiran) return 0;
+  var n = 0;
+  for (var i = 0; i < ichiran.length; i++) {
+    var na = ichiran[i].name || '';
+    if (na.slice(-3) !== '.md' || na.charAt(0) === '_') continue;
+    var hon = _github_yomu(ichiran[i].path);
+    if (!hon) continue;
+    if (new RegExp('^toi:\\s*' + toi + '\\s*$', 'm').test(hon)) {
+      _github_kesu(ichiran[i].path, ichiran[i].sha, '答えを1つ消す（' + toi + '）');
+      n++;
+    }
   }
   return n;
 }

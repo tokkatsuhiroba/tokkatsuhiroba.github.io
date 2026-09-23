@@ -638,12 +638,62 @@
 <section class="sec sec--sora" id="komari">
   <i class="kazari" data-k="gakkatsu-think" style="--y:20%;--w:106px;--d:.7s"></i>
   <div class="uchi">
-    <h2 class="midashi"><span class="en">VOICES</span><span class="ja">届いているお悩み</span></h2>
+    <h2 class="midashi"><span class="en">VOICES</span><span class="ja">みんなのお悩み</span></h2>
     <p class="yomi">
       送られてきたものを、そのまま並べています。<br>
       答えが見つかったものは、<a href="#manabu">学ぶ</a>の入口で<strong>押せる札</strong>になります。
     </p>
     <!--BUILD:KOMARI-->
+
+    <!-- 答える（2026-09-24 依頼）───────────────────────────
+         「外部から答えとか『こんなふうにやっています』って回答できるように」
+         ★フォームは **1つだけ** 作って、押された札の中へ移します。
+           札ごとに作ると、同じ欄がページに何個も並び、id も重なります。
+         ★ぶら下がる相手（toi）は、押した札から受けとります。
+         ★開いただけでは外に1バイトも出ません（押したときだけ）。 -->
+    <form class="okuru-f kotae-f" id="kotae-f" novalidate hidden>
+      <p class="okuru-midashi">このお悩みに答える</p>
+      <p class="kotae-toi" id="kotae-toi"></p>
+      <p class="okuru-yomi">「うちではこうしています」で十分です。<br>
+        学校名や子どもの名前は書かないでください。そのまま出ます。</p>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="kotae-m">答え<span class="okuru-hissu">必須</span></label>
+        <textarea class="okuru-i okuru-hiroi" id="kotae-m" maxlength="1000" rows="5"
+                  placeholder="例：
+うちは計画委員会を朝の15分だけにしています。司会の原稿は前の日に配って、当日は読むだけにしました。"></textarea>
+        <p class="okuru-kazu" id="kotae-kazu" aria-live="polite">0 / 1000字</p>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="kotae-na">お名前<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="kotae-na" maxlength="40" autocomplete="name"
+               placeholder="例：伊藤 優">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="kotae-sh">所属<span class="okuru-nin">任意</span></label>
+        <input class="okuru-i" type="text" id="kotae-sh" maxlength="60"
+               placeholder="例：◯◯市立◯◯小学校">
+      </div>
+
+      <p class="okuru-check">
+        <label for="kotae-ko"><input type="checkbox" id="kotae-ko">
+          <span>サイトに<b>名前を出してよい</b></span></label>
+        <span class="okuru-check-chu">入れなければ「答えてくださった先生」になります。</span>
+      </p>
+
+      <p class="okuru-kakunin">
+        <label for="kotae-mita"><input type="checkbox" id="kotae-mita">
+          <span><b>見ました。</b>学校名・子どもの名前・同僚の名前は、入っていません。</span></label>
+      </p>
+
+      <p class="okuru-botan">
+        <button class="btn" type="submit" id="kotae-b">答えを送る<span class="btn-ya">→</span></button>
+        <button class="bansho-b" type="button" id="kotae-yameru">やめる</button>
+      </p>
+      <p class="okuru-shirase" id="kotae-shirase" role="status" aria-live="polite"></p>
+    </form>
 
     <!-- 2026-09-24 依頼：「三行はパネルごと除去して。いらない」
          ここにあった「あなたのお悩みも お悩みBOX から送れます／答えが早いのは
@@ -3605,6 +3655,97 @@
      写真もPDFもありません。字だけです。
      ★ここも、この入力欄からは 押したときだけです。
        （ページを開いた1回ぶんは「どの画面が見られたか」のほうです） */
+  /* ══ お悩みに答える（2026-09-24 依頼）═══════════════════
+     「外部から答えとか『こんなふうにやっています』って回答できるように」
+     ★フォームは1つだけ作って、押された札の中へ移します（appendChild）。
+       札ごとに作ると、同じ id の欄がページに何個も並びます。
+     ★受け口には kind: 'kotae' で、相手（toi）と一緒に投げます。
+     ★合いことばは、困りごと・実践と同じ仕組みです（あとから自分の
+       答えを消すための関門）。                                   */
+  var kotaeF = document.getElementById('kotae-f');
+  if(kotaeF && OKURU_URL){
+    var aM = document.getElementById('kotae-m');
+    var aNa = document.getElementById('kotae-na');
+    var aSh = document.getElementById('kotae-sh');
+    var aKo = document.getElementById('kotae-ko');
+    var aMita = document.getElementById('kotae-mita');
+    var aToi = document.getElementById('kotae-toi');
+    var aKazu = document.getElementById('kotae-kazu');
+    var aShirase = document.getElementById('kotae-shirase');
+    var aBotan = document.getElementById('kotae-b');
+    var aIma = null;              /* いま答えている相手（お悩みの名前） */
+
+    aM.addEventListener('input', function(){
+      aKazu.textContent = aM.value.length + ' / 1000字';
+    });
+
+    var aTojiru = function(){
+      kotaeF.hidden = true; aIma = null; aShirase.textContent = '';
+    };
+    document.getElementById('kotae-yameru').addEventListener('click', aTojiru);
+
+    document.addEventListener('click', function(ev){
+      var b = ev.target.closest && ev.target.closest('.komari-kotaeru');
+      if(!b) return;
+      var fuda = b.closest('.komari-fuda');
+      if(!fuda) return;
+      aIma = b.getAttribute('data-kotae') || '';
+      aToi.textContent = b.getAttribute('data-dai') || '';
+      kotaeF.hidden = false;
+      /* 押された札の中へ移します。どの悩みに答えているのかが、
+         目で見て分かるようにするためです。 */
+      fuda.appendChild(kotaeF);
+      aM.focus();
+      kotaeF.scrollIntoView({block: 'center'});
+    });
+
+    kotaeF.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var m = aM.value.trim();
+      if(!aIma){ aShirase.textContent = 'どのお悩みに答えるのか、分からなくなりました。もう一度［答える］を押してください。'; return; }
+      if(!m){ aShirase.textContent = '答えを書いてください。'; return; }
+      if(aMita && !aMita.checked){
+        aShirase.textContent = '最後に「見ました」に印を入れてください。'
+          + '学校名・子どもの名前・同僚の名前が入っていないか、もう一度だけ見てください。';
+        var aHako = aMita.closest('.okuru-kakunin') || aMita;
+        aHako.classList.add('okuru-kakunin--yobu');
+        aHako.scrollIntoView({block: 'center'});
+        aMita.focus();
+        return;
+      }
+      aBotan.disabled = true;
+      aShirase.textContent = '送っています…';
+      var aAi = aikotoba_tsukuru();
+      aikotoba_hash(aAi).then(function(aNushi){
+      return fetch(OKURU_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify({ kind: 'kotae', nushi: aNushi, toi: aIma,
+                               m: m.slice(0, 1000),
+                               na: aNa.value.trim().slice(0, 40),
+                               sh: aSh.value.trim().slice(0, 60),
+                               ko: aKo.checked ? 1 : 0 })
+      }).then(function(){
+        var shimaeta = aNushi && aikotoba_shimau(
+          {k: aAi, n: aNushi, t: '答え（' + (aToi.textContent || 'お悩み') + '）',
+           d: new Date().toISOString().slice(0, 10)});
+        var dai = aToi.textContent;
+        kotaeF.reset(); aKazu.textContent = '0 / 1000字';
+        aShirase.textContent = '送りました。数分で、このお悩みの下に出ます。';
+        aikotoba_miseru(aAi, shimaeta);
+        aToi.textContent = dai;
+        aBotan.disabled = false;
+      });
+      })['catch'](function(err){
+        aShirase.textContent = 'うまく送れませんでした（'
+          + ((err && (err.message || err.name)) || '理由不明')
+          + '）。電波のいいところで、もう一度ためしてください。';
+        aBotan.disabled = false;
+      });
+    });
+  }
+
   var komariF = document.getElementById('komari-f');
   if(komariF && OKURU_URL){
     var kM = document.getElementById('komari-m');

@@ -56,6 +56,7 @@ GOODS  = os.path.join(SRC, 'goods')    # 学級会グッズ（1点＝1ファイ�
 SHIRYO = os.path.join(SRC, 'shiryo')   # 資料の画像（1件＝1フォルダ。ページの中に埋めこむ）
 BANSHO = os.path.join(SRC, 'bansho')   # 板書の写真（1件＝1フォルダ。板書のページにだけ埋めこむ）
 KOMARI = os.path.join(SRC, 'komari')   # 困りごと（1件＝1ファイル。送られたら、そのまま出ます）
+KOTAE  = os.path.join(SRC, 'kotae')    # お悩みへの答え（1件＝1ファイル。toi: でお悩みにぶら下がります）
 NITTEI = os.path.join(SRC, 'nittei')   # 送られた研究日程（1件＝1ファイル。手で足すぶんは src/app.js の EVENTS）
 ODAI   = os.path.join(SRC, 'odai.md')  # 今週のお題（1回ぶん＝1ファイル。無ければ帯ごと出ません）
 JISSEN_HOME_N = 2                      # ホームに出す実践の数
@@ -1113,6 +1114,49 @@ def odai_line_bun(o):
 KOMARI_MOJI_MAX = 1000
 
 
+def load_kotae():
+    """お悩みへの答え（2026-09-24 依頼）。1件＝1ファイル、toi: でぶら下がります。
+       LINEの答えは流れて消えます。ここに残れば、あとから同じ困りごとの人が読めます。
+
+       ★相手（toi）がいない答えは、**飛ばします**（止めません）。
+         お悩みが消されたとき、答えだけが残ることがあります。そこで止めると、
+         1件の消し忘れでサイト全体が更新できなくなります。
+       ★NG語は、困りごとと同じ検問です。その1件だけ出しません。"""
+    tsuki, tobashita = {}, []
+    for p in sorted(glob.glob(os.path.join(KOTAE, '*.md'))):
+        if os.path.basename(p).startswith('_'):
+            continue
+        fm = parse_md(p)
+        f = fm['_file']
+        if fm.get('share', '').lower() != 'true':
+            tobashita.append('%s … share: true が無いので出しません' % f)
+            continue
+        hon = fm['summary'].strip()
+        if not hon:
+            tobashita.append('%s … 中身が空です' % f)
+            continue
+        if ngword_aru(hon + (fm.get('by') or '')):
+            # 語そのものは書きません（_ngword.txt は リポジトリにも上げていない表です）
+            tobashita.append('%s … 出してはいけない語が入っています' % f)
+            continue
+        toi = (fm.get('toi') or '').strip()
+        if not re.match(r'^komari-[0-9]{8}-[0-9a-z]+$', toi):
+            tobashita.append('%s … toi が お悩みの名前の形ではありません（%s）' % (f, toi))
+            continue
+        try:
+            fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
+        except Exception:
+            tobashita.append('%s … date が 2026-09-21 の形ではありません' % f)
+            continue
+        fm['hon'] = hon[:KOMARI_MOJI_MAX]
+        fm['slug'] = slug_of(f)
+        tsuki.setdefault(toi, []).append(fm)
+    # 古い順（会話の順に読めるように）
+    for v in tsuki.values():
+        v.sort(key=lambda a: (a['d'], a['slug']))
+    return tsuki, tobashita
+
+
 def load_komari():
     kiji, tobashita = [], []
     for p in sorted(glob.glob(os.path.join(KOMARI, '*.md'))):
@@ -1198,8 +1242,19 @@ def mijikaku(hon, n=26):
 KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
         <p class="komari-hi">{tag}{hi}{grade}</p>
 {dai}        <div class="komari-hon">{hon}</div>
-{by}        <p class="komari-te"><a class="btn btn--line btn--komari" href="{line}" target="_blank" rel="noopener noreferrer">このお悩みをLINEに流す<span class="btn-ya">↗</span></a></p>
+{by}{kotae}        <p class="komari-te"><button type="button" class="bansho-b komari-kotaeru" data-kotae="{slug}" data-dai="{dai_ji}">答える</button><a class="btn btn--line btn--komari" href="{line}" target="_blank" rel="noopener noreferrer">このお悩みをLINEに流す<span class="btn-ya">↗</span></a></p>
       </article>"""
+# 答え（2026-09-24 依頼）。**お悩みの札の中**に、届いた順で並べます。
+#   ★別のページに出しません。答えは、その困りごとの続きだからです。
+KOTAE_NAMI = """        <div class="kotae-nami">
+          <p class="kotae-kazu">答え {n}</p>
+{naka}        </div>
+"""
+KOTAE_1 = """          <article class="kotae-1" id="a-{slug}">
+            <div class="kotae-hon">{hon}</div>
+            <p class="kotae-ashi">{by}　{hi}</p>
+          </article>
+"""
 # 題（2026-09-24 依頼）。送るときに書いてもらった「お悩みのタイトル」です。
 #   ★書かれていないときは出しません。その場合の title: は
 #     本文の1行目から機械が作ったもの（mijikaku）なので、見出しに置くと
@@ -1245,11 +1300,26 @@ def komari_line(a):
     return 'https://line.me/R/share?text=' + urllib.parse.quote('\n'.join(gyo))
 
 
-def build_komari(komari):
+def build_kotae(hairu):
+    """1つのお悩みにぶら下がる答え。0件なら、棚ごと出しません。"""
+    if not hairu:
+        return ''
+    naka = ''.join(
+        KOTAE_1.format(slug=k['slug'], hon=md_html(k['hon']),
+                       by=esc_html(sensei_ja(k.get('by') or '') or '答えてくださった先生'),
+                       hi=k['d'].strftime('%-m月%-d日'))
+        for k in hairu)
+    return KOTAE_NAMI.format(n=('%dつ' % len(hairu)), naka=naka)
+
+
+def build_komari(komari, kotae=None):
+    kotae = kotae or {}
     if not komari:
         return KOMARI_KARA
     return '\n'.join(
         KOMARI_T.format(slug=a['slug'], hi=a['d'].strftime('%Y年%-m月%-d日'),
+                        dai_ji=esc_html(a['mijikai']),
+                        kotae=build_kotae(kotae.get(a['slug'])),
                         tag=(KOMARI_TAG.format(nid=a['naiyo'],
                                                ja=esc_html(a['scene'] or naiyo_ja(a['naiyo'])))
                              if a['naiyo'] else ''),
@@ -4845,16 +4915,19 @@ def build_bansho_iriguchi(jissen):
             'みんなの実践を見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
 
 
-def build_komari_miru(komari):
+def build_komari_miru(komari, kotae=None):
     """困りごとを送る欄の、すぐ下に置く「見るところ」（2026-09-22）。
-       0件のときはリンクにしません（押しても何も無い、を作らないため）。"""
+       0件のときはリンクにしません（押しても何も無い、を作らないため）。
+       2026-09-24：数えるのは **届いた答えの数** にしました。
+       前は saki（学ぶの札になった数）でしたが、答えが本当に並ぶように
+       なったので、同じ「答え」という言葉で2つのものを数えると読めません。"""
     if not komari:
         return ('    <p class="bansho-iri bansho-iri--mada">'
                 '<b>届いている困りごと</b>まだ1件もありません。いちばん乗りをどうぞ。</p>')
-    tsuita = sum(1 for a in komari if a['saki'])
+    n = sum(len(v) for v in (kotae or {}).values())
     return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#komari">'
-            '届いているお悩みを見る（%d件・うち%d件に答え）<i>→</i></a></p>'
-            % (len(komari), tsuita))
+            'みんなのお悩みを見る（%d件%s）<i>→</i></a></p>'
+            % (len(komari), ('・答え%dつ' % n) if n else ''))
 
 
 def build_okuru_miru(jissen):
@@ -6079,6 +6152,9 @@ KOTOBA = {
     'グッズ': ('Tools', 'أدوات'),
     'お悩みBOX': ('Question box', 'صندوق الأسئلة'),
     '届いているお悩み': ('Questions that have arrived', 'الأسئلة الواردة'),
+    # 2026-09-24 依頼：「届いているお悩み」→「みんなのお悩み」。
+    #   上の行は、古いページが残っているときのために置いたままにします。
+    'みんなのお悩み': ('Everyone\'s questions', 'أسئلة الجميع'),
     '困りごと': ('Questions', 'الأسئلة'),
     'はじめかた': ('How to start', 'كيف تبدأ'),
     'ニュース': ('News', 'الأخبار'),
@@ -6698,6 +6774,17 @@ KOTOBA = {
     'お悩みのタイトル':
         ('Title of your question',
          'عنوان سؤالك'),
+    'このお悩みに答える':
+        ('Answer this question',
+         'أجب عن هذا السؤال'),
+    '答え':
+        ('Your answer',
+         'إجابتك'),
+    '「うちではこうしています」で十分です。 学校名や子どもの名前は書かないでください。そのまま出ます。':
+        ('"Here is how we do it" is enough. '
+         'Please do not write school names or children\'s names. They appear exactly as written.',
+         '«هكذا نفعل ذلك عندنا» تكفي. '
+         'من فضلك لا تكتب أسماء المدارس أو أسماء الأطفال، فهي تظهر كما هي.'),
     '札の見出しと、LINEに流すときの題になります。 書かないときは、本文の1行目から こちらで作ります。':
         ('This becomes the heading on the card and the subject line when it is shared to LINE. '
          'If you leave it empty, we make one from the first line of your text.',
@@ -7082,6 +7169,8 @@ def build_shin():
     odai = load_odai()
     kotoba = load_kotoba()
     komari, tobashita_k = load_komari()
+    kotae, tobashita_a = load_kotae()
+    tobashita_k = list(tobashita_k) + list(tobashita_a)
     # 採用済みの学校全景。4つの活動を切らずに、そのまま見せる。
     #   ★ホームだけは <use> ではなく「本物」を出します（2026-09-23 依頼）。
     #     <use> の中は CSS が届かず、子どもも雲も動かせないためです。
@@ -7099,9 +7188,9 @@ def build_shin():
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
                        ('    <!--BUILD:FUSHIME-->', build_fushime(jissen, buhin)),
                        ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
-                       ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari)),
+                       ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari, kotae)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen, kyara)),
-                       ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
+                       ('    <!--BUILD:KOMARI-->',     build_komari(komari, kotae)),
                        ('          <!--BUILD:KEN-->', build_ken_options()),
                        ('    <!--BUILD:KOTOBA-->',   build_kotoba(kotoba)),
                        ('    <!--BUILD:KAI-->',      build_kai()),

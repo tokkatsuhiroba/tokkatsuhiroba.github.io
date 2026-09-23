@@ -2397,8 +2397,39 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   margin:0 0 10px;font-family:var(--f-maru);font-weight:900;
   font-size:clamp(17px,3.4vw,20px);line-height:1.5;color:var(--ink);
 }
-/* 1件ずつの［このお悩みをLINEに流す］。札の中なので、幅いっぱいにはしません。 */
-.komari-te{margin:14px 0 0}
+/* 答え（2026-09-24 依頼）。お悩みの札の**中**に、届いた順で並びます。
+   ★左に太い線を入れて、悩みの言葉と答えの言葉を見分けられるようにします
+     （色だけで分けません）。 */
+.kotae-nami{
+  margin:16px 0 0;padding:14px 0 0;border-top:2px dashed var(--rule);
+}
+.kotae-kazu{
+  margin:0 0 10px;font-family:var(--f-maru);font-weight:700;
+  font-size:13px;color:var(--mute);
+}
+.kotae-1{
+  margin:0 0 12px;padding:12px 14px;
+  background:var(--men-sora);border-inline-start:5px solid var(--midori);
+  border-radius:0 12px 12px 0;
+}
+.kotae-1:last-child{margin-bottom:0}
+.kotae-hon p{margin:0 0 .6em;font-size:14.5px;line-height:1.85}
+.kotae-hon p:last-child{margin-bottom:0}
+.kotae-ashi{
+  margin:8px 0 0;font-family:var(--f-maru);font-weight:700;
+  font-size:12px;color:var(--mute);text-align:end;
+}
+/* 答えるフォームは、押された札の中へ入ります。札の白地から浮かせます。 */
+.kotae-f{margin:16px 0 0}
+.kotae-f[hidden]{display:none}
+.kotae-toi{
+  margin:0 0 10px;padding:8px 12px;
+  background:var(--men-ki);border-radius:10px;
+  font-family:var(--f-maru);font-weight:700;font-size:14px;
+}
+.kotae-toi::before{content:"▼ ";color:var(--mute)}
+/* 1件ずつの［答える］［このお悩みをLINEに流す］。札の中なので、幅いっぱいにはしません。 */
+.komari-te{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 0}
 .btn--komari{
   margin:0;padding:11px 20px;font-size:14px;
   box-shadow:3px 3px 0 var(--ink);
