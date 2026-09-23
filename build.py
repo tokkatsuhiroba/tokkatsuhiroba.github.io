@@ -3584,9 +3584,10 @@ def build_jissen_hiroba(jissen, goods):
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
 BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}" data-shiryo="{shiryo_url}">
-        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}<span class="bfuda-by bfuda-by--ue">{by}</span></p>
+        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
-{oshi}        <p class="bfuda-lead">{lead}</p>
+{oshi}        <p class="bfuda-by bfuda-by--ue">{by}</p>
+        <p class="bfuda-lead">{lead}</p>
 {more}{mado}{shiryo}{soto}        <p class="bfuda-ashi">\
 <span class="bfuda-te">{zen}\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span>印刷</span></button>\
