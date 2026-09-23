@@ -1305,7 +1305,9 @@ def build_jissen(kiji, goods):
         out.append(JART.format(
             slug=a['slug'], scene=esc_html(a['scene']), grade=esc_html(a['grade']),
             time=esc_html(a['time']), title=esc_html(a['title']), lead=inline_md(a['lead']),
-            more=more, set=setb + shb, weekly=weekly, by=esc_html(a['by']),
+            more=more, set=setb + shb, weekly=weekly,
+            # 2026-09-23 依頼：学校名は公開ページに出しません
+            by=esc_html(namae_dake(a['by'])),
             line=line_share(a['title'] + '\n' + absurl), abs=absurl,
         ))
     return '\n\n'.join(out)
@@ -3290,24 +3292,43 @@ YOTSU = (
 )
 
 
-def sensei_ja(by):
-    """送ってくださったお名前に「先生」を付ける（2026-09-23 依頼）。
-       「西野穂乃花（徳島県…千松小学校）」→「西野穂乃花先生（徳島県…千松小学校）」
-       ★学校名（かっこの中）は、そのまま残します。どこの実践かが分かるためです。
-       ★もう「先生」が付いているときは、足しません。
-       ★名前が無いとき（出してよい に印が無いとき）は、そのまま返します。"""
+def namae_dake(by):
+    """お名前のうしろの（所属＝学校名）を落とします（2026-09-23 依頼）。
+       「谷聡司（徳島県吉野川市立知恵島小学校）」→「谷聡司」
+       ★学校名は、送ってくださった先生ご本人がそのまま分かってしまう字です。
+         **公開ページには出しません。**
+       ★管理画面（Macの中だけ・kanri.html）には、これまでどおり残ります。
+         どなたの実践かは、こちらでは分かるようにしておきます。
+       ★地域（ken・shi＝都道府県と自治体）は落としません。
+         どのあたりの実践かは、そこで分かります。
+       ★「（実践時）」のような入れ子のかっこごと、
+         **最初のかっこから後ろを、まるごと**落とします。
+       ★名前が無くて（所属）だけのときは、名前なしとして扱います。"""
     t = (by or '').strip()
     if not t:
         return t
     i = min([x for x in (t.find('（'), t.find('(')) if x >= 0] or [len(t)])
-    na, ato = t[:i].strip(), t[i:]
-    if not na or re.search(r'(先生|教諭|教員|さん)$', na):
+    na = t[:i].strip()
+    return na or '送ってくださった先生'
+
+
+def sensei_ja(by):
+    """送ってくださったお名前に「先生」を付ける（2026-09-23 依頼）。
+       「西野穂乃花（徳島県…千松小学校）」→「西野穂乃花　先生」
+       ★学校名（かっこの中）は出しません。namae_dake の覚え書きを見てください。
+       ★もう「先生」が付いているときは、足しません。
+       ★名前が無いとき（出してよい に印が無いとき）は、そのまま返します。"""
+    t = namae_dake(by)
+    if not t:
         return t
+    na = t
+    if not na or re.search(r'(先生|教諭|教員|さん)$', na):
+        return na
     # 2026-09-23 依頼：名前と「先生」のあいだを空けます。
     #   「坂本理恵先生」だと一続きに見えて、どこまでが名前か分かりません。
     #   ★半角ではなく **全角の空き** です。まわりが日本語なので、
     #     半角だと詰まって見えます。
-    return na + '　先生' + ato
+    return na + '　先生'
 
 
 # ══ 文の切れ目で折る（2026-09-23 依頼）════════════════════

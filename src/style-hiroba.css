@@ -3326,8 +3326,12 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    緑の縦線だけでは、何の1行なのか伝わりませんでした。
    ★札の中で いちばん目立たせたいのは中身のほうなので、
      名のりは小さく・添え字の色にします。 */
+/* ★2026-09-23 依頼：札を**文と同じ行に置くのをやめました**。
+   札（85px）が1行めの頭を取るせいで、文のかたまりが入りきらず、
+   1行めに173pxも空きが残っていました（実測）。
+   札だけ1行に出せば、文は全幅を使えます。 */
 .bfuda-oshi-l{
-  display:inline-block;margin-inline-end:8px;
+  display:block;margin:0 0 4px;width:fit-content;
   padding:1px 9px;border-radius:999px;
   background:var(--accent);color:var(--bg);
   font-family:var(--f-maru);font-weight:700;
@@ -3346,11 +3350,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      壊れません（text-wrap:pretty も同じ）。 */
   word-break:auto-phrase;text-wrap:pretty;
 }
-/* 「、」「。」で切ったかたまり。中では折れないので、**折れ目は必ず
-   文の切れ目**になります（2026-09-23 依頼）。
-   前は「文章と写真を／変えるだけ。」と述語の途中で割れていました。
-   ★入りきらないときだけ、かたまりの中で折れます。そこも語の切れ目です。 */
-.bfuda-oshi .ku{display:inline-block}
+/* 「、」「。」で切ったかたまり（2026-09-23）。
+   ★いちど inline-block にして「かたまりの中では折らない」を試しましたが、
+     **やめました**。かたまりが残り幅に入らないと まるごと次の行へ落ちて、
+     1行めに170pxの空きが残りました（実測）。見た目のほうが壊れます。
+   ★いまは折れ目の判断を auto-phrase にまかせ、行は詰めて使います。
+     かたまりは、さがす欄などで使う目じるしとしてだけ残します。 */
+.bfuda-oshi .ku{display:inline}
 
 /* ══ スマホでの、実践の字の大きさ（2026-09-22 夜 依頼）══════
    実践内容の字が、スマホだと少し大きく感じる、という話から。
