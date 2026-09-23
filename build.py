@@ -3310,6 +3310,32 @@ def sensei_ja(by):
     return na + '　先生' + ato
 
 
+# ══ 文の切れ目で折る（2026-09-23 依頼）════════════════════
+#   推しポイントが「文章と写真を／変えるだけ。」のように、**述語の
+#   途中で割れて**読みにくい、という話から。
+#   auto-phrase（語の切れ目で折る）だけでは、ここまでは面倒を見ません。
+#
+#   ★やり方 … 「、」「。」で区切って、そのかたまりを inline-block に
+#     します。かたまりの中では折れないので、折れ目は必ず文の切れ目に
+#     来ます。入りきらないときは、そのかたまりの中で折れます
+#     （auto-phrase が効くので、そこでも語の切れ目です）。
+#   ★飾り（**太字** など）が書かれているときは、切ると タグが
+#     またいで壊れるので、**切りません**。そのまま出します。
+
+def ku_wakeru(ji):
+    """「、」「。」のうしろで区切り、かたまりごとに inline-block で包む。"""
+    t = (ji or '').strip()
+    if not t:
+        return ''
+    # 飾りが入っているものは、そのまま（タグをまたいで切らないため）
+    if re.search(r'[*_\[\]<>]', t):
+        return inline_md(t)
+    ku = [x for x in re.split(r'(?<=[、。])', t) if x]
+    if len(ku) < 2:
+        return inline_md(t)
+    return ''.join('<span class="ku">%s</span>' % inline_md(x) for x in ku)
+
+
 def naiyo_ichiran():
     """('gakkyu', '学級活動') の組。4つの内容の id は クラス名の n- を取ったもの。"""
     return [(c[2:], ja) for c, _, ja, _, _ in YOTSU]
@@ -3734,7 +3760,7 @@ def build_bansho(jissen):
             #   緑の縦線だけでは、何の1行なのかが伝わりませんでした。
             oshi=('        <p class="bfuda-oshi">'
                   '<span class="bfuda-oshi-l">推しポイント</span>%s</p>\n'
-                  % inline_md(a['oshi'])
+                  % ku_wakeru(a['oshi'])
                   if a.get('oshi') else ''),
             kindtag=('<span class="fuda-kind">議題</span>'
                      if a['kind'] == 'gidai' else ''),

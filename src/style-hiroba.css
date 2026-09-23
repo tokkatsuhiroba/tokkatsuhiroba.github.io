@@ -3346,6 +3346,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      壊れません（text-wrap:pretty も同じ）。 */
   word-break:auto-phrase;text-wrap:pretty;
 }
+/* 「、」「。」で切ったかたまり。中では折れないので、**折れ目は必ず
+   文の切れ目**になります（2026-09-23 依頼）。
+   前は「文章と写真を／変えるだけ。」と述語の途中で割れていました。
+   ★入りきらないときだけ、かたまりの中で折れます。そこも語の切れ目です。 */
+.bfuda-oshi .ku{display:inline-block}
 
 /* ══ スマホでの、実践の字の大きさ（2026-09-22 夜 依頼）══════
    実践内容の字が、スマホだと少し大きく感じる、という話から。
