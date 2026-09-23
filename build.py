@@ -4572,41 +4572,58 @@ def build_okuru_miru(jissen):
 #     なります（日付そのものは、いつ見ても本当のことです）。
 
 # 絵の中で、人が実際に描かれているところ（左端, 幅）。
-#   絵の箱は 170×152 ですが、中の人は 57〜117 しかありません。
-#   そのまま4人ならべると、すき間だらけで小さく見えます。ここで**切り抜いて**、
-#   横にぴったり詰めます。
-#   ★出どころ … ブラウザで getBBox() を読んだ実測値（2026-09-23）。
-#     絵を描きかえたら、ここも measure し直してください。合っていなくても
-#     絵が欠けるだけで止まらないので、**下の検問で名前だけは見ます**。
+#   絵の箱は 170×152 ですが、中の人は 57〜125 しかいません。そのまま4人
+#   ならべると すき間だらけになるので、ここで**切り抜いて**横に詰めます。
+#
+#   ★数は **ページに入れたあとの座標**です（0 から始まる形）。
+#     元の .svg は viewBox="-30 -17 170 152" のように**負から始まって**いて、
+#     load_approved_svg がそれを 0 からに直してから埋めこみます。
+#     元ファイルのまま測ると 30ずれて、**右はしの1人が切れます**
+#     （2026-09-23、実際に切れました）。測るときは、必ず
+#     load_kyara() が返す中身を <svg viewBox="0 0 w h"> に入れて測ること。
+#   ★測り方 … ブラウザで getBBox({stroke:true}) を読む。左端は切り捨て、
+#     幅は切り上げ。出したあとは、FOOT_NORI ぶん外に広げて使います。
 FOOT_HABA = {
-    'group-thanks':     (22, 373), 'group-welcome':    (9, 431),
-    'group-shoulders':  (9, 303),
-    'gakkatsu-board':   (20, 107), 'gakkatsu-guide':   (8, 104),
-    'gakkatsu-listen':  (12, 76),  'gakkatsu-thanks':  (22, 58),
-    'gakkatsu-think':   (22, 57),  'gakkatsu-welcome': (9, 80),
-    'gyoji-calendar':   (2, 73),   'gyoji-cheer':      (8, 81),
-    'gyoji-guide':      (8, 104),  'gyoji-news':       (14, 117),
-    'gyoji-thanks':     (14, 66),  'gyoji-welcome':    (9, 80),
-    'jidokai-guide':    (8, 104),  'jidokai-share':    (11, 79),
-    'jidokai-speak':    (4, 92),   'jidokai-thanks':   (10, 81),
-    'jidokai-upload':   (11, 95),  'jidokai-welcome':  (9, 80),
-    'club-cheer':       (8, 81),   'club-guide':       (8, 104),
-    'club-make':        (0, 108),  'club-tools':       (9, 76),
-    'club-try':         (14, 106), 'club-welcome':     (9, 80),
+    'group-shoulders':  (21, 303), 'group-thanks':     (36, 373),
+    'group-welcome':    (24, 431),
+    'gakkatsu-board':   (50, 107), 'gakkatsu-guide':   (38, 104),
+    'gakkatsu-listen':  (41, 77),  'gakkatsu-thanks':  (51, 58),
+    'gakkatsu-think':   (51, 57),  'gakkatsu-welcome': (39, 80),
+    'gyoji-calendar':   (31, 73),  'gyoji-cheer':      (38, 81),
+    'gyoji-guide':      (38, 104), 'gyoji-news':       (44, 117),
+    'gyoji-thanks':     (43, 66),  'gyoji-welcome':    (39, 80),
+    'jidokai-guide':    (38, 104), 'jidokai-share':    (40, 79),
+    'jidokai-speak':    (34, 93),  'jidokai-thanks':   (40, 81),
+    'jidokai-upload':   (40, 95),  'jidokai-welcome':  (39, 80),
+    'club-cheer':       (38, 81),  'club-guide':       (38, 104),
+    'club-make':        (29, 108), 'club-tools':       (38, 76),
+    'club-try':         (43, 107), 'club-welcome':     (39, 80),
 }
+FOOT_NORI = 4          # 切り抜くときの、左右ののりしろ
+
+# たて。**4人とも足もとが y=135 にそろっています**（実測）。頭は 19〜22。
+#   だから たては1つに決めて、全員 同じ大きさ・同じ地面に立たせます。
+#   1人ずつ測った高さで切ると、ポーズごとに拡大率が変わって、背の高さが
+#   ばらばらになります。
+FOOT_TATE      = (17, 120)     # 1人ずつの絵（箱は 170×152）
+FOOT_TATE_KUMI = (10, 122)     # 4人組の絵（箱は 345〜480 × 143〜147）
 
 # ページごとの4人。1つだけ書くと、その1枚（4人が組になった絵）を出します。
 #   ★並びは KYARA_MEN の順（緑・赤・青・黄）を崩しません。どのページでも
-#     同じ人が同じ場所に立っていないと、4人が入れかわって見えます。
+#     同じ人が同じ場所にいないと、4人が入れかわって見えます。
+#   ★2026-09-23 依頼「もっと仲良くいろんなポーズさせてよ」。
+#     1人ずつの版は **4人とも ちがうことをしている**ようにします
+#     （同じポーズが2つあると、ただ並んでいるように見えます）。
+#     そろっているところを見せたいページは、4人組の絵を使います。
 FOOT_KAO = {
-    'index.html':    'group-thanks',      # お礼のおじぎ
-    'okuru.html':    'group-welcome',     # 送りに来た人を迎える
-    'bansho.html':   ('gakkatsu-board', 'gyoji-cheer', 'jidokai-share', 'club-cheer'),
-    'komari.html':   ('gakkatsu-listen', 'gyoji-guide', 'jidokai-speak', 'club-guide'),
-    'shiru.html':    ('gakkatsu-think', 'gyoji-guide', 'jidokai-guide', 'club-guide'),
-    'manabu.html':   ('gakkatsu-board', 'gyoji-guide', 'jidokai-guide', 'club-tools'),
-    'atsumaru.html': ('gakkatsu-welcome', 'gyoji-calendar', 'jidokai-welcome', 'club-welcome'),
-    'news.html':     ('gakkatsu-welcome', 'gyoji-news', 'jidokai-welcome', 'club-cheer'),
+    'index.html':    'group-thanks',      # そろっておじぎ＝お礼
+    'okuru.html':    'group-welcome',     # そろって手をあげて迎える
+    'shiru.html':    'group-shoulders',   # 肩を組む＝4つの内容は ひとそろい
+    'bansho.html':   ('gakkatsu-board', 'gyoji-cheer', 'jidokai-share', 'club-make'),
+    'komari.html':   ('gakkatsu-listen', 'gyoji-welcome', 'jidokai-speak', 'club-guide'),
+    'manabu.html':   ('gakkatsu-board', 'gyoji-cheer', 'jidokai-guide', 'club-tools'),
+    'atsumaru.html': ('gakkatsu-welcome', 'gyoji-calendar', 'jidokai-guide', 'club-cheer'),
+    'news.html':     ('gakkatsu-listen', 'gyoji-news', 'jidokai-upload', 'club-welcome'),
 }
 
 YOUBI_JA = '月火水木金土日'
@@ -4619,9 +4636,22 @@ def foot_hi(d):
 
 
 def foot_kao(f, kyara):
-    """ページごとの4人。絵の箱は切り抜いて、横にぴったり詰めます。"""
+    """ページごとの4人。絵の箱ではなく **人のまわり**で切り抜いて、
+       横にぴったり詰めます。"""
     kao = FOOT_KAO[f]
-    na = (kao,) if isinstance(kao, str) else kao
+    kumi = isinstance(kao, str)
+    na = (kao,) if kumi else kao
+    if not kumi:
+        junban = [n for n, _, _, _ in KYARA_MEN]
+        if [x.split('-')[0] for x in na] != junban:
+            raise Tomeru('%s の足もとの4人は %s の順に並べてください'
+                         '（人が入れかわって見えます）' % (f, '・'.join(junban)))
+        pose = [x.split('-', 1)[1] for x in na]
+        if len(set(pose)) != 4:
+            raise Tomeru('%s の足もとの4人に、同じポーズが2つ以上あります（%s）。'
+                         '4人とも ちがうことをしているようにしてください'
+                         % (f, '・'.join(pose)))
+    y, takasa = FOOT_TATE_KUMI if kumi else FOOT_TATE
     e = []
     for n in na:
         if n not in kyara:
@@ -4630,12 +4660,17 @@ def foot_kao(f, kyara):
         if n not in FOOT_HABA:
             raise Tomeru('足もとの4人が %s を呼んでいますが、FOOT_HABA に'
                          '「人が描かれているところ」がありません。'
-                         'ブラウザで getBBox() を読んで（左端, 幅）を足してください' % n)
+                         'load_kyara() の中身を <svg viewBox="0 0 w h"> に入れて'
+                         'getBBox({stroke:true}) で測り、（左端, 幅）を足してください' % n)
         w, h = kyara[n][0], kyara[n][1]
         x, haba = FOOT_HABA[n]
-        x, haba = max(0, x - 4), min(haba + 8, w)        # 左右に4ずつ、のりしろ
+        if x < 0 or x + haba > w:
+            raise Tomeru('FOOT_HABA の %s が、絵の箱（幅 %g）からはみ出しています' % (n, w))
+        if y + takasa > h:
+            raise Tomeru('%s の たての切り抜きが、絵の箱（高さ %g）から出ています' % (n, h))
+        x, haba = max(0, x - FOOT_NORI), min(haba + FOOT_NORI * 2, w)
         e.append('<svg viewBox="%g %g %g %g" focusable="false">'
-                 '<use href="#ill-k-%s"/></svg>' % (x, 0, haba, h, n))
+                 '<use href="#ill-k-%s"/></svg>' % (x, y, haba, takasa, n))
     return ('      <div class="foot-kao" aria-hidden="true">%s</div>'
             % ''.join(e))
 
