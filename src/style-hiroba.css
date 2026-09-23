@@ -2158,6 +2158,22 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   align-items:center;justify-content:space-between;
 }
 .bfuda-by{font-size:calc(11.5px * var(--moji));color:var(--mute)}
+/* ── 実践者を、札の右上へ（2026-09-23 依頼）──────────────────
+   前は札のいちばん下、印刷・画像保存のボタンのとなりにありました。
+   「誰の実践か」は、読みはじめる前に知りたいものなので、上に移します。
+   ★同じ行（.bfuda-me）の **右はし** に寄せます。行が折れたときは
+     左にそろって次の行へ落ちます（はみ出しません）。
+   ★狭い画面では、内容・議題・地域の札とぶつかるので、行を分けます。 */
+.bfuda-by--ue{
+  margin-inline-start:auto;text-align:end;
+  font-weight:700;color:var(--ink);
+}
+@media (max-width:519px){
+  /* せまい画面では行が折れて2行めに落ちますが、**右そろえのまま**に
+     します（2026-09-23 依頼）。左に戻すと、広い画面と位置がちがって
+     見えるためです。 */
+  .bfuda-by--ue{margin-inline-start:auto;flex:1 1 100%;text-align:end}
+}
 
 /* まだ1枚も無いとき。空の棚を押せる形で出しません */
 .karappo{

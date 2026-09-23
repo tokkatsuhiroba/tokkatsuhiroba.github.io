@@ -194,6 +194,17 @@ LINKS = {
     'SITE_URL'   : SITE_URL,
 }
 
+# ══ 管理画面は公開しません（2026-09-23 依頼）══════════════
+#   それまでは 公開用/ に入れて Pages へ出していました。つまり
+#   **URLを開けば誰でも読める**状態です。合いことばは画面の中で
+#   隠しているだけなので、ソースを見れば一覧も「出していないもの」も見えます。
+#   ★いまは 管理/ に書きます。ここは GitHub にも Pages にも出ません
+#     （.gitignore と、ワークフローが 公開用/*.html しか写さないこと）。
+#   ★使うときは、手もとの 管理/kanri.html を そのまま開いてください。
+#     受け口（Apps Script）との やりとりは file: からでも動きます。
+KANRI_F   = 'kanri.html'
+OUT_KANRI = os.path.join(ROOT, '管理')
+
 # ── とびら版（入口の試作）。OKが出たら本体に混ぜて、ここごと消す ──
 OUT_T  = os.path.join(ROOT, '公開用', 'tobira.html')
 # 新版（縦スクロール1枚）。2026-09-21 に1から書き直し、同じ日に「公開するもの」になりました
@@ -454,12 +465,20 @@ def ngword_aru(text):
     return None
 
 
+def ngword_iu(w):
+    """止めた語を、そのまま書いてよいか（2026-09-23）。
+
+       ★GitHub Actions のログは、公開リポジトリでは**誰でも読めます**。
+         向こうでは語を伏せます。手もとでは出します（直すためです）。"""
+    return '' if os.environ.get('GITHUB_ACTIONS') else '「%s」' % w
+
+
 def ngword_check(text, where):
     """出してはいけない語が1つでも混ざっていたら止める（src/_ngword.txt）。"""
     w = ngword_aru(text)
     if w:
-        raise Tomeru('%s に、出してはいけない語「%s」が入っています'
-                     '（src/_ngword.txt を見てください）' % (where, w))
+        raise Tomeru('%s に、出してはいけない語%s が入っています'
+                     '（src/_ngword.txt を見てください）' % (where, ngword_iu(w)))
 
 
 def load_news():
@@ -965,7 +984,11 @@ def load_komari():
             continue
         w = ngword_aru(hon + fm.get('grade', ''))
         if w:
-            tobashita.append('%s … 出してはいけない語「%s」が入っています' % (f, w))
+            # 2026-09-23 依頼：**語そのものは書きません**。_ngword.txt は
+            #   同僚の名前などが入るので、リポジトリにも上げていない表です。
+            #   ここに書くと、止まった1件ごとに1語ずつ復元できてしまいます。
+            #   （この行は管理画面にも、ビルドのログにも出ます）
+            tobashita.append('%s … 出してはいけない語が入っています' % f)
             continue
         try:
             fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
@@ -2658,7 +2681,11 @@ def load_nittei(kyou=None):
                                  fm.get('venue', ''), fm.get('place', ''),
                                  fm.get('by', ''))))
         if w:
-            tobashita.append('%s … 出してはいけない語「%s」が入っています' % (f, w))
+            # 2026-09-23 依頼：**語そのものは書きません**。_ngword.txt は
+            #   同僚の名前などが入るので、リポジトリにも上げていない表です。
+            #   ここに書くと、止まった1件ごとに1語ずつ復元できてしまいます。
+            #   （この行は管理画面にも、ビルドのログにも出ます）
+            tobashita.append('%s … 出してはいけない語が入っています' % f)
             continue
 
         hiduke = [x for x in (_nittei_hi(d) for d in
@@ -3276,7 +3303,11 @@ def sensei_ja(by):
     na, ato = t[:i].strip(), t[i:]
     if not na or re.search(r'(先生|教諭|教員|さん)$', na):
         return t
-    return na + '先生' + ato
+    # 2026-09-23 依頼：名前と「先生」のあいだを空けます。
+    #   「坂本理恵先生」だと一続きに見えて、どこまでが名前か分かりません。
+    #   ★半角ではなく **全角の空き** です。まわりが日本語なので、
+    #     半角だと詰まって見えます。
+    return na + '　先生' + ato
 
 
 def naiyo_ichiran():
@@ -3553,10 +3584,10 @@ def build_jissen_hiroba(jissen, goods):
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
 BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}" data-shiryo="{shiryo_url}">
-        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
+        <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}<span class="bfuda-by bfuda-by--ue">{by}</span></p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{more}{mado}{shiryo}{soto}        <p class="bfuda-ashi"><span class="bfuda-by">実践者：{by}</span>\
+{more}{mado}{shiryo}{soto}        <p class="bfuda-ashi">\
 <span class="bfuda-te">{zen}\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span>印刷</span></button>\
 <button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span>画像保存</span></button></span></p>
@@ -3985,6 +4016,8 @@ def build_kanri_page(jissen, komari, ken, tobashita):
                         build_kanri_hoka(komari, ken, tobashita))
     body = body.replace('      <!--BUILD:KATAYORI-->', build_katayori(jissen))
     body = body.replace('{{OKURU_URL}}', OKURU_URL)
+    # 管理画面は 管理/ にあるので、ホームは1つ上の 公開用/ にあります。
+    body = body.replace('{{HOME}}', '../公開用/' + HOME)
     body = nuru_ireru(body, 'src/kanri.html')
     if re.findall(r'<!--BUILD:[^>]*-->|\{\{[A-Z_]+\}\}', body):
         raise Tomeru('管理画面に差しこまれていない目じるしが残っています')
@@ -6538,8 +6571,9 @@ def main_shin(check_only):
         print('　　%-14s %-8s %s%s'
               % (f, na, omo, ('　' + '・'.join(SETSU_NA[s] for s in setsu)) if setsu else
                  '　8つの札'))
-    print('　　%-14s %-8s %.0fKB　受け口で管理キーを確認'
-          % ('kanri.html', '実践の管理', len(pages['kanri.html'].encode('utf-8')) / 1024.0))
+    print('　　%-14s %-8s %.0fKB　公開しません（この Mac の中だけ）'
+          % ('管理/' + KANRI_F, '実践の管理',
+             len(pages[KANRI_F].encode('utf-8')) / 1024.0))
     # ── 板書の残り（2026-09-21）────────────────────────
     #   溜めると決めたので、**止まる前に教える**ほうを作ります。
     #   検問は16MBで止めますが、止まってから気づくのでは遅い。
@@ -6560,18 +6594,41 @@ def main_shin(check_only):
         print('\n  --check なので書いていません。\n')
         return 0
     for f in pages:
+        if f == KANRI_F:
+            continue                     # 管理画面は 公開用/ に置きません
         io.open(os.path.join(ROOT, '公開用', f), 'w',
                 encoding='utf-8', newline='\n').write(pages[f])
-    sitemap_kaku(pages)
+    kanri_kaku(pages[KANRI_F])
+    sitemap_kaku(dict((f, h) for f, h in pages.items() if f != KANRI_F))
     pdfjs_utsusu()
     ogp_utsusu()
     print('')
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
     print('  公開用/ は GitHubに上げません（.gitignore）。上げるのは src/ と build.py。')
     print('  push すると Actions が同じように組み立てて、%d枚とも Pages へ出します。'
-          % len(pages))
+          % (len(pages) - 1))
+    print('  管理画面は 管理/kanri.html です。**公開されません**（この Mac の中だけ）。')
     print('')
     return 0
+
+
+def kanri_kaku(html):
+    """管理画面を 管理/ に書き、公開用/ に残っている古いものを消す。
+
+       ★2026-09-23 まで、管理画面は 公開用/ に入って Pages へ出ていました。
+         URLを開けば誰でも読める状態で、合いことばは画面の中で
+         隠しているだけでした。だから置き場ごと移します。
+       ★古い 公開用/kanri.html を消すのは、ワークフローが
+         公開用/*.html をまとめて写すためです。消し忘れると、
+         移したつもりのものが そのまま公開され続けます。"""
+    if not os.path.isdir(OUT_KANRI):
+        os.makedirs(OUT_KANRI)
+    io.open(os.path.join(OUT_KANRI, KANRI_F), 'w',
+            encoding='utf-8', newline='\n').write(html)
+    furui = os.path.join(ROOT, '公開用', KANRI_F)
+    if os.path.exists(furui):
+        os.remove(furui)
+        print('  かたづけ　　… 公開用/%s を消しました（公開しないため）' % KANRI_F)
 
 
 # ══ 検索に見つけてもらうための2枚（2026-09-23 依頼）════════
@@ -6596,14 +6653,18 @@ def sitemap_kaku(pages):
         + url + '</urlset>\n')
     io.open(os.path.join(ROOT, '公開用', 'robots.txt'), 'w',
             encoding='utf-8', newline='\n').write(
-        '# 管理画面は、見に来ないでください。\n'
         '# みんなの実践と困りごとは、検索に出します（写真だけは\n'
         '# HTMLの noimageindex で、画像検索に載せないようお願いしています）。\n'
         'User-agent: *\n'
-        + ''.join('Disallow: /tokkatsu-hiroba/%s\n' % f for f in DASANAI)
+        # ★出していないページの名前は、ここに書きません（2026-09-23）。
+        #   robots.txt は誰でも読めます。「見に来ないで」と書くことは
+        #   「そこに在る」と教えることでもあります。管理画面は そもそも
+        #   Pages に出していないので、名ざす理由がありません。
+        + ''.join('Disallow: /tokkatsu-hiroba/%s\n' % f
+                  for f in DASANAI if f in pages)
         + '\nSitemap: %ssitemap.xml\n' % SITE_URL)
-    print('  検索　　　　… %d枚を sitemap.xml に。%d枚は出しません（%s）。'
-          % (len(dasu), len(DASANAI), '・'.join(DASANAI)))
+    print('  検索　　　　… %d枚を sitemap.xml に。管理画面は そもそも公開しません。'
+          % len(dasu))
     print('  　　　　　　　 %s は 字だけ出します（写真は画像検索に載せません）'
           % '・'.join(KAKUSU_E))
 
