@@ -2872,8 +2872,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* みんなの実践の中身。ふたに入れず、そのまま出します（2026-09-22）。
    押す場所を作らないのが目的なので、見出しも本文も札の中にそのまま置きます。 */
 .bfuda-naka{margin:9px 0 0}
+/* 小見出しも、本文と同じ UD書体に（2026-09-23 依頼）。
+   送っていただいた中身の中の見出しなので、本文と切り分けません。 */
 .bfuda-naka h4{
-  margin:12px 0 5px;font-family:var(--f-maru);font-weight:700;font-size:calc(14.5px * var(--moji));
+  margin:12px 0 5px;font-family:var(--f-hon);font-weight:700;font-size:calc(14.5px * var(--moji));
   letter-spacing:.05em;padding-inline-start:12px;
   border-inline-start:6px solid var(--ki);
 }
@@ -3334,14 +3336,19 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   display:block;margin:0 0 4px;width:fit-content;
   padding:1px 9px;border-radius:999px;
   background:var(--accent);color:var(--bg);
-  font-family:var(--f-maru);font-weight:700;
+  /* ★2026-09-23 依頼：ここも UD書体（本文と同じ）にしました。
+     10.5px の小さな札なので、丸ゴシックより UD書体のほうが読めます。 */
+  font-family:var(--f-hon);font-weight:700;
   font-size:calc(10.5px * var(--moji));letter-spacing:.06em;
   vertical-align:.12em;white-space:nowrap;
 }
 .bfuda-oshi{
   margin:0 0 8px;padding:1px 0 1px 12px;
   border-inline-start:5px solid var(--accent);
-  font-family:var(--f-maru);font-weight:700;
+  /* ★2026-09-23 依頼「実践の本文をUDに」。送っていただいた字は、
+     ぜんぶ UD書体（BIZ UDPGothic）でそろえます。ここは丸ゴシック
+     （Zen Maru Gothic）でした。太さ700は そのまま残します。 */
+  font-family:var(--f-hon);font-weight:700;
   font-size:calc(clamp(14.5px,1.6vw,17px) * var(--moji));line-height:1.55;letter-spacing:.02em;
   /* ★語の切れ目でだけ折ります（2026-09-23 依頼）。
      前は「文章と写真を変えるだ／け。だから続けられます」のように、

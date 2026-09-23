@@ -2889,7 +2889,10 @@
     if(oshi){
       /* 推しポイント。題のすぐ下に、本文よりひとまわり大きく。
          画面と同じように、左に太い線を引きます（色だけで目立たせない）。 */
-      ctx.font = '700 36px ' + GA_JI;
+      /* ★推しポイントも UD の書体で（2026-09-23 依頼）。画面のほうを
+         UDにしたので、保存した絵だけ丸ゴシックだと別ものになります。
+         ★測るときと描くときで、同じ字にしてください（下の 'oshi' も）。 */
+      ctx.font = '700 36px ' + GA_HON;
       var oshiG = ga_oru(ctx, oshi, naka - 26);
       okiba.push({t:'oshi', g:oshiG, y:y}); y += oshiG.length * 54 + 18;
     }
@@ -2977,7 +2980,7 @@
       } else if(o.t === 'oshi'){
         ctx.fillStyle = '#1F5C3F';
         ctx.fillRect(GA_P, o.y + 2, 7, o.g.length * 54 - 10);
-        ctx.fillStyle = '#1C1C1A'; ctx.font = '700 36px ' + GA_JI;
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '700 36px ' + GA_HON;
         ga_kaku(ctx, o.g, GA_P + 26, o.y, 54);
       } else if(o.t === 'meta'){
         ctx.fillStyle = '#63625C'; ctx.font = '500 27px ' + GA_HON;
