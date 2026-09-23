@@ -3392,9 +3392,20 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* ★本文は UD の書体（2026-09-23 依頼「実践の本文をUDにして」）。
    いままでも body から受けついで UD でしたが、**ここに書いておきます**。
    受けつぎだのみだと、札をどこかへ入れ子にした日に、黙って変わります。 */
+/* ★本文は **ふつうに詰めます**（2026-09-23 依頼
+   「言葉切れていいから普通に詰めて」）。
+   前は語の切れ目でだけ折る auto-phrase にしていました。推しポイントの
+   1行には効きますが、**長い本文では行のおしりが大きく空きます**。
+   実測（幅333px・馬渡先生の実践）：
+     auto-phrase … 9行、右の空き 79 / 51 / 4 / 4 / 66 / 9 / 32 / 29px
+     ふつう　　　 … 8行、右の空き 10 /  7 / 10 / 13 / 9 / 6 / 5px
+   1行減って、空きも1字ぶん以下に収まります。語の途中で折れますが、
+   日本語はもともとどこでも折れる字なので、読めなくはなりません。
+   ★推しポイント（.bfuda-oshi）は auto-phrase のままです。あちらは
+     短い1行で、「変えるだ／け。」と割れるのが読みにくかったためです。 */
 .bfuda-lead{margin:0;font-family:var(--f-hon);font-size:calc(14.5px * var(--moji));line-height:1.62;
-  word-break:auto-phrase;text-wrap:pretty}
-.bfuda-naka p,.bfuda-naka li{font-family:var(--f-hon)}
+  word-break:normal;text-wrap:wrap}
+.bfuda-naka p,.bfuda-naka li{font-family:var(--f-hon);word-break:normal;text-wrap:wrap}
 @media (max-width:719px){
   .bfuda-lead{font-size:calc(14px * var(--moji))}
   .bfuda-naka p,.bfuda-naka li{font-size:calc(14px * var(--moji))}
