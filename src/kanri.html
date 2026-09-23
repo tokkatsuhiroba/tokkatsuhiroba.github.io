@@ -139,6 +139,16 @@
       <input class="okuru-i" id="kanri-naosu-shk" name="_shk" maxlength="20"
              placeholder="例：江東区・吉野川市">
     </div>
+    <!-- デジタル資料のリンク（2026-09-23 依頼）。送るフォームと同じ欄です。
+         ★受け口は u を知らないので、保存のときに
+           **実践内容の頭へ混ぜて** 運びます（下の submit）。地域と同じやり方です。
+         ★受けない置き場（Canva・Google・OneDrive・Dropbox 以外）を書くと、
+           build.py が黙って落とします。ここでは止めません。 -->
+    <div class="kanri-naosu-g kanri-naosu-g--zen">
+      <label for="kanri-naosu-u">デジタル資料のリンク<span class="okuru-nin">任意</span></label>
+      <input class="okuru-i" id="kanri-naosu-u" name="_u" type="url" maxlength="300"
+             placeholder="例：https://www.canva.com/design/……/view">
+    </div>
     <div class="kanri-naosu-g kanri-naosu-g--zen">
       <label for="kanri-naosu-m">実践内容<span class="okuru-hissu">必須</span></label>
       <textarea class="okuru-i okuru-hiroi" id="kanri-naosu-m" name="m"
@@ -725,6 +735,7 @@
     document.getElementById('kanri-naosu-m').value = d.m || '';
     document.getElementById('kanri-naosu-ken').value = d.ken || '';
     document.getElementById('kanri-naosu-shk').value = d.shk || '';
+    document.getElementById('kanri-naosu-u').value = d.u || '';
     document.getElementById('kanri-naosu-na').value = d.na || '';
     document.getElementById('kanri-naosu-sh').value = d.sh || '';
     document.getElementById('kanri-naosu-ko').checked = !!d.ko;
@@ -740,7 +751,9 @@
          保存のときに こちらで混ぜているので、外さないと
          2回押したときに2行ぶん重なります（実測で踏む前に直しました）。 */
       m: document.getElementById('kanri-naosu-m').value
+           .replace(/^★資料リンク：[^\n]*\n*/, '')
            .replace(/^★地域：[^\n]*\n*/, '').trim(),
+      u: document.getElementById('kanri-naosu-u').value.trim(),
       ken: document.getElementById('kanri-naosu-ken').value,
       shk: document.getElementById('kanri-naosu-shk').value.trim(),
       na: document.getElementById('kanri-naosu-na').value.trim(),
@@ -785,8 +798,13 @@
        ★送るフォーム（src/hiroba.html）と同じやり方です。
        ★都道府県を選ばなかったときは混ぜません（自治体だけでは県が決まらない）。 */
     var mEl = document.getElementById('kanri-naosu-m');
-    mEl.value = d.ken ? ('★地域：' + d.ken + (d.shk ? '／' + d.shk : '') + '\n\n' + d.m)
-                      : d.m;
+    var hon = d.ken ? ('★地域：' + d.ken + (d.shk ? '／' + d.shk : '') + '\n\n' + d.m)
+                    : d.m;
+    /* デジタル資料のリンクも、同じやり方で頭に混ぜます（2026-09-23）。
+       ★地域より **さらに頭**に置きます。はがすのは build.py で、
+         どちらの順でも取れますが、読むときに並びが揃っていたほうが
+         直しやすいためです（送るフォームも、この並びです）。 */
+    mEl.value = d.u ? ('★資料リンク：' + d.u + '\n\n' + hon) : hon;
 
     naosuMatte = nonce(); naosuKakutei.disabled = true;
     naosuShirase.textContent = (e && e.e)

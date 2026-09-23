@@ -705,7 +705,7 @@
       <div class="okuru-g">
         <label class="okuru-shashin" for="okuru-e">
           <span class="okuru-shashin-ji">写真・PDFをえらぶ</span>
-          <span class="okuru-shashin-chu">写真3枚まで／PDF1つまで／その場で撮ってもOK<br>
+          <span class="okuru-shashin-chu">写真2枚まで／PDF1つまで／その場で撮ってもOK<br>
             <b>隠したいところは、このページの上で消せます</b></span>
           <input type="file" id="okuru-e" name="e" accept="image/*,application/pdf" multiple>
         </label>
@@ -721,6 +721,29 @@
             <b>ぬったものが送られます。</b>元の写真は、どこにも出ていきません。</p>
           <div id="okuru-kakusu-l"></div>
         </div>
+      </div>
+
+      <!-- ══ デジタル資料のリンク（2026-09-23 依頼）══════════════
+           「デジタル資料を添付したい人が出た。キャンバの共有リンクを
+             共有したい人が出て、そのリンクが綺麗にタップできるように。
+             もちろん任意でね」
+           ★写真やPDFは このサイトの中に入りますが、**リンクの先は外**です。
+             押した人だけが外へ出ます（開いただけでは、どこにも出ません）。
+           ★受けるのは、下に名前が出ている置き場だけです。
+             送られたものは管理人を通さずに公開へ出るので、行き先を
+             素通しにすると、このサイトが「知らない所への入口」になります。
+             足すときは SHIRYO_DOKO（すぐ下）と build.py の SHIRYO_SOTO_DOKO の
+             **2か所**に、同じものを足してください。
+           ★運び方は 推しポイント・地域と同じで、本文の頭に混ぜます
+             （受け口＝Apps Script を貼り直さずに、今日から効かせるため）。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-u">デジタル資料のリンク<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">Canvaやスライドの<b>共有リンク</b>を貼ると、札に<b>押せるボタン</b>で出ます。<br>
+          貼るまえに、<b>「リンクを知っている全員が閲覧可」</b>にしてください。そうでないと、押した人が開けません。<br>
+          受けられるのは <b>Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox</b> です。</p>
+        <input class="okuru-i" type="url" id="okuru-u" name="u" maxlength="300"
+               inputmode="url" placeholder="例：https://www.canva.com/design/……/view">
+        <p class="okuru-kazu" id="okuru-u-shirase" aria-live="polite"></p>
       </div>
 
       <!-- 内容（2026-09-22）。学習指導要領の6つで聞いて、サイトの4つに寄せます。
@@ -924,10 +947,9 @@
       <div class="foot-shokai-te">
         <p class="foot-shokai-yo">このサイトを紹介する</p>
         <p class="foot-shokai-url" id="shokai-url"></p>
-        <p class="foot-shokai-b">
-          <button class="btn btn--yoru" type="button" data-shokai><span class="btn-ji">紙に貼る1枚を保存</span></button>
-        </p>
-        <p class="okuru-shirase" id="shokai-shirase" role="status" aria-live="polite"></p>
+        <!-- 2026-09-23 依頼：「このサイト共有も画像保存いらない。QR表示はあっていいと思う」
+             紙に貼る1枚（画像を作って保存）のボタンを外しました。
+             QRと、その下のURLだけ残します。 -->
       </div>
     </div>
 
@@ -1363,7 +1385,10 @@
       var mihon = document.getElementById('okuru-mihon');
       var shirase = document.getElementById('okuru-shirase');
       var botan = document.getElementById('okuru-b');
-      var MAI = 3, KB_MAX = 380;
+      /* 写真は2枚まで（2026-09-23 依頼）。前は3枚でした。
+         ★ここを直したら、下の2か所の字も直してください
+           （「写真2枚まで」の案内と、えらんだあとの知らせ）。 */
+      var MAI = 2, KB_MAX = 380;
 
       /* ★ここで必ず上限に収めます（2026-09-21）。
          受け口は 400KB を超えた写真を断りますが、返事は読めない（no-cors）ので、
@@ -1429,6 +1454,7 @@
         document.getElementById('okuru-m').value = n.m || '';
         document.getElementById('okuru-ken').value = n.ken || '';
         document.getElementById('okuru-shk').value = n.shk || '';
+        document.getElementById('okuru-u').value = n.u || '';
         if(kazu) kazu.textContent = (n.m || '').length + ' / 1000字';
         gakunen.ireru(n.g || '');
         var n6 = NAIYO_SCENE[String(n.s || '').trim()];
@@ -1472,6 +1498,63 @@
           shk: (document.getElementById('okuru-shk') || {}).value || ''
         };
       };
+
+      /* ══ デジタル資料のリンク（2026-09-23 依頼）══════════════
+         運び方は 推しポイント・地域と同じ。本文の頭に目じるし付きで混ぜます。
+         取り出すのは build.py の shirushi_hagasu（SHIRYO_SHIRUSHI）。
+         ★受ける置き場は、ここと build.py の SHIRYO_SOTO_DOKO の2か所にあります。
+           どちらか片方だけ足すと、画面は通すのに札に出ない（またはその逆）に
+           なります。足すときは、かならず両方。                      */
+      var SHIRYO_SHIRUSHI = '★資料リンク：';
+      var SHIRYO_URL_MAX = 300;
+      var SHIRYO_DOKO = [
+        ['canva.com',         'Canva'],
+        ['docs.google.com',   'Googleドキュメント・スライド'],
+        ['drive.google.com',  'Googleドライブ'],
+        ['onedrive.live.com', 'OneDrive'],
+        ['1drv.ms',           'OneDrive'],
+        ['dropbox.com',       'Dropbox']
+      ];
+      /* 受ける置き場なら、その名前を返す。受けないなら空。
+         ★http:// は受けません（https:// だけ）。
+         ★「canva.com.example.jp」のような**似せた名前**を通さないため、
+           おしりが「.canva.com」か、ぴったり「canva.com」のときだけにします。 */
+      var shiryo_doko = function(u){
+        var m = /^https:\/\/([^\/?#]+)/i.exec((u || '').trim());
+        if(!m) return '';
+        var h = m[1].toLowerCase().split(':')[0];
+        for(var i = 0; i < SHIRYO_DOKO.length; i++){
+          var d = SHIRYO_DOKO[i][0];
+          if(h === d || h.slice(-(d.length + 1)) === '.' + d) return SHIRYO_DOKO[i][1];
+        }
+        return '';
+      };
+      var shiryo_tsukeru = function(u, m){
+        u = (u || '').trim().slice(0, SHIRYO_URL_MAX);
+        return (u && shiryo_doko(u)) ? (SHIRYO_SHIRUSHI + u + '\n\n' + m) : m;
+      };
+      var uIn = document.getElementById('okuru-u');
+      var uShirase = document.getElementById('okuru-u-shirase');
+      /* 画面に出す言い方。SHIRYO_DOKO と同じものを、人の言葉で1行に。
+         ★置き場を足すときに動かすのは 3か所です。
+             ① 上の SHIRYO_DOKO（受けるかどうかを決めているのは、ここ）
+             ② この1行（断るときの言葉に出ます）
+             ③ 入力欄の「受けられるのは …」（上のHTML。訳も付いています）
+           ①だけ足しても通りますが、②③がずれると案内が嘘になります。 */
+      var uDokoJi = 'Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox';
+      /* 打っているそばから、受けられるかどうかを出します。
+         送ってから断られると、書いたものが宙に浮くためです。 */
+      if(uIn && uShirase){
+        uIn.addEventListener('input', function(){
+          var v = uIn.value.trim();
+          if(!v){ uShirase.textContent = ''; return; }
+          var d = shiryo_doko(v);
+          uShirase.textContent = d
+            ? (d + 'のリンクとして、札にボタンで出ます。')
+            : ('このリンクは受けられません。https:// ではじまる '
+               + uDokoJi + ' のものだけです。');
+        });
+      }
 
       var mIn = document.getElementById('okuru-m');
       var kazu = document.getElementById('okuru-kazu');
@@ -1732,7 +1815,7 @@
         nuri_naraberu(w.e);
         if(!n){ mihon.textContent = ''; return; }
         mihon.textContent = ji.join('と') + 'をえらびました'
-          + (n > w.e.length + w.p.length ? '（写真3枚・PDF1つまでです）' : '');
+          + (n > w.e.length + w.p.length ? '（写真' + MAI + '枚・PDF1つまでです）' : '');
         if(w.p.length) pdf_hiraku(w.p[0]);
       });
 
@@ -1773,6 +1856,16 @@
         if(w.p.length && !nuri_pdf().length){
           shirase.textContent = 'PDFがひらけていません。'
             + '隠せないPDFは送れないので、写真にしてから送ってください。';
+          return;
+        }
+        /* デジタル資料のリンク（2026-09-23 依頼）。書いてあるときだけ見ます。
+           受けない置き場のまま送ると、no-cors なので断られたことが画面に
+           出ません（届いたのにリンクだけ消える、になります）。ここで止めます。 */
+        if(uIn && uIn.value.trim() && !shiryo_doko(uIn.value)){
+          shirase.textContent = 'デジタル資料のリンクが受けられません。https:// ではじまる '
+            + uDokoJi + ' のものだけです。空にすれば、そのまま送れます。';
+          uIn.focus();
+          uIn.scrollIntoView({block: 'center'});
           return;
         }
         /* 個人情報の見なおし（2026-09-23 依頼）。**いちばん最後**に置きます。
@@ -1838,9 +1931,10 @@
                  受け口はこちらを直しても、貼り直すまで古いまま動くためです。
                  取り出すのは build.py の kenmon_jissen（OSHI_SHIRUSHI）。 */
               m:  (function(c){
-                     return chiiki_tsukeru(c.ken, c.shk,
-                       oshi_tsukeru(document.getElementById('okuru-o').value,
-                                    document.getElementById('okuru-m').value));
+                     return shiryo_tsukeru(uIn ? uIn.value : '',
+                       chiiki_tsukeru(c.ken, c.shk,
+                         oshi_tsukeru(document.getElementById('okuru-o').value,
+                                      document.getElementById('okuru-m').value)));
                    })(chiiki_yomu()),
               na: naIn.value.trim().slice(0, 40),              /* お名前（必須） */
               sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
@@ -1861,6 +1955,7 @@
             {k: aikotoba, n: nushi, t: dai, d: new Date().toISOString().slice(0, 10)});
           okuruF.reset(); mihon.textContent = ''; nen_kesu(); nuri_kesu(); naiyo.kesu();
           if(kazu) kazu.textContent = '0 / 1000字';
+          if(uShirase) uShirase.textContent = '';
           shirase.textContent = '送りました。数分で「みんなの実践」に出ます。';
           aikotoba_miseru(aikotoba, shimaeta);
           botan.disabled = false;
@@ -1933,6 +2028,7 @@
                   o: f.getAttribute('data-oshi') || '',
                   ken: f.getAttribute('data-ken') || '',
                   shk: f.getAttribute('data-shi') || '',
+                  u: f.getAttribute('data-shiryo') || '',
                   m: f.getAttribute('data-hon') || ''
                 }));
                 location.href = 'index.html#okuru';

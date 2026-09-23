@@ -727,6 +727,18 @@ def kenmon_jissen(fm, goods):
     fm['chiiki'] = (ken + ('　' + shi if shi else '')) if ken else ''
     fm['chiho'] = KEN_CHIHO.get(ken, '')
 
+    # ── デジタル資料のリンク（2026-09-23 依頼）────────────
+    #   運び方は 推しポイント・地域と同じ（本文の頭に混ぜる）。
+    #   ★受けない置き場のときは **止めずに、無かったことにします**。
+    #     1件の書き方でサイト全体のビルドが止まると、その間だれも
+    #     何も見られなくなるためです（手で書く shiryo: は今までどおり止めます）。
+    shiryo_url, hon = shirushi_hagasu(hon, SHIRYO_SHIRUSHI)
+    shiryo_url = ((fm.get('shiryo_url') or shiryo_url) or '').strip()[:SHIRYO_URL_MAX]
+    shiryo_na = shiryo_soto_na(shiryo_url)
+    fm['shiryo_url'] = shiryo_url if shiryo_na else ''
+    if fm['shiryo_url']:
+        fm['shiryo_list'].append((shiryo_na, 'soto', fm['shiryo_url']))
+
     fm['summary'] = hon
     if not hon:
         # 推しポイントしか無いときは、それを本文にもします（空の札を出さない）
@@ -747,6 +759,48 @@ OSHI_MOJI_MAX = 60
 CHIIKI_SHIRUSHI = '★地域：'
 CHIIKI_KUGIRI = '／'     # 都道府県と自治体の間（例：東京都／江東区）
 CHIIKI_SHI_MAX = 20
+
+# ── デジタル資料のリンク（2026-09-23 依頼）────────────────
+#   「キャンバの共有リンクを共有したい人が出た。綺麗にタップできるように」
+#
+#   ★写真やPDFは このサイトの中に入りますが、**リンクの先は外**です。
+#     だから、受けるのは下に並べた置き場だけにします。
+#     送られたものは管理人を通さずに公開へ出ます（2026-09-21 から）。
+#     行き先を素通しにすると、このサイトが「知らない所への入口」になります。
+#   ★足すときは、ここと src/hiroba.html の SHIRYO_DOKO の **2か所**へ。
+#     片方だけだと、画面は通すのに札に出ない（またはその逆）になります。
+#   ★おしりが「.canva.com」か、ぴったり「canva.com」のときだけ受けます。
+#     「canva.com.example.jp」のような 似せた名前を通さないためです。
+SHIRYO_SHIRUSHI = '★資料リンク：'
+SHIRYO_URL_MAX = 300
+SHIRYO_SOTO_DOKO = (
+    ('canva.com',         'Canvaの資料'),
+    ('docs.google.com',   'Googleドキュメント・スライド'),
+    ('drive.google.com',  'Googleドライブの資料'),
+    ('onedrive.live.com', 'OneDriveの資料'),
+    ('1drv.ms',           'OneDriveの資料'),
+    ('dropbox.com',       'Dropboxの資料'),
+)
+
+
+def url_no_doko(url):
+    """URLの、行き先のところ（www. は落とす）。札に「どこへ出るか」を出すため。"""
+    m = re.match(r'^https?://([^/?#]+)', (url or '').strip())
+    if not m:
+        return ''
+    return re.sub(r'^www\.', '', m.group(1).lower().split(':')[0])
+
+
+def shiryo_soto_na(url):
+    """外にひらくリンクの、行き先の名前。受けない所なら '' を返す。"""
+    m = re.match(r'^https://([^/?#]+)', (url or '').strip())
+    if not m:
+        return ''
+    host = m.group(1).lower().split(':')[0]
+    for moto, na in SHIRYO_SOTO_DOKO:
+        if host == moto or host.endswith('.' + moto):
+            return na
+    return ''
 
 
 def shirushi_hagasu(hon, shirushi):
@@ -3469,11 +3523,11 @@ def build_jissen_hiroba(jissen, goods):
 #   2026-09-22：前は写真だけを出して、中身は「この実践を読む →」で
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
-BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}">
+BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}" data-shiryo="{shiryo_url}">
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">実践者：{by}</span>\
+{more}{mado}{shiryo}{soto}        <p class="bfuda-ashi"><span class="bfuda-by">実践者：{by}</span>\
 <span class="bfuda-te">{zen}\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span>印刷</span></button>\
 <button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span>画像保存</span></button></span></p>
@@ -3504,6 +3558,20 @@ ICON_GA   = icon('<rect x="3" y="3" width="18" height="12" rx="2"/>'   # 写真�
 # 札の足に置く［大きく見る］。どの窓を開くかを data-zen で渡します。
 ZEN_B = ('<button class="bansho-b bansho-b--zen" type="button" '
          'data-zen="{doko}">' + ICON_ZEN + '<span>{na}</span></button>')
+
+# デジタル資料のリンク（2026-09-23 依頼）。「綺麗にタップできるように」。
+#   ★指で押す的は、高さ56px。字だけのリンクにしません。
+#   ★行き先（canva.com など）を**必ず添えます**。押す前に、どこへ出るのかが
+#     分かるようにするためです。外へ出るのは、押した人だけです。
+#   ★rel="noopener noreferrer"。開いた先から、こちらの窓を触らせません。
+BFUDA_SOTO = """        <p class="bfuda-soto"><a class="soto-b" href="{url}" target="_blank" rel="noopener noreferrer">\
+<span class="soto-b-e" aria-hidden="true">{ICON}</span>\
+<span class="soto-b-t"><b>{na}</b><small>{host}<span class="soto-b-g">で開きます（外部）</span></small></span>\
+<span class="soto-b-ya" aria-hidden="true">↗</span></a></p>
+"""
+
+ICON_SOTO = icon('<path d="M4 7a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>'
+                 '<path d="M12 15V9m0 0-2.2 2.2M12 9l2.2 2.2"/>', 24)
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
 {gazou}
@@ -3564,6 +3632,10 @@ def build_bansho(jissen):
         # 送ってもらった資料（PDFを画像にしたもの）も、ここで開きます
         sh = ''.join(shiryo_mado(m, v, a['title'], page='bansho.html', zen=False)
                      for m, kind, v in a.get('shiryo_list', []) if kind == 'naka')
+        # 外へひらく資料（Canvaの共有リンクなど）。押した人だけが外へ出ます。
+        soto = ''.join(BFUDA_SOTO.format(url=esc_html(v), na=esc_html(m),
+                                         host=esc_html(url_no_doko(v)), ICON=ICON_SOTO)
+                       for m, kind, v in a.get('shiryo_list', []) if kind == 'soto')
         # ［大きく見る］。窓のぶんだけ出します（窓が無い件には出しません）。
         #   窓が2つ（写真とPDF）ある件では、どちらを開くのかが分かるように
         #   名前を分けます。いまは そんな件はありませんが、来ても迷いません。
@@ -3613,7 +3685,9 @@ def build_bansho(jissen):
             ken=esc_html(a.get('ken') or ''), shi=esc_html(a.get('shi') or ''),
             chiho=esc_html(a.get('chiho') or ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
-            mado=mado, shiryo=sh, zen=zen, more=more, by=esc_html(sensei_ja(a['by'])),
+            mado=mado, shiryo=sh, soto=soto, zen=zen, more=more,
+            by=esc_html(sensei_ja(a['by'])),
+            shiryo_url=esc_html(a.get('shiryo_url') or ''),
             ICON_KAMI=ICON_KAMI, ICON_GA=ICON_GA,
             ima=esc_html(ima)))
     return (JIBUN_TANA + '\n' + sagasu_obi(aru)
@@ -3649,6 +3723,8 @@ def build_kanri_list(jissen):
             # 地域（2026-09-22）。ken は都道府県、shk は自治体。
             #   sh は「所属」で先に使っているので、名前を分けています。
             'ken': a.get('ken') or '', 'shk': a.get('shi') or '',
+            # デジタル資料のリンク（2026-09-23）。空なら欄も空になります。
+            'u': a.get('shiryo_url') or '',
         }
         sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by'],
                            a.get('chiiki') or ''))
@@ -5723,9 +5799,20 @@ KOTOBA = {
     '知っている研究会を知らせる':
         ('Tell us about a meeting you know of',
          'أخبرنا بلقاء تعرفه'),
-    '写真3枚まで／PDF1つまで／その場で撮ってもOK 隠したいところは、このページの上で消せます':
-        ('Up to 3 photos, up to 1 PDF. Taking a photo right now is fine. Anything you want hidden can be blacked out on this page.',
-         'حتى ٣ صور وملفّ PDF واحد. ولا بأس بالتقاط صورة الآن. وما تريد إخفاءه يمكن طمسه داخل هذه الصفحة.'),
+    '写真2枚まで／PDF1つまで／その場で撮ってもOK 隠したいところは、このページの上で消せます':
+        ('Up to 2 photos, up to 1 PDF. Taking a photo right now is fine. Anything you want hidden can be blacked out on this page.',
+         'حتى صورتين وملفّ PDF واحد. ولا بأس بالتقاط صورة الآن. وما تريد إخفاءه يمكن طمسه داخل هذه الصفحة.'),
+    # デジタル資料のリンク（2026-09-23 依頼）
+    'デジタル資料のリンク':
+        ('Link to digital material',
+         'رابط إلى مادة رقمية'),
+    'Canvaやスライドの共有リンクを貼ると、札に押せるボタンで出ます。 貼るまえに、「リンクを知っている全員が閲覧可」にしてください。そうでないと、押した人が開けません。 受けられるのは Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox です。':
+        ('Paste a Canva or slide share link and it appears on your card as a button people can tap. '
+         'Before you paste it, set it so that anyone with the link can view — otherwise whoever taps it cannot open it. '
+         'Accepted: Canva, Google Docs / Slides / Drive, OneDrive and Dropbox.',
+         'الصق رابط مشاركة من Canva أو من شرائح العرض، فيظهر على بطاقتك زرًّا يمكن النقر عليه. '
+         'واضبطه قبل لصقه بحيث يستطيع كلّ من لديه الرابط الاطّلاع، وإلّا تعذّر الفتح على من ينقره. '
+         'والمقبول: Canva وGoogle Docs وSlides وDrive وOneDrive وDropbox.'),
     '写真1枚だけで大丈夫です。ログインもメールも要りません。 内容とお名前だけ、書いてください。名前をサイトに出すかどうかは、下で選べます。':
         ('One photo is enough. No login, no email address. Just write what it was and your name. Whether your name appears on the site is your choice, below.',
          'تكفي صورة واحدة. لا تسجيل دخول ولا بريد إلكتروني. اكتب ما جرى واسمك فقط، ولك أن تختار أدناه إظهار اسمك على الموقع من عدمه.'),
