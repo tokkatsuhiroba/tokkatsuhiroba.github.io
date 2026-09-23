@@ -1477,6 +1477,39 @@
     try{ localStorage.removeItem(NANORI_KAGI); }catch(e){}
   }
 
+  /* お名前・所属・印を、欄に入れます（2026-09-23 依頼。2026-09-24 に、
+     お悩みに答えるところからも呼べるようにしました）。
+     shirasu が true のときだけ、欄の下に「まえに書いたものです」と出して、
+     ［消す］を添えます（なおすときは、その1件のものなので知らせません。
+     知らせると、直しているのに前の話に見えます）。
+     doko … 入れる欄の名前。省くと「実践を送る」のものになります。 */
+  function nanori_ireru(n, shirasu, doko){
+    doko = doko || {na: 'okuru-na', sh: 'okuru-sh', ko: 'okuru-ko', shirase: 'okuru-nanori'};
+    var naI = document.getElementById(doko.na);
+    var shI = document.getElementById(doko.sh);
+    var koI = document.getElementById(doko.ko);
+    if(!n || !naI) return;
+    naI.value = n.na || '';
+    if(shI) shI.value = n.sh || '';
+    if(koI) koI.checked = !!n.ko;
+    if(!shirasu || !naI.value) return;
+    var oya = naI.parentNode;
+    if(!oya || document.getElementById(doko.shirase)) return;
+    var p = document.createElement('p');
+    p.className = 'okuru-yomi okuru-yomi--sub okuru-nanori';
+    p.id = doko.shirase;
+    p.innerHTML = '<span></span><button type="button" class="bansho-b">消す</button>';
+    p.querySelector('span').textContent =
+      'まえに この端末で書いたお名前と所属を入れてあります。ちがえば、書きかえてください。';
+    p.querySelector('button').addEventListener('click', function(){
+      nanori_wasureru();
+      nanori_ireru({na: '', sh: '', ko: 0}, false, doko);
+      p.parentNode.removeChild(p);
+      naI.focus();
+    });
+    oya.appendChild(p);
+  }
+
   /* ══ 学年の札（2026-09-22）══════════════════════════════
      前は 1〜2年／3〜4年 のまとめ売りの選びでした。実践は「5年でやった」
      ものなので、まとめられると書けません。1年ずつ押せる札にして、
@@ -2080,32 +2113,6 @@
          shirasu が true のときだけ、欄の下に「まえに書いたものです」と
          出して、［消す］を添えます（なおすときは、その1件のものなので
          知らせません。知らせると、直しているのに前の話に見えます）。 */
-      function nanori_ireru(n, shirasu){
-        var naI = document.getElementById('okuru-na');
-        var shI = document.getElementById('okuru-sh');
-        var koI = document.getElementById('okuru-ko');
-        if(!n || !naI) return;
-        naI.value = n.na || '';
-        if(shI) shI.value = n.sh || '';
-        if(koI) koI.checked = !!n.ko;
-        if(!shirasu || !naI.value) return;
-        var oya = naI.parentNode;
-        if(!oya || document.getElementById('okuru-nanori')) return;
-        var p = document.createElement('p');
-        p.className = 'okuru-yomi okuru-yomi--sub okuru-nanori';
-        p.id = 'okuru-nanori';
-        p.innerHTML = '<span></span><button type="button" class="bansho-b">消す</button>';
-        p.querySelector('span').textContent =
-          'まえに この端末で書いたお名前と所属を入れてあります。ちがえば、書きかえてください。';
-        p.querySelector('button').addEventListener('click', function(){
-          nanori_wasureru();
-          nanori_ireru({na: '', sh: '', ko: 0}, false);
-          p.parentNode.removeChild(p);
-          naI.focus();
-        });
-        oya.appendChild(p);
-      }
-
       var OSHI_SHIRUSHI = '★推しポイント：';
       var oshi_tsukeru = function(o, m){
         o = (o || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 60);
@@ -3854,6 +3861,15 @@
     var aIma = null;              /* いま答えている相手（お悩みの名前） */
     /* 写真とPDFは、実践を送るところと**同じもの**を使います（2026-09-24 依頼）。
        隠す・拡大・小さくする・PDFを組み直す、ぜんぶ同じ道です。 */
+    /* この端末が覚えているお名前と所属を、答えるときにも入れます
+       （2026-09-24 依頼）。送るフォームと同じ覚え（tokkatsu-nanori）です。
+       ★お悩みBOX（打ち明けるほう）には、わざと入れていません。
+         出すつもりのなかった名前が、そのまま出るためです。
+         答えるほうは「答える側」なので、入れます。
+       ★入れたときは、欄の下に「まえに書いたものです／消す」を出します
+         （共用の端末で、前の人の名前が残ったままにならないように）。 */
+    var A_NANORI = {na: 'kotae-na', sh: 'kotae-sh', ko: 'kotae-ko',
+                    shirase: 'kotae-nanori'};
     var aU = document.getElementById('kotae-u');
     shiryo_shirase_tsunagu(aU, document.getElementById('kotae-u-shirase'));
     var aTenpu = tenpu_tsukuru({
@@ -3882,6 +3898,8 @@
       aIma = b.getAttribute('data-kotae') || '';
       aToi.textContent = b.getAttribute('data-dai') || '';
       kotaeF.hidden = false;
+      /* 開くたびに入れます。送ったあとの reset() で欄が空になるためです。 */
+      nanori_ireru(nanori_yomu(), true, A_NANORI);
       /* 押された札の中へ移します。どの悩みに答えているのかが、
          目で見て分かるようにするためです。 */
       fuda.appendChild(kotaeF);
@@ -3943,6 +3961,10 @@
           {k: aAi, n: aNushi, t: '答え（' + (aToi.textContent || 'お悩み') + '）',
            d: new Date().toISOString().slice(0, 10)});
         var dai = aToi.textContent;
+        /* 次の1件から書かなくて済むように、覚えます（reset の前に）。
+           名前を書かなかった人は、覚えません（nanori_shimau が見ています）。 */
+        nanori_shimau({na: aNa.value.trim(), sh: aSh.value.trim(),
+                       ko: aKo.checked ? 1 : 0});
         kotaeF.reset(); aTenpu.kesu(); aKazu.textContent = '0 / 1000字';
         aShirase.textContent = '送りました。数分で、このお悩みの下に出ます。';
         aikotoba_miseru(aAi, shimaeta);
