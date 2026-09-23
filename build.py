@@ -4521,17 +4521,14 @@ def build_igi(kyara):
             # そろえます（2026-09-22）。<br> だと、画面が狭いときに文の
             # 途中でも折れて「みんなの特／活ひろば」のように割れます。
             '    <div class="igi-intro"><p class="igi-bun">'
+            # 2026-09-23 依頼で書きかえ。
+            #   前は「LINEオープンチャットと連携しています。あちらで話し、
+            #   ここで確かめて、持ち帰る。そのためにお使いください。」の3文
+            #   でしたが、**「あんまり連携していないから」**という話で消しました。
+            #   ★LINEへの道は、ほかに3つ残っています（上のLINEの札・この節の
+            #     下のボタン・足もとのボタン）。ここから消えても行けます。
             '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
-            # 2026-09-23 依頼：ここを押すとLINEへ飛びます。
-            #   ★{{LINE_OC}} は使えません（この節は切り分けたあとに作るので
-            #     置きかわらない）。LINKS から直に入れます。
-            #   ★外へ出るので「外部」と書いてから開きます（サイトの決まり）。
-            '<span>LINEオープンチャット'
-            '<a class="line-l" href="' + LINKS['LINE_OC'] + '" '
-            'target="_blank" rel="noopener noreferrer">'
-            '「みんなの特活ひろば（仮）」<i>外部</i></a>と連携しています。</span>'
-            '<span>あちらで話し、ここで<b>確かめて、持ち帰る</b>。</span>'
-            '<span>そのためにお使いください。</span>'
+            '<span>実践や研究日程を共有して、<b>特別活動を盛んに</b>したいです。</span>'
             '</p><div class="igi-friends">'
             '<svg viewBox="0 0 345 143" aria-hidden="true" focusable="false">'
             '<use href="#ill-k-group-shoulders"/></svg>'
@@ -5228,6 +5225,13 @@ def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
 KOTOBA = {
     # ── 節の見出し ──
     'TOKKATSU広場とは？': ('What TOKKATSU Hiroba is', 'ما هو ميدان توكّاتسو'),
+    '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>実践や研究日程を共有して、<b>特別活動を盛んに</b>したいです。</span>':
+        ('<span>A site for raising the <b>flow of information</b> in Japanese special activities.</span>'
+         '<span>By sharing practices and study-meeting dates, we want to see '
+         '<b>special activities thrive</b>.</span>',
+         '<span>موقع لرفع <b>تبادل المعلومات</b> حول الأنشطة الخاصة في اليابان.</span>'
+         '<span>بمشاركة الممارسات ومواعيد اللقاءات البحثية، نريد أن '
+         '<b>تزدهر الأنشطة الخاصة</b>.</span>'),
     # ★このかぎは HTML ごと入ります（<a> は訳の仕組みが外さないため）。
     #   LINEの招待URLを変えたら、ここも一緒に直してください。
     #   直し忘れても、ビルドが止まって「足す行」を出してくれます。
