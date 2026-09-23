@@ -1561,6 +1561,10 @@
       var SHIRYO_URL_MAX = 300;
       var SHIRYO_DOKO = [
         ['canva.com',         'Canva'],
+        /* 2026-09-23：Canvaの「共有リンクをコピー」は canva.link の短いURLです。
+           canva.com しか受けておらず、貼った先生に断りが出ていました。
+           canva.link は Canva公式の短縮ドメインです。 */
+        ['canva.link',        'Canva'],
         ['docs.google.com',   'Googleドキュメント・スライド'],
         ['drive.google.com',  'Googleドライブ'],
         ['onedrive.live.com', 'OneDrive'],

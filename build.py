@@ -790,6 +790,13 @@ SHIRYO_SHIRUSHI = '★資料リンク：'
 SHIRYO_URL_MAX = 300
 SHIRYO_SOTO_DOKO = (
     ('canva.com',         'Canvaの資料'),
+    # 2026-09-23：Canvaの「共有リンクをコピー」は canva.link の短いURLになります。
+    #   canva.com しか受けておらず、貼った先生に「このリンクは受けられません」
+    #   と出ていました（実機で報告あり）。canva.link は Canva公式の短縮ドメインです
+    #   （Canvaヘルプ「Create and manage short links」に明記）。
+    #   ★ヘルプには「地域によっては別のドメインを使うことがある」ともあり、
+    #     その名前は書かれていません。出てきたら、そのとき足します。
+    ('canva.link',        'Canvaの資料'),
     ('docs.google.com',   'Googleドキュメント・スライド'),
     ('drive.google.com',  'Googleドライブの資料'),
     ('onedrive.live.com', 'OneDriveの資料'),
