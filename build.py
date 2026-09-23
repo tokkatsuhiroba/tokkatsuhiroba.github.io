@@ -115,7 +115,7 @@ PAGES = (
     #   **書くところと、読むところを、同じページに置きました。**
     #   前は 書くところがホーム、読むところがこのページ で割れていました。
     #   困っている人が開いた先に、書く欄が無いのは おかしい、という話から。
-    ('komari.html',   '困りごと', 'いま困っていることを書く。届いたものを読む。',
+    ('komari.html',   'お悩みBOX', 'いま困っていることを書く。届いたものを読む。',
      ('kiku', 'komari')),
 )
 HOME = PAGES[0][0]
@@ -136,12 +136,20 @@ SETSU_NA = {
     'about':  '特活とは',   'manabu': 'はじめかた',
     'yotsu':  '4つの内容',  'jissen': 'すぐ使える道具',
     'shokai': 'このサイトを紹介する',
-    'kai':    '日本の研究会', 'okuru': '実践を送る',
+    # 2026-09-23：「日本の」を外しました（依頼）。ここは日本のサイトなので、
+    #   わざわざ言わなくても分かります。帯・札・ページの名前が短くなります。
+    'kai':    '研究会', 'okuru': '実践を送る',
     # 2026-09-22：ここがこのサイトの主役です。
     #   「板書」は狭すぎました（いまは写真もPDFも議題も届きます）。
     #   ファイル名（bansho.html）と front matter の bansho: は、そのままです。
     #   URLは読まれないので変えません。配ったリンクも生きます。
-    'bansho': 'みんなの実践', 'komari': '困りごと', 'kiku': 'ちょっと聞きたい',
+    # 2026-09-23 依頼：「ちょっと聞きたい」と「困りごと」は同じ場所でした。
+    #   名前を **お悩みBOX** に1つへそろえます。
+    #   kiku＝書くところ（お悩みBOX）／komari＝読むところ（届いているお悩み）。
+    #   帯・札・概要の札は、どれも『場所の名前』なので お悩みBOX でそろえます。
+    #   ページの中の見出しだけ、書くところ（お悩みBOX）と
+    #   読むところ（届いているお悩み）に分けています（src/hiroba.html）。
+    'bansho': 'みんなの実践', 'komari': 'お悩みBOX', 'kiku': 'お悩みBOX',
     'kotoba': 'ことばの意味',
 }
 
@@ -922,7 +930,7 @@ KOMARI_BY = """        <p class="komari-by">{by}</p>
 KOMARI_TAG = '<span class="bfuda-tag t--{nid}">{ja}</span>　'
 
 KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。<br>
-      ホームの <a href="#kiku">ちょっと聞きたい</a> から、いま困っていることを送ってください。</p>"""
+      ホームの <a href="#kiku">お悩みBOX</a> から、いま困っていることを送ってください。</p>"""
 
 
 def build_komari(komari):
@@ -3200,7 +3208,7 @@ def nayami_gyo(a, ji=' ' * 8):
 
 
 NAYAMI_KARA = """      <p class="nayami-mada">まだ1件もありません。<br>
-      いま困っていることを <a href="#komari">ちょっと聞きたい</a> から送ってください。
+      いま困っていることを <a href="#komari">お悩みBOX</a> から送ってください。
       送られたものが、そのままここに並びます。</p>"""
 
 
@@ -3218,7 +3226,7 @@ def build_nayami(komari):
         return NAYAMI_KARA
     tsuita = sum(1 for a in komari if a['saki'])
     return ('      <p class="nayami-saki"><a href="#komari">'
-            '届いた困りごと %d件を読む<i>→</i></a>'
+            '届いたお悩み %d件を読む<i>→</i></a>'
             '<span class="nayami-uchi">うち %d件は、答えが見つかっています</span></p>'
             % (len(komari), tsuita))
 
@@ -3738,10 +3746,10 @@ def build_kanri_hoka(komari, ken, tobashita):
             meta = '・'.join(x for x in (ja_md(a['d']), a.get('grade') or '') if x)
             out.append(KANRI_HOKA_T.format(
                 v=esc_html(a['slug']), dai=esc_html(a['mijikai']),
-                meta=esc_html(meta), nani='困りごと',
+                meta=esc_html(meta), nani='お悩み',
                 sagasu=esc_html(' '.join((a['mijikai'], a['hon'], a.get('grade') or '')))))
     else:
-        out.append('      <p class="karappo">届いた困りごとはまだありません。</p>')
+        out.append('      <p class="karappo">届いたお悩みはまだありません。</p>')
 
     # こよみは1件の .md から「当日」と「申込〆切」を別々の行に開きます。
     #   ここは **ファイル1つ＝1枚** に畳みます（消すのはファイルなので、
@@ -4161,7 +4169,7 @@ def build_komari_miru(komari):
                 '<b>届いている困りごと</b>まだ1件もありません。いちばん乗りをどうぞ。</p>')
     tsuita = sum(1 for a in komari if a['saki'])
     return ('    <p class="bansho-iri"><a class="bansho-b bansho-b--ookii" href="#komari">'
-            '届いている困りごとを見る（%d件・うち%d件に答え）<i>→</i></a></p>'
+            '届いているお悩みを見る（%d件・うち%d件に答え）<i>→</i></a></p>'
             % (len(komari), tsuita))
 
 
@@ -4314,7 +4322,7 @@ def build_kyara_narabi(kyara):
 #     2026-09-21 夜、「伝えたい」が atsumaru.html#okuru を指したまま
 #     送るところがホームへ移り、行き先が消えかけました。
 IGI_MEN = (
-    ('gakkatsu', 'ちょっと聞きたい', 'いま困っていることを。',   'kiku'),
+    ('gakkatsu', 'お悩みBOX',       'いま困っていることを。',   'kiku'),
     ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
     ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'jissen'),
     ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
@@ -4407,7 +4415,7 @@ HOME_FUDA = (
     ('bansho', 'bansho', 'jidokai-share', '先生方から届いた実践が、そのまま並びます。'),
     ('ima',    'nittei', 'gyoji-calendar', 'つぎの研究会と、申込の締切。'),
     # komari（困っている → 学ぶ、の順に並べます。2026-09-22）
-    ('komari', 'komari', 'gakkatsu-listen', '送られた困りごとが、そのまま並びます。'),
+    ('komari', 'komari', 'gakkatsu-listen', '送られたお悩みが、そのまま並びます。'),
     # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
     ('manabu', 'hajime', 'club-tools', '①から⑤の学習過程と、一次資料と、道具。'),
     # atsumaru
@@ -4813,7 +4821,14 @@ def page_na(f):
        かわりに、そのページに入っている節の名前をそのまま出します。"""
     for x, _, _, setsu in PAGES:
         if x == f:
-            return '　'.join(SETSU_NA[t] for t in setsu) or 'TOKKATSU広場'
+            # 同じ名前の節が2つあるときは、1つにまとめます。
+            #   2026-09-23：お悩みBOXは「書くところ」と「読むところ」の
+            #   2つの節でできていますが、場所としては1つです。
+            na = []
+            for t in setsu:
+                if SETSU_NA[t] not in na:
+                    na.append(SETSU_NA[t])
+            return '　'.join(na) or 'TOKKATSU広場'
     raise Tomeru('%s は PAGES にありません' % f)
 
 
@@ -4996,10 +5011,15 @@ KOTOBA = {
     '実践を送る': ('Send a practice', 'أرسل ممارسة'),
     'みんなの実践': ('Everyone’s practices', 'ممارسات الجميع'),
     '研究日程': ('Calendar', 'التقويم'),
+    # 2026-09-23 依頼：「ちょっと聞きたい」と「困りごと」を お悩みBOX にそろえました。
+    #   前の2つの見出し（ちょっと聞きたい／困りごと）は、まだ表に残しています。
+    #   どこかで使っていたときに、訳だけ消えるのを防ぐためです。
+    'お悩みBOX': ('Question box', 'صندوق الأسئلة'),
+    '届いているお悩み': ('Questions that have arrived', 'الأسئلة الواردة'),
     '困りごと': ('Questions', 'الأسئلة'),
     'はじめかた': ('How to start', 'كيف تبدأ'),
     'ニュース': ('News', 'الأخبار'),
-    '日本の研究会': ('Societies in Japan', 'الجمعيات في اليابان'),
+    '研究会': ('Societies', 'الجمعيات'),
     '特活とは': ('About Tokkatsu', 'عن توكاتسو'),
 
     # ── 札のひとこと ──
@@ -5013,6 +5033,9 @@ KOTOBA = {
         ('The next meetings, and the registration deadlines.',
          'اللقاءات القادمة ومواعيد التسجيل.'),
     '送られた困りごとが、そのまま並びます。':
+        ('Questions sent in, shown just as they arrived.',
+         'أسئلة وردت من المعلمين، معروضة كما وصلت.'),
+    '送られたお悩みが、そのまま並びます。':
         ('Questions sent in, shown just as they arrived.',
          'أسئلة وردت من المعلمين، معروضة كما وصلت.'),
     '①から⑤の学習過程と、一次資料と、道具。':
@@ -5080,9 +5103,9 @@ KOTOBA = {
     '学級会の学習過程と、一次資料と、持ち帰れる道具。':
         ('The steps of a class meeting, the source documents, and tools to take home.',
          'مراحل مجلس الفصل، والمراجع الأصلية، وأدوات تأخذها معك.'),
-    '研究日程 ニュース 日本の研究会':
-        ('Calendar · News · Societies in Japan',
-         'التقويم · الأخبار · الجمعيات في اليابان'),
+    '研究日程 ニュース 研究会':
+        ('Calendar · News · Societies',
+         'التقويم · الأخبار · الجمعيات'),
     '研究日程、ニュース、各地の研究会。':
         ('Meetings, news, and societies across the country.',
          'اللقاءات والأخبار والجمعيات في أنحاء البلاد.'),
@@ -5119,6 +5142,21 @@ KOTOBA = {
          'يظهر ما تكتبه مباشرة.<br> لكنّ <strong>الردّ أسرع في '
          '<b>محادثة LINE المفتوحة «ساحة توكاتسو للجميع»</b></strong>.<br> '
          'هناك يقرأ <strong>505</strong> معلمين، وغالبًا يردّ أحدهم في اليوم نفسه.'),
+    '<b>困っていること</b>は <a href="komari.html#komari">お悩みBOX</a> へ。'
+    '書くと、そのまま並びます。<br> ただし<strong>答えが早いのは '
+    '<b>LINEオープンチャット「みんなの特活ひろば」</b></strong>のほうです。<br> '
+    'LINEなら<strong>505人</strong>が読んでいて、その日のうちに誰かが答えてくれます。':
+        ('<b>Something you are stuck on</b> goes to '
+         '<a href="komari.html#komari">the Question box</a>. '
+         'What you write appears straight away.<br> But <strong>answers come faster in the '
+         '<b>LINE open chat “Minna no Tokkatsu Hiroba”</b></strong>.<br> '
+         'There, <strong>505 teachers</strong> are reading, and someone usually '
+         'replies the same day.',
+         '<b>ما يصعب عليك</b> اكتبه في '
+         '<a href="komari.html#komari">صندوق الأسئلة</a>. '
+         'يظهر ما تكتبه مباشرة.<br> لكنّ <strong>الردّ أسرع في '
+         '<b>محادثة LINE المفتوحة «ساحة توكاتسو للجميع»</b></strong>.<br> '
+         'هناك يقرأ <strong>505</strong> معلمين، وغالبًا يردّ أحدهم في اليوم نفسه.'),
     'それぞれのページの、中身のはじまりです。写した絵ではなく本物なので、中身が変わればここも変わります。':
         ('The opening of each page. This is the real content, not a copy of it, '
          'so when a page changes this changes too.',
@@ -5129,6 +5167,12 @@ KOTOBA = {
         ('You can send your own question from <a>A quick question</a>.<br> '
          '<strong>Answers come faster on LINE</strong> — 505 teachers are reading there.',
          'يمكنك إرسال سؤالك من <a>سؤال سريع</a>.<br> '
+         '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
+    'あなたのお悩みも <a>お悩みBOX</a> から送れます。<br> '
+    '<strong>答えが早いのはLINEのほう</strong>です。505人が読んでいます。':
+        ('You can send your own question from the <a>Question box</a>.<br> '
+         '<strong>Answers come faster on LINE</strong> — 505 teachers are reading there.',
+         'يمكنك إرسال سؤالك من <a>صندوق الأسئلة</a>.<br> '
          '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
     '国語や算数とちがって、教科書がありません。<br> 決めるのも、やるのも、ふり返るのも、子どもです。<br> '
     '先生の仕事は、教えることではなく、子どもが決められるようにすること。':
@@ -5173,6 +5217,17 @@ KOTOBA = {
          'والممارسات الواردة في '
          '<a href="bansho.html#bansho">ممارسات الجميع</a>.<br>'
          'وفي الحالتين يختار المُرسِل أحد هذه المجالات الأربعة.'),
+    '送られたお悩みは <a href="komari.html#komari">お悩みBOX</a>、届いた実践は '
+    '<a href="bansho.html#bansho">みんなの実践</a> にあります。<br>'
+    'どちらも、送るときにこの4つのどれかを選んでもらっています。':
+        ('Questions that were sent are in <a href="komari.html#komari">the Question box</a>, '
+         'and practices that arrived are in '
+         '<a href="bansho.html#bansho">Everyone’s practices</a>.<br>'
+         'For both, the sender chooses one of these four areas.',
+         'الأسئلة المُرسلة في <a href="komari.html#komari">صندوق الأسئلة</a>، '
+         'والممارسات الواردة في '
+         '<a href="bansho.html#bansho">ممارسات الجميع</a>.<br>'
+         'وفي الحالتين يختار المُرسِل أحد هذه المجالات الأربعة.'),
     '特別活動の会議や資料で出てくることばを、はじめての先生に向けて短く。<br> '
     '言い方はこのサイトによるものです。引用ではありません。':
         ('Words that come up in Tokkatsu meetings and documents, put briefly '
@@ -5182,6 +5237,13 @@ KOTOBA = {
          'لمن يلتقي بها لأول مرة.<br> '
          'الصياغة من إعداد هذا الموقع، وليست اقتباسًا.'),
     '困りごとから、いま必要なところへ。<br>'
+    '学級会の学習過程と、根拠になる一次資料をこのページの中で確かめられます。':
+        ('From what you are stuck on, straight to what you need now.<br>'
+         'The steps of a class meeting, and the source documents behind them, '
+         'are all on this page.',
+         'من المشكلة التي تواجهك إلى ما تحتاجه الآن مباشرة.<br>'
+         'مراحل مجلس الفصل والمراجع الأصلية التي تستند إليها، كلّها في هذه الصفحة.'),
+    'お悩みから、いま必要なところへ。<br>'
     '学級会の学習過程と、根拠になる一次資料をこのページの中で確かめられます。':
         ('From what you are stuck on, straight to what you need now.<br>'
          'The steps of a class meeting, and the source documents behind them, '
@@ -5245,6 +5307,12 @@ KOTOBA = {
         ('You can send your own question from <a href="#kiku">A quick question</a>.<br> '
          '<strong>Answers come faster on LINE</strong> — 505 teachers are reading there.',
          'يمكنك إرسال سؤالك من <a href="#kiku">سؤال سريع</a>.<br> '
+         '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
+    'あなたのお悩みも <a href="#kiku">お悩みBOX</a> から送れます。<br> '
+    '<strong>答えが早いのはLINEのほう</strong>です。505人が読んでいます。':
+        ('You can send your own question from the <a href="#kiku">Question box</a>.<br> '
+         '<strong>Answers come faster on LINE</strong> — 505 teachers are reading there.',
+         'يمكنك إرسال سؤالك من <a href="#kiku">صندوق الأسئلة</a>.<br> '
          '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
 
     # ── 足もと ──
