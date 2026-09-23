@@ -3334,8 +3334,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      札を文と同じ行へ　 … 2行、空き  23 / 107px
    6件のうち4件で1行減り、行の途中の空きは どれも25px以下になりました。 */
 .bfuda-oshi-l{
-  flex:none;display:inline-block;margin:0;
-  padding:1px 9px;border-radius:999px;
+  display:inline-block;margin:0 0 5px;
+  padding:2px 11px;border-radius:999px;
   background:var(--accent);color:var(--bg);
   /* ★2026-09-23 依頼：ここも UD書体（本文と同じ）にしました。
      10.5px の小さな札なので、丸ゴシックより UD書体のほうが読めます。 */
@@ -3343,46 +3343,65 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:calc(10.5px * var(--moji));letter-spacing:.06em;
   vertical-align:.12em;white-space:nowrap;
 }
+/* ── 推しポイント＝案内役の吹き出し（2026-09-23 依頼）──────────
+   「キャラクターの上に推しポイントを表記。そしてキャラクターが
+     吹き出しを出して、その中に推しポイントが表示されるようにする」
+   ★三角は CSSのふちで作ります（画像は1枚も増えません）。
+     外がわ（::before）が線の色、内がわ（::after）が地の色。
+     2枚かさねないと、線のある吹き出しになりません。
+   ★字は40字まで（build.py の OSHI_MOJI_MAX）。いちばん狭い
+     320pxでも、40字が3行で入ることを実測で確かめています。 */
 .bfuda-oshi{
-  margin:0 0 8px;padding:1px 0 1px 12px;
-  border-inline-start:5px solid var(--accent);
-  /* ★2026-09-23 依頼「実践の本文をUDに」。送っていただいた字は、
-     ぜんぶ UD書体（BIZ UDPGothic）でそろえます。ここは丸ゴシック
-     （Zen Maru Gothic）でした。太さ700は そのまま残します。 */
+  position:relative;margin:0;
+  padding:9px 13px;
+  background:var(--bg);
+  border:2.5px solid var(--accent);border-radius:14px;
   font-family:var(--f-hon);font-weight:700;
-  font-size:calc(clamp(14.5px,1.6vw,17px) * var(--moji));line-height:1.55;letter-spacing:.02em;
-  /* ★本文と同じく、**ふつうに詰めます**（2026-09-23 依頼
-     「言葉切れていいから普通に詰めて」→「推しポイントも整理して」）。
-     語の切れ目でだけ折る auto-phrase は、行のおしりが空きます。
-     実測（幅292px）で 67px・38px・33px 空いていたところが、
-     どれも25px以下（1字半ぶん以下）になりました。
-     語の途中で折れることはありますが、「変えるだけ。」のような
-     短いかたまりは、そのまま残ります（実測で確認）。 */
+  font-size:calc(clamp(14px,1.5vw,16px) * var(--moji));line-height:1.55;letter-spacing:.02em;
+  /* 本文と同じく、ふつうに詰めます（語の途中で折れてもよい） */
   word-break:normal;text-wrap:wrap;
-  /* ★2行めが、札の**下にもぐらない**ようにします（2026-09-23 依頼
-     「この推しポイントの下に２行目が行かないようにして欲しいね」）。
-     札と文を左右に分けて、文のかたまりを1本の柱にします。
-     折り返した2行めは、1行めの頭とそろいます。 */
-  display:flex;align-items:flex-start;gap:8px;
 }
-.bfuda-oshi-t{flex:1 1 auto;min-width:0}
+/* 吹き出しの口。案内役のほうへ向けます。 */
+/* ★口の高さは **まんなか**（top:50%）です。
+   はじめ 26px と決め打ちにしていましたが、1行だけの吹き出し（高さ42px）
+   では、口の下はし（26+18＝44px）が **吹き出しの外へ4pxはみ出し**ました
+   （幅430pxで実測）。まんなかなら、どの行数でも中に収まります。
+   案内役も同じ行のまんなかにそろえてあるので、口はいつも顔を向きます。 */
+.bfuda-oshi::before,.bfuda-oshi::after{
+  content:"";position:absolute;top:50%;width:0;height:0;
+  border-block:9px solid transparent;border-inline-start:0;
+}
+.bfuda-oshi::before{
+  inset-inline-start:-11px;margin-top:-9px;
+  border-inline-end:11px solid var(--accent);
+}
+.bfuda-oshi::after{
+  inset-inline-start:-7px;margin-top:-7px;
+  border-block-width:7px;border-inline-end:8px solid var(--bg);
+}
 /* ── 推しポイントの左に、案内役が1人（2026-09-23 依頼）────────
    4つの内容に合わせた1人が、推しポイントの横に立ちます。
    ★人は **添えもの**です。主役は、書いてくださった1行のほうなので、
      人の幅は40px前後にとどめ、文の幅をできるだけ減らしません
      （スマホでは34px。1行の字数が2字ほどしか変わらない大きさです）。
    ★aria-hidden。読み上げには出しません（意味は字のほうが持っています）。 */
-.bfuda-oshi-w{
-  display:flex;align-items:center;gap:9px;margin:0 0 8px;
-}
-.bfuda-oshi-w .bfuda-oshi{flex:1 1 auto;min-width:0;margin:0}
-.bfuda-oshi-k{
-  flex:none;width:40px;align-self:center;
-}
+/* ［推しポイント］の札が上、その下に 案内役と吹き出しが1行（2026-09-23 依頼
+   「推しポイントとキャラクターの位置を同列にしよう。
+     キャラクターの上に推しポイントを表記」）。
+   ★案内役と吹き出しは、たての **まんなかでそろえます**（align-items:center）。
+     そろえておかないと、吹き出しの口（top:50%）が顔からずれます。 */
+.bfuda-oshi-w{margin:0 0 10px}
+.bfuda-oshi-gyo{display:flex;align-items:center;gap:10px}
+.bfuda-oshi-w .bfuda-oshi{flex:1 1 auto;min-width:0}
+.bfuda-oshi-k{flex:none;width:52px}
 .bfuda-oshi-k svg{display:block;width:100%;height:auto}
 @media (max-width:719px){
-  .bfuda-oshi-k{width:34px}
-  .bfuda-oshi-w{gap:7px}
+  .bfuda-oshi-k{width:44px}
+  .bfuda-oshi-gyo{gap:8px}
+}
+@media (max-width:379px){
+  .bfuda-oshi-k{width:38px}
+  .bfuda-oshi{padding:8px 11px}
 }
 
 /* 「、」「。」で切ったかたまり（2026-09-23）。
@@ -3410,15 +3429,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      ふつう　　　 … 8行、右の空き 10 /  7 / 10 / 13 / 9 / 6 / 5px
    1行減って、空きも1字ぶん以下に収まります。語の途中で折れますが、
    日本語はもともとどこでも折れる字なので、読めなくはなりません。
-   ★推しポイント（.bfuda-oshi）は auto-phrase のままです。あちらは
-     短い1行で、「変えるだ／け。」と割れるのが読みにくかったためです。 */
+   ★推しポイント（.bfuda-oshi）も、いまは同じ「ふつうに詰める」です
+     （2026-09-23 依頼「推しポイントも整理して」）。 */
 .bfuda-lead{margin:0;font-family:var(--f-hon);font-size:calc(14.5px * var(--moji));line-height:1.62;
   word-break:normal;text-wrap:wrap}
 .bfuda-naka p,.bfuda-naka li{font-family:var(--f-hon);word-break:normal;text-wrap:wrap}
 @media (max-width:719px){
   .bfuda-lead{font-size:calc(14px * var(--moji))}
   .bfuda-naka p,.bfuda-naka li{font-size:calc(14px * var(--moji))}
-  .bfuda-oshi{padding-inline-start:10px}
 }
 
 /* ══ 実践カードの「足」と写真を詰める（2026-09-23 依頼）══════

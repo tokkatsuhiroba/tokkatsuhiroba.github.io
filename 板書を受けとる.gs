@@ -978,7 +978,9 @@ function _naosu(d, kanriMado) {
   }
 
   var hon = d.m || '';
-  var oshi = _arau(d.o || '').slice(0, 60);
+  // 推しポイントは40字まで（2026-09-23 依頼）。
+  // 画面の入力欄（maxlength="40"）と build.py の OSHI_MOJI_MAX と、同じ数です。
+  var oshi = _arau(d.o || '').slice(0, 40);
   if (oshi) hon = '★推しポイント：' + oshi + '\n\n' + hon;
   var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: hon,
             n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,

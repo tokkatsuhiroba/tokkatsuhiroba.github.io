@@ -740,7 +740,22 @@ def kenmon_jissen(fm, goods):
 
     oshi_shirushi, hon = shirushi_hagasu(hon, OSHI_SHIRUSHI)
     oshi = (fm.get('oshi') or '').strip() or oshi_shirushi
-    fm['oshi'] = oshi[:OSHI_MOJI_MAX]
+    # ★長すぎたときの扱いは、**どこから来たか**で変えます（2026-09-23）。
+    #   手で書いた .md（こちらで用意したもの）… 止めます。書いた本人が
+    #     すぐ直せますし、黙って切ると、文の途中で終わったものが公開されます。
+    #   届いたもの（okuri: true）… 切って、組み立ての最後に ⚠ で知らせます。
+    #     ここで止めると、**先生が1件送っただけでサイト全体の更新が止まります**。
+    #     古い画面（前の maxlength="60"）が残っている端末から届くことも
+    #     ありえます。公開を止めるほどのことではありません。
+    if len(oshi) > OSHI_MOJI_MAX:
+        if not fm.get('okuri'):
+            raise Tomeru('%s：推しポイントが %d字あります（%d字まで）。\n'
+                         '     %s\n'
+                         '     吹き出しに入れるので、ここで長さを決めています。'
+                         % (f, len(oshi), OSHI_MOJI_MAX, oshi))
+        OSHI_NAGAI.append((f, len(oshi), oshi))
+        oshi = oshi[:OSHI_MOJI_MAX]
+    fm['oshi'] = oshi
 
     # ── 地域（2026-09-22 依頼）────────────────────────────
     #   「47都道府県で、日本の特色が見えたら楽しい」という話から。
@@ -789,7 +804,16 @@ def kenmon_jissen(fm, goods):
 # 本文の頭に混ぜて運ぶときの目じるし。
 #   画面の入力欄（src/hiroba.html・src/kanri.html）と、ここでしか使いません。
 OSHI_SHIRUSHI = '★推しポイント：'
-OSHI_MOJI_MAX = 60
+# 推しポイントの字数（2026-09-23 依頼「推しポイントの文字制限を行う」）。
+#   吹き出しに入れるので、際限なく長いと札が吹き出しだけになります。
+#   ★いま届いている6件の いちばん長いものが **31字**（「毎回同じデザインで、
+#     文章と写真を変えるだけ。だから続けられます」）。そこに9字の余りを
+#     足して 40字にしました。届いているものは、ぜんぶそのまま入ります。
+#   ★入力欄（src/hiroba.html）と 受け口（板書を受けとる.gs）も同じ40字です。
+#     3か所そろっていないと、送れたのに切れる／切れないが起きます。
+OSHI_MOJI_MAX = 40
+# 40字を超えて届いたもの（切ったぶん）。組み立ての最後に ⚠ で出します。
+OSHI_NAGAI = []
 CHIIKI_SHIRUSHI = '★地域：'
 CHIIKI_KUGIRI = '／'     # 都道府県と自治体の間（例：東京都／江東区）
 CHIIKI_SHI_MAX = 20
@@ -3715,12 +3739,21 @@ ICON_SOTO = icon('<path d="M4 7a2 2 0 0 1 2-2h5l2 2h5a2 2 0 0 1 2 2v9a2 2 0 0 1-
 NAIYO_KYARA = {'gakkyu': 'gakkatsu', 'gyoji': 'gyoji',
                'jidokai': 'jidokai', 'club': 'club'}
 
+# ── 推しポイントは、案内役の吹き出しで（2026-09-23 依頼）──────
+#   「キャラクターの上に推しポイントを表記。そしてキャラクターが
+#     吹き出しを出して、その中に推しポイントが表示されるようにする」
+#   左の柱に［推しポイント］の札と案内役を たてに積み、その右に
+#   吹き出しを置きます。吹き出しの向きは CSS の三角で作ります
+#   （画像は1枚も増えません）。
 BFUDA_OSHI = """        <div class="bfuda-oshi-w">
-{kao}          <p class="bfuda-oshi"><span class="bfuda-oshi-l">推しポイント</span><span class="bfuda-oshi-t">{honbun}</span></p>
+          <span class="bfuda-oshi-l">推しポイント</span>
+          <div class="bfuda-oshi-gyo">
+{kao}            <p class="bfuda-oshi">{honbun}</p>
+          </div>
         </div>
 """
 
-BFUDA_OSHI_K = ('          <span class="bfuda-oshi-k" aria-hidden="true">'
+BFUDA_OSHI_K = ('            <span class="bfuda-oshi-k" aria-hidden="true">'
                 '<svg viewBox="0 0 %g %g" focusable="false">'
                 '<use href="#ill-k-%s"/></svg></span>\n')
 
@@ -6160,9 +6193,10 @@ KOTOBA = {
     'いくつでも押せます。もう一度押すと外れます。':
         ('Press as many as you like. Press again to remove.',
          'اضغط ما شئت، واضغط ثانية للإزالة.'),
-    'いちばん伝えたいことを、ひとことで。題のすぐ下に、大きく出ます。':
-        ('The one thing you most want to get across, in a single line. It appears large, just under the title.',
-         'أهمّ ما تودّ إيصاله في سطر واحد، ويظهر كبيرًا تحت العنوان مباشرة.'),
+    'いちばん伝えたいことを、ひとことで。案内役の吹き出しに入って、題のすぐ下に出ます。40字までです。':
+        ('The one thing you most want to get across, in a single line. '
+         'It appears in the guide character\u2019s speech bubble, just under the title. Up to 40 characters.',
+         'أهمّ ما تودّ إيصاله في سطر واحد. يظهر في فقاعة كلام الشخصية المرشدة تحت العنوان مباشرة. حتى 40 حرفًا.'),
     'ひとことでも大丈夫です。長く書く必要はありません。':
         ('A single line is fine. There is no need to write at length.',
          'يكفي سطر واحد، ولا داعي للإطالة.'),
@@ -6702,6 +6736,10 @@ def main_shin(check_only):
                      for nid, ja in naiyo_ichiran()))
     print('  悩み　　　　… %d件（うち %d件に答えが付いています）'
           % (len(komari), sum(1 for a in komari if a['saki'])))
+    for f_nagai, n_nagai, ji_nagai in OSHI_NAGAI:
+        print('  ⚠ %s：推しポイントが %d字あったので %d字で切りました' %
+              (f_nagai, n_nagai, OSHI_MOJI_MAX))
+        print('     %s' % ji_nagai)
     print('  実践　　　　… %d件（うち議題が%d件。ぜんぶ、中身までこのページに）'
           % (len(jissen), sum(1 for a in jissen if a['kind'] == 'gidai')))
     print('  板書　　　　… %d件・%d枚（写真は bansho.html にだけ入れています）'

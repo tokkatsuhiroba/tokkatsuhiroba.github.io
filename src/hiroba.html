@@ -822,9 +822,10 @@
            題のすぐ下に、ひとまわり大きく出ます。 -->
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-o">推しポイント<span class="okuru-nin">任意</span></label>
-        <p class="okuru-yomi okuru-yomi--sub">いちばん伝えたいことを、ひとことで。題のすぐ下に、大きく出ます。</p>
-        <input class="okuru-i" type="text" id="okuru-o" name="o" maxlength="60"
+        <p class="okuru-yomi okuru-yomi--sub">いちばん伝えたいことを、ひとことで。案内役の吹き出しに入って、題のすぐ下に出ます。<b>40字まで</b>です。</p>
+        <input class="okuru-i" type="text" id="okuru-o" name="o" maxlength="40"
                placeholder="例：提案理由を真ん中に置くだけで、話合いが迷子になりません">
+        <p class="okuru-kazu" id="okuru-o-kazu" aria-live="polite">0 / 40字</p>
       </div>
 
       <div class="okuru-g">
@@ -1530,6 +1531,8 @@
       function naoshi_shitaku(n){
         document.getElementById('okuru-t').value = n.t || '';
         document.getElementById('okuru-o').value = n.o || '';
+        /* 入れ直した字で、下の「◯ / 40字」も数え直します */
+        document.getElementById('okuru-o').dispatchEvent(new Event('input'));
         document.getElementById('okuru-m').value = n.m || '';
         document.getElementById('okuru-ken').value = n.ken || '';
         document.getElementById('okuru-shk').value = n.shk || '';
@@ -1648,6 +1651,20 @@
         mIn.addEventListener('input', function(){
           kazu.textContent = mIn.value.length + ' / 1000字';
         });
+      }
+
+      /* 推しポイントの字数（2026-09-23 依頼で40字まで）。
+         入力欄の maxlength で止まりますが、**止まったことが見えません**。
+         打っている途中で、あと何字かが分かるようにします。
+         なおすときは、入れ直した字で数え直します（input だけでは動きません）。 */
+      var oIn = document.getElementById('okuru-o');
+      var oKazu = document.getElementById('okuru-o-kazu');
+      if(oIn && oKazu){
+        var o_kazoeru = function(){
+          oKazu.textContent = oIn.value.length + ' / 40字';
+        };
+        oIn.addEventListener('input', o_kazoeru);
+        o_kazoeru();
       }
 
       /* PDFは、そのまま送ります（縮めません）。
@@ -2878,10 +2895,13 @@
        （2026-09-23：「推しポイントあいさつワッペン…」とくっついて出ていました） */
     var oshiEl = fuda.querySelector('.bfuda-oshi');
     var oshi = ga_moji(oshiEl);
-    if(oshiEl){
-      var oshiL = oshiEl.querySelector('.bfuda-oshi-l');
+    if(oshi){
+      /* 2026-09-23：札は吹き出しの外（左の柱）へ出ました。同じ段落の中を
+         探しても、もう見つかりません。かこいのほうから拾います。 */
+      var oshiW = fuda.querySelector('.bfuda-oshi-w');
+      var oshiL = oshiW && oshiW.querySelector('.bfuda-oshi-l');
       var lj = oshiL ? (oshiL.innerText || oshiL.textContent || '').trim() : '';
-      if(lj && oshi.indexOf(lj) === 0) oshi = lj + '　' + oshi.slice(lj.length).trim();
+      if(lj && oshi.indexOf(lj) !== 0) oshi = lj + '　' + oshi;
     }
     var lead = ga_moji(fuda.querySelector('.bfuda-lead'));
     var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
