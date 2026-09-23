@@ -39,7 +39,8 @@
  *     DRIVE_FOLDER  … マイドライブの直下
  *
  * ★ 置き場所について（tokkatu-78 が作っている板書のページに合わせるところ）
- *   写真は  src/bansho/<フォルダ名>/01.jpg 02.jpg …  に置きます。
+ *   写真は  src/bansho/<フォルダ名>/01.jpg 02.jpg …  に置きます
+ *   （しっぽは中身に合わせます。WebP で送られたら 01.webp です → _shippo）。
  *   フォルダ名は英小文字・数字・- だけ（build.py がそう検問しています）。
  *   ★ 写真だけ置いても、板書のページには出ません（2026-09-21 実測）。
  *     build.py は写真のフォルダを直接は見ず、src/jissen/*.md の bansho: から
@@ -228,10 +229,16 @@ function doPost(e) {
     for (var i = 0; i < shashin.length; i++) {
       var b = _dataURI(shashin[i]);
       if (!b) return _kotae({ ok: false, riyu: '写真の形が読めません' });
+      /* しっぽは中身から決めます（→ _shippo）。知らない形は断ります。
+         置いてから気づくと、その1枚が数に入らず、ビルドが止まります。 */
+      var shippo = _shippo(b);
+      if (!shippo) {
+        return _kotae({ ok: false, riyu: 'この形の写真は受けとれません（JPEG・PNG・WebPだけ）' });
+      }
       if (b.getBytes().length > KB_MAX * 1024) {
         return _kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
       }
-      var na = ('0' + (i + 1)).slice(-2) + '.jpg';
+      var na = ('0' + (i + 1)).slice(-2) + shippo;
       folder.createFile(b.setName(na));
       uri.push({ na: na, b64: Utilities.base64Encode(b.getBytes()) });
     }
@@ -742,6 +749,20 @@ function _kotae(o) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/* 名前のしっぽ（拡張子）は、**中身から**決めます。
+   ★ずれると2つ困ります。
+     ・build.py は しっぽを見て data:image/… を書くので、WebPのバイトに
+       「image/jpeg」と札を付けて埋めることになります。
+     ・build.py が知らないしっぽ（.gif や .svg）だと、その1枚は数に入らず、
+       「src/bansho/<slug>/ に画像がありません」で**ビルドが止まります**。
+   だから、知らない形は ここで断ります（置いてから気づくのでは遅い）。 */
+var GAZOU_SHIPPO = { 'image/jpeg': '.jpg', 'image/jpg': '.jpg',
+                     'image/png': '.png', 'image/webp': '.webp' };
+
+function _shippo(b) {
+  return GAZOU_SHIPPO[String(b.getContentType() || '').toLowerCase()] || '';
+}
+
 function _dataURI(s) {
   var m = String(s).match(/^data:(image\/[a-z+]+);base64,(.+)$/);
   if (!m) return null;
@@ -952,30 +973,48 @@ function _naosu(d, kanriMado) {
   var pdfs    = (d.p || []).slice(0, 1);
   var folder  = _folder(slug);
   var uri = [];
-  if (shashin.length) {
-    _kesu_folder('src/bansho/' + slug, slug);          // 古いぶんを先に消す
-    for (var i = 0; i < shashin.length; i++) {
-      var b = _dataURI(shashin[i]);
-      if (!b) return kotae({ ok: false, riyu: '写真の形が読めません' });
-      if (b.getBytes().length > KB_MAX * 1024) {
-        return kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
-      }
-      var na = ('0' + (i + 1)).slice(-2) + '.jpg';
-      folder.createFile(b.setName(na));
-      uri.push({ na: na, b64: Utilities.base64Encode(b.getBytes()) });
+  /* ══ 順番がいのちです（2026-09-23 夜）════════════════════
+     前は「①GitHubの古い写真を消す → ②1枚ずつ検める」でした。
+     2枚めが読めない／大きすぎると、そこで return します。すると
+     src/bansho/<slug>/ は**空のまま**なのに、.md は bansho: を
+     指したままになり、build.py の検問で止まります。
+     ＝ その1件のせいで、サイト全体が更新できなくなります。
+     しかも no-cors なので、送った人の画面には「送りました」と出たまま。
+     だから いまは この順です。
+       ① ぜんぶ検める（ここで転んでも、まだ1枚も消していない）
+       ② 手もとの控え（Drive）
+       ③ 新しいぶんを GitHub に置く（同じ名前は上書き）
+       ④ 余ったぶんだけを消す（しっぽ違いも ここで片づく）
+       ⑤ 最後に .md
+     どこで転んでも、src/bansho/ が空になりません。                */
+  for (var i = 0; i < shashin.length; i++) {
+    var b = _dataURI(shashin[i]);
+    if (!b) return kotae({ ok: false, riyu: '写真の形が読めません' });
+    var shippo = _shippo(b);
+    if (!shippo) {
+      return kotae({ ok: false, riyu: 'この形の写真は受けとれません（JPEG・PNG・WebPだけ）' });
     }
+    if (b.getBytes().length > KB_MAX * 1024) {
+      return kotae({ ok: false, riyu: '写真が大きすぎます（1枚 ' + KB_MAX + 'KBまで）' });
+    }
+    uri.push({ na: ('0' + (i + 1)).slice(-2) + shippo, b: b,
+               b64: Utilities.base64Encode(b.getBytes()) });
   }
-  var pdf = null;
+  var pdf = null, pdfB = null;
   if (pdfs.length) {
     var pb = _dataURI_pdf(pdfs[0]);
     if (!pb) return kotae({ ok: false, riyu: 'PDFの形が読めません' });
     if (pb.getBytes().length > PDF_MB_MAX * 1024 * 1024) {
       return kotae({ ok: false, riyu: 'PDFが大きすぎます（' + PDF_MB_MAX + 'MBまで）' });
     }
-    _kesu_folder('src/shiryo/' + slug, slug);          // 古いぶんを先に消す
-    folder.createFile(pb.setName('shiryo.pdf'));
     pdf = Utilities.base64Encode(pb.getBytes());
+    pdfB = pb;
   }
+  /* ② 手もとの控え（Drive）。ここから先は、もう断りません。 */
+  for (var i2 = 0; i2 < uri.length; i2++) {
+    folder.createFile(uri[i2].b.setName(uri[i2].na));
+  }
+  if (pdfB) folder.createFile(pdfB.setName('shiryo.pdf'));
 
   var hon = d.m || '';
   // 推しポイントは40字まで（2026-09-23 依頼）。
@@ -989,20 +1028,35 @@ function _naosu(d, kanriMado) {
      以前は古い by を必ず優先していたため、名前や所属を
      書き換えても更新されなかった。古い公開済み画面だけ互換用に by を引きつぐ。 */
   if (kanri && d.kanri && !d.by_atarashii) n.by_hyoji = _arau(d.by).slice(0, 100);
-  /* ★ 2026-09-23、ここが抜けていました（実際にビルドが止まりました）。
-     写真を送りなおすと、上で **GitHubの古い写真を消して**いるのに、
-     新しい写真は Drive（folder.createFile）にしか置いていませんでした。
-     .md は bansho: を指したままなので、写真の無いフォルダを指すことになり、
-     build.py の検問が「src/bansho/ にありません」で止まります。
-     ＝ なおした瞬間に、サイト全体が更新できなくなっていました。
-     ★.md より先に押します。.md が先だと、写真が揃う前に組み立てが走ります。 */
+  /* ③ 新しいぶんを GitHub に置きます。
+     ★2026-09-23、ここが丸ごと抜けていました（実際にビルドが止まりました）。
+       新しい写真を Drive にしか置いていなかったため、.md が指す
+       src/bansho/<slug>/ が空になり、build.py の検問で止まりました。
+     ★.md より先に押します。.md が先だと、写真が揃う前に組み立てが走ります。
+     ★同じ名前は _github が sha を取って上書きするので、消さずに重ねられます。 */
+  /* GitHub が途中で断ることがあります（鍵切れ・向こうの不調）。
+     投げっぱなしにすると、管理画面は「保存しています…」のまま止まります。
+     どこまで行ったか分からないので、そのとおりに伝えます。 */
+  try {
   for (var j = 0; j < uri.length; j++) {
     _github('src/bansho/' + slug + '/' + uri[j].na, uri[j].b64,
             '板書を1枚ふやす（' + slug + '）');
   }
+  /* ④ 余ったぶんだけ消します（置いたあとに消す）。
+     ★3枚だったものが2枚になったときの 03、しっぽが変わったときの
+       01.webp が、ここで片づきます。1枚も置いていないときは、
+       何も触りません（写真はそのまま残す、という意味だからです）。 */
+  if (uri.length) {
+    var nokosu = [];
+    for (var k = 0; k < uri.length; k++) nokosu.push(uri[k].na);
+    _amari_kesu('src/bansho/' + slug, nokosu, slug);
+  }
   if (pdf) {
     _github('src/shiryo/' + slug + '/shiryo.pdf', pdf,
             '資料を1つふやす（' + slug + '）');
+    /* 古いページの絵（01.webp …）を落とします。この回の Actions が
+       置いたばかりのPDFを絵に変えてから、組み立てが走ります。 */
+    _amari_kesu('src/shiryo/' + slug, ['shiryo.pdf'], slug);
   }
 
   var md = _md(slug, n);
@@ -1011,6 +1065,10 @@ function _naosu(d, kanriMado) {
   if (!pdf && moto.shiryo)        md = md.replace(/\n---\n/, '\nshiryo: 送ってもらった資料|' + slug + '\n---\n');
   _github('src/jissen/' + moto.michi_na, Utilities.base64Encode(md, Utilities.Charset.UTF_8),
           '実践を1件 なおす（' + slug + '）');
+  } catch (err) {
+    return kotae({ ok: false, riyu: '途中で止まりました（写真は入れかわっているかもしれません）。'
+                                  + 'もう一度ためしてください：' + String(err).slice(0, 120) });
+  }
   _shiraseru_naoshita(slug, d, n);
   return kotae({ ok: true });
 }
@@ -1145,6 +1203,26 @@ function _kesu_folder(michi, slug) {
   var n = 0;
   for (var i = 0; i < ichiran.length; i++) {
     _github_kesu(ichiran[i].path, ichiran[i].sha, '板書を1件消す（' + slug + '）');
+    n++;
+  }
+  return n;
+}
+
+/* 新しく置いたもの以外を消す（_naosu の差しかえ用）。
+   ★**置いたあとに消す**のが肝です。先に消して途中で転ぶと、
+     src/bansho/<slug>/ が空のまま残り、.md は bansho: を指したままなので
+     build.py の検問で止まり、その1件のせいで**サイト全体が更新できなく
+     なります**（2026-09-23 に実際に起きました）。
+   ★しっぽ違い（01.webp → 01.jpg）も、ここで一緒に片づきます。
+     名前で残すものを選ぶので、01.webp は「余り」になります。 */
+function _amari_kesu(michi, nokosu, slug) {
+  var ichiran = _github_miru(michi);
+  if (!ichiran || !ichiran.length) return 0;
+  var n = 0;
+  for (var i = 0; i < ichiran.length; i++) {
+    var na = ichiran[i].name || '';
+    if (!na || nokosu.indexOf(na) >= 0) continue;
+    _github_kesu(ichiran[i].path, ichiran[i].sha, '古いぶんを1つ消す（' + slug + '）');
     n++;
   }
   return n;
