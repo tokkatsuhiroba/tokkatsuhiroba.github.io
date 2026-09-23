@@ -933,7 +933,8 @@ def build_komari(komari):
                                                ja=esc_html(a['scene'] or naiyo_ja(a['naiyo'])))
                              if a['naiyo'] else ''),
                         grade=('　' + esc_html(a['grade'])) if a['grade'] else '',
-                        by=(KOMARI_BY.format(by=esc_html(a['by'])) if a['by'] else ''),
+                        by=(KOMARI_BY.format(by=esc_html(sensei_ja(a['by'])))
+                            if a['by'] else ''),
                         hon=md_html(a['hon']))
         for a in komari)
 
@@ -3099,6 +3100,22 @@ YOTSU = (
 )
 
 
+def sensei_ja(by):
+    """送ってくださったお名前に「先生」を付ける（2026-09-23 依頼）。
+       「西野穂乃花（徳島県…千松小学校）」→「西野穂乃花先生（徳島県…千松小学校）」
+       ★学校名（かっこの中）は、そのまま残します。どこの実践かが分かるためです。
+       ★もう「先生」が付いているときは、足しません。
+       ★名前が無いとき（出してよい に印が無いとき）は、そのまま返します。"""
+    t = (by or '').strip()
+    if not t:
+        return t
+    i = min([x for x in (t.find('（'), t.find('(')) if x >= 0] or [len(t)])
+    na, ato = t[:i].strip(), t[i:]
+    if not na or re.search(r'(先生|教諭|教員|さん)$', na):
+        return t
+    return na + '先生' + ato
+
+
 def naiyo_ichiran():
     """('gakkyu', '学級活動') の組。4つの内容の id は クラス名の n- を取ったもの。"""
     return [(c[2:], ja) for c, _, ja, _, _ in YOTSU]
@@ -3266,7 +3283,7 @@ JFUDA = """      <article class="fuda{kcls}" id="j-{slug}">
         <p class="fuda-me"><a class="fuda-tag t--{nid}" href="#naiyo-{nid}">{naiyo}</a>{kindtag}{meta}</p>
         <h3 class="fuda-h">{title}</h3>
         <p class="fuda-lead">{lead}</p>
-{more}{setb}{weekly}        <p class="fuda-by">提供：{by}</p>
+{more}{setb}{weekly}        <p class="fuda-by">実践者：{by}</p>
       </article>"""
 
 JFUDA_MORE = """        <details class="hiraku">
@@ -3340,7 +3357,8 @@ def build_jissen_hiroba(jissen, goods):
             kcls=' fuda--gidai' if gidai else '',
             kindtag='<span class="fuda-kind">議題</span>' if gidai else '',
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
-            more=more, setb=setb + shb + ban, weekly=shu, by=esc_html(a['by'])))
+            more=more, setb=setb + shb + ban, weekly=shu,
+            by=esc_html(sensei_ja(a['by']))))
     # 2026-09-21：札をぜんぶ縦に並べると、ここだけでスマホ5画面ありました。
     #   上から JISSEN_UE_N 枚だけ出して、のこりはこのページの中のふたへ。
     #   4つの内容から #j-◯◯ で飛んできたときは、akeru() がふたを先に開きます。
@@ -3375,7 +3393,7 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
+{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">実践者：{by}</span>\
 <span class="bfuda-te">{zen}\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span>印刷</span></button>\
 <button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span>画像保存</span></button></span></p>
@@ -3515,7 +3533,7 @@ def build_bansho(jissen):
             ken=esc_html(a.get('ken') or ''), shi=esc_html(a.get('shi') or ''),
             chiho=esc_html(a.get('chiho') or ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
-            mado=mado, shiryo=sh, zen=zen, more=more, by=esc_html(a['by']),
+            mado=mado, shiryo=sh, zen=zen, more=more, by=esc_html(sensei_ja(a['by'])),
             ICON_KAMI=ICON_KAMI, ICON_GA=ICON_GA,
             ima=esc_html(ima)))
     return (JIBUN_TANA + '\n' + sagasu_obi(aru)
@@ -3555,7 +3573,7 @@ def build_kanri_list(jissen):
         sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by'],
                            a.get('chiiki') or ''))
         meta = '・'.join(x for x in (a.get('chiiki') or '', a['scene'], a['grade'],
-                                     ja_md(a['d']), '提供：' + a['by']) if x)
+                                     ja_md(a['d']), '実践者：' + sensei_ja(a['by'])) if x)
         out.append(
             '      <article class="kanri-card" data-v="%s" data-date="%s" data-sagasu="%s">\n'
             '        <div><h3>%s</h3><p data-kanri-meta>%s</p>'
@@ -3970,7 +3988,7 @@ SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
       <div class="sagasu-gyo">
         <label class="sagasu-l" for="sagasu-ji">さがす</label>
         <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
-               placeholder="題・中身・学年・提供者から（例：たてわり）">
+               placeholder="題・中身・学年・実践者から（例：たてわり）">
       </div>
       <div class="sagasu-gyo">
         <span class="sagasu-l" id="sagasu-n-l">内容</span>
@@ -4217,7 +4235,11 @@ def kazari_defs(tsukatta, buhin, kyara, mark):
         hako, atama = hakos[tane]
         if name not in hako:
             raise Tomeru('#%s%s を呼んでいますが、その名前の絵がありません' % (atama, name))
-        g.append('<g id="%s%s">%s</g>' % (atama, name, hako[name][2]))
+        # data-vb … 画像保存のとき、この絵を1枚のSVGに組み直すために使います
+        #   （<use> で出すときは外がわの viewBox で決まるので、絵そのものは
+        #     大きさを持っていません。ここに書いておかないと 0×0 になります）
+        g.append('<g id="%s%s" data-vb="0 0 %g %g">%s</g>'
+                 % (atama, name, hako[name][0], hako[name][1], hako[name][2]))
     return ''.join(g)
 
 
@@ -4885,8 +4907,8 @@ def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
     tane = ('<svg class="tane" aria-hidden="true" focusable="false" width="0" height="0" '
             'style="position:absolute"><defs>%s</defs></svg>' % ''.join(g))
     # 呼んでいるのに入っていない絵が1つでもあれば、止める
-    aru = (set(re.findall(r'<g id="(ill-[^"]+)">', tane))
-           | set(re.findall(r'<g id="(ill-[^"]+)">', html)))
+    aru = (set(re.findall(r'<g id="(ill-[^"]+)"', tane))
+           | set(re.findall(r'<g id="(ill-[^"]+)"', html)))
     yobu = set(re.findall(r'href="#(ill-[^"]+)"', html))
     nai = yobu - aru
     if nai:

@@ -136,6 +136,49 @@ img,svg{max-width:100%}
 }
 .hero-e{display:block;width:100%;height:auto}
 .hero-e svg{display:block;width:100%;height:auto}
+
+/* ══ スマホでは、学校の絵を大きく出す（2026-09-23 依頼）══════════
+   3200×1550 の絵を 幅375pxに収めると、**縦が182pxしか**ありません。
+   校舎も校庭も教室も、その182pxの中に全部入るので、子ども1人は10px強。
+   小さく見えて当たり前でした。
+
+   絵を --hero-bai 倍の幅で置いて、はみ出したぶんは横にすべらせます。
+   **最初に見えるのは、いちばん左の「学級会の教室」**です。
+   このサイトの芯は学級活動なので、そこを主役にします。
+   指で動かすと、校庭・校舎・児童会の掲示・クラブが出てきます。
+
+   ★絵は1枚のまま。切り出しも差しかえもしていません。
+   ★動きは絵の中にあるので、大きくしても壊れません。
+   ★大きさを変えたいときは --hero-bai だけを動かしてください
+     （1.9で 縦345px・子ども約20px。2.4にすると 縦436pxになります）。 */
+@media (max-width:719px){
+  .hero-e--hiro{
+    --hero-bai:1.9;
+    overflow-x:auto;overflow-y:hidden;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .hero-e--hiro::-webkit-scrollbar{display:none}
+  .hero-e--hiro > svg{
+    width:calc(100% * var(--hero-bai));max-width:none;
+  }
+  /* 「よこにスライド →」の案内。絵の右下に重ねます。
+     いちど動かすと、JavaScript が消します。 */
+  .hero-slide{
+    position:absolute;z-index:2;
+    inset-inline-end:10px;bottom:10px;margin:0;
+    padding:5px 12px;border-radius:999px;
+    background:rgba(252,251,247,.92);color:var(--ink);
+    border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);
+    font-family:var(--f-maru);font-weight:700;font-size:11.5px;letter-spacing:.06em;
+    pointer-events:none;
+    transition:opacity .3s ease;
+  }
+  .hero-slide--kesu{opacity:0}
+}
+/* 広い画面では、すべる必要がないので出しません */
+@media (min-width:720px){ .hero-slide{display:none} }
 .hero-koe{
   position:relative;order:-1;z-index:2;width:100%;max-width:1280px;margin-inline:auto;
   text-align:center;padding:18px var(--pad) 10px;
@@ -2817,7 +2860,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .komari-by{
   margin:12px 0 0;font-size:12.5px;color:var(--mute);text-align:end;
 }
-.komari-by::before{content:"提供："}
+/* 2026-09-23：「提供」をやめました。困りごとは 書いた人 です */
+.komari-by::before{content:"書いた人："}
 
 /* 「中身は1か所」にしたあとの、行き先の行（2026-09-22）。
    数と行き先だけを出します。札そのものは、本物の場所にしかありません。 */
@@ -3823,3 +3867,21 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .bfuda-te{gap:6px}
   .bfuda-te .bansho-b{padding:7px 3px;font-size:calc(11px * var(--moji))}
 }
+
+/* ══ 頭のボタンと、字のつまみ（2026-09-23 依頼）════════════════
+   ① スマホで「実践を送る」「みんなの実践を見る」が画面いっぱいに伸びて、
+      ボタンではなく帯に見えていました。**まんなかに寄せて、幅を決めます。**
+      2つとも同じ幅なので、縦に並べても そろって見えます。
+   ② 字の大きさのつまみ（あ）は、右上でLINEの案内と並んでいました。
+      **左上**へ離します。「読むための道具」と「外へ出る入口」は、
+      同じかたまりに見せないほうが迷いません。
+      ★ホームの頭だけを直します（ほかのページは戻り道の行の右はしのまま）。 */
+@media (max-width:719px){
+  .hero-botan{align-items:center}
+  .hero-botan .btn{width:min(72vw,300px);padding-inline:20px}
+}
+.hero-koe .ue-migi{width:100%;margin-inline:0;justify-content:space-between}
+.hero-koe .ue-migi .moji{order:-1}                 /* つまみを左はしへ */
+/* 札は、ボタンの位置に合わせて「左はしから右へ」ひらきます
+   （右づめのままだと、左上では画面の外に出ます） */
+.hero-koe .ue-migi .moji .moji-tana{inset-inline-start:0;inset-inline-end:auto}

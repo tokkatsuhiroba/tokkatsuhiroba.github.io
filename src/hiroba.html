@@ -3,6 +3,10 @@
   <!-- 絵は1枚だけ。スマホでも同じ全景を出します（2026-09-23）。
        ここは <use> ではなく絵の本物です。動かすために本物が要ります。 -->
   <div class="hero-e hero-e--hiro"><!--BUILD:HIROBA--></div>
+  <!-- スマホで、絵を横にすべらせられることの案内（2026-09-23 依頼）。
+       いちど動かしたら消えます（読むのを邪魔しないため）。
+       ★広い画面では出しません（すべる必要がないため）。 -->
+  <p class="hero-slide" aria-hidden="true">よこにスライド　→</p>
   <div class="hero-koe">
     <!-- LINEの案内と、字の大きさのつまみ（2026-09-23 依頼）。
          つまみは JavaScript がこの中へ入れます。
@@ -119,7 +123,7 @@
         <p class="okuru-check">
           <label for="nt-ko"><input type="checkbox" id="nt-ko">
             <span>サイトに<b>名前を出してよい</b></span></label>
-          <span class="okuru-check-chu">入れなければ「提供：送ってくださった先生」と出ます。</span>
+          <span class="okuru-check-chu">入れなければ「実践者：送ってくださった先生」と出ます。</span>
         </p>
 
         <p class="okuru-kiwo"><b>送るまえに かならず</b>主催の案内と、日づけを見くらべてください。<b>押すと、そのまま公開のこよみに出ます。</b></p>
@@ -469,6 +473,16 @@
      bansho: は、そのままにしてあります（URLは読まれないので、配った先が生きます）。
      写真の実体は、このページにだけ入っています（同じ画像を2ページに埋めないため）。 -->
 <section class="sec sec--ki" id="bansho">
+  <!-- 画像保存のときだけ使う4人（学級活動＝学活くん／学校行事＝行人／
+       児童会活動＝児童会ちゃん／クラブ活動＝クラブマン）。
+       ★画面には出しません。ここに置くのは、この4人を **このページの絵の
+         入れ物**に入れてもらうためです（build.py の tsukau_e が、呼ばれた
+         絵の名前を数えて、呼んだぶんだけを入れる作りになっています）。
+       ★この中に絵の名前を「字で」書かないこと。検問が本物の呼び出しと
+         まちがえて、ビルドが止まります（2026-09-23 に1度 踏みました）。 -->
+  <svg class="ga-tane" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+    <use href="#ill-k-gakkatsu"/><use href="#ill-k-gyoji"/><use href="#ill-k-jidokai"/><use href="#ill-k-club"/>
+  </svg>
   <i class="kazari" data-b="kokuban" style="--y:24%;--w:126px;--d:.2s"></i>
   <i class="kazari kazari--migi" data-k="jidokai-share" style="--y:50%;--w:106px;--d:1.3s"></i>
   <div class="uchi">
@@ -779,7 +793,7 @@
       <!-- お名前（2026-09-22）。必須にしました。
            ★書いてもらうことと、サイトに出すことは別です。
              出すかどうかは、下のチェックで本人が決めます。
-             チェックが無ければ「提供：送ってくださった先生」のままです。 -->
+             チェックが無ければ「実践者：送ってくださった先生」のままです。 -->
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-na">お名前<span class="okuru-hissu">必須</span></label>
         <input class="okuru-i" type="text" id="okuru-na" name="na" maxlength="40"
@@ -795,7 +809,7 @@
       <p class="okuru-check">
         <label for="okuru-ko"><input type="checkbox" id="okuru-ko" name="ko">
           <span>サイトに<b>名前を出してよい</b></span></label>
-        <span class="okuru-check-chu">入れなければ「提供：送ってくださった先生」と出ます。<br>
+        <span class="okuru-check-chu">入れなければ「実践者：送ってくださった先生」と出ます。<br>
           どちらでも、お名前は管理人にだけ届きます。</span>
       </p>
 
@@ -864,6 +878,21 @@
 <script>
 /*BUILD:STORAGE*/
 /*BUILD:NURU*/
+
+/* ══ 絵を横にすべらせたら、案内を消す（2026-09-23 依頼）══════
+   スマホでは、学校の絵を大きく出して横にすべらせます。
+   いちど動かせば、もう案内は要りません。                      */
+(function(){
+  'use strict';
+  var e = document.querySelector('.hero-e--hiro');
+  var a = document.querySelector('.hero-slide');
+  if(!e || !a) return;
+  var kesu = function(){
+    a.classList.add('hero-slide--kesu');
+    e.removeEventListener('scroll', kesu);
+  };
+  e.addEventListener('scroll', kesu, {passive: true});
+})();
 
 /* ══ 字の大きさのつまみ（2026-09-23 依頼）══════════════════
    「おいおい調整できるように」という話から、読む人が自分で
@@ -2498,16 +2527,47 @@
     return {ms: ms, h: y - aki};
   }
 
+  /* 4つの内容に合わせた4人（2026-09-23 依頼）。
+     絵の中に **小さく** 1人だけ入れます。どの内容の実践かが、
+     字を読まなくても分かります。                                    */
+  var GA_KYARA = {gakkyu: 'gakkatsu', gyoji: 'gyoji',
+                  jidokai: 'jidokai', club: 'club'};
+
+  function ga_kyara_yomu(fuda){
+    /* ページの絵の入れ物（<defs>）にある1人を、1枚のSVGに組み直して読みます。
+       ★外へは出ません。同じページの中にある絵を、そのまま使うだけです。
+       ★<use> で出すときは外がわの viewBox で大きさが決まるので、
+         絵そのものは大きさを持っていません。data-vb に書いてあります。 */
+    var na = GA_KYARA[fuda.getAttribute('data-naiyo') || ''];
+    if(!na) return Promise.resolve(null);
+    var g = document.getElementById('ill-k-' + na);
+    if(!g) return Promise.resolve(null);
+    var vb = (g.getAttribute('data-vb') || '').split(/\s+/);
+    if(vb.length !== 4) return Promise.resolve(null);
+    var w = parseFloat(vb[2]), h = parseFloat(vb[3]);
+    if(!(w > 0 && h > 0)) return Promise.resolve(null);
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h +
+              '" viewBox="' + vb.join(' ') + '">' + g.innerHTML + '</svg>';
+    return new Promise(function(ok){
+      var im = new Image();
+      im.onload  = function(){ ok(im.naturalWidth ? im : null); };
+      im.onerror = function(){ ok(null); };
+      im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+  }
+
   function ga_sensei(by){
-    /* 「提供：西野穂乃花（徳島県…）」→「西野穂乃花先生」
-       ★学校名は落とします。絵の中では、名前だけで足ります。 */
-    var t = (by || '').replace(/^\s*提供[：:]\s*/, '');
+    /* 「実践者：西野穂乃花先生（徳島県…）」→「西野穂乃花先生」
+       ★学校名は落とします。絵の中では、名前だけで足ります。
+       ★頭の札は「実践者：」です（2026-09-23 に「提供：」から変えました）。
+         古い書き方でも通るように、どちらも落とします。 */
+    var t = (by || '').replace(/^\s*(実践者|提供)[：:]\s*/, '');
     t = t.split('（')[0].split('(')[0].trim();
     if(!t) return '';
     return /(先生|教諭|教員)$/.test(t) ? t : t + '先生';
   }
 
-  function ga_tsukuru(fuda, url, shashin){
+  function ga_tsukuru(fuda, url, shashin, kyara){
     var naka = GA_W - GA_P * 2;
     var tag  = fuda.querySelector('.bfuda-tag');
     var kind = fuda.querySelector('.fuda-kind');
@@ -2698,8 +2758,15 @@
       ctx.fillStyle = '#63625C'; ctx.font = '500 25px ' + GA_HON;
       ctx.fillText('QRコードを読みこむと、', tx, qy + 76);
       ctx.fillText('この実践がそのままひらきます。', tx, qy + 112);
-      ctx.fillStyle = '#1C1C1A'; ctx.font = '700 22px ' + GA_JI;
-      ctx.fillText('特別活動の情報が、溜まる場。', tx, qy + 160);
+      ctx.fillStyle = '#1C1C1A'; ctx.font = '700 24px ' + GA_JI;
+      ctx.fillText('特別活動で、輝く。', tx, qy + 158);
+      /* 4つの内容に合わせた1人を、右はしに小さく（2026-09-23 依頼）。
+         QRと字のじゃまをしない大きさ・場所にします。 */
+      if(kyara){
+        var kh = 132, kw = Math.round(kyara.naturalWidth * kh / kyara.naturalHeight);
+        var kx = GA_W - GA_P - kw, ky = qy + atari - kh;
+        if(kx > tx + 420) ctx.drawImage(kyara, kx, ky, kw, kh);
+      }
     } else {
       ctx.fillStyle = '#1C1C1A'; ctx.font = '900 32px ' + GA_JI;
       ctx.fillText('TOKKATSU広場へ', GA_P, fy + 40);
@@ -2724,9 +2791,9 @@
     /* 書体が来る前に描くと、別の書体で焼きついてしまいます */
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
     .then(function(){
-      return ga_e_yomu(fuda);
-    }).then(function(shashin){
-      var c = ga_tsukuru(fuda, botan.getAttribute('data-url') || location.href, shashin);
+      return Promise.all([ga_e_yomu(fuda), ga_kyara_yomu(fuda)]);
+    }).then(function(x){
+      var c = ga_tsukuru(fuda, botan.getAttribute('data-url') || location.href, x[0], x[1]);
       var na = (ga_moji(fuda.querySelector('.bfuda-h')) || '実践')
                  .replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40) + '.png';
       return new Promise(function(ok){ c.toBlob(ok, 'image/png'); }).then(function(b){
