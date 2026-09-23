@@ -3691,7 +3691,7 @@ NAIYO_KYARA = {'gakkyu': 'gakkatsu', 'gyoji': 'gyoji',
                'jidokai': 'jidokai', 'club': 'club'}
 
 BFUDA_OSHI = """        <div class="bfuda-oshi-w">
-{kao}          <p class="bfuda-oshi"><span class="bfuda-oshi-l">推しポイント</span>{honbun}</p>
+{kao}          <p class="bfuda-oshi"><span class="bfuda-oshi-l">推しポイント</span><span class="bfuda-oshi-t">{honbun}</span></p>
         </div>
 """
 

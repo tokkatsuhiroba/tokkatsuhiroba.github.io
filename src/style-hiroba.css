@@ -3338,7 +3338,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      札を文と同じ行へ　 … 2行、空き  23 / 107px
    6件のうち4件で1行減り、行の途中の空きは どれも25px以下になりました。 */
 .bfuda-oshi-l{
-  display:inline-block;margin:0 8px 0 0;
+  flex:none;display:inline-block;margin:0;
   padding:1px 9px;border-radius:999px;
   background:var(--accent);color:var(--bg);
   /* ★2026-09-23 依頼：ここも UD書体（本文と同じ）にしました。
@@ -3363,7 +3363,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      語の途中で折れることはありますが、「変えるだけ。」のような
      短いかたまりは、そのまま残ります（実測で確認）。 */
   word-break:normal;text-wrap:wrap;
+  /* ★2行めが、札の**下にもぐらない**ようにします（2026-09-23 依頼
+     「この推しポイントの下に２行目が行かないようにして欲しいね」）。
+     札と文を左右に分けて、文のかたまりを1本の柱にします。
+     折り返した2行めは、1行めの頭とそろいます。 */
+  display:flex;align-items:flex-start;gap:8px;
 }
+.bfuda-oshi-t{flex:1 1 auto;min-width:0}
 /* ── 推しポイントの左に、案内役が1人（2026-09-23 依頼）────────
    4つの内容に合わせた1人が、推しポイントの横に立ちます。
    ★人は **添えもの**です。主役は、書いてくださった1行のほうなので、
