@@ -4528,7 +4528,7 @@ def build_igi(kyara):
             #   ★LINEへの道は、ほかに3つ残っています（上のLINEの札・この節の
             #     下のボタン・足もとのボタン）。ここから消えても行けます。
             '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
-            '<span>実践や研究日程を共有して、<b>特別活動を盛んに</b>したいです。</span>'
+            '<span>実践や研究日程を共有して、<b>特別活動を盛ん</b>にしたいです。</span>'
             '</p><div class="igi-friends">'
             '<svg viewBox="0 0 345 143" aria-hidden="true" focusable="false">'
             '<use href="#ill-k-group-shoulders"/></svg>'
@@ -4545,7 +4545,9 @@ def build_igi(kyara):
             '    <ul class="igi-l">\n' + '\n'.join(men) + '\n    </ul>\n'
             # ★ここは切り分けたあとに作るので、{{◯◯}} は置きかわりません。
             #   LINKS から直に入れます。
-            '    <p class="igi-b"><a class="btn" href="' + LINKS['LINE_OC'] + '" '
+            # 2026-09-23 依頼：LINEの案内は ぜんぶ「白地＋緑」でそろえます。
+            #   ここだけ btn--line が付いておらず、赤いボタンでした。
+            '    <p class="igi-b"><a class="btn btn--line" href="' + LINKS['LINE_OC'] + '" '
             'target="_blank" rel="noopener noreferrer">'
             'みんなの特活ひろば（仮）へ</a></p>\n'
             '  </div>\n'
@@ -5238,7 +5240,7 @@ def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
 KOTOBA = {
     # ── 節の見出し ──
     'TOKKATSU広場とは？': ('What TOKKATSU Hiroba is', 'ما هو ميدان توكّاتسو'),
-    '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>実践や研究日程を共有して、<b>特別活動を盛んに</b>したいです。</span>':
+    '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>実践や研究日程を共有して、<b>特別活動を盛ん</b>にしたいです。</span>':
         ('<span>A site for raising the <b>flow of information</b> in Japanese special activities.</span>'
          '<span>By sharing practices and study-meeting dates, we want to see '
          '<b>special activities thrive</b>.</span>',

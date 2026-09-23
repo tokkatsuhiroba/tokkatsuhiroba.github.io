@@ -2620,7 +2620,31 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* LINE への導線だけは緑。9色の --midori を使います（LINE の #06C755 に
    ほぼ重なるので、10色めを増やさずに「LINEっぽさ」が出ます）。
    字は墨で 6.8:1。白抜きにすると 2.4:1 しか出ないので、白は枠と影だけに使います。 */
-.foot .btn--line{background:var(--midori);color:var(--ink);border-color:var(--bg)}
+/* ══ LINEの案内は ぜんぶ「緑地に白字」（2026-09-23 依頼）══════════
+   赤いボタン・白いボタン・緑のボタンが混ざっていて、どれがLINEか
+   ひと目で分かりませんでした。**LINEへ出るものは、緑地に白字**で
+   そろえます。
+
+   ★緑は --accent（#1F5C3F）を使います。LINEの緑（#06C755）に
+     白い字を乗せると、コントラストが 2.5:1 しかなく読めません。
+     --accent なら 8:1 を超えます。サイトの色の1つでもあります。
+   ★中の「LINE」の札だけは、緑地の上で消えないよう **白地に緑字**に
+     ひっくり返します。
+   ★影は墨のままにします。ここはサイトぜんぶの形なので、
+     LINEのものだけ形を変えません。 */
+.btn--line{
+  background:var(--accent);color:var(--bg);border-color:var(--ink);
+}
+.btn--line .btn-ya,.btn--line .btn-ji{color:inherit}
+.btn--line:hover,.btn--line:focus-visible{background:#164a31}
+/* 足もとは夜の地。同じ緑地に白字でそろえます */
+.foot .btn--line{background:var(--accent);color:var(--bg);border-color:var(--bg)}
+/* 上の札も、同じ緑地に白字に */
+.line-sumi{background:var(--accent);color:var(--bg);border-color:var(--ink)}
+.line-sumi i{color:var(--bg)}
+.line-sumi:hover,.line-sumi:focus-visible{background:#164a31}
+/* 「LINE」の札は、緑の上では白地に緑字へ ひっくり返します */
+.line-sumi b{background:var(--bg);color:var(--accent)}
 .foot .btn--yoru:focus-visible{outline:3px solid var(--bg);outline-offset:3px}
 
 @media (max-width:719px){
