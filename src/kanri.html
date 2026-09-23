@@ -41,6 +41,14 @@
     <input class="sagasu-i kanri-sagasu" type="search" id="kanri-sagasu"
            autocomplete="off" placeholder="例：学級会、5年、運動会">
     <p class="kanri-kazu" id="kanri-kazu" aria-live="polite"></p>
+
+    <!-- ══ LINE用の文（2026-09-23 依頼）══════════════════════════
+         LINEに何を書くか考えるところが、いちばん時間を食います。
+         **文はこちらが作ります。管理者は貼るだけ**です。
+         ★こちらからは1バイトも送りません。オープンチャットへ外から
+           書きこむ道はありません。残り1押しにするのが限界です。 -->
+    <!--BUILD:KANRI_LINE-->
+
     <div class="kanri-list" id="kanri-list">
       <!--BUILD:KANRI_LIST-->
     </div>
@@ -426,6 +434,93 @@
     (window.crypto || window.msCrypto).getRandomValues(b);
     return [].map.call(b, function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
   }
+  /* ══ LINE用の文をコピー（2026-09-23 依頼）══════════════════
+     ★写すだけです。**送信はしません**（原則2）。
+     ★紹介ずみの印は、この端末の localStorage にだけ残します。
+       外へは出ません。同じ実践をもう一度写すことも止めません
+       （印が出るだけです）。 */
+  var ZUMI_NA = 'tokkatsu-line-zumi';
+
+  function zumi_yomu(){
+    try{ return JSON.parse(localStorage.getItem(ZUMI_NA) || '{}') || {}; }
+    catch(e){ return {}; }
+  }
+  function zumi_kaku(z){
+    try{ localStorage.setItem(ZUMI_NA, JSON.stringify(z)); }catch(e){}
+  }
+  function zumi_hi(iso){
+    var d = String(iso || '').split('-');
+    return d.length === 3 ? (Number(d[1]) + '/' + Number(d[2])) : iso;
+  }
+  function zumi_utsusu(){
+    var z = zumi_yomu();
+    cards.forEach(function(c){
+      var p = c.querySelector('[data-zumi]');
+      if(!p) return;
+      var hi = z[c.getAttribute('data-v')];
+      p.hidden = !hi;
+      p.textContent = hi ? ('LINEで紹介ずみ（' + zumi_hi(hi) + '）') : '';
+    });
+  }
+  function zumi_tsukeru(c){
+    if(!c) return;
+    var d = new Date(), z = zumi_yomu();
+    z[c.getAttribute('data-v')] =
+      d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2)
+      + '-' + ('0' + d.getDate()).slice(-2);
+    zumi_kaku(z); zumi_utsusu();
+  }
+
+  /* 写すところ。clipboard が断られたら、古いやり方に落とします
+     （**黙って何も起きない**のが、いちばん困るので）。 */
+  function line_furui(ji){
+    try{
+      var t = document.createElement('textarea');
+      t.value = ji; t.setAttribute('readonly', '');
+      t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t);
+      t.select(); t.setSelectionRange(0, ji.length);
+      var ok = document.execCommand('copy');
+      t.remove();
+      return ok;
+    }catch(e){ return false; }
+  }
+  function line_shirase(b, ji){
+    if(b.dataset.matte) return;
+    var moto = b.textContent;
+    b.dataset.matte = '1'; b.textContent = ji;
+    setTimeout(function(){ b.textContent = moto; b.removeAttribute('data-matte'); }, 2000);
+  }
+  function line_utsusu(b){
+    var ji = b.getAttribute('data-line');
+    if(!ji) return;
+    var owari = function(ok){
+      line_shirase(b, ok ? 'コピーしました' : 'コピーできません');
+      if(ok) zumi_tsukeru(b.closest('.kanri-card'));
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ji).then(function(){ owari(true); },
+        function(){ owari(line_furui(ji)); });
+      return;
+    }
+    owari(line_furui(ji));
+  }
+
+  /* まだ公開されていない実践には、貼るアドレスがありません。
+     （いまは この一覧に載るのは公開ずみだけですが、そこが変わっても
+       「押せるのに中身が無いボタン」を出さないように。） */
+  [].slice.call(document.querySelectorAll('.kanri-line-b')).forEach(function(b){
+    if(b.getAttribute('data-line') || b.disabled) return;
+    b.disabled = true;
+    b.insertAdjacentHTML('afterend',
+      '<span class="kanri-line-chu">公開してから使えます</span>');
+  });
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('.kanri-line-b[data-line]');
+    if(b) line_utsusu(b);
+  });
+  zumi_utsusu();
+
   function key_yomu(){ try{ return sessionStorage.getItem(KEY_NA) || ''; }catch(e){ return ''; } }
   function key_shimau(k){ try{ sessionStorage.setItem(KEY_NA, k); }catch(e){} }
   function key_kesu(){

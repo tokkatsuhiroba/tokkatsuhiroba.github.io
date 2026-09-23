@@ -3928,6 +3928,84 @@ def build_bansho(jissen, kyara):
             + '\n'.join(fuda) + '\n    </div>')
 
 
+# ══ LINE用の文（2026-09-23 依頼・共有とお題 v1.0 ②）════════════
+#   LINEの参加者は1000人、サイトに届いた実践は数件。足りないのは機能では
+#   なく、**実践が人から人へ渡っていく道**でした。
+#   管理者がいちばん時間を使うのは「LINEに何を書くか考える」ところなので、
+#   **文面はこちらが作り、管理者は貼るだけ**にします。
+#
+#   ★作るだけです。**こちらからは1バイトも送りません**（原則2）。
+#     オープンチャットに外から書きこむ道はありません（→ よみかた.md）。
+#     できるのは「残り1押し」にするところまでです。
+#   ★学校名は入れません（公開ページ・画像保存と同じ扱い → namae_dake）。
+#   ★アドレスは jissen_url() から取ります。式をここに書き写しません。
+NANASHI = '送ってくださった先生'       # 名前を出してよい印が無いとき
+
+
+def mijikaku_ten(ji, n):
+    """n字を超えたら、うしろを「…」にします（…も1字と数えます）。"""
+    ji = (ji or '').strip()
+    return ji if len(ji) <= n else ji[:n - 1] + '…'
+
+
+def line_jissen_bun(a):
+    """届いた実践1件を、LINEにそのまま貼れる文にします。"""
+    ba, nokori = ba_wakeru(a)
+    gyo = ['【新しい実践が届きました】', a['title'],
+           '｜'.join(x for x in (ba, a.get('grade') or '', nokori) if x)]
+    if a.get('oshi'):
+        gyo.append('推し：' + mijikaku_ten(a['oshi'], OSHI_MOJI_MAX))
+    # 名前は「出してよい」と印のあったときだけ。無ければ **行ごと**消します。
+    na = sensei_ja(a.get('by') or '')
+    if na and na != NANASHI:
+        gyo.append('実践者：' + na)
+    gyo.append('▶ ' + jissen_url(a))
+    return '\n'.join(x for x in gyo if x)
+
+
+def line_matome_aru(jissen, kyou=None):
+    """今週のまとめに出す実践（公開ずみ・直近7日・新しい順）。
+       jissen は届いた時こくの新しい順にならんでいます（→ load_jissen）。"""
+    kyou = kyou or kyou_jst()
+    kara = kyou - datetime.timedelta(days=7)
+    return [a for a in bansho_aru(jissen) if a['todoita'].date() >= kara]
+
+
+def line_matome_bun(jissen, kyou=None):
+    """今週ぶんを1つの文に。0件のときは空を返します（ボタンは押せなくなります）。"""
+    aru = line_matome_aru(jissen, kyou)
+    if not aru:
+        return ''
+    gyo = ['【今週のTOKKATSU広場】新しい実践が%d件' % len(aru)]
+    # 並べるのは5件まで。それ以上は、上の数だけで伝えます（長い文はLINEで
+    # 途中から読まれません）。
+    for i, a in enumerate(aru[:len(MARU)]):
+        ba, _ = ba_wakeru(a)
+        waki = '・'.join(x for x in (ba, a.get('grade') or '') if x)
+        gyo.append('%s %s%s' % (MARU[i], a['title'], ('（%s）' % waki) if waki else ''))
+    gyo.append('▶ ' + SITE_URL)
+    return '\n'.join(gyo)
+
+
+def line_attr(bun):
+    """文を、そのまま属性に入れられる形に（改行は &#10;）。"""
+    return esc_html(bun).replace('\n', '&#10;')
+
+
+def build_kanri_line(jissen):
+    """「届いた実践」の上に置く［今週のまとめをコピー］。"""
+    bun = line_matome_bun(jissen)
+    n = len(line_matome_aru(jissen))
+    if not bun:
+        return ('    <p class="kanri-line-ue"><button class="kanri-line-b" '
+                'type="button" disabled>今週のまとめをコピー</button>'
+                '<span class="kanri-line-chu">今週はまだありません</span></p>')
+    return ('    <p class="kanri-line-ue"><button class="kanri-line-b" '
+            'type="button" data-line="%s">今週のまとめをコピー</button>'
+            '<span class="kanri-line-chu">直近7日に届いた %d件です</span></p>'
+            % (line_attr(bun), n))
+
+
 def build_kanri_list(jissen):
     """管理画面の一覧。ここに入るのは、すでに公開ページに出ている字だけ。
        編集の権限はこのHTMLではなく、Apps ScriptのKANRI_KEYが決める。"""
@@ -3966,10 +4044,13 @@ def build_kanri_list(jissen):
         out.append(
             '      <article class="kanri-card" data-v="%s" data-date="%s" data-sagasu="%s">\n'
             '        <div><h3>%s</h3><p data-kanri-meta>%s</p>'
+            # LINEで紹介ずみの印（2026-09-23）。覚えているのは、この端末だけです。
+            '<p class="kanri-line-zumi" data-zumi hidden></p>'
             # 管理人だけのメモ（2026-09-22）。公開ページには出ません。
             #   中身は受け口の覚え書きにあるので、ここは入れ物だけ置きます。
             '<p class="kanri-memo-p" data-memo-p hidden></p></div>\n'
             '        <div class="kanri-card-te">'
+            '<button type="button" class="kanri-line-b" data-line="%s">LINE用の文をコピー</button>'
             '<button type="button" class="kanri-memo-b" data-memo data-title="%s">メモ</button>'
             '<button type="button" class="jibun-naosu" data-naosu="%s">なおす</button>'
             '<button type="button" class="kanri-kesu" data-kesu data-title="%s">消す</button>'
@@ -3977,6 +4058,7 @@ def build_kanri_list(jissen):
             '      </article>'
             % (esc_html(a['slug']), esc_html(ja_md(a['d'])), esc_html(sagasu),
                esc_html(a['title']), esc_html(meta),
+               line_attr(line_jissen_bun(a)),
                esc_html(a['title']),
                esc_html(json.dumps(d, ensure_ascii=False, separators=(',', ':'))),
                esc_html(a['title'])))
@@ -4184,6 +4266,7 @@ def build_kanri_page(jissen, komari, ken, tobashita):
     """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
     body = rd('src/kanri.html')
     body = body.replace('          <!--BUILD:KEN-->', build_ken_options())
+    body = body.replace('    <!--BUILD:KANRI_LINE-->', build_kanri_line(jissen))
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
     body = body.replace('      <!--BUILD:KANRI_HOKA-->',
                         build_kanri_hoka(komari, ken, tobashita))

@@ -4160,7 +4160,7 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
    ★管理画面はこの Mac の中だけなので、色は公開ページより強めで構いません。
    ★押せない（まだ公開されていない）ときは、理由を **字で**添えます。 */
 .kanri-line-b{
-  min-height:40px;padding:8px 16px;background:var(--ink);color:var(--bg);
+  min-height:44px;padding:8px 16px;background:var(--ink);color:var(--bg);
   border:2px solid var(--ink);border-radius:999px;
   font:700 13px/1.4 var(--f-maru);cursor:pointer;white-space:nowrap;
 }
@@ -4174,7 +4174,7 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
 .kanri-line-chu{color:var(--mute);font-size:12.5px;line-height:1.7}
 .kanri-line-zumi{
   margin:8px 0 0 !important;padding:4px 10px;display:inline-block;
-  background:var(--men-midori,var(--men));border:2px solid var(--midori,var(--ink));
+  background:var(--men-midori);border:2px solid var(--midori);
   border-radius:999px;font:700 12px/1.5 var(--f-maru);color:var(--ink) !important;
 }
 .kanri-line-zumi[hidden]{display:none}
