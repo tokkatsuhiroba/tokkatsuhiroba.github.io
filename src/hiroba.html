@@ -685,6 +685,18 @@
         </div>
       </div>
 
+      <!-- デジタル資料のリンク（2026-09-24 依頼）。実践を送るところと
+           **同じ欄・同じ関門**です（受ける置き場も、書き方も1か所）。
+           ★運び方も同じで、本文の頭に目じるし付きで混ぜます
+             （受け口＝Apps Script を貼り直さずに効きます）。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="kotae-u">デジタル資料のリンク<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">Canvaやスライドの共有リンク。<b>「リンクを知っている全員が閲覧可」</b>にしてから貼ってください。</p>
+        <input class="okuru-i" type="url" id="kotae-u" maxlength="300"
+               inputmode="url" placeholder="例：https://www.canva.com/design/……/view">
+        <p class="okuru-kazu" id="kotae-u-shirase" aria-live="polite"></p>
+      </div>
+
       <div class="okuru-g">
         <label class="okuru-l" for="kotae-na">お名前<span class="okuru-nin">任意</span></label>
         <input class="okuru-i" type="text" id="kotae-na" maxlength="40" autocomplete="name"
@@ -1584,6 +1596,71 @@
     if(hako && t.checked) hako.classList.remove('okuru-kakunin--yobu');
   });
 
+  /* ══ デジタル資料のリンク（2026-09-23 依頼）══════════════
+     運び方は 推しポイント・地域と同じ。本文の頭に目じるし付きで混ぜます。
+     取り出すのは build.py の shirushi_hagasu（SHIRYO_SHIRUSHI）。
+     ★受ける置き場は、ここと build.py の SHIRYO_SOTO_DOKO の2か所にあります。
+       どちらか片方だけ足すと、画面は通すのに札に出ない（またはその逆）に
+       なります。足すときは、かならず両方。                      */
+  var SHIRYO_SHIRUSHI = '★資料リンク：';
+  var SHIRYO_URL_MAX = 300;
+  var SHIRYO_DOKO = [
+    ['canva.com',         'Canva'],
+    /* 2026-09-23：Canvaの「共有リンクをコピー」は canva.link の短いURLです。
+       canva.com しか受けておらず、貼った先生に断りが出ていました。
+       canva.link は Canva公式の短縮ドメインです。 */
+    ['canva.link',        'Canva'],
+    ['docs.google.com',   'Googleドキュメント・スライド'],
+    ['drive.google.com',  'Googleドライブ'],
+    ['onedrive.live.com', 'OneDrive'],
+    ['1drv.ms',           'OneDrive'],
+    ['dropbox.com',       'Dropbox']
+  ];
+  /* 受ける置き場なら、その名前を返す。受けないなら空。
+     ★http:// は受けません（https:// だけ）。
+     ★「canva.com.example.jp」のような**似せた名前**を通さないため、
+       おしりが「.canva.com」か、ぴったり「canva.com」のときだけにします。 */
+  var shiryo_doko = function(u){
+    var m = /^https:\/\/([^\/?#]+)/i.exec((u || '').trim());
+    if(!m) return '';
+    var h = m[1].toLowerCase().split(':')[0];
+    for(var i = 0; i < SHIRYO_DOKO.length; i++){
+      var d = SHIRYO_DOKO[i][0];
+      if(h === d || h.slice(-(d.length + 1)) === '.' + d) return SHIRYO_DOKO[i][1];
+    }
+    return '';
+  };
+  var shiryo_tsukeru = function(u, m){
+    u = (u || '').trim().slice(0, SHIRYO_URL_MAX);
+    return (u && shiryo_doko(u)) ? (SHIRYO_SHIRUSHI + u + '\n\n' + m) : m;
+  };
+  /* 画面に出す言い方。SHIRYO_DOKO と同じものを、人の言葉で1行に。
+     ★置き場を足すときに動かすのは 2か所です。
+         ① 上の SHIRYO_DOKO（受けるかどうかを決めているのは、ここ）
+         ② この1行（受けられないと知らせるときの言葉に出ます）
+       ①だけ足しても通りますが、②がずれると案内が嘘になります。
+     ★2026-09-23 依頼：「フォームはハードルを下げたいから文章は短めに」。
+       入力欄からは、受けられる置き場の並びを外しました。**打ったそばから
+       受けられるかどうかは出る**ので、先に読ませる必要がありません。
+       受けられないときだけ、ここの並びが出ます。 */
+  var uDokoJi = 'Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox';
+
+  /* 打っているそばから、受けられるかどうかを出します（送ってから断られると、
+     書いたものが宙に浮くためです）。送るフォームと、答えるフォームの両方から
+     呼びます。 */
+  function shiryo_shirase_tsunagu(uIn, uShirase){
+    if(!uIn || !uShirase) return;
+    uIn.addEventListener('input', function(){
+      var v = uIn.value.trim();
+      if(!v){ uShirase.textContent = ''; return; }
+      var d = shiryo_doko(v);
+      uShirase.textContent = d
+        ? (d + 'のリンクとして、札にボタンで出ます。')
+        : ('このリンクは受けられません。https:// ではじまる '
+           + uDokoJi + ' のものだけです。');
+    });
+  }
+
   /* ══ 添える写真とPDF（2026-09-24）════════════════════════
      「この答える時もきっと資料を添付したい人がいるはずだから、実践と
        同じシステムを入れて」。使い手が2つになったので、**1か所**に
@@ -2055,69 +2132,9 @@
         };
       };
 
-      /* ══ デジタル資料のリンク（2026-09-23 依頼）══════════════
-         運び方は 推しポイント・地域と同じ。本文の頭に目じるし付きで混ぜます。
-         取り出すのは build.py の shirushi_hagasu（SHIRYO_SHIRUSHI）。
-         ★受ける置き場は、ここと build.py の SHIRYO_SOTO_DOKO の2か所にあります。
-           どちらか片方だけ足すと、画面は通すのに札に出ない（またはその逆）に
-           なります。足すときは、かならず両方。                      */
-      var SHIRYO_SHIRUSHI = '★資料リンク：';
-      var SHIRYO_URL_MAX = 300;
-      var SHIRYO_DOKO = [
-        ['canva.com',         'Canva'],
-        /* 2026-09-23：Canvaの「共有リンクをコピー」は canva.link の短いURLです。
-           canva.com しか受けておらず、貼った先生に断りが出ていました。
-           canva.link は Canva公式の短縮ドメインです。 */
-        ['canva.link',        'Canva'],
-        ['docs.google.com',   'Googleドキュメント・スライド'],
-        ['drive.google.com',  'Googleドライブ'],
-        ['onedrive.live.com', 'OneDrive'],
-        ['1drv.ms',           'OneDrive'],
-        ['dropbox.com',       'Dropbox']
-      ];
-      /* 受ける置き場なら、その名前を返す。受けないなら空。
-         ★http:// は受けません（https:// だけ）。
-         ★「canva.com.example.jp」のような**似せた名前**を通さないため、
-           おしりが「.canva.com」か、ぴったり「canva.com」のときだけにします。 */
-      var shiryo_doko = function(u){
-        var m = /^https:\/\/([^\/?#]+)/i.exec((u || '').trim());
-        if(!m) return '';
-        var h = m[1].toLowerCase().split(':')[0];
-        for(var i = 0; i < SHIRYO_DOKO.length; i++){
-          var d = SHIRYO_DOKO[i][0];
-          if(h === d || h.slice(-(d.length + 1)) === '.' + d) return SHIRYO_DOKO[i][1];
-        }
-        return '';
-      };
-      var shiryo_tsukeru = function(u, m){
-        u = (u || '').trim().slice(0, SHIRYO_URL_MAX);
-        return (u && shiryo_doko(u)) ? (SHIRYO_SHIRUSHI + u + '\n\n' + m) : m;
-      };
       var uIn = document.getElementById('okuru-u');
       var uShirase = document.getElementById('okuru-u-shirase');
-      /* 画面に出す言い方。SHIRYO_DOKO と同じものを、人の言葉で1行に。
-         ★置き場を足すときに動かすのは 2か所です。
-             ① 上の SHIRYO_DOKO（受けるかどうかを決めているのは、ここ）
-             ② この1行（受けられないと知らせるときの言葉に出ます）
-           ①だけ足しても通りますが、②がずれると案内が嘘になります。
-         ★2026-09-23 依頼：「フォームはハードルを下げたいから文章は短めに」。
-           入力欄からは、受けられる置き場の並びを外しました。**打ったそばから
-           受けられるかどうかは出る**ので、先に読ませる必要がありません。
-           受けられないときだけ、ここの並びが出ます。 */
-      var uDokoJi = 'Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox';
-      /* 打っているそばから、受けられるかどうかを出します。
-         送ってから断られると、書いたものが宙に浮くためです。 */
-      if(uIn && uShirase){
-        uIn.addEventListener('input', function(){
-          var v = uIn.value.trim();
-          if(!v){ uShirase.textContent = ''; return; }
-          var d = shiryo_doko(v);
-          uShirase.textContent = d
-            ? (d + 'のリンクとして、札にボタンで出ます。')
-            : ('このリンクは受けられません。https:// ではじまる '
-               + uDokoJi + ' のものだけです。');
-        });
-      }
+      shiryo_shirase_tsunagu(uIn, uShirase);
 
       var mIn = document.getElementById('okuru-m');
       var kazu = document.getElementById('okuru-kazu');
@@ -3837,6 +3854,8 @@
     var aIma = null;              /* いま答えている相手（お悩みの名前） */
     /* 写真とPDFは、実践を送るところと**同じもの**を使います（2026-09-24 依頼）。
        隠す・拡大・小さくする・PDFを組み直す、ぜんぶ同じ道です。 */
+    var aU = document.getElementById('kotae-u');
+    shiryo_shirase_tsunagu(aU, document.getElementById('kotae-u-shirase'));
     var aTenpu = tenpu_tsukuru({
       eIn: document.getElementById('kotae-e'),
       mihon: document.getElementById('kotae-mihon'),
@@ -3884,6 +3903,14 @@
         aMita.focus();
         return;
       }
+      /* 受けない置き場のまま送ると、no-cors なので断られたことが画面に
+         出ません（届いたのにリンクだけ消える、になります）。ここで止めます。 */
+      if(aU && aU.value.trim() && !shiryo_doko(aU.value)){
+        aShirase.textContent = 'デジタル資料のリンクが受けられません。https:// ではじまる '
+          + uDokoJi + ' のものだけです。空にすれば、そのまま送れます。';
+        aU.focus(); aU.scrollIntoView({block: 'center'});
+        return;
+      }
       /* PDFを選んだのに、ページが1枚も出ていない＝ひらけなかった、ということ。
          そのまま送ると、塗られていないPDFが公開に出ます。ここで止めます。 */
       var aW = aTenpu.wakeru();
@@ -3903,7 +3930,10 @@
         mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: JSON.stringify({ kind: 'kotae', nushi: aNushi, toi: aIma,
-                               m: m.slice(0, 1000),
+                               /* リンクは、本文の頭に目じるし付きで混ぜて運びます
+                                  （受け口は u という欄を知りません）。はがすのは
+                                  build.py の shirushi_hagasu です。 */
+                               m: shiryo_tsukeru(aU ? aU.value : '', m.slice(0, 1000)),
                                e: zen[1].e, p: zen[1].p,
                                na: aNa.value.trim().slice(0, 40),
                                sh: aSh.value.trim().slice(0, 60),

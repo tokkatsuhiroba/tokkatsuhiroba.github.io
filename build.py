@@ -1132,6 +1132,19 @@ def load_kotae():
             tobashita.append('%s … share: true が無いので出しません' % f)
             continue
         hon = fm['summary'].strip()
+        # デジタル資料のリンク（2026-09-24 依頼）。実践と同じで、本文の頭に
+        # 目じるし付きで混ぜて運ばれてきます。ここではがします。
+        #   ★受ける置き場（SHIRYO_SOTO_DOKO）でなければ、**出しません**。
+        #     画面でも止めていますが、.md を手で書くこともできるためです。
+        soto = (fm.get('u') or '').strip()
+        if not soto:
+            soto, hon = shirushi_hagasu(hon, SHIRYO_SHIRUSHI)
+        soto = soto.strip()[:SHIRYO_URL_MAX]
+        if soto and not shiryo_soto_na(soto):
+            tobashita.append('%s … 資料リンクの行き先が受けられないので、'
+                             'リンクは出しません' % f)
+            soto = ''
+        fm['soto'] = soto
         if not hon:
             tobashita.append('%s … 中身が空です' % f)
             continue
@@ -1331,6 +1344,11 @@ def kotae_e(k):
     if k.get('shiryo'):
         out += shiryo_mado(SHIRYO_JIDOU_NA, k['shiryo'], '答えに添えられた資料',
                            page=KOMARI_HTML, zen=False)
+    # 外へひらく資料（Canvaの共有リンクなど）。押した人だけが外へ出ます。
+    if k.get('soto'):
+        out += BFUDA_SOTO.format(url=esc_html(k['soto']),
+                                 na=esc_html(shiryo_soto_na(k['soto'])),
+                                 host=esc_html(url_no_doko(k['soto'])), ICON=ICON_SOTO)
     return out
 
 
