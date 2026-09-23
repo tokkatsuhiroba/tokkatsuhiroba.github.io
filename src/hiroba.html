@@ -2173,6 +2173,32 @@
     });
   })();
 
+  /* ══ 地図のふた（2026-09-23 依頼）════════════════════════
+     スマホでは、さがすのパネルが0.93画面ありました。その半分が地図です。
+     ★地図は縮めません。県の形がそのまま小さくなり、東京や香川が
+       押せなくなるためです。**広い画面でだけ、開いたままにします。**
+     ★JSが動かない端末では閉じたままですが、押せば開きます。 */
+  (function(){
+    var futa = [].slice.call(document.querySelectorAll('.chizu-futa'));
+    if(!futa.length) return;
+    var hiroi = window.matchMedia('(min-width:760px)');
+    function awaseru(){
+      futa.forEach(function(d){
+        /* 人が自分で開け閉めしたあとは、こちらで動かしません */
+        if(d.dataset.hito) return;
+        d.open = hiroi.matches;
+      });
+    }
+    futa.forEach(function(d){
+      d.addEventListener('toggle', function(){
+        if(d.dataset.ugokashita){ d.dataset.ugokashita = ''; return; }
+        d.dataset.hito = '1';
+      });
+    });
+    awaseru();
+    if(hiroi.addEventListener) hiroi.addEventListener('change', awaseru);
+  })();
+
   /* ══ みんなの実践を、絞る・並べかえる・さがす（2026-09-22 夜）══
      届いたものが増えるほど、上から順に見るのが しんどくなります。
      ★ぜんぶ、このページの中だけで動きます。何も出ていきません。

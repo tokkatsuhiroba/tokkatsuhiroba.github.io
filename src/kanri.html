@@ -83,6 +83,7 @@
         <input type="hidden" name="key" id="kanri-miru-key" value="">
         <input type="hidden" name="nonce" id="kanri-miru-nonce" value="">
         <button class="bansho-b" type="submit" id="kanri-miru-b">よみこむ</button>
+        <button class="bansho-b" type="button" id="kanri-miru-kesu-b">数を0に戻す</button>
       </form>
       <p class="okuru-shirase" id="kanri-miru-shirase" role="status" aria-live="polite"></p>
       <div id="kanri-miru-hyo"></div>
@@ -264,6 +265,30 @@
   <input type="hidden" name="nonce" id="kanri-kesu-nonce" value="">
 </form>
 
+<!-- ══ 見られた数を 0 に戻す（2026-09-23 依頼）════════════════
+     消えるのは「どの画面が何回ひらかれたか」だけです。
+     実践・困りごと・研究日程・メモは、1件も動きません。 -->
+<div class="kanri-kesu-mado" id="kanri-miru-kesu-mado" hidden role="dialog"
+     aria-modal="true" aria-labelledby="kanri-miru-kesu-h">
+  <div class="kanri-kesu-naka">
+    <p class="kanri-kago">数えなおしの確認</p>
+    <h2 id="kanri-miru-kesu-h">見られた数を、ぜんぶ0に戻しますか</h2>
+    <p class="kanri-kesu-chu">きょうまでに数えた回数が、すべて消えます。<br>
+      <b>戻せません。</b>実践・困りごと・研究日程・メモは、そのままです。</p>
+    <p class="kanri-kesu-te">
+      <button type="button" class="bansho-b" id="kanri-miru-kesu-yameru">やめる</button>
+      <button type="button" class="kanri-kesu-kakutei" id="kanri-miru-kesu-kakutei">0に戻す</button>
+    </p>
+    <p class="okuru-shirase" id="kanri-miru-kesu-shirase" role="status" aria-live="polite"></p>
+  </div>
+</div>
+
+<form class="kanri-kakunin" id="kanri-miru-kesu-f" method="post" target="kanri-kakunin">
+  <input type="hidden" name="kind" value="kanri-miru-kesu">
+  <input type="hidden" name="key" id="kanri-miru-kesu-key" value="">
+  <input type="hidden" name="nonce" id="kanri-miru-kesu-nonce" value="">
+</form>
+
 <script>
 /*BUILD:NURU*/
 (function(){
@@ -382,7 +407,14 @@
   var miruShirase = document.getElementById('kanri-miru-shirase');
   var miruHyo = document.getElementById('kanri-miru-hyo');
   var miruMatte = '';
+  var miruKesuB = document.getElementById('kanri-miru-kesu-b');
+  var miruKesuMado = document.getElementById('kanri-miru-kesu-mado');
+  var miruKesuF = document.getElementById('kanri-miru-kesu-f');
+  var miruKesuKakutei = document.getElementById('kanri-miru-kesu-kakutei');
+  var miruKesuShirase = document.getElementById('kanri-miru-kesu-shirase');
+  var miruKesuMatte = '';
   miruF.action = OKURU_URL;
+  miruKesuF.action = OKURU_URL;
   memoF.action = OKURU_URL;
   var memoYomuF = document.getElementById('kanri-memo-yomu-f');
   memoYomuF.action = OKURU_URL;
@@ -482,6 +514,19 @@
       else { miruShirase.textContent = ev.data.riyu || 'よみこめませんでした。'; }
       return;
     }
+    if(ev.data.action === 'miru-kesu'){
+      if(ev.data.nonce !== miruKesuMatte) return;
+      miruKesuKakutei.disabled = false;
+      if(ev.data.ok){
+        miruKesuMado.hidden = true;
+        miruShirase.textContent = '';
+        miruHyo.innerHTML = '<p class="kanri-miru-kara">0に戻しました。' +
+          'きょうこれから ひらかれたぶんから、また数えます。</p>';
+      }else{
+        miruKesuShirase.textContent = ev.data.riyu || '戻せませんでした。';
+      }
+      return;
+    }
     if(ev.data.nonce !== matte) return;
     hairu.disabled = false;
     if(ev.data.ok){ shirase.textContent = ''; hiraku(keyIn.value.trim()); }
@@ -499,8 +544,15 @@
   /* ══ どの画面が見られているか（2026-09-22）════════════════
      受け口が返すのは [{d:'20260922', p:{index:12,…}}, …]（新しい順）だけ。
      人の数も、誰が見たかも、そもそも受け口に無い。               */
-  var MIRU_NA = { index:'ホーム', shiru:'知る', manabu:'はじめかた',
-                  atsumaru:'集まる', bansho:'みんなの実践', komari:'困りごと' };
+  /* 並びも呼び名も、帯（obi）に出ているものにそろえます（2026-09-23）。
+     ★ここに足すだけでは数えません。src/hiroba.html の正規表現と、
+       受け口の MIRU_PAGE にも、同じ名前を足してください。
+     ★MIRU_MIJIKA は、日ごとの表の見出しだけに使う短い呼び名です。 */
+  var MIRU_NA = { index:'ホーム', okuru:'実践を送る', bansho:'みんなの実践',
+                  atsumaru:'研究会', komari:'お悩みBOX',
+                  manabu:'明日から使えるグッズ', shiru:'特活とは',
+                  news:'ニュース' };
+  var MIRU_MIJIKA = { okuru:'送る', manabu:'グッズ' };
   var MIRU_YOUBI = ['日','月','火','水','木','金','土'];
 
   function miru_esc(t){
@@ -543,7 +595,9 @@
     var na = Object.keys(MIRU_NA);
     html += '<h3 class="kanri-miru-h3">日ごと<span>新しい順に14日</span></h3>' +
             '<div class="kanri-miru-hi"><table><thead><tr><th>日</th>' +
-            na.map(function(k){ return '<th>' + miru_esc(MIRU_NA[k]) + '</th>'; }).join('') +
+            na.map(function(k){
+              return '<th>' + miru_esc(MIRU_MIJIKA[k] || MIRU_NA[k]) + '</th>';
+            }).join('') +
             '<th>合計</th></tr></thead><tbody>' +
             hi.slice(0, 14).map(function(h){
               var kei = 0;
@@ -564,6 +618,28 @@
     document.getElementById('kanri-miru-key').value = k;
     miruB.disabled = true; miruShirase.textContent = 'よみこんでいます…';
     miruF.submit();
+  });
+  /* 数を 0 に戻す（2026-09-23 依頼）。ひと押しでは消えません。
+     消えるのは回数だけで、届いたものには さわりません。 */
+  miruKesuB.addEventListener('click', function(){
+    miruKesuShirase.textContent = '';
+    miruKesuKakutei.disabled = false;
+    miruKesuMado.hidden = false;
+    miruKesuKakutei.focus();
+  });
+  document.getElementById('kanri-miru-kesu-yameru').addEventListener('click', function(){
+    miruKesuMado.hidden = true;
+    miruKesuB.focus();
+  });
+  miruKesuKakutei.addEventListener('click', function(){
+    var k = key_yomu();
+    if(!k){ miruKesuShirase.textContent = 'もう一度、合いことばから入ってください。'; return; }
+    miruKesuMatte = nonce();
+    document.getElementById('kanri-miru-kesu-nonce').value = miruKesuMatte;
+    document.getElementById('kanri-miru-kesu-key').value = k;
+    miruKesuKakutei.disabled = true;
+    miruKesuShirase.textContent = '戻しています…';
+    miruKesuF.submit();
   });
 
   sagasu.addEventListener('input', shiboru);

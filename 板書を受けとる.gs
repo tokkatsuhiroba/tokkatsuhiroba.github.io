@@ -160,6 +160,10 @@ function doPost(e) {
     if (e.parameter && e.parameter.kind === 'kanri-miru') {
       return _kanri_miru(e.parameter);
     }
+    /* その数を、ぜんぶ 0 に戻す（2026-09-23 依頼）。管理人だけができます。 */
+    if (e.parameter && e.parameter.kind === 'kanri-miru-kesu') {
+      return _kanri_miru_kesu(e.parameter);
+    }
     /* 管理人だけのメモ（2026-09-22）。公開ページにも GitHub にも出ません。 */
     if (e.parameter && e.parameter.kind === 'kanri-memo-yomu') {
       return _kanri_memo_yomu(e.parameter);
@@ -371,7 +375,10 @@ function _shiraseru_komari(slug, d, m, nose) {
    ★1日ぶんを1つの覚え書き（miru_yyyyMMdd）にまとめます。
      日づけごとに1行なので、1年ぶんでも数十KBにしかなりません。       */
 
-var MIRU_PAGE = { index:1, shiru:1, manabu:1, atsumaru:1, bansho:1, komari:1 };
+/* 数える画面。**帯に出ているものと同じ並び**にしてあります（2026-09-23）。
+   ここと src/hiroba.html の正規表現は、いつも同じ顔ぶれにしてください。 */
+var MIRU_PAGE = { index:1, okuru:1, bansho:1, atsumaru:1, komari:1,
+                  manabu:1, shiru:1, news:1 };
 var MIRU_HI_MAX = 120;      // 何日ぶん残すか（これより古い日は、読むときに消します）
 
 function _miru(d) {
@@ -438,6 +445,17 @@ function _kanri_miru(d) {
     kotae.riyu = '合いことばがちがいます';
     return _kanri_mado(kotae);
   }
+  /* 2026-09-23 依頼「数字をリセットしていいや」。
+     合いことばは ここ（受け口）の中にしかないので、管理人が次に1回
+     よみこんだ そのときに、いちどだけ 0 に戻します。
+     戻したら MIRU_RESET に日づけを残すので、二度目はありません。
+     そのあとは、管理画面の［数を0に戻す］から いつでもできます。 */
+  if (!P.getProperty('MIRU_RESET')) {
+    var mae = P.getProperties();
+    for (var mk in mae) { if (mk.slice(0, 5) === 'miru_') P.deleteProperty(mk); }
+    P.setProperty('MIRU_RESET',
+                  Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyyMMdd'));
+  }
   var subete = P.getProperties();
   var furui = new Date();
   furui.setDate(furui.getDate() - MIRU_HI_MAX);
@@ -455,6 +473,38 @@ function _kanri_miru(d) {
   kotae.ok = true;
   kotae.hi = hi;
   kotae.na = Object.keys(MIRU_PAGE);
+  return _kanri_mado(kotae);
+}
+
+
+/* 数を ぜんぶ 0 に戻す（2026-09-23 依頼）。
+   ★消すのは miru_yyyyMMdd の覚え書きだけです。実践・困りごと・研究日程・
+     メモ・合いことばには 指1本ふれません。
+   ★戻せません。消えたら、その日より前の回数は 二度と出ません。       */
+function _kanri_miru_kesu(d) {
+  var nonce = String(d.nonce || '').replace(/[^0-9a-z_-]/gi, '').slice(0, 80);
+  var kotae = { source: 'tokkatsu-kanri', action: 'miru-kesu', ok: false,
+                nonce: nonce, riyu: '', n: 0 };
+  if (String(d.key || '').trim() !== _kanri_key()) {
+    kotae.riyu = '合いことばがちがいます';
+    return _kanri_mado(kotae);
+  }
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(5000); } catch (e) {
+    kotae.riyu = '混み合っています。少し待ってから、もう一度。';
+    return _kanri_mado(kotae);
+  }
+  try {
+    var subete = P.getProperties();
+    for (var k in subete) {
+      if (k.slice(0, 5) !== 'miru_') continue;
+      P.deleteProperty(k);
+      kotae.n++;
+    }
+    kotae.ok = true;
+  } finally {
+    lock.releaseLock();
+  }
   return _kanri_mado(kotae);
 }
 

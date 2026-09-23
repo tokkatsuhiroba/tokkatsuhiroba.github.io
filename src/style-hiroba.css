@@ -3051,25 +3051,40 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      新しい見た目を1つも増やさずに、できることだけ増やします。
    ★JavaScript が動かない人には、build.py が hidden のままにします。 */
 .sagasu{
-  display:grid;gap:12px;margin:0 0 clamp(20px,3vw,30px);
-  padding:clamp(14px,2vw,18px);
+  display:grid;gap:10px;margin:0 0 clamp(16px,2.4vw,24px);
+  padding:clamp(11px,1.5vw,14px);
   background:var(--bg);border:2.5px solid var(--ink);border-radius:18px;
   box-shadow:4px 4px 0 var(--rule);
 }
 .sagasu[hidden]{display:none}
-.sagasu-gyo{display:grid;gap:7px}
+.sagasu-gyo{display:grid;gap:5px}
+/* ── 押し札は1行に（2026-09-23 依頼）──────────────────────
+   スマホで「学年」は7つあり、2行に折れて120pxありました。
+   ★字も押せる大きさも、減らしません（減らすと押せなくなります）。
+     **折り返さずに、よこへすべらせます。**帯と同じやり方です。
+   ★すべることが分かるよう、右はしを少しぼかします（-webkit-mask）。
+     効かないブラウザでも、ただ切れて見えるだけで、すべりは効きます。 */
+.sagasu .okuru-nen{
+  flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  padding-bottom:2px;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+          mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+}
+.sagasu .okuru-nen::-webkit-scrollbar{display:none}
+.sagasu .okuru-nen-b{flex:none}
 /* ── 左に地図・右にさがす（2026-09-23 依頼）──────────────────
    書く順は「さがす → 地図」です。スマホではこの順に上から積まれます
    （字で絞るほうが速いので、そちらを先に）。広い画面のときだけ、
    ここで地図を **左の列** へ動かします。
    ★地域が1件も書かれていないときは .sagasu--futatsu が付かないので、
      空の列ができません。 */
-.sagasu-migi{display:grid;gap:12px;min-width:0}
+.sagasu-migi{display:grid;gap:9px;min-width:0}
 .sagasu-hidari{min-width:0}
 @media (min-width:760px){
   .sagasu--futatsu{
-    grid-template-columns:minmax(0,320px) minmax(0,1fr);
-    gap:18px;align-items:start;
+    grid-template-columns:minmax(0,260px) minmax(0,1fr);
+    gap:14px;align-items:start;
   }
   .sagasu--futatsu .sagasu-hidari{grid-column:1;grid-row:1}
   .sagasu--futatsu .sagasu-migi  {grid-column:2;grid-row:1}
@@ -3095,9 +3110,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    ══════════════════════════════════════════════════════════════ */
 .chizu-yomi{margin:0 0 8px;font-size:12px;line-height:1.85;color:var(--mute)}
 .chizu-nashi-chu{display:block;color:var(--ink)}
+/* ★2026-09-23 依頼：さがすのパネルが大きすぎました。
+   高さを決めていたのは、ほぼ地図です（355px）。
+   押せる県の大きさは変わらない（形はそのまま縮む）ので、
+   ここを詰めるのがいちばん効きます。 */
 .chizu{
   position:relative;
-  width:100%;max-width:520px;margin:0 auto;
+  width:100%;max-width:300px;margin:0 auto;
   aspect-ratio:480 / 532;
 }
 .chizu-e{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -3763,7 +3782,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-miru{margin-top:clamp(36px,5vw,56px);padding-top:clamp(24px,3.4vw,34px);border-top:2px solid var(--rule)}
 .kanri-miru h2{margin:0 0 8px;font-family:var(--f-maru);font-size:clamp(18px,2.3vw,22px)}
 .kanri-miru-yo{margin:0 0 16px;font-size:13px;line-height:1.9;color:var(--mute)}
-.kanri-miru-f{margin:0 0 10px}
+.kanri-miru-f{margin:0 0 10px;display:flex;flex-wrap:wrap;gap:8px}
 .kanri-miru-h3{
   margin:22px 0 10px;font-family:var(--f-maru);font-size:15px;letter-spacing:.04em;
   display:flex;align-items:baseline;gap:10px;
@@ -3771,13 +3790,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .kanri-miru-h3 span{font-size:12.5px;font-weight:400;color:var(--mute)}
 .kanri-miru-kara{margin:0;font-size:13px;color:var(--mute)}
 .kanri-miru-bo{list-style:none;margin:0;padding:0;display:grid;gap:7px}
-.kanri-miru-bo li{display:grid;grid-template-columns:7.5em 1fr 3.5em;align-items:center;gap:10px}
+.kanri-miru-bo li{display:grid;grid-template-columns:clamp(6.5em,30vw,10.5em) 1fr 3.5em;align-items:center;gap:10px}
 .kanri-miru-bo b{font-size:13.5px;font-weight:700}
 .kanri-miru-bo .bo{display:block;height:14px;background:var(--rule);border-radius:999px}
 .kanri-miru-bo .bo i{display:block;height:100%;width:var(--w,0);min-width:3px;background:var(--accent);border-radius:999px}
 .kanri-miru-bo .n{text-align:right;font-variant-numeric:tabular-nums;font-size:13.5px;font-weight:700}
 .kanri-miru-hi{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.kanri-miru-hi table{border-collapse:collapse;font-size:13px;min-width:520px}
+.kanri-miru-hi table{border-collapse:collapse;font-size:13px;min-width:600px}
 .kanri-miru-hi th,.kanri-miru-hi td{padding:6px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
 .kanri-miru-hi thead th{font-size:12px;color:var(--mute);text-align:end;border-bottom:2px solid var(--rule)}
 .kanri-miru-hi thead th:first-child,.kanri-miru-hi tbody th{text-align:start}
@@ -3881,13 +3900,31 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hero-copy{font-size:calc(16px * var(--moji));letter-spacing:.04em;margin-top:10px}
   .hero-botan{margin-block:18px 8px}
   .hero .line-sumi{min-height:40px;max-width:100%;white-space:normal}
-  .igi-intro{grid-template-columns:1fr;gap:16px}
-  .igi-friends{max-width:310px}
-  .igi-a{padding:12px 8px}
-  .igi-h .e svg{height:120px}
-  .hfuda-e{height:90px}
+  /* ══ スマホの「遠さ」を、もう一段つめる（2026-09-23 依頼）════
+     実測（375×812）で、ページ全体が 7584px ＝ **9.3画面**ありました。
+     いちばん食っていたのは **カードの中の絵**です。
+     カード1枚239pxのうち、絵だけで115px（**ちょうど半分**）。
+     題は22px、説明は39pxしかありません。
+     **絵がカードの主役になっていて、字が添えものになっていました。**
+
+     絵は消しません。**半分にします。**それだけで4枚で240px減ります。
+     ★Twitterの1件（写真なし）は120pxほど。カードもその辺りを目指します。 */
+  .igi-intro{grid-template-columns:1fr;gap:10px}
+  .igi-friends{max-width:210px}          /* 4人の絵。310→210 */
+  .igi-na{margin-top:4px;font-size:10px}
+  .igi-l{gap:8px;margin-top:14px}
+  .igi-a{padding:9px 7px}
+  .igi-h .e svg{height:56px}             /* 120→56。カードの半分を返す */
+  .igi-h .t{min-height:0}                /* 3.1em の下ざさえをやめる */
+  .igi-b{margin-top:14px}
+  .hfuda-e{height:52px;margin-bottom:6px}
   .hfuda-e svg{max-height:none}
-  .hitori .e svg{height:100px}
+  .hitori .e svg{height:64px}
+  /* 節と節のあいだ。40→26 */
+  .sec{padding-block:26px}
+  .midashi{margin-bottom:4px}
+  .midashi .en{margin-bottom:5px}
+  .yomi{margin-bottom:14px}
 }
 
 /* ══ 節の案内役（2026-09-23 依頼）══════════════════════════

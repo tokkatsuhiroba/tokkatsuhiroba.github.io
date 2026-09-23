@@ -4048,12 +4048,19 @@ def chizu_mijikaku(ken):
 
 # ★ id は外から渡します。同じ id が2つあると、リンクが別の場所へ飛ぶので
 #   ビルドが止まります（実践の地図と、研究会の地図の2つを置くため）。
-CHIZU_T = """      <div class="sagasu-gyo sagasu-gyo--chizu">
-        <span class="sagasu-l" id="{mid}-l">地図から</span>
+# 2026-09-23 依頼：スマホでは地図を「ふた」にします。
+#   さがすのパネルが 785px（0.93画面）あり、その359pxが地図でした。
+#   ★地図を縮めて入れる手は取りません。県の形がそのまま小さくなるので、
+#     東京や香川が押せなくなります（押せる大きさは減らさない）。
+#   ★広い画面では、JavaScript が open を付けて **開いたまま**にします
+#     （src/hiroba.html の 地図のふた）。JSが動かない端末では閉じたまま
+#     ですが、summary を押せば開くので、行き止まりにはなりません。
+CHIZU_T = """      <details class="sagasu-gyo sagasu-gyo--chizu chizu-futa">
+        <summary class="chizu-futa-s"><span class="sagasu-l" id="{mid}-l">地図から</span><span class="pm" aria-hidden="true"></span></summary>
 {yomi}        <div class="chizu" id="{mid}" role="group" aria-labelledby="{mid}-l">
 {e}
 {fuda}        </div>
-      </div>
+      </details>
 """
 
 CHIZU_YOMI = ('押すと、その県のものだけになります。もう一度押すと もどります。<br>\n'
@@ -4285,7 +4292,10 @@ def sagasu_obi(aru):
         nen.append('          <button type="button" class="okuru-nen-b" data-g="%s" '
                    'aria-pressed="false">%s<span class="sagasu-b-kazu">%d</span></button>\n'
                    % (k, esc_html(ja), kazu))
-    chizu = build_chizu(aru)
+    # 2026-09-23 依頼：さがすのパネルが大きすぎるので、地図の下の説明4行を
+    #   出しません（155pxありました）。押せば分かることを、4行かけて
+    #   説明していました。
+    chizu = build_chizu(aru, yomi='')
     return SAGASU_OBI.format(naiyo=''.join(gyo), nen=''.join(nen), chizu=chizu,
                              futatsu=' sagasu--futatsu' if chizu else '')
 
@@ -4462,11 +4472,13 @@ def build_kyara_narabi(kyara):
 #     節がどのページに移っても、tsunagi_naosu() が張りなおしてくれます。
 #     2026-09-21 夜、「伝えたい」が atsumaru.html#okuru を指したまま
 #     送るところがホームへ移り、行き先が消えかけました。
+# 2026-09-23 依頼：4つの言い方を「悩みを解決／知りたい／試したい／伝えたい」に
+#   そろえました。「ちょっと」を外して、**したいこと**だけを4つ並べます。
 IGI_MEN = (
-    ('gakkatsu', 'お悩みBOX',       'いま困っていることを。',   'kiku'),
-    ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
-    ('club',     'ちょっと試したい', '明日から使える学級会グッズ！', 'manabu'),
-    ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
+    ('gakkatsu', '悩みを解決', 'いま困っていることを。',       'kiku'),
+    ('gyoji',    '知りたい',   '研究日程とニュース。',         'ima'),
+    ('club',     '試したい',   '明日から使える学級会グッズ！', 'manabu'),
+    ('jidokai',  '伝えたい',   '板書も資料も、ここから。',     'okuru'),
 )
 
 IGI_T = """      <li class="igi-h h--{n}">
@@ -5279,6 +5291,12 @@ KOTOBA = {
     'ちょっと聞きたい': ('A quick question', 'سؤال سريع'),
     'いま困っていることを。': ('Whatever you are stuck on right now.',
                               'ما يصعب عليك الآن.'),
+    # 2026-09-23 依頼で言い方を短くしました。前の4つは、まだ表に残してあります
+    # （どこかで使っていたときに、訳だけ消えるのを防ぐため）。
+    '悩みを解決': ('Get unstuck', 'حلّ الحَيرة'),
+    '知りたい':   ('Something to know', 'ما يستحق المعرفة'),
+    '試したい':   ('Something to try', 'ما يستحق التجربة'),
+    '伝えたい':   ('Something to pass on', 'ما يستحق المشاركة'),
     'ちょっと知りたい': ('Something to know', 'ما يستحق المعرفة'),
     '研究日程とニュース。': ('Meetings and news.', 'اللقاءات والأخبار.'),
     'ちょっと試したい': ('Something to try', 'ما يستحق التجربة'),
