@@ -4926,13 +4926,26 @@ def wakeru(body):
     return hero, sec, foot, shikake
 
 
+# 帯だけの短い名前（2026-09-23 依頼）。
+#   「アイコンを入れたい。その代わり 帯の言葉を短くする」
+#   ★ここに無いものは、ふだんの名前（SETSU_NA）のままです。
+#   ★札・見出し・ページの名前は いままでどおり SETSU_NA です。
+#     短くするのは **帯の中だけ**（横1行に収めるため）。
+OBI_NA = {
+    'okuru':  '送る',
+    'bansho': '実践集',
+    'komari': 'お悩み',
+    'manabu': 'グッズ',
+}
+
+
 def build_obi(ima_file, doko):
     """帯。どのページでも同じ位置に、同じ8つ。
        2026-09-21：いちど4つ（ページ名）にしましたが、ホームの札8つと
        数がちがって分かりにくい、という話になったので8つに戻しました。
        行き先はページをまたぎます。いまのページにある項目には印をつけます。"""
     gyo = []
-    for sid, _, _, _ in HOME_FUDA:
+    for sid, shirushi, _, _ in HOME_FUDA:
         saki = doko[sid]
         ima = (saki == ima_file)
         # s--◯◯ … 項目ごとの印。いまは 幅を2ます分にしたいとき
@@ -4940,13 +4953,19 @@ def build_obi(ima_file, doko):
         # p--◯◯ … ページの色。2026-09-23 の依頼で **帯では使っていません**
         #   （帯は ぜんぶ同じ。色で言うのは「いまどこ」だけ）。
         #   札と「中身を、ざっと」では、いまも ページの色です。
+        # しるし（モノの絵）＋ 短い名前。絵は読み上げません（名前が隣にあるため）
         gyo.append('      <li class="o--%s"><a class="obi-s p--%s s--%s%s" '
-                   'href="%s"%s>%s</a></li>'
+                   'href="%s"%s>'
+                   '<span class="obi-e" aria-hidden="true">'
+                   '<svg viewBox="0 0 %d %d" focusable="false">'
+                   '<use href="#ill-m-%s"/></svg></span>%s</a></li>'
                    % (sid, saki.replace('.html', ''), sid,
                       ' obi-ima' if ima else '',
                       '#%s' % sid if ima else '%s#%s' % (saki, sid),
                       ' aria-current="page"' if ima else '',
-                      esc_html(SETSU_NA[sid])))
+                      MARK_BOX, MARK_BOX, shirushi,
+                      '<span class="obi-ji">%s</span>'
+                      % esc_html(OBI_NA.get(sid, SETSU_NA[sid]))))
     return ('<nav class="obi" aria-label="TOKKATSU広場の中の、%d の行き先">\n'
             % len(HOME_FUDA) + 
             '  <div class="obi-uchi">\n'
@@ -5217,6 +5236,11 @@ KOTOBA = {
     # 2026-09-23 依頼：「ちょっと聞きたい」と「困りごと」を お悩みBOX にそろえました。
     #   前の2つの見出し（ちょっと聞きたい／困りごと）は、まだ表に残しています。
     #   どこかで使っていたときに、訳だけ消えるのを防ぐためです。
+    # 帯だけの短い名前（2026-09-23）
+    '送る':   ('Send', 'أرسل'),
+    '実践集': ('Practices', 'الممارسات'),
+    'お悩み': ('Questions', 'الأسئلة'),
+    'グッズ': ('Tools', 'أدوات'),
     'お悩みBOX': ('Question box', 'صندوق الأسئلة'),
     '届いているお悩み': ('Questions that have arrived', 'الأسئلة الواردة'),
     '困りごと': ('Questions', 'الأسئلة'),
@@ -5989,7 +6013,9 @@ KOTOBA = {
 KOTOBA_TEKI = (
     (r'(<span class="ja">)(.*?)(</span>)', '節の見出し'),
     (r'(<p class="yomi[^"]*">)(.*?)(</p>)', '節の説明'),
-    (r'(<a class="obi-s[^"]*"[^>]*>)(.*?)(</a>)', '帯'),
+    # 2026-09-23：帯に しるし（絵）が入ったので、**字の span だけ**を見ます。
+    #   <a> ごと見ると、見出しに svg の字が混ざります。
+    (r'(<span class="obi-ji">)(.*?)(</span>)', '帯'),
     (r'(<b class="hfuda-h">)(.*?)(</b>)', '札の名前'),
     (r'(<span class="hfuda-yo">)(.*?)(</span>)', '札のひとこと'),
     (r'(<b class="gfuda-h">)(.*?)(</b>)', '概要の札の名前'),

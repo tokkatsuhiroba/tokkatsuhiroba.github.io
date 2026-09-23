@@ -3993,8 +3993,27 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hban{gap:8px}
 
   .igi-intro{gap:8px}
-  .igi-friends{max-width:180px}             /* 210→180 */
+  /* 4人の絵。名前が1行に収まる幅にします（「児童会ちゃん」が
+     いちばん長い。180pxだと「児童会ち／ゃん」と折れていました）。 */
+  .igi-friends{max-width:250px}
+  .igi-na{font-size:9.5px;letter-spacing:0}
+  .igi-na span{white-space:nowrap}
   .igi-b{margin-top:10px}
+
+  /* ══ 4つの札を1行に（2026-09-23 依頼）════════════════════
+     2列×2段だと 320px（1枚160px×2段）使っていました。
+     **4つ横ならび**にして、94pxほどに詰めます。
+     ★4列だと1枚78pxしかないので、**ひとことは出しません**。
+       「いま困っていることを。」が3行に折れて、かえって高くなるためです。
+       絵と名前だけで、何の入口かは分かります。
+     ★矢印（→）も出しません（依頼）。札ぜんぶが押せるので、
+       矢印が無くても押せることは伝わります。 */
+  .igi-l{grid-template-columns:repeat(4,1fr);gap:6px}
+  .igi-a{padding:8px 4px}
+  .igi-h .e svg{height:44px}
+  .igi-h b{font-size:calc(11.5px * var(--moji));letter-spacing:0;line-height:1.35}
+  .igi-h .t{display:none}
+  .igi-ya{display:none}
 }
 
 /* ══ 節の案内役（2026-09-23 依頼）══════════════════════════
@@ -4360,4 +4379,23 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
 @media (max-width:479px){
   .onegai{padding:11px}
   .onegai-url{font-size:11px}
+}
+
+/* ── 帯に「しるし」を入れる（2026-09-23 依頼）────────────────
+   「アイコンを入れたい。その代わり帯の言葉を短くする」
+   字を短くしたぶんを絵にあてるので、**札の大きさは変わりません**
+   （実測：実践を送る109px → 送る＋絵 でほぼ同じ）。
+   ★絵は読み上げません（すぐ隣に名前があるので、二度言いになります）。
+   ★絵だけにはしません。絵の意味は人によってちがうので、字を必ず添えます。 */
+.obi-l a{gap:6px;padding-inline:10px}
+.obi-e{width:20px;height:20px;flex:none;line-height:0}
+.obi-e svg{display:block;width:100%;height:100%}
+@media (max-width:1099px){
+  .obi-l a{gap:5px;padding-inline:9px}
+  .obi-e{width:18px;height:18px}
+}
+/* 「明日から使えるグッズ」が「グッズ」になったので、
+   スマホで2ます分をとる必要がなくなりました */
+@media (max-width:719px){
+  .obi-l .o--manabu{grid-column:auto}
 }
