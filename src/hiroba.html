@@ -450,29 +450,6 @@
   </div>
 </section>
 
-<!-- ══ このサイトを紹介する（2026-09-23 依頼）════════════════
-     実践の札のQRは「その実践」へ飛びます。それは残したまま、
-     **ホームへ飛ぶQR**をここに置きます。研修の資料や学級だよりに
-     貼って、紙からサイトへ来てもらうためのものです。
-     ★QRはこの端末の中で作ります。外の道具は使いません（原則2）。 -->
-<section class="sec" id="shokai">
-  <i class="kazari kazari--migi" data-k="jidokai-share" style="--y:30%;--w:112px;--d:.5s"></i>
-  <div class="uchi">
-    <h2 class="midashi"><span class="en">SHARE</span><span class="ja">このサイトを紹介する</span></h2>
-    <p class="yomi">研修の資料や学級だよりに貼れる、QRコードつきの1枚を作ります。<br>
-      読みこむと、このサイトのホームがひらきます。</p>
-    <div class="shokai">
-      <canvas class="shokai-qr" id="shokai-qr" width="240" height="240"
-              aria-label="TOKKATSU広場のホームへのQRコード"></canvas>
-      <div class="shokai-te">
-        <p class="shokai-yo">画面のQRに、そのままカメラを向けても開きます。<br>
-          紙に貼るなら、下から1枚の絵として保存してください。</p>
-        <button class="bansho-b" type="button" data-shokai>画像保存<i>↓</i></button>
-        <p class="okuru-shirase" id="shokai-shirase" role="status" aria-live="polite"></p>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section class="sec sec--midori" id="jissen">
   <i class="kazari" data-k="club-tools" style="--y:28%;--w:116px;--d:.3s"></i>
@@ -903,6 +880,26 @@
          押せるものはページの中と同じ丸いボタンの形にそろえます。 -->
     <div class="foot-botan">
       <a class="btn btn--yoru btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer"><span class="btn-ji">みんなの特活ひろば（LINE）</span><span class="btn-ya">↗</span></a>
+    </div>
+
+    <!-- このサイトを紹介する（2026-09-23 依頼）────────────────
+         「リンクやらQRコードは一番下のラインへの案内のところに小さく表記して」
+         もとは「はじめかた」の中の1節でしたが、**紹介するのは、読み終えた
+         いちばん下**です。LINEの案内のとなりに小さく置きます。
+         ★QRは この端末の中で作ります（qr_matrix）。外へは出ません。
+         ★行き先は og:url から取るので、どのページの足もとからでも
+           ホームを指します。 -->
+    <div class="foot-shokai">
+      <canvas class="foot-qr" id="shokai-qr" width="220" height="220"
+              aria-label="TOKKATSU広場のホームへのQRコード"></canvas>
+      <div class="foot-shokai-te">
+        <p class="foot-shokai-yo">このサイトを紹介する</p>
+        <p class="foot-shokai-url" id="shokai-url"></p>
+        <p class="foot-shokai-b">
+          <button class="btn btn--yoru" type="button" data-shokai><span class="btn-ji">紙に貼る1枚を保存</span></button>
+        </p>
+        <p class="okuru-shirase" id="shokai-shirase" role="status" aria-live="polite"></p>
+      </div>
     </div>
 
     <!-- ことばの切りかえ（2026-09-23 依頼）。いちばん下、管理者のところに置きます。
@@ -2924,6 +2921,9 @@
     try { qm = qr_matrix(ie); } catch(e) { qm = null; }
     if(!qm){ men.hidden = true; return; }
 
+    var uEl = document.getElementById('shokai-url');
+    if(uEl) uEl.textContent = ie;
+
     /* ① 画面のQR（カメラを向けるだけの人むけ） */
     var d = men.getContext('2d');
     d.fillStyle = '#FFFFFF'; d.fillRect(0, 0, men.width, men.height);
@@ -2951,13 +2951,11 @@
         x.fillStyle = '#1C1C1A'; x.font = '900 68px ' + GA_JI;
         x.fillText('TOKKATSU広場', 72, 110);
         x.font = '900 40px ' + GA_JI;
-        x.fillText('特別活動の情報が、', tx, 210);
-        x.fillText('溜まる場。', tx, 262);
+        x.fillText('特別活動で、', tx, 210);
+        x.fillText('輝く。', tx, 262);
         x.fillStyle = '#63625C'; x.font = '500 27px ' + GA_HON;
         x.fillText('カメラを向けると、', tx, 330);
         x.fillText('このサイトがひらきます。', tx, 368);
-        x.fillStyle = '#1C1C1A'; x.font = '700 26px ' + GA_JI;
-        x.fillText('特別活動で、輝く。', tx, 430);
         x.fillStyle = '#63625C'; x.font = '500 22px ' + GA_HON;
         x.fillText(ie, 72, H - 56);
 

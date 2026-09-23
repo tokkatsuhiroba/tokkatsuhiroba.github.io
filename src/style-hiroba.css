@@ -32,6 +32,7 @@
   --men-sora:#EAF5FA;
   --men-midori:#EDF5EC;
   --men-hada:#F7E3D9;      /* 4つめの面。行き先の色分けで使います */
+  --men-fuji:#EFEAF7;      /* 5つめ。ニュースだけに使います（2026-09-23） */
 
   /* 書体は役ごとに変える。温かさは丸ゴシックと硬筆、読みやすさはUD書体。
        maru … 見出し・ボタン（Zen Maru Gothic＝丸ゴシック）
@@ -1842,6 +1843,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .p--manabu  {--p-iro:var(--men-midori)}
 .p--atsumaru{--p-iro:var(--men-hada)}
 
+/* ★1つだけ、決まりから外します（2026-09-23 依頼）。
+   研究会とニュースは どちらも atsumaru.html なので、上の決まりでは
+   同じ色になり、帯でとなり合って見分けがつきませんでした。
+   ニュースだけ別の色にします。「同じ色＝同じページ」は、これ1つを
+   のぞいて そのまま生きています。
+   ★色だけで伝えないため、字はもちろん、いまいる所はベタ塗りのままです。 */
+.s--news{--p-iro:var(--men-fuji)}
+
 .obi-s{position:relative}
 @media (min-width:720px){
   .obi-l a.obi-s::after{
@@ -1862,6 +1871,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
     display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
     overflow:visible;
   }
+  /* ★「明日から使えるグッズ」は字が長いので2ます分（2026-09-23 依頼）。
+     行き先は7つ。1つが2ますなら ちょうど8ます＝2段4列に収まります。
+     ここを1ますに戻すと、字が2行に折れて帯の高さが揃わなくなります。 */
+  .obi-l .o--manabu{grid-column:span 2}
   /* 1列だったころの「区切りの縦線」は、2段4列では邪魔になります */
   .obi-l li{min-width:0}
   .obi-l li + li{padding-inline-start:0;margin-inline-start:0}
@@ -3432,19 +3445,40 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:12px;line-height:1.7;color:var(--mute);
 }
 
-/* ── このサイトを紹介する（2026-09-23）──────────────────── */
-.shokai{
-  display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,30px);align-items:center;
-  max-width:640px;margin:0 auto;padding:clamp(18px,2.6vw,26px);
-  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
-  box-shadow:6px 6px 0 var(--ink);
+/* ── このサイトを紹介する（2026-09-23 依頼で、足もとへ移しました）──
+   「リンクやらQRコードは一番下のラインへの案内のところに小さく表記して」
+   もとは「はじめかた」の中の1節（大きなカード）でした。
+   紹介するのは **読み終えたいちばん下** なので、LINEの案内のとなりに
+   小さく置きます。地が墨なので、ふちと字は地の色（--bg）で出します。 */
+.foot-shokai{
+  display:flex;align-items:center;gap:14px;
+  max-width:520px;margin:0 0 clamp(18px,2.6vw,26px);
+  padding:12px 14px;
+  border:2px solid rgba(252,251,247,.36);border-radius:16px;
 }
-.shokai-qr{
-  flex:0 0 auto;width:150px;height:150px;display:block;
-  border:2px solid var(--ink);border-radius:8px;background:#fff;
+.foot-qr{
+  flex:none;width:96px;height:96px;display:block;
+  background:#FCFBF7;border-radius:8px;padding:4px;
 }
-.shokai-te{flex:1 1 220px;min-width:0}
-.shokai-yo{margin:0 0 12px;font-size:13.5px;line-height:1.95}
+.foot-shokai-te{min-width:0}
+.foot-shokai-yo{
+  margin:0 0 3px;font-family:var(--f-maru);font-weight:700;
+  font-size:14px;line-height:1.6;color:var(--bg);
+}
+.foot-shokai-url{
+  margin:0 0 9px;font-size:11px;line-height:1.5;
+  color:rgba(252,251,247,.72);word-break:break-all;
+}
+.foot-shokai-b{margin:0}
+.foot-shokai .btn{font-size:12.5px;padding:7px 15px;min-height:40px}
+.foot-shokai .okuru-shirase{
+  margin:6px 0 0;font-size:12px;color:rgba(252,251,247,.82);
+}
+@media (max-width:479px){
+  .foot-shokai{gap:11px;padding:11px}
+  .foot-qr{width:84px;height:84px}
+  .foot-shokai-yo{font-size:13px}
+}
 
 /* ══ 紙に出す（A4・2026-09-23 依頼）════════════════════════
    学校は紙で回ります。実践1件を職員室に配れる形にします。
@@ -3985,3 +4019,37 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   text-wrap:pretty;
 }
 .yomi{text-wrap:balance}
+
+/* ══ 「小」のときは、余白も詰める（2026-09-23 依頼）════════════
+   字だけ小さくしても、1画面に入る量はほとんど増えませんでした
+   （実測：1024pxのホームで 7152px → 6992px。2%しか縮んでいません）。
+   空いているのは字と字のあいだではなく、**節と節のあいだ**だからです。
+
+   そこで「小」のときだけ、すきまを詰めます。
+     ① 節と節のあいだ（--aki）  40〜84px → 24〜48px
+     ② 左右の余白（--pad）      14〜32px → 12〜24px
+     ③ 行間                     1.62 → 1.52
+     ④ 見出し・1行・カード・ふたの内余白
+
+   ★「中」「大」「特大」は 1pxも変わりません。
+   ★詰めるのは **すきまだけ** です。押せる大きさ（46px以上）は削りません。
+     字を小さくした人が、押しまちがえるようになっては意味がないためです。
+   ★板書の札（.bfuda）は --bfuda-pad を動かします。この値は写真の窓とも
+     つながっているので、直接 padding を書くと写真が札からはみ出します。 */
+html[data-moji="chiisai"]{
+  --aki:clamp(24px,3.4vw,48px);
+  --pad:clamp(12px,2.6vw,24px);
+}
+html[data-moji="chiisai"] body{line-height:1.52}
+html[data-moji="chiisai"] .midashi{margin-bottom:4px}
+html[data-moji="chiisai"] .yomi{margin-bottom:clamp(12px,1.8vw,20px)}
+html[data-moji="chiisai"] .naka{margin-top:clamp(16px,2.2vw,26px)}
+html[data-moji="chiisai"] .fuda{
+  padding:clamp(14px,1.9vw,21px) clamp(13px,1.8vw,21px) clamp(14px,1.8vw,20px);
+}
+html[data-moji="chiisai"] .hfuda{
+  padding:clamp(12px,1.4vw,16px) clamp(11px,1.2vw,15px) clamp(10px,1.2vw,13px);
+}
+html[data-moji="chiisai"] .bfuda{--bfuda-pad:clamp(9px,1.2vw,13px)}
+html[data-moji="chiisai"] .hiraku>summary,
+html[data-moji="chiisai"] .motto>summary{min-height:46px;padding:8px 18px}

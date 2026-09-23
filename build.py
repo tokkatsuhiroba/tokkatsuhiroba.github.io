@@ -100,7 +100,7 @@ PAGES = (
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。ことばの意味も。',
      ('about', 'yotsu', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
-     ('manabu', 'shokai', 'jissen')),
+     ('manabu', 'jissen')),
     # 2026-09-23 依頼：研究会（つぎの日程 → 各地の会）を先にまとめ、
     #   ニュースは別枠で いちばん後ろにします。
     ('atsumaru.html', '集まる', 'つぎの研究会と、各地の会。ニュースも。',
@@ -143,9 +143,12 @@ SETSU_NA = {
     #   お悩み別の入口を困りごとへ渡したので、ここに残るのは
     #   **学級活動(1)の学習過程・一次資料・すぐ使える道具**。
     #   はじめての人が最初に読むところ、という顔になりました。
-    'about':  '特活とは',   'manabu': 'はじめかた',
+    # 2026-09-23 依頼：「はじめかた」→「明日から使えるグッズ」。
+    #   「はじめかた」は場所の名前としては広すぎて、何が置いてあるか
+    #   分かりませんでした。ここに来てほしいのは、道具を探しに来た人です。
+    #   帯では字が長くなるので、2ます分の幅を取ります（→ .obi-l .o--manabu）。
+    'about':  '特活とは',   'manabu': '明日から使えるグッズ',
     'yotsu':  '4つの内容',  'jissen': 'すぐ使える道具',
-    'shokai': 'このサイトを紹介する',
     # 2026-09-23：「日本の」を外しました（依頼）。ここは日本のサイトなので、
     #   わざわざ言わなくても分かります。帯・札・ページの名前が短くなります。
     'kai':    '研究会', 'okuru': '実践を送る',   # ↑ ima と同じ名前（1つの場所）
@@ -4334,7 +4337,7 @@ def build_kyara_narabi(kyara):
 IGI_MEN = (
     ('gakkatsu', 'お悩みBOX',       'いま困っていることを。',   'kiku'),
     ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
-    ('club',     'ちょっと試したい', '週案に貼る1行つき。',     'jissen'),
+    ('club',     'ちょっと試したい', '明日から使える学級会グッズ！', 'jissen'),
     ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
 )
 
@@ -4778,8 +4781,13 @@ def build_obi(ima_file, doko):
     for sid, _, _, _ in HOME_FUDA:
         saki = doko[sid]
         ima = (saki == ima_file)
-        gyo.append('      <li><a class="obi-s p--%s%s" href="%s"%s>%s</a></li>'
-                   % (saki.replace('.html', ''), ' obi-ima' if ima else '',
+        # s--◯◯ … 項目ごとの印。色を1つだけ変えたいとき（ニュース）と、
+        #   幅を2ます分にしたいとき（明日から使えるグッズ）に使います。
+        #   p--◯◯（ページの色）はそのまま残します。ふだんはページの色です。
+        gyo.append('      <li class="o--%s"><a class="obi-s p--%s s--%s%s" '
+                   'href="%s"%s>%s</a></li>'
+                   % (sid, saki.replace('.html', ''), sid,
+                      ' obi-ima' if ima else '',
                       '#%s' % sid if ima else '%s#%s' % (saki, sid),
                       ' aria-current="page"' if ima else '',
                       esc_html(SETSU_NA[sid])))
@@ -5084,6 +5092,8 @@ KOTOBA = {
         ('Building relationships · Taking part in society · Becoming yourself',
          'بناء العلاقات · المشاركة في المجتمع · تحقيق الذات'),
     'みんなの実践を見る': ('See everyone’s practices', 'شاهد ممارسات الجميع'),
+    '紙に貼る1枚を保存': ('Save a sheet to print', 'احفظ ورقة للطباعة'),
+    'このサイトを紹介する': ('Share this site', 'شارِك هذا الموقع'),
     'みんなの特活ひろば（LINE）':
         ('Minna no Tokkatsu Hiroba (LINE)', 'ساحة توكاتسو للجميع (LINE)'),
 
@@ -5110,8 +5120,8 @@ KOTOBA = {
     'ちょっと知りたい': ('Something to know', 'ما يستحق المعرفة'),
     '研究日程とニュース。': ('Meetings and news.', 'اللقاءات والأخبار.'),
     'ちょっと試したい': ('Something to try', 'ما يستحق التجربة'),
-    '週案に貼る1行つき。': ('With one line you can paste into your weekly plan.',
-                            'مع سطر جاهز لخطتك الأسبوعية.'),
+    '明日から使える学級会グッズ！': ('Class-meeting tools you can use tomorrow!',
+                            'أدوات لاجتماع الفصل تصلح للاستخدام غدًا!'),
     'ちょっと伝えたい': ('Something to pass on', 'ما يستحق المشاركة'),
     '板書も資料も、ここから。': ('Blackboards and handouts — send them from here.',
                                 'السبورات والمواد — أرسلها من هنا.'),
@@ -5131,6 +5141,9 @@ KOTOBA = {
         ('The steps of a class meeting, the source documents, and tools to take home.',
          'مراحل مجلس الفصل، والمراجع الأصلية، وأدوات تأخذها معك.'),
     '研究会 ニュース': ('Societies · News', 'الجمعيات · الأخبار'),
+    '明日から使えるグッズ すぐ使える道具':
+        ('Kit for tomorrow · Tools you can use right away',
+         'أدوات لغدٍ · أدوات جاهزة للاستخدام'),
     'つぎの研究会と、各地の会。ニュースも。':
         ('The next meetings, the societies — and the news.',
          'اللقاءات القادمة والجمعيات — والأخبار أيضًا.'),
@@ -5732,6 +5745,13 @@ KOTOBA = {
     'はじめかた このサイトを紹介する すぐ使える道具':
         ('How to start · Tell others · Tools you can use now',
          'كيف تبدأ · عرِّف الآخرين · أدوات جاهزة'),
+    '明日から使えるグッズ':
+        ('Tools you can use tomorrow', 'أدوات تصلح للاستخدام غدًا'),
+    '明日から使えるグッズ すぐ使える道具':
+        ('Tools you can use tomorrow · Ready-made tools',
+         'أدوات تصلح للاستخدام غدًا · أدوات جاهزة'),
+    '紙に貼る1枚を保存':
+        ('Save a sheet to put on paper', 'احفظ ورقة للطباعة'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
@@ -5753,6 +5773,7 @@ KOTOBA_TEKI = (
     (r'(<p class="ko-yo">)(.*?)(</p>)', 'ページのひとこと'),
     (r'(<a class="ko-oya"[^>]*>)(.*?)(</a>)', '親への戻り道'),
     (r'(<p class="foot-koe">)(.*?)(</p>)', '足もとの1行'),
+    (r'(<p class="foot-shokai-yo">)(.*?)(</p>)', '足もとの紹介'),
     (r'(<span class="kanri-na">)(.*?)(</span>)', '管理者'),
     (r'(<a class="btn"[^>]*href="\#okuru"[^>]*>)(実践を送る)(<span)', 'ヒーローのボタン1'),
     (r'(<a class="btn btn--usu"[^>]*>)(みんなの実践を見る)(<span)', 'ヒーローのボタン2'),
