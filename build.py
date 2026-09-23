@@ -100,11 +100,15 @@ PAGES = (
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。ことばの意味も。',
      ('about', 'yotsu', 'katei', 'ichiji', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
-     ('manabu', 'jissen')),
+     ('manabu',)),
     # 2026-09-23 依頼：研究会（つぎの日程 → 各地の会）を先にまとめ、
     #   ニュースは別枠で いちばん後ろにします。
-    ('atsumaru.html', '集まる', 'つぎの研究会と、各地の会。ニュースも。',
-     ('ima', 'kai', 'news')),
+    ('atsumaru.html', '集まる', 'つぎの研究会と、各地の会。',
+     ('ima', 'kai')),
+    # 2026-09-23 依頼：「ニュースは別枠にして。今研究会の下にきているから」
+    #   同じページに置くと、ニュースが「研究会のおまけ」に見えます。
+    ('news.html',     'ニュース', '特別活動にかかわる一次情報だけ。',
+     ('news',)),
     # みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。
     #   **このサイトの主役です。**だから帯の8つに入れました。
     #   かわりに「すぐ使える道具」を外しています（学ぶ と同じページなので、
@@ -2243,23 +2247,42 @@ def _e_atsumaru(k):
     k.nama('<path d="M0 376C520 358 1140 392 1720 374S2180 358 2400 368" '
            'fill="none" stroke="#E8C547" stroke-width="5"/>')
 
-    # ── 左：ニュース。知らせが3枚 貼られた掲示板を、子どもが見ている ──
-    k.oku('keijiban', 330, 400, kage=96)
-    k.oku('ko-ushiro', 215, 414, FUKU[0], kage=15)
-    k.oku('ko-ushiro', 440, 416, FUKU[1], kage=15)
-
-    # ── 右：日本の研究会。のぼりの下に、先生のかたまりが3つ ──
+    # のぼりの下に、先生のかたまりが3つ（研究会）
     for nobori, sensei in (
-            ((( 900, 386, '#D2552A'), ( 956, 394, '#E8C547')),
-             ((1030, 408), (1082, 412))),
-            (((1500, 390, '#3A6EA5'), (1556, 398, '#D2552A')),
-             ((1630, 410), (1682, 414), (1734, 408))),
+            ((( 340, 386, '#D2552A'), ( 396, 394, '#E8C547')),
+             (( 470, 408), ( 522, 412))),
+            (((1180, 390, '#3A6EA5'), (1236, 398, '#D2552A')),
+             ((1310, 410), (1362, 414), (1414, 408))),
             (((2010, 398, '#E8C547'), (2066, 406, '#3A6EA5')),
              ((2140, 412), (2192, 416)))):
         for x, base, iro in nobori:
             k.oku('nobori', x, base, iro, kage=20)
         for x, base in sensei:
             k.oku('sensei', x, base, kage=17)
+
+
+# ══ ③-2 ニュース ═══════════════════════════════════════════
+#   2026-09-23 依頼：「ニュースは別枠にして。今研究会の下にきているから」
+#   研究会と同じページに置くと、ニュースが「研究会のおまけ」に見えます。
+#   ページごと分けました。場所は同じまちですが、**掲示板**が主役です。
+def _e_news(k):
+    k.sora(((520, 44), (1880, 38)), hi=(1300, 52))
+    k.yama()
+    k.jimen(niwa=False)
+    for x, base in ((190, 248), (1430, 242), (2300, 252)):
+        k.oku('ie', x, base, kage=96)
+    k.ki((860, 1960))
+    k.nama('<path d="M0 330C520 312 1140 346 1720 328S2180 312 2400 322V420H0Z" '
+           'fill="#FCFBF7"%s/>' % SEN_ZOKUSEI)          # まちの道
+    k.nama('<path d="M0 376C520 358 1140 392 1720 374S2180 358 2400 368" '
+           'fill="none" stroke="#E8C547" stroke-width="5"/>')
+    # 知らせが貼られた掲示板を、子どもが見ている
+    for x, base in ((430, 400), (1240, 404), (2010, 398)):
+        k.oku('keijiban', x, base, kage=96)
+    for x, base, fuku in ((315, 414, FUKU[0]), (540, 416, FUKU[1]),
+                          (1125, 418, FUKU[2]), (1350, 416, FUKU[3]),
+                          (1895, 412, FUKU[1]), (2120, 414, FUKU[0])):
+        k.oku('ko-ushiro', x, base, fuku, kage=15)
 
 
 # ══ ④ 板書 ═══════════════════════════════════════════════
@@ -2311,8 +2334,11 @@ KO_E = {
                                    '480 0 880 420', False),
     'manabu.html':   (_e_manabu,   '黒板を囲んで学級会をしている教室の中',
                                    '400 0 880 420', True),
-    'atsumaru.html': (_e_atsumaru, '山と家のならぶまち。知らせが貼られた掲示板と、'
-                                   'のぼり旗の下で集まって話している先生たち',
+    'atsumaru.html': (_e_atsumaru, '山と家のならぶまち。のぼり旗の下で'
+                                   '集まって話している先生たち',
+                                   '160 0 880 420', False),
+    'news.html':     (_e_news,     '山と家のならぶまち。知らせが貼られた掲示板を、'
+                                   'こどもたちが見ている',
                                    '160 0 880 420', False),
     'bansho.html':   (_e_bansho,   '窓のならぶろうかに、黒板が3枚 立ててある',
                                    '820 0 880 420', True),
@@ -3036,18 +3062,15 @@ KAI_CHIZU_T = """    <div class="kaichizu" id="kaichizu">
     </div>
 """
 
-KAI_CHIZU_YOMI = ('押すと、その県の会だけになります。もう一度押すと もどります。<br>\n'
-                  '          <b>札が立っているのが、いま載せている県です。</b>札の無い県は\n'
-                  '          「そこに会が無い」のではなく、<b>まだ載せていないだけ</b>です。<br>\n'
-                  '          <b>全国の会は、どの県を押しても出したままにします。</b>')
+# 2026-09-23 依頼：「この文章いらない。消して」
+#   押せば分かることを、4行も書いていました。地図は押して確かめるものなので、
+#   説明は出しません（**空の字を渡すと、行ごと出ません**）。
+KAI_CHIZU_YOMI = ''
 
 
 def kai_chizu(aru_ken):
     """研究会の地図。1つも県が無いときは、地図ごと出しません。"""
-    return build_chizu(
-        aru_ken, mid='kai-k', yomi=KAI_CHIZU_YOMI,
-        nashi='いまは %(ken)d都道県に %(kazu)d会。'
-              'のこり %(nokori)d県は、まだ載せていないだけです。')
+    return build_chizu(aru_ken, mid='kai-k', yomi=KAI_CHIZU_YOMI, nashi='')
 
 
 def build_kai():
@@ -3929,9 +3952,7 @@ def chizu_mijikaku(ken):
 #   ビルドが止まります（実践の地図と、研究会の地図の2つを置くため）。
 CHIZU_T = """      <div class="sagasu-gyo sagasu-gyo--chizu">
         <span class="sagasu-l" id="{mid}-l">地図から</span>
-        <p class="chizu-yomi">{yomi}
-          <span class="chizu-nashi-chu">{nashi}</span></p>
-        <div class="chizu" id="{mid}" role="group" aria-labelledby="{mid}-l">
+{yomi}        <div class="chizu" id="{mid}" role="group" aria-labelledby="{mid}-l">
 {e}
 {fuda}        </div>
       </div>
@@ -3940,6 +3961,10 @@ CHIZU_T = """      <div class="sagasu-gyo sagasu-gyo--chizu">
 CHIZU_YOMI = ('押すと、その県のものだけになります。もう一度押すと もどります。<br>\n'
               '          <b>札が立っているのが、いま届いている県です。</b>札の無い県は\n'
               '          「そこに実践が無い」のではなく、<b>まだ送られていないだけ</b>です。')
+
+# 地図の上に出す説明。yomi='' を渡すと、**行ごと出しません**（2026-09-23 依頼）。
+CHIZU_YOMI_T = ('        <p class="chizu-yomi">%s\n'
+                '          <span class="chizu-nashi-chu">%s</span></p>\n')
 
 
 def build_chizu(aru, mid='sagasu-k', yomi=None, nashi=None):
@@ -4039,10 +4064,11 @@ def build_chizu(aru, mid='sagasu-k', yomi=None, nashi=None):
         nashi = ('いまは %d県から %d件。のこり %d県には、まだ札が立っていません。'
                  % (len(kazu), sum(kazu.values()), nokori)) if nokori else \
                 'とうとう47都道府県、ぜんぶそろいました。'
-    else:
+    elif nashi:
         nashi = nashi % {'ken': len(kazu), 'kazu': sum(kazu.values()), 'nokori': nokori}
+    y = CHIZU_YOMI if yomi is None else yomi
     return CHIZU_T.format(e='\n'.join(e), fuda=''.join(fuda), mid=mid,
-                          yomi=(yomi or CHIZU_YOMI), nashi=esc_html(nashi))
+                          yomi=(CHIZU_YOMI_T % (y, esc_html(nashi)) if y else ''))
 
 
 # 2026-09-23 依頼：**左に地図、右にさがす**の2段組みにします。
@@ -4341,7 +4367,7 @@ def build_kyara_narabi(kyara):
 IGI_MEN = (
     ('gakkatsu', 'お悩みBOX',       'いま困っていることを。',   'kiku'),
     ('gyoji',    'ちょっと知りたい', '研究日程とニュース。',     'ima'),
-    ('club',     'ちょっと試したい', '明日から使える学級会グッズ！', 'jissen'),
+    ('club',     'ちょっと試したい', '明日から使える学級会グッズ！', 'manabu'),
     ('jidokai',  'ちょっと伝えたい', '板書も資料も、ここから。', 'okuru'),
 )
 
@@ -4500,12 +4526,11 @@ def home_kazu(sid, sec, kiji, jissen, ken, komari):
     if sid == 'about':
         n = kazoe(r'class="manabu-box"')
         return mitsu('話が%dつ' % n, '%d topics' % n, '%d موضوعات' % n)
+    # 2026-09-23：学習過程と一次資料は「特活とは」へ移り、道具と1つにまとめました。
+    #   ここで数えるのは **グッズの数** です。
     if sid == 'manabu':
-        dan = kazoe(r'data-learn-detail=')
-        shi = kazoe(r'<li><a href="https?://[^"]*"[^>]*><span><b>')
-        return mitsu('%d段階と資料%d件' % (dan, shi),
-                     '%d steps, %d sources' % (dan, shi),
-                     '%d مراحل و%d مرجعًا' % (dan, shi))
+        return mitsu('%d点' % len(jissen), '%d items' % len(jissen),
+                     '%d عنصر' % len(jissen))
     # 困りごとの数。2026-09-22 まで「4つの内容」の札に出していましたが、
     # 帯を1つにまとめたので、困りごとの札の数になりました。
     if sid in ('komari', 'yotsu'):
@@ -5097,11 +5122,13 @@ KOTOBA = {
          'بناء العلاقات · المشاركة في المجتمع · تحقيق الذات'),
     'みんなの実践を見る': ('See everyone’s practices', 'شاهد ممارسات الجميع'),
     '紙に貼る1枚を保存': ('Save a sheet to print', 'احفظ ورقة للطباعة'),
-    'お願いの1枚を保存': ('Save the request sheet', 'احفظ ورقة الدعوة'),
+    'リンクをコピー': ('Copy the link', 'انسخ الرابط'),
     '実践紹介のお願い': ('Ask a colleague to share', 'ادعُ زميلًا للمشاركة'),
-    '同僚の先生に頼むための1枚を作ります。読みこむと、この送る画面がそのままひらきます。':
-        ('Makes a sheet you can hand to a colleague. Scanning it opens this form directly.',
-         'يصنع ورقة تعطيها لزميلك. مسحها يفتح هذه الاستمارة مباشرة.'),
+    '同僚の先生に頼むときは、この画面のリンクを渡してください。ひらくと、そのまま書き始められます。':
+        ('To ask a colleague, send them the link to this screen. '
+         'Opening it takes them straight to the form.',
+         'لدعوة زميل، أرسل له رابط هذه الشاشة. '
+         'فتحه ينقله مباشرة إلى الاستمارة.'),
     'このサイトを紹介する': ('Share this site', 'شارِك هذا الموقع'),
     'みんなの特活ひろば（LINE）':
         ('Minna no Tokkatsu Hiroba (LINE)', 'ساحة توكاتسو للجميع (LINE)'),
@@ -5153,9 +5180,12 @@ KOTOBA = {
     '明日から使えるグッズ すぐ使える道具':
         ('Kit for tomorrow · Tools you can use right away',
          'أدوات لغدٍ · أدوات جاهزة للاستخدام'),
-    'つぎの研究会と、各地の会。ニュースも。':
-        ('The next meetings, the societies — and the news.',
-         'اللقاءات القادمة والجمعيات — والأخبار أيضًا.'),
+    'つぎの研究会と、各地の会。':
+        ('The next meetings, and the societies.',
+         'اللقاءات القادمة والجمعيات.'),
+    '特別活動にかかわる一次情報だけ。':
+        ('Primary sources on Tokkatsu only.',
+         'مصادر أولية عن الأنشطة الخاصة فقط.'),
     '送ってもらった実践が、そのまま並びます。':
         ('Practices that teachers sent in, shown just as they arrived.',
          'ممارسات أرسلها المعلمون، معروضة كما وصلت.'),
@@ -5959,10 +5989,8 @@ def build_shin():
     for mark, html in (('<!--BUILD:HIROBA-->', hero),
                        ('<!--BUILD:COPY-->',   build_copy(TOBIRA_COPY)),
                        ('    <!--BUILD:YOTSU-->',  build_yotsu(kyara, jissen, komari)),
-                       ('      <!--BUILD:NAYAMI-->', build_nayami(komari)),
                        ('    <!--BUILD:KYARA-->',  build_kyara_narabi(kyara)),
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
-                       ('    <!--BUILD:BANSHO_IRI-->', build_bansho_iriguchi(jissen)),
                        ('    <!--BUILD:FUSHIME-->', build_fushime(jissen, buhin)),
                        ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
                        ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari)),

@@ -438,25 +438,31 @@
 
 <section class="sec sec--ki manabu" id="manabu">
   <i class="kazari" data-k="gakkatsu-board" style="--y:18%;--w:112px;--d:.4s"></i>
-  <i class="kazari kazari--migi" data-b="kokuban" style="--y:50%;--w:126px;--d:1.1s"></i>
+  <i class="kazari kazari--migi" data-k="club-tools" style="--y:52%;--w:116px;--d:1.1s"></i>
   <div class="uchi">
     <!-- 2026-09-23 依頼：学習過程と一次資料を「特活とは」へ移したので、
          ここは**道具の場所**になりました。見出しと説明も、それに合わせます。 -->
     <h2 class="midashi"><span class="en">KIT</span><span class="ja">明日から使えるグッズ</span></h2>
     <p class="yomi">特別活動には、教科書がありません。<br>グッズがあると、子どもたちが自分たちで進められます。</p>
-    <!--BUILD:BANSHO_IRI-->
-
-    <!-- 2026-09-22：ここには困りごとの札を6つ並べていました。
-         同じ札が 困りごと・学ぶ・4つの内容 の3か所に出ていたので、
-         **中身は1か所**と決めて、ここは行き先だけにしました。 -->
-    <div class="manabu-box">
-      <h3 class="manabu-h">お悩みから探す</h3>
-      <p class="manabu-note">
-        送られてきたお悩みは、<strong>すべて「お悩みBOX」にあります</strong>。<br>
-        答えが見つかったものは、下の5段階のうち読むところへつながっています。
-      </p>
-      <!--BUILD:NAYAMI-->
-    </div>
+    <!-- 2026-09-23 依頼：ここは **グッズだけのページ** にしました。
+         前は「みんなの実践を見る」と「お悩みから探す」が上に並んでいましたが、
+         どちらも本体は別のページ（みんなの実践／お悩みBOX）にあり、ここに
+         あったのは入口だけです。グッズを探しに来た人が、まず別の入口を
+         2つ通る形になっていました。帯からも札からも、それぞれの本体へは
+         行けるので、外しても行き止まりは生まれません。
+         ★戻すときは BANSHO_IRI と NAYAMI の目じるしをここへ書き戻し、
+           build.py の目じるしの表にも足してください（目じるしの文字を
+           このコメントに書くと、検問に当たるうえ、コメントの入れ子は
+           HTMLでは途中で閉じてしまいます）。 -->
+    <p class="yomi">
+      ここは<strong>こちらで用意したもの</strong>です。学級会グッズ、映像資料、<br>
+      よく出る困りごとに効く手だて。<strong>持ち帰って、明日そのまま使えるもの</strong>だけを置きます。
+    </p>
+    <p class="yomi">
+      先生方から届いた実践は、こちらではなく <strong>「みんなの実践」</strong>にあります。<br>
+      あちらが本物の持ち寄り、ここが道具箱です。
+    </p>
+    <!--BUILD:JISSEN_H-->
   </div>
 </section>
 
@@ -474,22 +480,6 @@
 </section>
 
 
-<section class="sec sec--midori" id="jissen">
-  <i class="kazari" data-k="club-tools" style="--y:28%;--w:116px;--d:.3s"></i>
-  <i class="kazari kazari--migi" data-b="ki" style="--y:46%;--w:104px;--d:1.4s"></i>
-  <div class="uchi">
-    <h2 class="midashi"><span class="en">TOOLS</span><span class="ja">すぐ使える道具</span></h2>
-    <p class="yomi">
-      ここは<strong>こちらで用意したもの</strong>です。学級会グッズ、映像資料、<br>
-      よく出る困りごとに効く手だて。<strong>持ち帰って、明日そのまま使えるもの</strong>だけを置きます。
-    </p>
-    <p class="yomi">
-      先生方から届いた実践は、こちらではなく <strong>「みんなの実践」</strong>にあります。<br>
-      あちらが本物の持ち寄り、ここが道具箱です。
-    </p>
-    <!--BUILD:JISSEN_H-->
-  </div>
-</section>
 
 <!-- みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。**このサイトの主役です。**
      もとの名前は「板書」でした。届くものが 写真・PDF・議題・概要 まで広がったので、
@@ -881,16 +871,13 @@
          ★足もとのQRはホーム行きです。ここだけ行き先がちがいます。
          ★作るのは この端末の中だけ。外へは何も出ません。 -->
     <div class="onegai">
-      <canvas class="onegai-qr" id="onegai-qr" width="220" height="220"
-              aria-label="実践を送る画面へのQRコード"></canvas>
-      <div class="onegai-te">
-        <p class="onegai-h">実践紹介のお願い</p>
-        <p class="onegai-yo">同僚の先生に頼むための1枚を作ります。読みこむと、この送る画面がそのままひらきます。</p>
-        <p class="onegai-b">
-          <button class="bansho-b" type="button" data-shokai data-url-saki="#okuru"><span class="btn-ji">お願いの1枚を保存</span></button>
-        </p>
-        <p class="okuru-shirase" id="onegai-shirase" role="status" aria-live="polite"></p>
-      </div>
+      <p class="onegai-h">実践紹介のお願い</p>
+      <p class="onegai-yo">同僚の先生に頼むときは、この画面のリンクを渡してください。ひらくと、そのまま書き始められます。</p>
+      <p class="onegai-url" id="onegai-url"></p>
+      <p class="onegai-b">
+        <button class="bansho-b" type="button" data-copy-okuru><span class="btn-ji">リンクをコピー</span></button>
+      </p>
+      <p class="okuru-shirase" id="onegai-shirase" role="status" aria-live="polite"></p>
     </div>
 
     <!-- 送るところの、すぐ下に「見るところ」を置きます（2026-09-22 依頼）。
@@ -2937,6 +2924,49 @@
     if(b) ga_hozon(b);
   });
 
+  /* ══ 実践紹介のお願い（2026-09-23 依頼）══════════════════════
+     「実戦に関しては、リンクをコピーするだけのボタンだけでいい！
+       画像を出力するQRは不要」
+     同僚に頼むときは、LINEやメールに貼るのが いちばん早い。
+     だから **リンクを1つ、写すだけ** にします。絵は作りません。
+     ★行き先は og:url から取るので、どのページから押しても
+       送る画面（#okuru）を指します。
+     ★写すのは この端末の中だけです。外へは何も出ません。          */
+  (function(){
+    var b = document.querySelector('[data-copy-okuru]');
+    if(!b) return;
+    var moto = document.querySelector('meta[property="og:url"]');
+    var ie = (moto && moto.content ? moto.content : '').replace(/[^/]*\.html$/, '');
+    if(!ie){ b.hidden = true; return; }
+    var u = ie + '#okuru';
+    var uEl = document.getElementById('onegai-url');
+    if(uEl) uEl.textContent = u;
+    var shirase = document.getElementById('onegai-shirase');
+    function owari(ok){
+      if(!shirase) return;
+      shirase.textContent = ok ? 'コピーしました。'
+        : 'コピーできませんでした。上のリンクを長押しして、選んでください。';
+    }
+    b.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(u)
+          .then(function(){ owari(true); })['catch'](function(){ owari(false); });
+        return;
+      }
+      /* 古い端末（clipboard が無い）でも写せるように */
+      try {
+        var t = document.createElement('textarea');
+        t.value = u; t.setAttribute('readonly', '');
+        t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t);
+        t.select(); t.setSelectionRange(0, u.length);
+        var ok = document.execCommand('copy');
+        t.remove();
+        owari(ok);
+      } catch(e) { owari(false); }
+    });
+  })();
+
   /* ══ 紹介のQR（2026-09-23 依頼）══════════════════════════════
      行き先が2つあります。
        ① 足もとの「このサイトを紹介する」 … ホームへ
@@ -2954,14 +2984,13 @@
                .replace(/[^/]*\.html$/, '');      /* どのページからでもホームへ */
     if(!ie) return;
 
-    /* 行き先ごとの、紙に貼る1枚の字（2行＋ひとこと） */
+    /* 紙に貼る1枚の字。行き先は **ホームだけ** です。
+       ★実践のほうは、2026-09-23 の依頼で **リンクをコピーするだけ**に
+         しました（QRの絵は出しません）。下の「実践紹介のお願い」を見てください。 */
     var SAKI = {
-      '':       {url: ie,            dai: ['特別活動で、', '輝く。'],
-                 yo: ['カメラを向けると、', 'このサイトがひらきます。'],
-                 na: 'TOKKATSU広場.png'},
-      '#okuru': {url: ie + '#okuru', dai: ['実践を、', '送ってください。'],
-                 yo: ['カメラを向けると、', '送る画面がそのままひらきます。'],
-                 na: '実践紹介のお願い.png'}
+      '': {url: ie, dai: ['特別活動で、', '輝く。'],
+           yo: ['カメラを向けると、', 'このサイトがひらきます。'],
+           na: 'TOKKATSU広場.png'}
     };
 
     function qr_egaku(ctx, qm, x, y, atari){
@@ -2977,7 +3006,7 @@
     }
 
     /* ── ① 画面のQR（カメラを向けるだけの人むけ）── */
-    [['shokai-qr', '', 'shokai-url'], ['onegai-qr', '#okuru', null]].forEach(function(t){
+    [['shokai-qr', '', 'shokai-url']].forEach(function(t){
       var men = document.getElementById(t[0]);
       if(!men) return;
       var qm = qr_toru(SAKI[t[1]].url);
@@ -2996,9 +3025,7 @@
       var b = ev.target.closest && ev.target.closest('[data-shokai]');
       if(!b) return;
       var k = SAKI[b.getAttribute('data-url-saki') || ''] || SAKI[''];
-      var shirase = b.closest('.onegai')
-                    ? document.getElementById('onegai-shirase')
-                    : document.getElementById('shokai-shirase');
+      var shirase = document.getElementById('shokai-shirase');
       if(shirase) shirase.textContent = '作っています…';
       try {
         var qm = qr_toru(k.url);

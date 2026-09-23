@@ -4111,15 +4111,15 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
    ★足もとの紹介（.foot-shokai）とは行き先がちがいます。
      あちらはホーム、ここは **この送る画面（#okuru）** です。 */
 .onegai{
-  display:flex;align-items:center;gap:clamp(12px,2vw,18px);
   margin:clamp(16px,2.4vw,22px) 0 0;padding:clamp(12px,1.8vw,16px);
   background:var(--bg);border:2px dashed var(--rule);border-radius:16px;
 }
-.onegai-qr{
-  flex:none;width:96px;height:96px;display:block;
-  background:#fff;border:2px solid var(--ink);border-radius:8px;
+.onegai-url{
+  margin:0 0 10px;padding:8px 10px;
+  background:var(--men-ki);border-radius:8px;
+  font-family:var(--f-en);font-size:12px;line-height:1.6;
+  color:var(--ink);word-break:break-all;
 }
-.onegai-te{min-width:0}
 .onegai-h{
   margin:0 0 3px;font-family:var(--f-maru);font-weight:700;
   font-size:calc(15px * var(--moji));line-height:1.5;
@@ -4132,6 +4132,6 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
 .onegai .bansho-b{font-size:calc(12.5px * var(--moji));padding:7px 15px;min-height:40px}
 .onegai .okuru-shirase{margin:6px 0 0;font-size:12px}
 @media (max-width:479px){
-  .onegai{gap:11px;padding:11px}
-  .onegai-qr{width:84px;height:84px}
+  .onegai{padding:11px}
+  .onegai-url{font-size:11px}
 }
