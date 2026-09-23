@@ -2168,12 +2168,253 @@
      ★字の折り返しは、1字ずつ measureText で測ります。日本語はどこでも
        折れますが、行あたまに 。、）」 が来ないところだけ直します。      */
   var GA_W = 1080;              /* 絵のはば。スマホでもPCでも、これ1つ */
-  var GA_TAKASA_MAX = 2600;     /* これを超えたら、本文を切って「つづきはサイトで」 */
+  var GA_TAKASA_MAX = 3000;     /* これを超えたら、本文を切って「つづきはサイトで」 */
   var GA_P = 64;                /* まわりの余白 */
-  var GA_E_TAKASA = 900;        /* 絵の高さの上限。これを超えたら上だけ切り出す */
+  /* 資料の置き場の高さ。2026-09-23（依頼）で **切るのをやめました**。
+     「添付資料が全部写るようにする。２枚のものは小さくして入れる」
+     ★上だけ切り出すと、紙の下半分が誰にも届きません。縮めれば、
+       小さくても ぜんぶ写ります。読めないぶんはQRから本物へ行けます。 */
+  var GA_E_TAKASA = 1250;       /* 資料の置き場の高さ。ここに収まるまで縮めます */
+  var GA_E_MAX = 4;             /* 入れる資料の枚数。これ以上はQRの先で */
   var GA_JI = '"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif';
   var GA_HON = '"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif';
   var GA_ATAMA = 'みんなの実践';
+
+  /* ══ QRコード（2026-09-23 依頼）══════════════════════════════
+     外のライブラリは読みこみません（原則2＝何も送信しない）。
+     バイトモード・誤り訂正レベルM・型1〜10。
+     URLは70字ほどなので、型4か5に収まります。               */
+  function qr_matrix(text){
+    /* ── 1．字をバイトに（UTF-8）── */
+    var d = [], i, j, k;
+    for(i = 0; i < text.length; i++){
+      var cp = text.codePointAt(i);
+      if(cp > 0xFFFF) i++;
+      if(cp < 0x80) d.push(cp);
+      else if(cp < 0x800) d.push(0xC0 | cp >> 6, 0x80 | cp & 63);
+      else if(cp < 0x10000) d.push(0xE0 | cp >> 12, 0x80 | cp >> 6 & 63, 0x80 | cp & 63);
+      else d.push(0xF0 | cp >> 18, 0x80 | cp >> 12 & 63, 0x80 | cp >> 6 & 63, 0x80 | cp & 63);
+    }
+    /* ── 2．型を決める（レベルMの、型ごとの中身）── */
+    /*    [1ブロックの誤り訂正語数, [[ブロック数, データ語数], …]]            */
+    var V = [null,
+      [10, [[1,16]]],            [16, [[1,28]]],            [26, [[1,44]]],
+      [18, [[2,32]]],            [24, [[2,43]]],            [16, [[4,27]]],
+      [18, [[4,31]]],            [22, [[2,38],[2,39]]],     [22, [[3,36],[2,37]]],
+      [26, [[4,43],[1,44]]]];
+    var ver = 0, you;
+    for(i = 1; i <= 10; i++){
+      var dc = 0;
+      V[i][1].forEach(function(b){ dc += b[0] * b[1]; });
+      var cc = (i < 10) ? 8 : 16;                 /* 字数のけた（バイトモード） */
+      if(d.length + 2 + (cc / 8) <= dc){ ver = i; you = dc; break; }
+    }
+    if(!ver) return null;                          /* 長すぎ。ここでは出しません */
+
+    /* ── 3．ビットの列を作る ── */
+    var bits = [];
+    function put(v, n){ for(k = n - 1; k >= 0; k--) bits.push(v >> k & 1); }
+    put(4, 4);                                     /* バイトモード */
+    put(d.length, ver < 10 ? 8 : 16);
+    for(i = 0; i < d.length; i++) put(d[i], 8);
+    for(i = 0; i < 4 && bits.length < you * 8; i++) bits.push(0);
+    while(bits.length % 8) bits.push(0);
+    var data = [];
+    for(i = 0; i < bits.length; i += 8){
+      var v = 0; for(k = 0; k < 8; k++) v = v << 1 | bits[i + k];
+      data.push(v);
+    }
+    var pad = [0xEC, 0x11];
+    for(i = 0; data.length < you; i++) data.push(pad[i % 2]);
+
+    /* ── 4．誤り訂正（GF(256)・リードソロモン）── */
+    var EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+    for(i = 0, j = 1; i < 255; i++){ EXP[i] = j; LOG[j] = i; j <<= 1; if(j & 256) j ^= 285; }
+    for(i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+    function mul(a, b){ return (a && b) ? EXP[LOG[a] + LOG[b]] : 0; }
+    function gen(n){
+      var g = [1];
+      for(i = 0; i < n; i++){
+        var ng = new Array(g.length + 1).fill(0);
+        for(j = 0; j < g.length; j++){
+          ng[j] ^= g[j];
+          ng[j + 1] ^= mul(g[j], EXP[i]);
+        }
+        g = ng;
+      }
+      return g;
+    }
+    var ecN = V[ver][0], G = gen(ecN);
+    function rs(blk){
+      var r = blk.concat(new Array(ecN).fill(0));
+      for(i = 0; i < blk.length; i++){
+        var c = r[i]; if(!c) continue;
+        for(j = 0; j < G.length; j++) r[i + j] ^= mul(G[j], c);
+      }
+      return r.slice(blk.length);
+    }
+    var dBlk = [], eBlk = [], p = 0;
+    V[ver][1].forEach(function(b){
+      for(var n = 0; n < b[0]; n++){
+        var blk = data.slice(p, p + b[1]); p += b[1];
+        dBlk.push(blk); eBlk.push(rs(blk));
+      }
+    });
+    /* ── 5．ブロックを交互に並べる ── */
+    var fin = [], maxD = 0, maxE = 0;
+    dBlk.forEach(function(b){ if(b.length > maxD) maxD = b.length; });
+    eBlk.forEach(function(b){ if(b.length > maxE) maxE = b.length; });
+    for(i = 0; i < maxD; i++) for(j = 0; j < dBlk.length; j++)
+      if(i < dBlk[j].length) fin.push(dBlk[j][i]);
+    for(i = 0; i < maxE; i++) for(j = 0; j < eBlk.length; j++)
+      if(i < eBlk[j].length) fin.push(eBlk[j][i]);
+
+    /* ── 6．ますめに置く ── */
+    var N = 17 + 4 * ver;
+    var m = [], yoyaku = [];
+    for(i = 0; i < N; i++){ m.push(new Uint8Array(N)); yoyaku.push(new Uint8Array(N)); }
+    function set(r, c, v){ m[r][c] = v; yoyaku[r][c] = 1; }
+    function finder(r, c){
+      for(i = -1; i <= 7; i++) for(j = -1; j <= 7; j++){
+        var rr = r + i, cc = c + j;
+        if(rr < 0 || cc < 0 || rr >= N || cc >= N) continue;
+        var on = (i >= 0 && i <= 6 && (j === 0 || j === 6)) ||
+                 (j >= 0 && j <= 6 && (i === 0 || i === 6)) ||
+                 (i >= 2 && i <= 4 && j >= 2 && j <= 4);
+        set(rr, cc, on ? 1 : 0);
+      }
+    }
+    finder(0, 0); finder(0, N - 7); finder(N - 7, 0);
+    for(i = 8; i < N - 8; i++){ set(6, i, i % 2 ? 0 : 1); set(i, 6, i % 2 ? 0 : 1); }
+    var AL = [[], [], [6,18], [6,22], [6,26], [6,30], [6,34],
+              [6,22,38], [6,24,42], [6,26,46], [6,28,50]][ver];
+    for(var a = 0; a < AL.length; a++) for(var b2 = 0; b2 < AL.length; b2++){
+      var ar = AL[a], ac = AL[b2];
+      if((ar <= 8 && ac <= 8) || (ar <= 8 && ac >= N - 9) || (ar >= N - 9 && ac <= 8)) continue;
+      for(i = -2; i <= 2; i++) for(j = -2; j <= 2; j++)
+        set(ar + i, ac + j, (Math.abs(i) === 2 || Math.abs(j) === 2 || (i === 0 && j === 0)) ? 1 : 0);
+    }
+    set(N - 8, 8, 1);                               /* いつも黒い1ます */
+    for(i = 0; i < 9; i++){                         /* 形式の場所を、先に取っておく */
+      if(!yoyaku[8][i]) set(8, i, 0);
+      if(!yoyaku[i][8]) set(i, 8, 0);
+    }
+    for(i = 0; i < 8; i++){
+      if(!yoyaku[8][N - 1 - i]) set(8, N - 1 - i, 0);
+      if(!yoyaku[N - 1 - i][8]) set(N - 1 - i, 8, 0);
+    }
+    if(ver >= 7){
+      var VI = {7:0x07C94, 8:0x085BC, 9:0x09A99, 10:0x0A4D3}[ver];
+      for(i = 0; i < 18; i++){
+        var v2 = VI >> i & 1;
+        set(Math.floor(i / 3), N - 11 + i % 3, v2);
+        set(N - 11 + i % 3, Math.floor(i / 3), v2);
+      }
+    }
+    /* データを、右下から2列ずつ、ジグザグに */
+    var bi = 0, up = true;
+    for(var col = N - 1; col > 0; col -= 2){
+      if(col === 6) col--;
+      for(var n2 = 0; n2 < N; n2++){
+        var row = up ? N - 1 - n2 : n2;
+        for(var s = 0; s < 2; s++){
+          var cc2 = col - s;
+          if(yoyaku[row][cc2]) continue;
+          var bit = 0;
+          if(bi < fin.length * 8) bit = fin[bi >> 3] >> (7 - (bi & 7)) & 1;
+          bi++;
+          m[row][cc2] = bit;
+        }
+      }
+      up = !up;
+    }
+    /* ── 7．マスクを選ぶ（罰点がいちばん少ないもの）── */
+    function maskF(t, r, c){
+      switch(t){
+        case 0: return (r + c) % 2 === 0;
+        case 1: return r % 2 === 0;
+        case 2: return c % 3 === 0;
+        case 3: return (r + c) % 3 === 0;
+        case 4: return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0;
+        case 5: return (r * c) % 2 + (r * c) % 3 === 0;
+        case 6: return ((r * c) % 2 + (r * c) % 3) % 2 === 0;
+        default: return ((r + c) % 2 + (r * c) % 3) % 2 === 0;
+      }
+    }
+    var FMT = [0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
+    function katachi(g, t){
+      /* 形式の15ビットの置き場所。行と列をまちがえないこと
+         （1回まちがえて、読めないコードになりました）。 */
+      var f = FMT[t];
+      for(i = 0; i < 15; i++){
+        var v3 = f >> i & 1;
+        if(i < 6) g[i][8] = v3;                    /* 左上のたて */
+        else if(i === 6) g[7][8] = v3;
+        else if(i === 7) g[8][8] = v3;
+        else if(i === 8) g[8][7] = v3;
+        else g[8][14 - i] = v3;                    /* 左上のよこ */
+        if(i < 8) g[8][N - 1 - i] = v3;            /* 右上のよこ */
+        else g[N - 15 + i][8] = v3;                /* 左下のたて */
+      }
+      g[N - 8][8] = 1;
+    }
+    function batten(g){
+      var s2 = 0, r, c, run, last;
+      for(r = 0; r < N; r++){
+        run = 1; last = -1;
+        for(c = 0; c < N; c++){
+          if(g[r][c] === last) run++; else { if(run >= 5) s2 += run - 2; run = 1; last = g[r][c]; }
+        }
+        if(run >= 5) s2 += run - 2;
+      }
+      for(c = 0; c < N; c++){
+        run = 1; last = -1;
+        for(r = 0; r < N; r++){
+          if(g[r][c] === last) run++; else { if(run >= 5) s2 += run - 2; run = 1; last = g[r][c]; }
+        }
+        if(run >= 5) s2 += run - 2;
+      }
+      for(r = 0; r < N - 1; r++) for(c = 0; c < N - 1; c++){
+        var v4 = g[r][c];
+        if(v4 === g[r][c+1] && v4 === g[r+1][c] && v4 === g[r+1][c+1]) s2 += 3;
+      }
+      var P = [1,0,1,1,1,0,1];
+      function mi(get){
+        var n3 = 0;
+        for(var q = 0; q + 6 < N; q++){
+          var ok = true;
+          for(var w = 0; w < 7; w++) if(get(q + w) !== P[w]){ ok = false; break; }
+          if(!ok) continue;
+          var mae = true, ato = true;
+          for(w = 1; w <= 4; w++){ if(q - w < 0){ break; } if(get(q - w) !== 0){ mae = false; break; } }
+          if(q - 4 < 0) mae = (q === 0) ? true : mae;
+          for(w = 7; w < 11; w++){ if(q + w >= N){ break; } if(get(q + w) !== 0){ ato = false; break; } }
+          if(mae || ato) n3 += 40;
+        }
+        return n3;
+      }
+      for(r = 0; r < N; r++) s2 += mi(function(x){ return g[r][x]; });
+      for(c = 0; c < N; c++) s2 += mi(function(x){ return g[x][c]; });
+      var kuro = 0;
+      for(r = 0; r < N; r++) for(c = 0; c < N; c++) kuro += g[r][c];
+      var pct = kuro * 100 / (N * N);
+      s2 += Math.floor(Math.abs(pct - 50) / 5) * 10;
+      return s2;
+    }
+    var best = null, bestS = Infinity;
+    for(var t2 = 0; t2 < 8; t2++){
+      var g2 = [], r, c;
+      for(r = 0; r < N; r++){
+        g2.push(new Uint8Array(N));
+        for(c = 0; c < N; c++)
+          g2[r][c] = yoyaku[r][c] ? m[r][c] : (m[r][c] ^ (maskF(t2, r, c) ? 1 : 0));
+      }
+      katachi(g2, t2);
+      var sc = batten(g2);
+      if(sc < bestS){ bestS = sc; best = g2; }
+    }
+    return best;
+  }
 
   function ga_oru(ctx, ji, haba){
     /* 字を、はばに収まるところで折る。戻りは行の並び。 */
@@ -2205,20 +2446,65 @@
   }
 
   function ga_e_yomu(fuda){
-    /* 札の絵を1枚、**読みこんでから**返します。
+    /* 札の絵を **ぜんぶ**、読みこんでから返します（2026-09-23 依頼）。
        ★ページの絵には loading="lazy" が付いています。画面に入るまで
          読みこまれないので、そのまま canvas に描くと 0×0 になり、
          絵の無い（字だけの）1枚ができます（2026-09-22 実測）。
-       ★板書の写真が無い件（PDFだけで届いたもの）は、資料の1ページめを
-         使います。ここを見ないと、指導案しか無い実践が字だけになります。 */
-    var el = fuda.querySelector('.bfuda-mado img') || fuda.querySelector('.shiryo-mado img');
-    if(!el || !el.getAttribute('src')) return Promise.resolve(null);
-    return new Promise(function(ok){
-      var im = new Image();
-      im.onload  = function(){ ok(im.naturalWidth ? im : null); };
-      im.onerror = function(){ ok(null); };
-      im.src = el.getAttribute('src');
-    });
+       ★写真（板書）と資料（PDFを画像にしたもの）の両方を、この順で。 */
+    var el = [].slice.call(fuda.querySelectorAll('.bfuda-mado img, .shiryo-mado img'))
+               .filter(function(e){ return e.getAttribute('src'); })
+               .slice(0, GA_E_MAX);
+    if(!el.length) return Promise.resolve([]);
+    return Promise.all(el.map(function(e){
+      return new Promise(function(ok){
+        var im = new Image();
+        im.onload  = function(){ ok(im.naturalWidth ? im : null); };
+        im.onerror = function(){ ok(null); };
+        im.src = e.getAttribute('src');
+      });
+    })).then(function(a){ return a.filter(Boolean); });
+  }
+
+  function ga_e_kumi(ims, naka){
+    /* 資料の並べ方。1枚ならはばいっぱい、2枚以上なら2列。
+       **どれも縮めるだけで、切りません。** 全部写るのが先です。 */
+    var n = ims.length;
+    if(!n) return null;
+    var cols = (n === 1) ? 1 : 2;
+    var retsu = Math.ceil(n / cols);
+    var aki = 16;
+    var cw = (naka - aki * (cols - 1)) / cols;
+    var maxH = GA_E_TAKASA / retsu;
+    var ms = [], y = 0;
+    for(var r = 0; r < retsu; r++){
+      var takaGyo = 0, gyo = [];
+      for(var c = 0; c < cols; c++){
+        var i = r * cols + c;
+        if(i >= n) break;
+        var im = ims[i];
+        var s = Math.min(cw / im.naturalWidth, maxH / im.naturalHeight);
+        var o = {im: im, w: Math.round(im.naturalWidth * s),
+                 h: Math.round(im.naturalHeight * s), c: c};
+        gyo.push(o);
+        if(o.h > takaGyo) takaGyo = o.h;
+      }
+      for(var k = 0; k < gyo.length; k++){
+        gyo[k].x = Math.round(gyo[k].c * (cw + aki) + (cw - gyo[k].w) / 2);
+        gyo[k].y = y + Math.round((takaGyo - gyo[k].h) / 2);
+      }
+      ms = ms.concat(gyo);
+      y += takaGyo + aki;
+    }
+    return {ms: ms, h: y - aki};
+  }
+
+  function ga_sensei(by){
+    /* 「提供：西野穂乃花（徳島県…）」→「西野穂乃花先生」
+       ★学校名は落とします。絵の中では、名前だけで足ります。 */
+    var t = (by || '').replace(/^\s*提供[：:]\s*/, '');
+    t = t.split('（')[0].split('(')[0].trim();
+    if(!t) return '';
+    return /(先生|教諭|教員)$/.test(t) ? t : t + '先生';
   }
 
   function ga_tsukuru(fuda, url, shashin){
@@ -2226,7 +2512,15 @@
     var tag  = fuda.querySelector('.bfuda-tag');
     var kind = fuda.querySelector('.fuda-kind');
     var dai  = ga_moji(fuda.querySelector('.bfuda-h'));
-    var oshi = ga_moji(fuda.querySelector('.bfuda-oshi'));
+    /* 推しポイントは「札のことば＋本文」が地つづきになるので、間をあけます
+       （2026-09-23：「推しポイントあいさつワッペン…」とくっついて出ていました） */
+    var oshiEl = fuda.querySelector('.bfuda-oshi');
+    var oshi = ga_moji(oshiEl);
+    if(oshiEl){
+      var oshiL = oshiEl.querySelector('.bfuda-oshi-l');
+      var lj = oshiL ? (oshiL.innerText || oshiL.textContent || '').trim() : '';
+      if(lj && oshi.indexOf(lj) === 0) oshi = lj + '　' + oshi.slice(lj.length).trim();
+    }
     var lead = ga_moji(fuda.querySelector('.bfuda-lead'));
     var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
     var by   = ga_moji(fuda.querySelector('.bfuda-by'));
@@ -2237,11 +2531,17 @@
     var iro = tag ? getComputedStyle(tag).backgroundColor : '#1F5C3F';
     var jiIro = tag ? getComputedStyle(tag).color : '#FCFBF7';
 
+    /* 提供者は **右上**へ（2026-09-23 依頼）。足もとからは外します。 */
+    var sensei = ga_sensei(by);
+    /* 場面・学年・日づけは **1行**にまとめます（前は2〜3行ありました） */
+    meta = meta.split('\n').map(function(x){ return x.trim(); })
+               .filter(Boolean).join('・');
+
     /* ── まず、高さを測る（描かずに数えるだけ）── */
     var c = document.createElement('canvas');
     var ctx = c.getContext('2d');
     var okiba = [];
-    var y = GA_P + 92;                                   /* 頭の帯のぶん */
+    var y = GA_P + 62;                                   /* 頭の1行ぶん */
 
     ctx.font = '900 54px ' + GA_JI;
     var daiG = ga_oru(ctx, dai, naka);
@@ -2261,18 +2561,8 @@
     }
     y += 34; okiba.push({t:'sen', y:y - 17});
 
-    if(shashin && shashin.naturalWidth){
-      /* 絵は、はばいっぱいに置きます。縦に長すぎるときは **上だけ切り出します**。
-         ★はばと高さを別々に決めてはいけません（2026-09-22 実測）。
-           指導案のような縦長の紙が、横に伸びて出ていました。
-         ★小さく縮めるのではなく、切ります。A4を丸ごと入れると
-           字が小さすぎて、1枚見ただけでは何も分からないためです。
-           上から切るのは、題と ねらいが 紙の上にあるからです。 */
-      var h = Math.round(naka * shashin.naturalHeight / shashin.naturalWidth);
-      var kirinuki = false;
-      if(h > GA_E_TAKASA){ kirinuki = true; h = GA_E_TAKASA; }
-      okiba.push({t:'e', y:y, h:h, kiri:kirinuki}); y += h + (kirinuki ? 46 : 40);
-    }
+    var kumi = ga_e_kumi(shashin || [], naka);
+    if(kumi){ okiba.push({t:'e', y:y, k:kumi}); y += kumi.h + 40; }
     ctx.font = '700 32px ' + GA_JI;
     var leadG = lead ? ga_oru(ctx, lead, naka) : [];
     if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 52 + 26; }
@@ -2280,7 +2570,7 @@
     ctx.font = '400 29px ' + GA_HON;
     var honG = hon ? ga_oru(ctx, hon, naka) : [];
     /* 入りきらないぶんは切る。切ったことは、画面の中で正直に言う */
-    var ashi = 212;     /* 提供・見出し・（リンクをタップしてね）・URL のぶん */
+    var ashi = 300;     /* QRコードと「TOKKATSU広場へ」のぶん */
     var kiru = Math.floor((GA_TAKASA_MAX - y - ashi) / 54);
     var kitta = false;
     if(honG.length > kiru && kiru > 3){ honG = honG.slice(0, kiru); kitta = true; }
@@ -2298,38 +2588,30 @@
     ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 10;
     ctx.strokeRect(5, 5, GA_W - 10, takasa - 10);
 
-    /* 頭 … サイトの名前と、この棚の名前 */
+    /* ── 頭。1行にまとめます（2026-09-23 依頼で行数を減らしました）──
+       左から サイトの名前・内容の札・議題の札、右はしに 提供者「◯◯先生」。 */
+    var hy = GA_P;                       /* 札の上ぶち。高さ44の帯です */
     ctx.fillStyle = '#1C1C1A';
     ctx.font = '900 30px ' + GA_JI;
-    ctx.fillText('TOKKATSU広場', GA_P, GA_P);
-    ctx.font = '700 24px ' + GA_JI;
-    ctx.fillStyle = '#63625C';
-    var mn = GA_ATAMA;
-    ctx.fillText(mn, GA_W - GA_P - ctx.measureText(mn).width, GA_P + 6);
-
-    /* 内容の札 */
-    if(tag){
+    ctx.fillText('TOKKATSU広場', GA_P, hy + 8);
+    var hx = GA_P + ctx.measureText('TOKKATSU広場').width + 22;
+    function fuda_kaku(ji, ji_iro, ji_ha){
       ctx.font = '700 25px ' + GA_JI;
-      var tj = tag.textContent.trim();
-      var tw = ctx.measureText(tj).width + 40;
-      var ty = GA_P + 46;
+      var w = ctx.measureText(ji).width + 38;
       ctx.beginPath();
-      if(ctx.roundRect) ctx.roundRect(GA_P, ty, tw, 44, 22);
-      else ctx.rect(GA_P, ty, tw, 44);
-      ctx.fillStyle = iro; ctx.fill();
+      if(ctx.roundRect) ctx.roundRect(hx, hy, w, 44, 22); else ctx.rect(hx, hy, w, 44);
+      ctx.fillStyle = ji_ha; ctx.fill();
       ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A'; ctx.stroke();
-      ctx.fillStyle = jiIro; ctx.fillText(tj, GA_P + 20, ty + 8);
-      if(kind){
-        ctx.font = '700 25px ' + GA_JI;
-        var kj = kind.textContent.trim();
-        var kw = ctx.measureText(kj).width + 36;
-        ctx.beginPath();
-        if(ctx.roundRect) ctx.roundRect(GA_P + tw + 12, ty, kw, 44, 22);
-        else ctx.rect(GA_P + tw + 12, ty, kw, 44);
-        ctx.fillStyle = '#FCFBF7'; ctx.fill();
-        ctx.lineWidth = 3; ctx.stroke();
-        ctx.fillStyle = '#1C1C1A'; ctx.fillText(kj, GA_P + tw + 30, ty + 8);
-      }
+      ctx.fillStyle = ji_iro; ctx.fillText(ji, hx + 19, hy + 9);
+      hx += w + 12;
+    }
+    if(tag) fuda_kaku(tag.textContent.trim(), jiIro, iro);
+    if(kind) fuda_kaku(kind.textContent.trim(), '#1C1C1A', '#FCFBF7');
+    if(sensei){
+      ctx.font = '700 27px ' + GA_JI;
+      ctx.fillStyle = '#1C1C1A';
+      var sw = ctx.measureText(sensei).width;
+      ctx.fillText(sensei, GA_W - GA_P - sw, hy + 10);
     }
 
     okiba.forEach(function(o){
@@ -2348,28 +2630,21 @@
         ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(GA_P, o.y); ctx.lineTo(GA_W - GA_P, o.y); ctx.stroke();
       } else if(o.t === 'e'){
-        ctx.save();
-        ctx.beginPath();
-        if(ctx.roundRect) ctx.roundRect(GA_P, o.y, naka, o.h, 14); else ctx.rect(GA_P, o.y, naka, o.h);
-        ctx.clip();
-        if(o.kiri){
-          /* 元の絵の「上のほう」だけを、そのままの縦横のまま置きます */
-          var moto_h = Math.round(shashin.naturalWidth * o.h / naka);
-          ctx.drawImage(shashin, 0, 0, shashin.naturalWidth, moto_h,
-                        GA_P, o.y, naka, o.h);
-        } else {
-          ctx.drawImage(shashin, GA_P, o.y, naka, o.h);
-        }
-        ctx.restore();
-        ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A';
-        ctx.beginPath();
-        if(ctx.roundRect) ctx.roundRect(GA_P, o.y, naka, o.h, 14); else ctx.rect(GA_P, o.y, naka, o.h);
-        ctx.stroke();
-        if(o.kiri){
-          ctx.fillStyle = '#63625C'; ctx.font = '500 22px ' + GA_HON;
-          ctx.fillText('\u203b \u3053\u306e\u5148\u306f\u3001\u4e0b\u306eURL\u304b\u3089\u898b\u3089\u308c\u307e\u3059',
-                       GA_P, o.y + o.h + 10);
-        }
+        /* 資料は ぜんぶ、縮めて置きます。切りません（2026-09-23 依頼）。 */
+        o.k.ms.forEach(function(z){
+          var zx = GA_P + z.x, zy = o.y + z.y;
+          ctx.save();
+          ctx.beginPath();
+          if(ctx.roundRect) ctx.roundRect(zx, zy, z.w, z.h, 12); else ctx.rect(zx, zy, z.w, z.h);
+          ctx.clip();
+          ctx.fillStyle = '#FFFFFF'; ctx.fillRect(zx, zy, z.w, z.h);
+          ctx.drawImage(z.im, zx, zy, z.w, z.h);
+          ctx.restore();
+          ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A';
+          ctx.beginPath();
+          if(ctx.roundRect) ctx.roundRect(zx, zy, z.w, z.h, 12); else ctx.rect(zx, zy, z.w, z.h);
+          ctx.stroke();
+        });
       } else if(o.t === 'lead'){
         ctx.fillStyle = '#1C1C1A'; ctx.font = '700 32px ' + GA_JI;
         ga_kaku(ctx, o.g, GA_P, o.y, 52);
@@ -2382,25 +2657,45 @@
       }
     });
 
-    /* 足もと … 提供と、このサイトのURL（ここが、いちばん大事） */
+    /* ── 足もと … QRコードと「TOKKATSU広場へ」（2026-09-23 依頼）──
+       前は長いURLを字で出して「リンクをタップしてね」と書いていました。
+       読みとれる機種と、そうでない機種があります。QRなら、どの機種でも
+       カメラを向けるだけです。
+       ★QRは、この端末の中で作ります。外の道具は使いません（原則2）。
+       ★作れなかったとき（長すぎるなど）は、いままでどおり字で出します。 */
     var fy = takasa - ashi;
     ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(GA_P, fy); ctx.lineTo(GA_W - GA_P, fy); ctx.stroke();
-    ctx.fillStyle = '#63625C'; ctx.font = '500 25px ' + GA_HON;
-    ctx.fillText(by || '', GA_P, fy + 22);
-    ctx.fillStyle = '#1C1C1A'; ctx.font = '900 27px ' + GA_JI;
-    ctx.fillText('この実践は、ここに溜めています', GA_P, fy + 62);
-    /* （リンクをタップしてね）2026-09-22 夜 依頼。
-       ★絵の中の字なので、ほんとうは「押せるもの」ではありません。
-         いまのスマホは、写真の中の字を読みとって押せるようにしてくれます
-         （iPhoneのライブテキスト／Androidのレンズ）。そこを当てにした一言です。
-       ★読みとれない機種のために、共有のときは **URLそのもの** も
-         いっしょに渡します（→ ga_hozon）。そちらは、かならず押せます。 */
-    ctx.fillStyle = '#63625C'; ctx.font = '700 23px ' + GA_JI;
-    ctx.fillText('（リンクをタップしてね）', GA_P, fy + 98);
-    ctx.fillStyle = '#1C1C1A'; ctx.font = '500 24px ' + GA_HON;
-    var u = ga_oru(ctx, url, naka);
-    ga_kaku(ctx, u, GA_P, fy + 136, 34);
+
+    var qm = null;
+    try { qm = qr_matrix(url); } catch(e) { qm = null; }
+    if(qm){
+      /* 1ますを何ピクセルにするか。**割り切れる数**にします。
+         中途はんぱだと、ますの境目がにじんで読みとりにくくなります。
+         250 ÷ (41+8) = 5 … 型6（よくある長さのURL）で1ます5pxです。 */
+      var QS = 250, N = qm.length, ms = Math.floor(QS / (N + 8)) || 1;
+      var atari = ms * (N + 8), qx = GA_P, qy = fy + 28;
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(qx, qy, atari, atari);
+      ctx.fillStyle = '#1C1C1A';
+      for(var qr2 = 0; qr2 < N; qr2++) for(var qc = 0; qc < N; qc++)
+        if(qm[qr2][qc]) ctx.fillRect(qx + (qc + 4) * ms, qy + (qr2 + 4) * ms, ms, ms);
+      ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A';
+      ctx.strokeRect(qx, qy, atari, atari);
+      var tx = qx + atari + 32;
+      ctx.fillStyle = '#1C1C1A'; ctx.font = '900 38px ' + GA_JI;
+      ctx.fillText('TOKKATSU広場へ', tx, qy + 18);
+      ctx.fillStyle = '#63625C'; ctx.font = '500 25px ' + GA_HON;
+      ctx.fillText('QRコードを読みこむと、', tx, qy + 76);
+      ctx.fillText('この実践がそのままひらきます。', tx, qy + 112);
+      ctx.fillStyle = '#1C1C1A'; ctx.font = '700 22px ' + GA_JI;
+      ctx.fillText('特別活動の情報が、溜まる場。', tx, qy + 160);
+    } else {
+      ctx.fillStyle = '#1C1C1A'; ctx.font = '900 32px ' + GA_JI;
+      ctx.fillText('TOKKATSU広場へ', GA_P, fy + 40);
+      ctx.fillStyle = '#1C1C1A'; ctx.font = '500 24px ' + GA_HON;
+      var u = ga_oru(ctx, url, naka);
+      ga_kaku(ctx, u, GA_P, fy + 92, 34);
+    }
     return c;
   }
 
