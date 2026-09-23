@@ -2608,10 +2608,21 @@
     if(tag) fuda_kaku(tag.textContent.trim(), jiIro, iro);
     if(kind) fuda_kaku(kind.textContent.trim(), '#1C1C1A', '#FCFBF7');
     if(sensei){
-      ctx.font = '700 27px ' + GA_JI;
+      /* 名前が長いと、札に重なります。入るまで字を小さくし、
+         それでも入らないときだけ、うしろを「…」で切ります。
+         （これから届くぶんで、長いお名前が来ても崩れないように） */
+      var noko = GA_W - GA_P - hx - 16;
+      var sji = 27;
       ctx.fillStyle = '#1C1C1A';
+      ctx.font = '700 ' + sji + 'px ' + GA_JI;
+      while(ctx.measureText(sensei).width > noko && sji > 19){
+        sji -= 1; ctx.font = '700 ' + sji + 'px ' + GA_JI;
+      }
+      while(sensei.length > 3 && ctx.measureText(sensei).width > noko){
+        sensei = sensei.slice(0, -2) + '…';
+      }
       var sw = ctx.measureText(sensei).width;
-      ctx.fillText(sensei, GA_W - GA_P - sw, hy + 10);
+      ctx.fillText(sensei, GA_W - GA_P - sw, hy + 10 + (27 - sji) / 2);
     }
 
     okiba.forEach(function(o){
