@@ -705,7 +705,7 @@
       <div class="okuru-g">
         <label class="okuru-shashin" for="okuru-e">
           <span class="okuru-shashin-ji">写真・PDFをえらぶ</span>
-          <span class="okuru-shashin-chu">写真2枚まで／PDF1つまで／その場で撮ってもOK<br>
+          <span class="okuru-shashin-chu">写真4枚まで／PDF1つまで／その場で撮ってもOK<br>
             <b>隠したいところは、このページの上で消せます</b></span>
           <input type="file" id="okuru-e" name="e" accept="image/*,application/pdf" multiple>
         </label>
@@ -925,7 +925,26 @@
 
 <footer class="foot">
   <div class="uchi">
-    <div class="foot-friends" aria-hidden="true"><svg viewBox="0 0 431 147" focusable="false"><use href="#ill-k-group-thanks"/></svg></div>
+    <!-- おじぎの4人に、意味を持たせる（2026-09-23 依頼）──────────
+         「下のこの4人のこのエリアを有効活用したい」
+         ★もとは aria-hidden の飾り1枚でした。字も、押すところも無く、
+           読み終えた人がここで手ぶらになっていました。
+           足もとの行き先は LINE と QR の2つ＝**どちらも外向き**で、
+           中へ戻る道が1本もありませんでした。
+         ★おじぎの相手を「送ってくださった先生」と決めて、いま溜まって
+           いるぶんを となりに数で出します。数はビルドがその場で数えた
+           ぶんだけです（手で書いた数は1つも置きません）。
+           外へは1バイトも出ません（原則2）。
+         ★行き先は節のidだけ書きます（page.html#id と書くと、節が別の
+           ページへ移ったとき静かに壊れます）。
+         ★スマホでは、4人を小さくして上下に積みます（.foot-rei の
+           @media を見てください）。 -->
+    <div class="foot-rei">
+      <div class="foot-friends" aria-hidden="true"><svg viewBox="0 0 431 147" focusable="false"><use href="#ill-k-group-thanks"/></svg></div>
+      <div class="foot-rei-te">
+        <!--BUILD:FOOT_KAZU-->
+      </div>
+    </div>
     <p class="foot-koe">特別活動で、輝く。</p>
 
     <!-- 夜の地なので、ふちと影は墨ではなく地の色（--bg）で出します。
@@ -1435,10 +1454,15 @@
       var mihon = document.getElementById('okuru-mihon');
       var shirase = document.getElementById('okuru-shirase');
       var botan = document.getElementById('okuru-b');
-      /* 写真は2枚まで（2026-09-23 依頼）。前は3枚でした。
-         ★ここを直したら、下の2か所の字も直してください
-           （「写真2枚まで」の案内と、えらんだあとの知らせ）。 */
-      var MAI = 2, KB_MAX = 380;
+      /* 写真は4枚まで（2026-09-23 依頼。2枚 → 4枚）。
+         受け口（板書を受けとる.gs の MAI_MAX）は **6枚**にしてあります。
+         ★ここを 6より多くしてはいけません。受け口は超えたぶんを黙って
+           捨てますし、no-cors なので断られたことが画面に出ません。
+         ★ここを直したら、下の2か所の字も直してください。
+           ・上の案内（「写真4枚まで／PDF1つまで」）
+           ・build.py の訳（日本語・English・العربية の3つ）
+           えらんだあとの知らせは MAI をそのまま出すので、直りません。 */
+      var MAI = 4, KB_MAX = 380;
 
       /* ★ここで必ず上限に収めます（2026-09-21）。
          受け口は 400KB を超えた写真を断りますが、返事は読めない（no-cors）ので、

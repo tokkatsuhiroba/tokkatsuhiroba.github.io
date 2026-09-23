@@ -6132,9 +6132,9 @@ KOTOBA = {
     '知っている研究会を知らせる':
         ('Tell us about a meeting you know of',
          'أخبرنا بلقاء تعرفه'),
-    '写真2枚まで／PDF1つまで／その場で撮ってもOK 隠したいところは、このページの上で消せます':
-        ('Up to 2 photos, up to 1 PDF. Taking a photo right now is fine. Anything you want hidden can be blacked out on this page.',
-         'حتى صورتين وملفّ PDF واحد. ولا بأس بالتقاط صورة الآن. وما تريد إخفاءه يمكن طمسه داخل هذه الصفحة.'),
+    '写真4枚まで／PDF1つまで／その場で撮ってもOK 隠したいところは、このページの上で消せます':
+        ('Up to 4 photos, up to 1 PDF. Taking a photo right now is fine. Anything you want hidden can be blacked out on this page.',
+         'حتى أربع صور وملفّ PDF واحد. ولا بأس بالتقاط صورة الآن. وما تريد إخفاءه يمكن طمسه داخل هذه الصفحة.'),
     # デジタル資料のリンク（2026-09-23 依頼）
     'デジタル資料のリンク':
         ('Link to digital material',

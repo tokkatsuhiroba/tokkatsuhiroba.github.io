@@ -3722,6 +3722,66 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:12px;line-height:1.7;color:var(--mute);
 }
 
+/* ══ 足もとのお礼（2026-09-23 依頼）══════════════════════════
+   「下のこの4人のこのエリアを有効活用したい」。
+   おじぎの4人は、飾り1枚でした（aria-hidden・真ん中寄せ・360px）。
+   左寄せの字の上に札だけが浮いて、**右がまるごと空いて**いました。
+
+   ★おじぎの相手を「送ってくださった先生」と決めて、その人たちが
+     足したぶんを、空いていた右に数で出します。
+     形は下の紹介（QR＋字）と同じ「絵が左・字が右」にそろえます。
+   ★数の色は --ki（黄）。墨の地に 10.2:1 出ます。
+   ★スマホ（719px以下）では、右に置くと字が2文字で折れます。
+     **上下に積んで**、4人を204pxまで小さくします。
+     もとの360pxより小さいので、積んでも増えるのは100px足らずです。
+   ★字の大きさのつまみ（--moji）は、足もとぜんぶで使っていません。
+     ここだけ動くと、足もとが半分だけ大きくなります。 */
+.foot-rei{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  max-width:560px;margin:0 0 clamp(18px,2.6vw,26px);
+}
+.foot-friends{
+  flex:none;width:min(100%,252px);margin:0;
+  padding:12px 10px;background:#FCFBF7;border-radius:20px;
+}
+.foot-rei-te{flex:1 1 200px;min-width:0}
+/* .foot p（0-1-1）に負けるので、.foot を付けて書きます */
+.foot .foot-rei-yo{
+  margin:0 0 9px;font-family:var(--f-maru);font-weight:700;
+  font-size:14px;line-height:1.6;color:var(--bg);
+}
+.foot-kazu{
+  display:flex;flex-wrap:wrap;gap:4px 18px;
+  margin:0 0 12px;padding:0;list-style:none;
+}
+.foot-kazu li{min-width:62px}
+.foot-kazu b{
+  display:block;font-family:var(--f-maru);font-weight:700;
+  font-size:27px;line-height:1.15;color:var(--ki);
+}
+.foot-kazu span{
+  display:block;font-family:var(--f-maru);font-weight:700;
+  font-size:11.5px;line-height:1.5;color:rgba(252,251,247,.8);
+}
+.foot .foot-rei-b{margin:0}
+.foot-rei .btn{font-size:13px;padding:8px 16px;min-height:44px}
+@media (max-width:719px){
+  .foot-rei{flex-direction:column;align-items:stretch;gap:12px}
+  /* 上下に積むときは、flex-basis が **たて** に効きます。
+     200px のままだと、ボタンの下に 60px の空きができます。 */
+  .foot-rei-te{flex:0 0 auto}
+  .foot-friends{width:min(100%,204px);padding:10px 8px}
+  .foot-kazu{gap:4px 16px;margin-bottom:11px}
+  .foot-kazu b{font-size:24px}
+  /* 足もとのボタンは、ぜんぶ横いっぱい（.foot-botan と同じ形） */
+  .foot-rei .btn{width:100%;justify-content:space-between;font-size:14.5px;padding:12px 20px}
+}
+@media (max-width:479px){
+  .foot-friends{width:min(100%,196px)}
+  .foot-kazu li{min-width:56px}
+  .foot-kazu b{font-size:22px}
+}
+
 /* ── このサイトを紹介する（2026-09-23 依頼で、足もとへ移しました）──
    「リンクやらQRコードは一番下のラインへの案内のところに小さく表記して」
    もとは「はじめかた」の中の1節（大きなカード）でした。
@@ -4053,7 +4113,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .hfuda-e svg{max-width:100%;max-height:none}
 .hitori .e svg{max-width:100%;height:110px}
 .naiyo-e > svg{aspect-ratio:4 / 3;background:#F8DF9D}
-.foot-friends{width:min(100%,360px);margin:0 auto 24px;padding:16px 12px;background:#FCFBF7;border-radius:20px}
+/* .foot-friends は「足もとのお礼」の節へ移しました（2026-09-23）。
+   数とボタンが となりに付いたので、1か所にまとめます。 */
 @media(max-width:719px){
   .hero-koe{padding-block:16px 8px}
   .hero-logo{font-size:clamp(28px,7.3vw,46px);letter-spacing:.04em}
