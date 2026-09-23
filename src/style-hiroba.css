@@ -4053,3 +4053,85 @@ html[data-moji="chiisai"] .hfuda{
 html[data-moji="chiisai"] .bfuda{--bfuda-pad:clamp(9px,1.2vw,13px)}
 html[data-moji="chiisai"] .hiraku>summary,
 html[data-moji="chiisai"] .motto>summary{min-height:46px;padding:8px 18px}
+
+/* ══ 送るフォームの余白を詰める（2026-09-23 依頼）════════════
+   ホームでいちばん背が高い節です（スマホ390px・字「小」で 3075px）。
+   高さの中身を測ると、2割ちかくが すきまでした ──
+     欄と欄のあいだ 16px×11本、フォームの内余白 40px、
+     説明の下 20px×6本、注意書きの内余白 28px、札のすきま 8px。
+
+   ★**字と、押せる大きさは 1pxも変えません。**
+     ・入力欄の字は 16px のまま（これ未満だと iPhone が勝手に拡大します）
+     ・押す札・チェックの行は 44px のまま（指で押せる下限）
+   ★札は**横の余白**を詰めます。1行に入る数が増えて、**行数が減ります**。
+   ★赤い注意書き（.okuru-kiwo）の下余白は 0 のままにします。
+     すぐ下の最終確認の札と、1枚につながって見せているためです。 */
+.okuru-f{padding:clamp(16px,2.4vw,24px)}
+.okuru-g{margin-bottom:11px}
+.okuru-yomi{margin:5px 0 13px}
+.okuru-yomi--sub{margin:0 0 6px}
+.okuru-nen{gap:6px}
+.okuru-nen-b{padding:9px 12px}
+.okuru-check{margin-bottom:clamp(10px,1.4vw,14px);padding:11px 13px}
+.okuru-kiwo{padding:10px 12px}
+.okuru-kakunin{margin-bottom:13px;padding:10px 12px}
+
+/* 「小」をえらんだ人には、もう一段 */
+html[data-moji="chiisai"] .okuru-f{padding:clamp(13px,2vw,20px)}
+html[data-moji="chiisai"] .okuru-g{margin-bottom:8px}
+html[data-moji="chiisai"] .okuru-yomi{margin:4px 0 9px}
+html[data-moji="chiisai"] .okuru-nen{gap:5px}
+html[data-moji="chiisai"] .okuru-nen-b{padding:8px 10px}
+html[data-moji="chiisai"] .okuru-check{padding:9px 11px}
+html[data-moji="chiisai"] .okuru-kiwo{padding:8px 10px}
+html[data-moji="chiisai"] .okuru-kakunin{margin-bottom:10px;padding:8px 10px}
+
+/* 説明の行間と、自由に書く欄の高さ（「小」のときだけ）
+   ★説明の字（13.5px）は小さくしません。**行間だけ**詰めます
+     （10pxまで落ちると、読む気が失せます）。
+   ★自由に書く欄は 240px → 180px。せまくすると「ひとこと」で
+     止まってしまう、という理由で広くとってある欄なので、
+     **「小」をえらんだ人のときだけ**縮めます。書けば伸びます。 */
+html[data-moji="chiisai"] .okuru-yomi{line-height:1.6}
+html[data-moji="chiisai"] .okuru-l{margin-bottom:4px}
+html[data-moji="chiisai"] .okuru-hiroi{min-height:180px;line-height:1.75}
+html[data-moji="chiisai"] .okuru-kiwo,
+html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
+
+/* ★詰めていて気づいた1つ。ここだけ押せる高さが 30px でした（実測）。
+   このサイトの決まりは 44px です（.okuru-kakunin label と同じ）。
+   余白を詰める話とは逆向きですが、**押せなくては意味がない**ので直します。 */
+.okuru-check label{min-height:44px}
+
+/* ══ 実践紹介のお願い（2026-09-23 依頼）════════════════════
+   「実践を入力するフォームのところにボタンを設置して欲しいね。
+     『実践紹介のお願い』的な」
+   自分が送るためではなく、**同僚に頼む**ための1枚です。
+   送る欄のすぐ下に置きます。送り終えた人の目が、次に行く場所だからです。
+   ★足もとの紹介（.foot-shokai）とは行き先がちがいます。
+     あちらはホーム、ここは **この送る画面（#okuru）** です。 */
+.onegai{
+  display:flex;align-items:center;gap:clamp(12px,2vw,18px);
+  margin:clamp(16px,2.4vw,22px) 0 0;padding:clamp(12px,1.8vw,16px);
+  background:var(--bg);border:2px dashed var(--rule);border-radius:16px;
+}
+.onegai-qr{
+  flex:none;width:96px;height:96px;display:block;
+  background:#fff;border:2px solid var(--ink);border-radius:8px;
+}
+.onegai-te{min-width:0}
+.onegai-h{
+  margin:0 0 3px;font-family:var(--f-maru);font-weight:700;
+  font-size:calc(15px * var(--moji));line-height:1.5;
+}
+.onegai-yo{
+  margin:0 0 10px;font-size:calc(12.5px * var(--moji));
+  line-height:1.8;color:var(--mute);
+}
+.onegai-b{margin:0}
+.onegai .bansho-b{font-size:calc(12.5px * var(--moji));padding:7px 15px;min-height:40px}
+.onegai .okuru-shirase{margin:6px 0 0;font-size:12px}
+@media (max-width:479px){
+  .onegai{gap:11px;padding:11px}
+  .onegai-qr{width:84px;height:84px}
+}
