@@ -3596,7 +3596,14 @@ def build_jissen_hiroba(jissen, goods):
         fuda.append(JFUDA.format(
             slug=a['slug'], nid=a['naiyo'], naiyo=esc_html(naiyo_ja(a['naiyo'])),
             kcls=' fuda--gidai' if gidai else '',
-            kindtag='<span class="fuda-kind">議題</span>' if gidai else '',
+            # ★「議題」の札は出しません（2026-09-23 依頼
+            #   「この議題っていう表記いらなくないか」）。
+            #   届いた実践10件のうち9件が議題で、**ほぼ全部に付く印**でした。
+            #   全部に付く印は、何も分けません。読む人には、議題か実践かより
+            #   「何の話か」のほうが要ります。
+            #   ★kind は残します。議題には「かかる時間」を聞かない、という
+            #     受けとりがわのきまりが、これで決まっているためです。
+            kindtag='',
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             more=more, setb=setb + shb + ban, weekly=shu,
             by=esc_html(sensei_ja(a['by']))))
@@ -3814,8 +3821,8 @@ def build_bansho(jissen, kyara):
             oshi=(BFUDA_OSHI.format(kao=oshi_kao(a['naiyo'], kyara),
                                     honbun=ku_wakeru(a['oshi']))
                   if a.get('oshi') else ''),
-            kindtag=('<span class="fuda-kind">議題</span>'
-                     if a['kind'] == 'gidai' else ''),
+            # ★「議題」の札は出しません（2026-09-23 依頼）。→ build_jissen の注
+            kindtag='',
             # 地域（2026-09-22 依頼）。書かれたときだけ出します。
             #   ここは字なので、上の「さがす」欄で「徳島」と打てば当たります
             #   （さがすは、札の字ぜんぶを見ています）。

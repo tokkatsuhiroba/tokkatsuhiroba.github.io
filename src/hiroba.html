@@ -2849,7 +2849,6 @@
   function ga_tsukuru(fuda, url, shashin, kyara){
     var naka = GA_W - GA_P * 2;
     var tag  = fuda.querySelector('.bfuda-tag');
-    var kind = fuda.querySelector('.fuda-kind');
     var dai  = ga_moji(fuda.querySelector('.bfuda-h'));
     /* 推しポイントは「札のことば＋本文」が地つづきになるので、間をあけます
        （2026-09-23：「推しポイントあいさつワッペン…」とくっついて出ていました） */
@@ -2864,9 +2863,9 @@
     var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
     var by   = ga_moji(fuda.querySelector('.bfuda-by'));
     var me   = fuda.querySelector('.bfuda-me');
-    /* 見出しの行から、札のことば（内容・議題）をのぞいた残り＝場面・学年・日づけ */
-    var meta = ga_moji(me).replace(tag ? tag.textContent : '', '')
-                          .replace(kind ? kind.textContent : '', '').trim();
+    /* 見出しの行から、内容の札をのぞいた残り＝場面・学年・日づけ
+       （2026-09-23 依頼で「議題」の札をやめたので、その1つぶんを外しました） */
+    var meta = ga_moji(me).replace(tag ? tag.textContent : '', '').trim();
     var iro = tag ? getComputedStyle(tag).backgroundColor : '#1F5C3F';
     var jiIro = tag ? getComputedStyle(tag).color : '#FCFBF7';
 
@@ -2954,7 +2953,6 @@
       hx += w + 12;
     }
     if(tag) fuda_kaku(tag.textContent.trim(), jiIro, iro);
-    if(kind) fuda_kaku(kind.textContent.trim(), '#1C1C1A', '#FCFBF7');
     if(sensei){
       /* 名前が長いと、札に重なります。入るまで字を小さくし、
          それでも入らないときだけ、うしろを「…」で切ります。
