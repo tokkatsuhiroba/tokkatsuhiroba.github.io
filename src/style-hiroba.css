@@ -2509,11 +2509,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 
 /* ── 3．図の下の行（何枚めか／大きく見る）── */
 .shot{margin:0}
-.shot-shita{
-  margin-top:6px;padding:0 10px 8px;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-}
-.shot-kazu{font-family:var(--f-en);font-size:12px;color:var(--mute)}
+/* ★図の下に行を置く .shot-shita は、2026-09-23（依頼）でやめました。
+   写真の高さを その行に取られるためです。［大きく見る］は
+   札の足（.bansho-b--zen）／窓の外（.shiryo-zen）に移してあります。
+   「1 / 2」は図の左上に重ねます（.shot-kazu、下のほうで書いています）。 */
 .shot-b{
   font-family:var(--f-maru);font-weight:700;font-size:12.5px;letter-spacing:.04em;
   padding:7px 14px;min-height:36px;
@@ -3767,3 +3766,50 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 :root[data-kotoba="ar"] .obi-l a{font-size:12.5px;padding-inline:11px;letter-spacing:0}
 :root[data-kotoba="en"] .obi-l li + li,
 :root[data-kotoba="ar"] .obi-l li + li{padding-inline-start:8px;margin-inline-start:3px}
+
+/* ══ 写真を できる限り大きく（2026-09-23 依頼）════════════════
+   「これだと画像が小さくなるから。大きく見るボタンは別場所に配置して。
+     画像のサイズは変えない。できる限り大きくしてね」
+
+   実測して分かったこと … この写真（A4のたて長）は **幅で頭打ち**でした。
+   375pxで 310×439px。高さの天井（56vh＝472px）には当たっていません。
+   だから効くのは「高さを増やす」ではなく **「幅を増やす」** です。
+
+   直したのは2つ。
+   1. 図の下にあった［大きく見る］の行をやめて、札の足へ移した（build.py）。
+      窓の高さを、その行に取られないようにするため。
+   2. 資料（PDFを画像にしたもの）の窓を、札のふちまで広げた。
+      板書の窓（.bfuda-mado--hiro）はもう そうなっていて、資料の窓だけ
+      内余白ぶん せまいままでした。
+
+   PCは**そのまま**です。あちらは幅ではなく高さ（540px）で頭打ちなので、
+   広げても大きくなりません（かえって画面の1枚ぶんを超えます）。 */
+@media (max-width:719px){
+  .bfuda .shiryo-mado{
+    margin-inline:calc(-1 * var(--bfuda-pad));
+    padding:0;border-inline:0;border-radius:0;
+  }
+  .bfuda .shiryo-mado img{
+    width:100%;max-width:none;margin-inline:0;
+    /* 幅いっぱいにしたぶん、たてに伸びます。A4のたて長で 幅362px →
+       高さ510px。56vh（472px）のままだと、そこで頭打ちになって
+       せっかく広げた幅が戻ってしまいます。 */
+    max-height:80vh;
+    border-inline:0;border-radius:0;
+  }
+}
+
+/* ── 何枚めか（1 / 2）。2枚以上のときだけ、図の左上に小さく重ねます ──
+   前は図の下に1行を取っていました。1枚しか無い件では「1 / 1」だけの
+   行になり、写真の高さをただ削っていました。 */
+.shot{position:relative}
+.shot-kazu{
+  position:absolute;top:8px;inset-inline-start:8px;z-index:2;
+  padding:3px 9px;border-radius:999px;
+  background:rgba(28,28,26,.72);color:var(--bg);
+  font-family:var(--f-en);font-size:11.5px;line-height:1.4;
+  pointer-events:none;
+}
+/* 窓の外に置いた［大きく見る］（「すぐ使える道具」の資料）。
+   窓の中に戻さないこと … 写真の高さを、この行に取られます。 */
+.shiryo-zen{margin:8px 0 0;display:flex;justify-content:flex-end}

@@ -1053,21 +1053,33 @@ SHIRYO_MADO = """        <div class="shiryo-hiraku">
             <div class="shiryo-mado">
 {gazou}
             </div>
-          </div>
+{zen}          </div>
         </div>
 """
 
+# 窓の **外** に置く［大きく見る］（2026-09-23）。
+#   窓の中（図の下）に置くと、写真の高さをこの行に取られます。
+#   「みんなの実践」の札では、これを使わずに札の足へ置きます（→ ZEN_B）。
+SHIRYO_ZEN = ('            <p class="shiryo-zen">'
+              '<button class="shot-b" type="button" data-zen="shiryo">'
+              '大きく見る</button></p>\n')
 
-def shiryo_mado(midashi, oki, alt, moto=None, page='manabu.html'):
-    """資料1件ぶんの「ページの中で開く窓」。"""
+
+def shiryo_mado(midashi, oki, alt, moto=None, page='manabu.html', zen=True):
+    """資料1件ぶんの「ページの中で開く窓」。
+       zen=False … ［大きく見る］を、ここには出しません。
+       「みんなの実践」の札では、札の足（提供…の行）に置くためです。"""
     mai = shiryo_yomu(oki, moto, page)
     g = [GAZOU.format(uri=uri, alt=esc_html('%s %dページめ' % (alt, i + 1)),
-                      w=w, h=h, i=i + 1, n=len(mai))
+                      w=w, h=h,
+                      kazu=(GAZOU_KAZU.format(i=i + 1, n=len(mai))
+                            if len(mai) > 1 else ''))
          for i, (uri, w, h) in enumerate(mai)]
     return SHIRYO_MADO.format(
         midashi=('' if midashi.strip() == SHIRYO_JIDOU_NA
                  else SHIRYO_MIDASHI.format(midashi=esc_html(midashi), n=len(mai))),
-        n=len(mai), gazou='\n'.join(g))
+        n=len(mai), gazou='\n'.join(g),
+        zen=(SHIRYO_ZEN if (zen and mai) else ''))
 
 
 def goods_status(g):
@@ -3363,12 +3375,16 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
+{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>{zen}\
 <button class="bansho-b bansho-b--hoshi" type="button" data-hoshi="{slug}" aria-pressed="false" hidden>あとで見る<i aria-hidden="true">☆</i></button>\
 <button class="bansho-b bansho-b--yaritai" type="button" data-yaritai="{slug}" hidden>やってみたい<span class="yaritai-n" data-yaritai-n="{slug}"></span></button>\
 <button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>印刷</button>\
 <button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">画像保存<i>↓</i></button></p>
       </article>"""
+
+# 札の足に置く［大きく見る］。どの窓を開くかを data-zen で渡します。
+ZEN_B = ('<button class="bansho-b bansho-b--zen" type="button" '
+         'data-zen="{doko}">{na}</button>')
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
 {gazou}
@@ -3385,11 +3401,14 @@ BFUDA_MORE = """        <div class="bfuda-naka">
         </div>
 """
 
-# 写真1枚ぶん。図と、その下の［大きく見る］。
-#   ボタンは figure の中に置きます。押されたら、同じ figure の <img> を大きく出します。
-GAZOU = """              <figure class="shot"><img src="{uri}" alt="{alt}" width="{w}" height="{h}" loading="lazy" decoding="async">
-                <figcaption class="shot-shita"><span class="shot-kazu">{i} / {n}</span><button class="shot-b" type="button" data-zen>大きく見る</button></figcaption>
-              </figure>"""
+# 写真1枚ぶん。
+#   2026-09-23（依頼）：図の下にあった［大きく見る］の行をやめました。
+#   その行があると、写真は **窓の高さ** をその行に取られます。写真は
+#   「できる限り大きく」が先なので、ボタンは **札の足**（提供…の行）へ
+#   移しました。何枚めかの「1 / 2」は、2枚以上のときだけ 図の左上に
+#   小さく重ねます（1枚しか無いときは、出す意味がありません）。
+GAZOU = """              <figure class="shot"><img src="{uri}" alt="{alt}" width="{w}" height="{h}" loading="lazy" decoding="async">{kazu}</figure>"""
+GAZOU_KAZU = '<span class="shot-kazu">{i} / {n}</span>'
 
 
 def bansho_aru(jissen):
@@ -3418,12 +3437,23 @@ def build_bansho(jissen):
         # 写真が無い件（PDFだけ・議題だけ）も並べます。窓は出しません。
         mai = shiryo_yomu(a['bansho'], BANSHO, 'bansho.html') if a.get('bansho') else []
         g = [GAZOU.format(uri=uri, alt=esc_html('%s の写真 %d枚め' % (a['title'], i + 1)),
-                          w=w, h=h, i=i + 1, n=len(mai))
+                          w=w, h=h,
+                          kazu=(GAZOU_KAZU.format(i=i + 1, n=len(mai))
+                                if len(mai) > 1 else ''))
              for i, (uri, w, h) in enumerate(mai)]
         mado = BFUDA_MADO.format(gazou='\n'.join(g)) if g else ''
         # 送ってもらった資料（PDFを画像にしたもの）も、ここで開きます
-        sh = ''.join(shiryo_mado(m, v, a['title'], page='bansho.html')
+        sh = ''.join(shiryo_mado(m, v, a['title'], page='bansho.html', zen=False)
                      for m, kind, v in a.get('shiryo_list', []) if kind == 'naka')
+        # ［大きく見る］。窓のぶんだけ出します（窓が無い件には出しません）。
+        #   窓が2つ（写真とPDF）ある件では、どちらを開くのかが分かるように
+        #   名前を分けます。いまは そんな件はありませんが、来ても迷いません。
+        futatsu = bool(mado) and bool(sh)
+        zen = ''
+        if mado:
+            zen += ZEN_B.format(doko='hiro', na='写真を大きく' if futatsu else '大きく見る')
+        if sh:
+            zen += ZEN_B.format(doko='shiryo', na='資料を大きく' if futatsu else '大きく見る')
         more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         meta = '・'.join(x for x in (esc_html(a['scene']), esc_html(a['grade']),
                                      ja_md(a['d'])) if x)
@@ -3464,7 +3494,7 @@ def build_bansho(jissen):
             ken=esc_html(a.get('ken') or ''), shi=esc_html(a.get('shi') or ''),
             chiho=esc_html(a.get('chiho') or ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
-            mado=mado, shiryo=sh, more=more, by=esc_html(a['by']),
+            mado=mado, shiryo=sh, zen=zen, more=more, by=esc_html(a['by']),
             ima=esc_html(ima)))
     return (JIBUN_TANA + '\n' + sagasu_obi(aru)
             + '\n    <div class="bantana" id="bantana">\n'

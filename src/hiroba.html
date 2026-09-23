@@ -2928,10 +2928,31 @@
     modoru = null;
   }
 
+  /* ［大きく見る］が どの図を開くか（2026-09-23 依頼で置き場が変わりました）。
+     前は 図のすぐ下にボタンがあったので、closest('figure') で決まりました。
+     いまは **札の足**（提供…の行）にあります。写真の高さを、ボタンの行に
+     取られないようにするためです。だから、どの窓かを data-zen で受けとり、
+     その窓の「いま見えている1枚」を選びます（窓はよこ送りです）。 */
+  function zuToru(b){
+    var fig = b.closest('figure');
+    if(fig) return fig;                      /* 図の中にあるとき（昔の置き方） */
+    var fuda = b.closest('.bfuda');
+    if(!fuda) return null;
+    var doko = b.getAttribute('data-zen');
+    var mado = fuda.querySelector(
+      doko === 'shiryo' ? '.shiryo-mado' :
+      doko === 'hiro'   ? '.bfuda-mado'  : '.bfuda-mado, .shiryo-mado');
+    if(!mado) return null;
+    var zu = mado.querySelectorAll('figure');
+    if(!zu.length) return null;
+    var i = Math.round(mado.scrollLeft / Math.max(1, mado.clientWidth));
+    return zu[Math.min(zu.length - 1, Math.max(0, i))];
+  }
+
   document.addEventListener('click', function(ev){
     var b = ev.target.closest && ev.target.closest('[data-zen]');
     if(!b) return;
-    var fig = b.closest('figure');
+    var fig = zuToru(b);
     var moto = fig && fig.querySelector('img');
     if(!moto) return;
     modoru = b;
