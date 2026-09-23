@@ -151,21 +151,25 @@ img,svg{max-width:100%}
    ★動きは絵の中にあるので、大きくしても壊れません。
    ★大きさを変えたいときは --hero-bai だけを動かしてください
      （1.9で 縦345px・子ども約20px。2.4にすると 縦436pxになります）。 */
+/* ★2026-09-23 依頼で **1倍に戻しました**。
+   1.9倍・横スクロールにすると、最初に見えるのは左の教室だけで、
+   校舎も運動会も児童会もクラブも、指で動かさないと出てきません。
+   「やはり全体が写るように戻して欲しい」（本人）。
+   ★1人が小さく見えるのは承知のうえです。細かいところは
+     「4つの内容」の拡大図で見られます。
+   ★大きくしたくなったら --hero-bai を 1.9 などに戻し、下の
+     overflow と .hero-slide の行も一緒に戻してください。 */
 @media (max-width:719px){
   .hero-e--hiro{
-    --hero-bai:1.9;
-    overflow-x:auto;overflow-y:hidden;
-    overscroll-behavior-x:contain;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+    --hero-bai:1;
   }
-  .hero-e--hiro::-webkit-scrollbar{display:none}
   .hero-e--hiro > svg{
     width:calc(100% * var(--hero-bai));max-width:none;
   }
-  /* 「よこにスライド →」の案内。絵の右下に重ねます。
-     いちど動かすと、JavaScript が消します。 */
-  .hero-slide{
+  /* 「よこにスライド →」の案内。1倍に戻したのですべる必要がなく、
+     出しません（2026-09-23）。1.9倍に戻すときは display:none を外します。 */
+  .hero-slide{display:none}
+  .hero-slide--tsukawanai{
     position:absolute;z-index:2;
     inset-inline-end:10px;bottom:10px;margin:0;
     padding:5px 12px;border-radius:999px;
@@ -2179,6 +2183,42 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:13px;line-height:1.85;
 }
 .okuru-kiwo b{display:block;margin-bottom:2px;color:var(--shu)}
+/* ══ 送るまえの、最後の関門（2026-09-23 依頼）════════════════
+   「個人情報のチェックは送るときに再度チェックを入れるようにして欲しい。
+     投稿者が確認をできるようにね」
+   ★上の赤い札（.okuru-kiwo）とつながって見えるようにします。
+     読むところと、押すところで、1つの手つづきです。
+   ★押せる大きさは、行ぜんたい（label）です。四角だけだと、
+     指では当たりません。                                          */
+.okuru-kiwo{margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom:0}
+.okuru-kakunin{
+  margin:0 0 18px;padding:12px 14px;
+  border:2px solid var(--shu);border-top:2px dashed #EFC3B2;
+  border-radius:0 0 12px 12px;background:#FDF1EC;
+}
+.okuru-kakunin label{
+  display:flex;align-items:flex-start;gap:10px;
+  min-height:44px;cursor:pointer;
+  font-size:13.5px;line-height:1.8;
+}
+.okuru-kakunin input{
+  flex:none;width:24px;height:24px;margin-top:5px;
+  accent-color:var(--shu);cursor:pointer;
+}
+.okuru-kakunin b{color:var(--shu)}
+/* 印が無いまま送ろうとしたとき。色だけでなく、形（太い枠）でも言います */
+.okuru-kakunin--yobu{
+  border-color:var(--shu);border-width:3px;background:#FBE3DA;
+}
+.okuru-kakunin--yobu label{font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .okuru-kakunin--yobu{animation:kakunin-yobu .5s ease 2}
+}
+@keyframes kakunin-yobu{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}
+  75%{transform:translateX(4px)}
+}
 .okuru-botan{margin:0;text-align:center}
 .okuru-botan .btn{width:100%;justify-content:center}
 .okuru-botan .btn[disabled]{opacity:.5;cursor:default;transform:none}
@@ -3386,6 +3426,20 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:12px;line-height:1.7;color:var(--mute);
 }
 
+/* ── このサイトを紹介する（2026-09-23）──────────────────── */
+.shokai{
+  display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,30px);align-items:center;
+  max-width:640px;margin:0 auto;padding:clamp(18px,2.6vw,26px);
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);
+}
+.shokai-qr{
+  flex:0 0 auto;width:150px;height:150px;display:block;
+  border:2px solid var(--ink);border-radius:8px;background:#fff;
+}
+.shokai-te{flex:1 1 220px;min-width:0}
+.shokai-yo{margin:0 0 12px;font-size:13.5px;line-height:1.95}
+
 /* ══ 紙に出す（A4・2026-09-23 依頼）════════════════════════
    学校は紙で回ります。実践1件を職員室に配れる形にします。
    ★PDFを作る道具は入れません。ブラウザの印刷にそのまま渡します
@@ -3885,3 +3939,43 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* 札は、ボタンの位置に合わせて「左はしから右へ」ひらきます
    （右づめのままだと、左上では画面の外に出ます） */
 .hero-koe .ue-migi .moji .moji-tana{inset-inline-start:0;inset-inline-end:auto}
+
+/* ── 旗のような「細長い絵」が字にかぶるのを直す（2026-09-23 依頼）──
+   せまい画面の飾りは **幅** でそろえていました。
+   旗は 50×170 と細長いので、幅74pxだと **高さが252px** になり、
+   節の足もとから ぬっと伸びて、本文に重なっていました（実測）。
+   **背の高さでそろえます。** どの絵も同じ背たけになり、はみ出しません。
+   ★高さは、節の下の余白（--aki ＋ 46px）より小さくしてあります。 */
+@supports selector(:has(*)){
+  @media (max-width:1259px){
+    .sec > .kazari{width:auto;height:var(--h-sp,92px)}
+    .sec > .kazari svg{width:auto;height:100%}
+  }
+  @media (max-width:479px){
+    .sec > .kazari{height:var(--h-sp,76px)}
+  }
+}
+
+/* ── 研究会の地図（2026-09-23 依頼）──────────────────────
+   実践の地図は「さがす」の帯の中にありますが、こちらは節の頭に
+   1つだけ置きます。カードの形は、いままでのままです。 */
+.kaichizu{max-width:560px;margin:0 auto clamp(22px,3vw,34px)}
+.kaichizu .sagasu-gyo--chizu{display:block;margin:0}
+.kaichizu .sagasu-l{display:block;margin-bottom:8px}
+.kaichizu .chizu-ima{margin-top:12px}
+
+/* ── 節の1行が、語のとちゅうで折れるのを直す（2026-09-23 依頼）──
+   スマホで「……そのままなの／で、いつでもここへ戻れます。」のように、
+   語のまんなかで折れていました。日本語は空白で区切らないので、
+   ブラウザは入るところで折ります。
+
+   ★字は1文字も変えていません。**折る場所の決め方**だけを変えます。
+     （文を変えると、ことばの言いかえ表〈KOTOBA〉の見出しがずれます）
+   ・word-break:auto-phrase … 語のまとまり（文節）で折る
+   ・text-wrap:balance　　　… 2〜3行を、同じくらいの長さにそろえる
+   ★どちらも、効かないブラウザでは いままでどおりです（崩れません）。 */
+.yomi,.sec-yomi,.kai-yomi,.chizu-yomi,.okuru-yomi,.fuda-lead{
+  word-break:auto-phrase;
+  text-wrap:pretty;
+}
+.yomi{text-wrap:balance}

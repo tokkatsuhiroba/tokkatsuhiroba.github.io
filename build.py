@@ -100,7 +100,7 @@ PAGES = (
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。ことばの意味も。',
      ('about', 'yotsu', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
-     ('manabu', 'jissen')),
+     ('manabu', 'shokai', 'jissen')),
     ('atsumaru.html', '集まる', '研究日程、ニュース、各地の研究会。',
      ('ima', 'news', 'kai')),
     # みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。
@@ -135,6 +135,7 @@ SETSU_NA = {
     #   はじめての人が最初に読むところ、という顔になりました。
     'about':  '特活とは',   'manabu': 'はじめかた',
     'yotsu':  '4つの内容',  'jissen': 'すぐ使える道具',
+    'shokai': 'このサイトを紹介する',
     'kai':    '日本の研究会', 'okuru': '実践を送る',
     # 2026-09-22：ここがこのサイトの主役です。
     #   「板書」は狭すぎました（いまは写真もPDFも議題も届きます）。
@@ -2990,12 +2991,38 @@ KAIGUMI_T = """      <div class="kaigumi">
         </div>
       </div>"""
 
-KAI_T = """      <a class="kai" href="{url}" target="_blank" rel="noopener noreferrer">
+KAI_T = """      <a class="kai" data-ken="{ken}" href="{url}" target="_blank" rel="noopener noreferrer">
         <span class="kai-ue"><span class="kai-han han--{han}">{han_ji}</span><span class="kai-muke">{muke}</span><span class="kai-soto">外部</span></span>
         <b class="kai-na">{na}</b>
         <span class="kai-yo">{yo}</span>
         <span class="kai-shita">{tag}<span class="kai-do">{do}</span></span>
       </a>"""
+
+
+# 研究会の地図（2026-09-23 依頼）。
+#   2026-09-22 には「会が7都道県しかなく、40県が真っ白になるので地図にしない」
+#   と決めていました。依頼で入れます。かわりに、白い県が
+#   「会が無い」ではなく「まだ載せていない」ことを、字で必ず出します。
+#   ★カードの形は、そのままです。地図は **絞りこみの札** として上に置きます。
+#   ★全国の会は、どの県を押しても出したままにします（どこに居ても関わるため）。
+KAI_CHIZU_T = """    <div class="kaichizu" id="kaichizu">
+{chizu}      <p class="chizu-ima" id="kaichizu-ima" hidden><span></span>
+        <button type="button" class="chizu-modosu">ぜんぶに戻す</button></p>
+    </div>
+"""
+
+KAI_CHIZU_YOMI = ('押すと、その県の会だけになります。もう一度押すと もどります。<br>\n'
+                  '          <b>札が立っているのが、いま載せている県です。</b>札の無い県は\n'
+                  '          「そこに会が無い」のではなく、<b>まだ載せていないだけ</b>です。<br>\n'
+                  '          <b>全国の会は、どの県を押しても出したままにします。</b>')
+
+
+def kai_chizu(aru_ken):
+    """研究会の地図。1つも県が無いときは、地図ごと出しません。"""
+    return build_chizu(
+        aru_ken, mid='kai-k', yomi=KAI_CHIZU_YOMI,
+        nashi='いまは %(ken)d都道県に %(kazu)d会。'
+              'のこり %(nokori)d県は、まだ載せていないだけです。')
 
 
 def build_kai():
@@ -3006,17 +3033,19 @@ def build_kai():
          15会を均等に並べると、どこの会かは範囲の2文字（全国／都／県／市）
          でしか分かりませんでした。地方の小見出しを入れると、
          自分の近くの会が一目で見つかります。
-       なぜ日本地図にしないのか
-         全国の会が5つあって、地図の上に置き場所がありません。
-         そのうえ会があるのは7都道県だけで、のこり40県が真っ白になります。
-         白いのは「会が無い」のではなく「まだ載せていない」だけなので、
-         地図にすると事実とちがうことを伝えてしまいます。
-         会が30・40と増えたら、そのとき地図を**絞りこみの札**として
-         横に置きます（カードの形は、そのまま残す）。
+       地図について（2026-09-23 に入れました）
+         2026-09-22 には「会があるのは7都道県だけで、のこり40県が真っ白に
+         なる。白いのは"会が無い"ではなく"まだ載せていない"だけなので、
+         事実とちがうことを伝えてしまう」として、地図を入れませんでした。
+         依頼で入れます。**そのかわり、白い県の意味を地図の上に必ず書きます。**
+         形は、そのときに決めておいたとおりです ──
+         **地図は絞りこみの札。カードの形は、そのまま残す。**
+         全国の会は、どの県を押しても出したままにします
+         （どこに住んでいても関わる会なので、消すと不便になるため）。
     """
     from urllib.parse import urlsplit
     mita = set()
-    zen, chihou = [], {}
+    zen, chihou, aru_ken = [], {}, []
     for han, han_ji, muke, ken, na, url, yo, tags in KAI:
         if han not in ('zen', 'ken', 'shi'):
             raise Tomeru('ほかの研究会「%s」の範囲が %s です（zen／ken／shi のどれか）' % (na, han))
@@ -3047,12 +3076,14 @@ def build_kai():
         fuda = ''.join('<span class="kai-tag">%s</span>' % esc_html(t) for t in tags)
         gyo = KAI_T.format(
             url=esc_html(url), han=han, han_ji=esc_html(han_ji), muke=esc_html(muke),
+            ken=esc_html(ken),
             na=esc_html(na), yo=esc_html(yo), tag=fuda,
             do=esc_html(urlsplit(url).netloc.replace('www.', '')))
         if han == 'zen':
             zen.append(gyo)
         else:
             chihou.setdefault(KEN_CHIHO[ken], []).append(gyo)
+            aru_ken.append({'ken': ken})
 
     honbun = ('    <div class="kaigumi kaigumi--zen">\n'
               '      <h3 class="kaigumi-h"><span class="kaigumi-ji">全国</span>'
@@ -3070,10 +3101,11 @@ def build_kai():
         na_zoro.append(ch)
         kumi.append(KAIGUMI_T.format(ch=esc_html(ch), n=len(naka), naka='\n'.join(naka)))
     if not kumi:
-        return honbun
-    return tsunagu(honbun, '\n'.join(kumi), kazu,
-                   a='各地の研究会 %d会を、このページで開く（%s）'
-                     % (kazu, '／'.join(na_zoro)))
+        return KAI_CHIZU_T.format(chizu=kai_chizu(aru_ken)) + honbun
+    return (KAI_CHIZU_T.format(chizu=kai_chizu(aru_ken))
+            + tsunagu(honbun, '\n'.join(kumi), kazu,
+                      a='各地の研究会 %d会を、このページで開く（%s）'
+                        % (kazu, '／'.join(na_zoro))))
 
 
 # ══════════════════════════════════════════════════════════
@@ -3868,21 +3900,29 @@ def chizu_mijikaku(ken):
     return ken if ken == '北海道' else ken[:-1]
 
 
+# ★ id は外から渡します。同じ id が2つあると、リンクが別の場所へ飛ぶので
+#   ビルドが止まります（実践の地図と、研究会の地図の2つを置くため）。
 CHIZU_T = """      <div class="sagasu-gyo sagasu-gyo--chizu">
-        <span class="sagasu-l" id="sagasu-k-l">地図から</span>
-        <p class="chizu-yomi">押すと、その県のものだけになります。もう一度押すと もどります。<br>
-          <b>札が立っているのが、いま届いている県です。</b>札の無い県は
-          「そこに実践が無い」のではなく、<b>まだ送られていないだけ</b>です。
+        <span class="sagasu-l" id="{mid}-l">地図から</span>
+        <p class="chizu-yomi">{yomi}
           <span class="chizu-nashi-chu">{nashi}</span></p>
-        <div class="chizu" id="sagasu-k" role="group" aria-labelledby="sagasu-k-l">
+        <div class="chizu" id="{mid}" role="group" aria-labelledby="{mid}-l">
 {e}
 {fuda}        </div>
       </div>
 """
 
+CHIZU_YOMI = ('押すと、その県のものだけになります。もう一度押すと もどります。<br>\n'
+              '          <b>札が立っているのが、いま届いている県です。</b>札の無い県は\n'
+              '          「そこに実践が無い」のではなく、<b>まだ送られていないだけ</b>です。')
 
-def build_chizu(aru):
-    """日本の地図（2026-09-22 依頼）。押すと、その県の実践だけになります。
+
+def build_chizu(aru, mid='sagasu-k', yomi=None, nashi=None):
+    """日本の地図（2026-09-22 依頼）。押すと、その県のものだけになります。
+
+       mid  … 地図の id。2つ置くので、外から渡します（id が重なると止まります）
+       yomi … 上に出す説明。渡さなければ 実践むけの字
+       nashi… 「のこり◯県」の1行。渡さなければ 実践むけの字
 
        ★絵は、経度・緯度から組み立てます。画像は1枚も使いません。
          外の地図サービスも使いません（開いただけで通信が飛ぶため。原則2）。
@@ -3970,10 +4010,14 @@ def build_chizu(aru):
     e[-1:-1] = hiku      # 引き出し線と印は、島の上・札の下に入れます
 
     nokori = 47 - len(kazu)
-    nashi = ('いまは %d県から %d件。のこり %d県には、まだ札が立っていません。'
-             % (len(kazu), sum(kazu.values()), nokori)) if nokori else \
-            'とうとう47都道府県、ぜんぶそろいました。'
-    return CHIZU_T.format(e='\n'.join(e), fuda=''.join(fuda), nashi=esc_html(nashi))
+    if nashi is None:
+        nashi = ('いまは %d県から %d件。のこり %d県には、まだ札が立っていません。'
+                 % (len(kazu), sum(kazu.values()), nokori)) if nokori else \
+                'とうとう47都道府県、ぜんぶそろいました。'
+    else:
+        nashi = nashi % {'ken': len(kazu), 'kazu': sum(kazu.values()), 'nokori': nokori}
+    return CHIZU_T.format(e='\n'.join(e), fuda=''.join(fuda), mid=mid,
+                          yomi=(yomi or CHIZU_YOMI), nashi=esc_html(nashi))
 
 
 # 2026-09-23 依頼：**左に地図、右にさがす**の2段組みにします。
@@ -4882,7 +4926,7 @@ def head_de(f, na):
     head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
         head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))
-        head = head.replace('content="TOKKATSU広場｜特別活動の情報が、溜まる場。"',
+        head = head.replace('content="TOKKATSU広場｜特別活動で、輝く。"',
                             'content="%s｜TOKKATSU広場"' % esc_html(page_na(f)), 1)
     return head
 
@@ -5204,11 +5248,7 @@ KOTOBA = {
          '<strong>الردّ أسرع في LINE</strong> — يقرأ هناك 505 معلمين.'),
 
     # ── 足もと ──
-    '特別活動の情報が、溜まる場。<br>LINEで流れていく話も、ここには残ります。':
-        ('A place where information about Tokkatsu collects.<br>'
-         'What scrolls away on LINE stays here.',
-         'مكان تتجمّع فيه المعلومات عن الأنشطة الخاصة.<br>'
-         'ما يمضي سريعًا في LINE يبقى هنا.'),
+    '特別活動で、輝く。': ('Shine through Tokkatsu.', 'تألّق مع الأنشطة الخاصة.'),
     '管理者：伊藤 優': ('Site owner: Yu Ito', 'مسؤول الموقع: يو إيتو'),
     '管理画面': ('Admin page', 'لوحة الإدارة'),
 
@@ -5216,6 +5256,386 @@ KOTOBA = {
     '<b>LINE</b>みんなの特活ひろば<i aria-hidden="true">↗</i>':
         ('<b>LINE</b>Minna no Tokkatsu Hiroba<i aria-hidden="true">↗</i>',
          '<b>LINE</b>ساحة توكاتسو للجميع<i aria-hidden="true">↗</i>'),
+
+    # ── 2026-09-23 追加（送るところ・ことばの意味・欄の名前）──
+    '特別活動':
+        ('Special Activities',
+         'الأنشطة الخاصة'),
+    'なすことによって学ぶ':
+        ('Learning by doing',
+         'التعلّم بالممارسة'),
+    '人間関係形成':
+        ('Building human relationships',
+         'بناء العلاقات الإنسانية'),
+    '社会参画':
+        ('Social participation',
+         'المشاركة الاجتماعية'),
+    '自己実現':
+        ('Self-realisation',
+         'تحقيق الذات'),
+    '学級活動(1)':
+        ('Classroom Activities (1)',
+         'أنشطة الفصل (١)'),
+    '学級活動(2)':
+        ('Classroom Activities (2)',
+         'أنشطة الفصل (٢)'),
+    '学級活動(3)':
+        ('Classroom Activities (3)',
+         'أنشطة الفصل (٣)'),
+    '児童会活動':
+        ('Student Council Activities',
+         'أنشطة مجلس التلاميذ'),
+    'クラブ活動':
+        ('Club Activities',
+         'أنشطة النوادي'),
+    '学校行事':
+        ('School Events',
+         'الفعاليات المدرسية'),
+    '自発的、自治的な活動':
+        ('Self-initiated, self-governing activity',
+         'نشاط ينبع من التلاميذ ويديرونه بأنفسهم'),
+    '議題':
+        ('Gidai — an item the class decides together',
+         'موضوع النقاش — ما يقرّره الفصل معًا'),
+    '題材':
+        ('Zaizai — a topic the teacher sets',
+         'الموضوع الذي يحدّده المعلّم'),
+    '提案理由':
+        ('Reason for the proposal',
+         'سبب الاقتراح'),
+    '計画委員会':
+        ('Planning committee',
+         'لجنة التخطيط'),
+    '合意形成':
+        ('Building consensus',
+         'بناء التوافق'),
+    '意思決定':
+        ('Personal decision-making',
+         'القرار الشخصي'),
+    '話合い活動':
+        ('Discussion activity',
+         'نشاط الحوار'),
+    '学級会':
+        ('Class meeting',
+         'اجتماع الفصل'),
+    '係活動':
+        ('Kakari — jobs the children invent',
+         'المهام التي يبتكرها التلاميذ'),
+    '当番活動':
+        ('Toban — duties that rotate',
+         'المهام الدورية الواجبة'),
+    'キャリア・パスポート':
+        ('Career Passport',
+         'جواز المسار المهني'),
+    '学習過程':
+        ('The learning process',
+         'مسار التعلّم'),
+    '振り返り':
+        ('Reflection',
+         'المراجعة بعد التنفيذ'),
+    '教科書のない教科です。学級や学校の生活を、子どもたちが自分たちでよりよくしていく活動をまとめて、こう呼びます。':
+        ('A subject with no textbook. It is the name for all the activities in which children make their own class and school life better.',
+         'مادة بلا كتاب مدرسي. هو الاسم الجامع للأنشطة التي يحسّن بها التلاميذ حياة فصلهم ومدرستهم بأنفسهم.'),
+    '学級活動・児童会活動・クラブ活動・学校行事の4つでできています。':
+        ('It is made up of four parts: Classroom Activities, Student Council Activities, Club Activities and School Events.',
+         'ويتكوّن من أربعة أقسام: أنشطة الفصل، وأنشطة مجلس التلاميذ، وأنشطة النوادي، والفعاليات المدرسية.'),
+    '特別活動の考え方の芯です。話を聞いて分かるのではなく、実際にやってみて、うまくいかなくて、また考える。その繰り返しで学びます。':
+        ('The core idea of Special Activities. You do not learn it by being told. You try, it does not work, you think again — and learning happens in that loop.',
+         'هذا هو جوهر الأنشطة الخاصة. لا يتعلّم الطفل بالاستماع، بل بالمحاولة والإخفاق وإعادة التفكير، ويحدث التعلّم داخل هذه الدورة.'),
+    'だから、失敗できる場が要ります。':
+        ('So children need a place where failing is allowed.',
+         'ولذلك يحتاج التلاميذ إلى مكان يُسمح فيه بالإخفاق.'),
+    '特別活動が育てる3つの視点の1つ。年齢や考え方のちがう人と、よりよい関係をつくっていく力です。':
+        ('One of the three perspectives Special Activities develop: the ability to build better relationships with people of different ages and different views.',
+         'أحد المنظورات الثلاثة التي تنمّيها الأنشطة الخاصة: القدرة على بناء علاقات أفضل مع من يختلفون في السنّ أو في الرأي.'),
+    '仲よくすることとは、少しちがいます。合わない人とも一緒にやれることを指します。':
+        ('It is not quite the same as getting along. It means being able to work with people you do not click with.',
+         'وهو ليس مجرّد الوفاق، بل القدرة على العمل مع من لا تنسجم معه.'),
+    '3つの視点の2つめ。自分たちの集団や社会を、自分たちでよりよくしていこうとする態度です。':
+        ('The second perspective: the will to make your own group and society better yourselves.',
+         'المنظور الثاني: الإرادة في تحسين الجماعة والمجتمع بأيدي أفرادهما.'),
+    '「誰かが決めてくれる」から「自分たちで決める」へ、という転換です。':
+        ('It is the shift from “somebody decides for us” to “we decide”.',
+         'إنه انتقال من «غيرنا يقرّر» إلى «نحن نقرّر».'),
+    '3つの視点の3つめ。集団の中で、自分のよさを生かし、これからの生き方を考えていくことです。':
+        ('The third perspective: using your own strengths inside a group, and thinking about how you want to live.',
+         'المنظور الثالث: توظيف نقاط قوّتك داخل الجماعة، والتفكير في الحياة التي تريدها.'),
+    '集団に埋もれることでも、目立つことでもありません。':
+        ('It is neither disappearing into the group nor standing out from it.',
+         'وهو ليس الذوبان في الجماعة ولا التميّز عنها.'),
+    '「学級や学校における生活づくりへの参画」。議題を子どもが出し、子どもが決めます。':
+        ('“Taking part in building class and school life.” The children raise the agenda item, and the children decide.',
+         '«المشاركة في بناء حياة الفصل والمدرسة». التلاميذ هم من يطرح الموضوع وهم من يقرّر.'),
+    '学級会がこれにあたります。目ざすところは合意形成です。':
+        ('This is what the class meeting is. What it aims at is consensus.',
+         'وهذا ما يُسمّى اجتماع الفصل، وغايته بناء التوافق.'),
+    '「日常の生活や学習への適応と自己の成長及び健康安全」。題材は教師が設定します。':
+        ('“Adapting to daily life and learning, personal growth, health and safety.” Here the teacher sets the topic.',
+         '«التكيّف مع الحياة اليومية والتعلّم، والنموّ الشخصي، والصحّة والسلامة». هنا يحدّد المعلّم الموضوع.'),
+    '食事・睡眠・安全など、一人一人が自分のこととして決めます。目ざすところは意思決定です。':
+        ('Food, sleep, safety — each child decides for themselves. What it aims at is a personal decision.',
+         'الطعام والنوم والسلامة — يقرّر كل تلميذ لنفسه. وغايته القرار الشخصي.'),
+    '「一人一人のキャリア形成と自己実現」。こちらも題材は教師が設定します。':
+        ('“Each child’s career formation and self-realisation.” Here too the teacher sets the topic.',
+         '«بناء المسار المهني لكل تلميذ وتحقيق ذاته». وهنا أيضًا يحدّد المعلّم الموضوع.'),
+    '係活動や当番、学ぶことの意義、将来の生き方を扱います。目ざすところは意思決定です。':
+        ('It covers classroom jobs and duties, why learning matters, and how to live in future. What it aims at is a personal decision.',
+         'ويتناول مهام الفصل والمناوبات، ومعنى التعلّم، وطريقة الحياة في المستقبل. وغايته القرار الشخصي.'),
+    '全校の子どもでつくる組織の活動です。代表委員会や委員会活動、児童会集会などがあります。':
+        ('An organisation run by the children of the whole school: the representatives’ committee, the standing committees, school-wide assemblies.',
+         'تنظيم يديره تلاميذ المدرسة كلّها: مجلس الممثّلين، واللجان الدائمة، والتجمّعات المدرسية.'),
+    '学校全体をよりよくするところが、学級活動とのちがいです。':
+        ('What makes it different from Classroom Activities is that it improves the whole school.',
+         'وما يميّزه عن أنشطة الفصل أنه يحسّن المدرسة بأكملها.'),
+    '主として第4学年以上の、同じ興味や関心をもつ子どもが集まって行う活動です。':
+        ('Children from Year 4 upwards who share an interest gather and work on it together.',
+         'يجتمع التلاميذ من الصف الرابع فما فوق ممّن تجمعهم ميول مشتركة ويعملون عليها معًا.'),
+    '異なる学年が一緒になるところに意味があります。':
+        ('The point is that different year groups mix.',
+         'والمغزى هو اختلاط الصفوف المختلفة.'),
+    '儀式的行事・文化的行事・健康安全体育的行事・遠足集団宿泊的行事・勤労生産奉仕的行事の5つです。':
+        ('There are five kinds: ceremonies, cultural events, health–safety–PE events, excursions and residential trips, and work–production–service events.',
+         'وهي خمسة أنواع: الاحتفالات الرسمية، والفعاليات الثقافية، وفعاليات الصحّة والسلامة والرياضة، والرحلات والمبيت الجماعي، وفعاليات العمل والإنتاج والخدمة.'),
+    'やること自体が目的ではなく、集団への所属感や公共の精神を育てるためのものです。':
+        ('Holding the event is not the aim. The aim is a sense of belonging and a public spirit.',
+         'إقامة الفعالية ليست الغاية؛ الغاية هي الإحساس بالانتماء وروح الصالح العام.'),
+    '子どもが自分たちで問題を見つけ、話し合い、決め、実践する活動のことです。':
+        ('Activity in which children find the problem, talk it over, decide and carry it out themselves.',
+         'نشاط يكتشف فيه التلاميذ المشكلة، ويتحاورون، ويقرّرون، وينفّذون بأنفسهم.'),
+    '教師が決めたことを子どもにやらせるのは、これにあたりません。':
+        ('Having children carry out what the teacher decided does not count as this.',
+         'أمّا تنفيذ التلاميذ لما قرّره المعلّم فلا يُعدّ من هذا الباب.'),
+    '学級活動(1)で話し合うことがらです。子どもが出します。':
+        ('What the class talks about in Classroom Activities (1). The children raise it.',
+         'ما يناقشه الفصل في أنشطة الفصل (١). والتلاميذ هم من يطرحه.'),
+    '「みんなで決めたいこと」であることが条件で、一人で決められることや、先生が決めることは議題になりません。':
+        ('It has to be something the class wants to decide together. Anything one child can decide alone, or that the teacher decides, is not an agenda item.',
+         'ويُشترط أن يكون ممّا يريد الفصل أن يقرّره معًا؛ فما يقرّره تلميذ وحده أو يقرّره المعلّم ليس موضوعًا للنقاش.'),
+    '学級活動(2)(3)で扱うことがらです。教師が設定します。':
+        ('What is dealt with in Classroom Activities (2) and (3). The teacher sets it.',
+         'ما تتناوله أنشطة الفصل (٢) و(٣). والمعلّم هو من يحدّده.'),
+    '議題とまぎらわしいのですが、出どころがちがいます。ここを取りちがえると、活動の性格が変わります。':
+        ('It is easily confused with an agenda item, but it comes from a different place. Mix the two up and the nature of the activity changes.',
+         'يسهل الخلط بينه وبين موضوع النقاش، لكنّ مصدرهما مختلف؛ والخلط بينهما يغيّر طبيعة النشاط.'),
+    '「なぜこれをクラス全員で話す必要があるのか」を述べたものです。':
+        ('It states why this has to be talked about by the whole class.',
+         'يوضّح لماذا يجب أن يناقش الفصل كلّه هذا الأمر.'),
+    '話合いで案をくらべるときのものさしになります。ここが弱いと、話合いは好き嫌いの言い合いになります。':
+        ('It becomes the measure for comparing ideas. When it is weak, the discussion turns into a swap of likes and dislikes.',
+         'وهو المعيار الذي تُقارن به الاقتراحات. وإذا ضعف، تحوّل الحوار إلى تبادل أهواء.'),
+    '学級会の前に、議題を選び、進め方を考える子どもたちの集まりです。':
+        ('A group of children who, before the class meeting, choose the agenda item and plan how the meeting will run.',
+         'مجموعة من التلاميذ يختارون موضوع النقاش قبل الاجتماع ويخطّطون لسير الجلسة.'),
+    '司会・記録・提案者などで構成します。ここが育つと、学級会が回りはじめます。':
+        ('It is made up of the chair, the note-taker, the proposer and so on. Once this grows, the class meeting starts to run by itself.',
+         'وتتكوّن من المُيسِّر والمدوّن وصاحب الاقتراح وغيرهم. ومتى نضجت، بدأ الاجتماع يسير من تلقاء نفسه.'),
+    'みんなが納得できる一つの答えを、話合いでつくることです。学級活動(1)が目ざすところです。':
+        ('Making, through discussion, one answer everyone can accept. This is what Classroom Activities (1) aim at.',
+         'صنع إجابة واحدة يقبلها الجميع، عبر الحوار. وهذا ما تسعى إليه أنشطة الفصل (١).'),
+    '多数決で決めることではありません。人数ではなく理由をくらべます。':
+        ('It is not deciding by majority vote. You compare reasons, not head counts.',
+         'وليس القرار بالأغلبية؛ فالمقارنة بين الأسباب لا بين الأعداد.'),
+    '一人一人が、自分のこととして「これをやる」と決めることです。学級活動(2)(3)が目ざすところです。':
+        ('Each child deciding, as their own business, “I will do this.” This is what Classroom Activities (2) and (3) aim at.',
+         'أن يقرّر كل تلميذ بنفسه ولنفسه: «سأفعل هذا». وهذا ما تسعى إليه أنشطة الفصل (٢) و(٣).'),
+    'クラスで1つに決める合意形成とは、目ざすところがちがいます。':
+        ('It aims at something different from consensus, where the class settles on one answer.',
+         'وغايته تختلف عن بناء التوافق الذي يستقرّ فيه الفصل على إجابة واحدة.'),
+    '学級活動(1)の中心になる活動です。「出し合う → くらべ合う → まとめる」の順で進みます。':
+        ('The activity at the centre of Classroom Activities (1). It goes: put ideas out → compare them → bring them together.',
+         'النشاط المحوري في أنشطة الفصل (١)، ويسير هكذا: نطرح الأفكار ← نقارنها ← نجمعها.'),
+    '出し合っている間は、よい悪いを言いません。':
+        ('While ideas are being put out, nobody says good or bad.',
+         'وأثناء طرح الأفكار لا يُقال جيّد أو رديء.'),
+    '学級活動(1)を行う時間の、実際の呼び名です。議題を子どもが出し、子どもが司会をして進めます。':
+        ('The everyday name for the lesson in which Classroom Activities (1) happen. The children raise the agenda item and the children chair it.',
+         'الاسم المتداول للحصّة التي تجري فيها أنشطة الفصل (١). التلاميذ يطرحون الموضوع ويُيسّرون الجلسة.'),
+    '教師は決めません。見取り、必要なときだけ助けます。':
+        ('The teacher does not decide. The teacher watches, and steps in only when needed.',
+         'لا يقرّر المعلّم؛ بل يراقب ولا يتدخّل إلا عند الحاجة.'),
+    '学級の生活を楽しく豊かにするために、子どもが自分たちで考えてつくる仕事です。':
+        ('Jobs the children think up themselves to make class life richer and more enjoyable.',
+         'مهام يبتكرها التلاميذ بأنفسهم ليجعلوا حياة الفصل أغنى وأمتع.'),
+    '当番活動とはちがいます。当番は誰かが必ずやらねばならない仕事、係は無くても困らないが、あると学級が豊かになる仕事です。':
+        ('Not the same as rotating duties. A duty is work someone must do; a kakari job is work nobody would miss, but which makes the class richer.',
+         'وهي غير المهام الدورية. المناوبة عمل لا بدّ أن يقوم به أحد، أمّا مهمّة «كاكاري» فلا يفتقدها أحد لو غابت، لكنّها تُغني الفصل إن وُجدت.'),
+    '給食・掃除・日直など、学級の生活を成り立たせるために必ず必要な仕事です。':
+        ('Lunch, cleaning, the day’s monitor — work the class cannot run without.',
+         'الغداء والتنظيف ومناوبة اليوم — أعمال لا يقوم الفصل بدونها.'),
+    '創意工夫の余地は係活動より小さく、公平に回すことが大事になります。':
+        ('There is less room to invent than in kakari jobs, so sharing them fairly is what matters.',
+         'ومجال الابتكار فيها أضيق، فالمهمّ أن تُوزَّع بالعدل.'),
+    '小学校から高校までの、学びの記録を積み上げていく教材です。学級活動(3)と結びついています。':
+        ('A record of learning built up from primary through to upper secondary school. It is tied to Classroom Activities (3).',
+         'سجلّ للتعلّم يُبنى من الابتدائية حتى الثانوية، ويرتبط بأنشطة الفصل (٣).'),
+    '書かせることが目的ではなく、自分で見返して次を考えるためのものです。':
+        ('Filling it in is not the point. It is there to be looked back on, to think about what comes next.',
+         'وليست الغاية أن يملأه الطفل، بل أن يعود إليه ليفكّر في الخطوة التالية.'),
+    '学級活動(1)の一連の流れです。①問題の発見・確認 ②解決方法等の話合い ③解決方法の決定 ④決めたことの実践 ⑤振り返り、と進み、また①に戻ります。':
+        ('The whole cycle of Classroom Activities (1): ① find and confirm the problem ② talk about how to solve it ③ decide ④ carry out what was decided ⑤ reflect — then back to ①.',
+         'الدورة الكاملة لأنشطة الفصل (١): ① اكتشاف المشكلة وتأكيدها ② الحوار حول الحلّ ③ اتخاذ القرار ④ تنفيذ ما تقرّر ⑤ المراجعة — ثم العودة إلى ①.'),
+    '1時間で終わるものではなく、学級会の前と後を含めた流れです。':
+        ('It does not fit into one lesson. It is a flow that includes what comes before and after the class meeting.',
+         'ولا تنتهي في حصّة واحدة؛ فهي مسار يشمل ما قبل الاجتماع وما بعده.'),
+    'やってみた後で、はじめの自分の考えとくらべることです。':
+        ('After trying it, comparing the result with what you thought at the start.',
+         'أن تقارن بعد التنفيذ بين النتيجة وما كنت تظنّه في البداية.'),
+    '「楽しかった」で終わらせず、次の議題につなげるところまでが振り返りです。':
+        ('Reflection is not over at “that was fun”. It runs as far as the next agenda item.',
+         'ولا تنتهي المراجعة عند «كان ممتعًا»؛ بل تمتدّ حتى موضوع النقاش التالي.'),
+    'さがす':
+        ('Search',
+         'ابحث'),
+    'ことばをさがす':
+        ('Search the words',
+         'ابحث في المصطلحات'),
+    '字の大きさ':
+        ('Text size',
+         'حجم الخطّ'),
+    '必須':
+        ('required',
+         'مطلوب'),
+    '任意':
+        ('optional',
+         'اختياري'),
+    '内容':
+        ('Which of the four',
+         'أيٌّ من الأربعة'),
+    '学年':
+        ('Year group',
+         'الصف'),
+    '地域':
+        ('Where',
+         'المكان'),
+    'お名前':
+        ('Your name',
+         'اسمك'),
+    '所属':
+        ('School or affiliation',
+         'المدرسة أو الجهة'),
+    '実践内容':
+        ('What you did',
+         'ما الذي قمت به'),
+    '推しポイント':
+        ('The one thing to notice',
+         'أبرز نقطة'),
+    '議題名・題材名・行事名':
+        ('Agenda item, topic or event name',
+         'اسم موضوع النقاش أو الموضوع أو الفعالية'),
+    '議題名・題材名・行事名・タイトル':
+        ('Agenda item, topic, event name or title',
+         'اسم موضوع النقاش أو الموضوع أو الفعالية أو العنوان'),
+    '写真・PDFをえらぶ':
+        ('Choose photos or a PDF',
+         'اختر صورًا أو ملفّ PDF'),
+    '市区町村':
+        ('Municipality',
+         'البلدية'),
+    '会の名前':
+        ('Name of the meeting',
+         'اسم اللقاء'),
+    'いつ':
+        ('When',
+         'متى'),
+    '2日目':
+        ('Second day',
+         'اليوم الثاني'),
+    '申込の〆切':
+        ('Application deadline',
+         'آخر موعد للتسجيل'),
+    '何をやる会か':
+        ('What happens there',
+         'ماذا يجري فيه'),
+    '会場':
+        ('Venue',
+         'المكان'),
+    '主催':
+        ('Organiser',
+         'الجهة المنظِّمة'),
+    '申込みについて':
+        ('About applying',
+         'عن التسجيل'),
+    '案内ページ':
+        ('Information page',
+         'صفحة المعلومات'),
+    'いま困っていることを書く':
+        ('Write what you are stuck on',
+         'اكتب ما يصعب عليك'),
+    '知っている研究会を知らせる':
+        ('Tell us about a meeting you know of',
+         'أخبرنا بلقاء تعرفه'),
+    '写真3枚まで／PDF1つまで／その場で撮ってもOK 隠したいところは、このページの上で消せます':
+        ('Up to 3 photos, up to 1 PDF. Taking a photo right now is fine. Anything you want hidden can be blacked out on this page.',
+         'حتى ٣ صور وملفّ PDF واحد. ولا بأس بالتقاط صورة الآن. وما تريد إخفاءه يمكن طمسه داخل هذه الصفحة.'),
+    '写真1枚だけで大丈夫です。ログインもメールも要りません。 内容とお名前だけ、書いてください。名前をサイトに出すかどうかは、下で選べます。':
+        ('One photo is enough. No login, no email address. Just write what it was and your name. Whether your name appears on the site is your choice, below.',
+         'تكفي صورة واحدة. لا تسجيل دخول ولا بريد إلكتروني. اكتب ما جرى واسمك فقط، ولك أن تختار أدناه إظهار اسمك على الموقع من عدمه.'),
+    '隠したいところを、指でなぞってください。 なぞった四角が、黒くぬりつぶされます。 ぬったものが送られます。元の写真は、どこにも出ていきません。':
+        ('Trace over anything you want hidden. The rectangle you trace is filled in black. What is sent is the blacked-out version — the original photo never leaves your device.',
+         'مرّر إصبعك على ما تريد إخفاءه، فيُملأ المستطيل الذي رسمته بالأسود. والمُرسَل هو النسخة المطموسة؛ أمّا الصورة الأصلية فلا تغادر جهازك أبدًا.'),
+    '1つだけ押してください。押したもののカードに集まります。 学級活動(1)(2)(3)は、ぜんぶ「学級活動」のカードへ。':
+        ('Press one only. It will be gathered on that card. Classroom Activities (1), (2) and (3) all go to the “Classroom Activities” card.',
+         'اضغط واحدًا فقط، فيُجمع على تلك البطاقة. وأنشطة الفصل (١) و(٢) و(٣) تذهب جميعها إلى بطاقة «أنشطة الفصل».'),
+    '1つだけ押してください。押したもののカードに集まります。 その内容の実践と、同じところに並びます。':
+        ('Press one only. It will be gathered on that card, alongside the practices for the same one of the four.',
+         'اضغط واحدًا فقط، فيُجمع على تلك البطاقة إلى جانب الممارسات من النوع نفسه.'),
+    '押すと入ります。いくつでも押せます。もう一度押すと外れます。':
+        ('Press to add. You can press as many as you like. Press again to remove.',
+         'اضغط للإضافة، ولك أن تضغط ما شئت، واضغط ثانية للإزالة.'),
+    'いちばん伝えたいことを、ひとことで。題のすぐ下に、大きく出ます。':
+        ('The one thing you most want to get across, in a single line. It appears large, just under the title.',
+         'أهمّ ما تودّ إيصاله في سطر واحد، ويظهر كبيرًا تحت العنوان مباشرة.'),
+    'ひとことでも大丈夫です。長く書く必要はありません。':
+        ('A single line is fine. There is no need to write at length.',
+         'يكفي سطر واحد، ولا داعي للإطالة.'),
+    '学校名や子どもの名前は書かないでください。そのまま出ます。':
+        ('Please do not write the school name or children’s names. It goes out exactly as written.',
+         'من فضلك لا تكتب اسم المدرسة ولا أسماء الأطفال؛ فما تكتبه يُنشر كما هو.'),
+    'サイトに出ます。 書いていただいたぶんが溜まったら、地図からさがせるようにします。 自治体は、書きたいときだけで大丈夫です（区や市でちがう、を言えるように）。':
+        ('This appears on the site. Once enough has been written in, we will make it searchable from a map. The municipality is optional — it is there so you can say that things differ from ward to ward.',
+         'يظهر هذا على الموقع. ومتى تجمّع ما يكفي، سنجعل البحث ممكنًا من خريطة. أمّا البلدية فاختيارية، وُضعت كي تتمكّن من بيان اختلاف الأمور بين حيّ وآخر.'),
+    '2日開催のときだけ。1日で終わる会は、空のままで。':
+        ('Only for two-day meetings. Leave it empty if it finishes in one day.',
+         'لِلقاءات اليومين فقط. اتركه فارغًا إن انتهى في يوم واحد.'),
+    '入れると、こよみに点線の丸で出ます。':
+        ('If you fill this in, it shows on the calendar as a dotted circle.',
+         'إن ملأته، ظهر في التقويم كدائرة منقّطة.'),
+    '学年・内容・始まる時こく・講師など。10字以上。 名前と日付だけ並べるのは、このサイトではやらないと決めています。':
+        ('Year group, content, start time, speaker and so on — at least ten characters. Listing nothing but a name and a date is something this site has decided not to do.',
+         'الصف والمحتوى ووقت البدء والمحاضر ونحوها، بعشرة محارف على الأقل. أمّا سرد الاسم والتاريخ فحسب فقد قرّر هذا الموقع ألّا يفعله.'),
+    '主催の公式ページがあれば。押した人だけが、外へ出ます。':
+        ('The organiser’s official page, if there is one. Only whoever presses it leaves the site.',
+         'الصفحة الرسمية للجهة المنظِّمة إن وُجدت. ولا يغادر الموقع إلا من يضغطها.'),
+    '送るまえに かならず子どもの顔や名前、学校名が写っていないか見てください。押すと、そのまま公開のページに出ます。 写っていても、撮り直さなくて大丈夫です。隠したいところは、このページの上で消せます。':
+        ('Before you send, please check for children’s faces, names and the school name. What you send goes straight onto the public page. If something is in the photo you do not have to reshoot it — you can black it out on this page.',
+         'قبل الإرسال، تحقّق من وجوه الأطفال وأسمائهم واسم المدرسة. فما تُرسله يظهر مباشرة على الصفحة العامّة. وإن ظهر شيء منها فلا حاجة لإعادة التصوير؛ يمكنك طمسه داخل هذه الصفحة.'),
+    '送るまえに かならず学校名・子どもの名前・同僚の名前が入っていないか見てください。押すと、そのまま公開のページに出ます。':
+        ('Before you send, please check for the school name and the names of children and colleagues. What you send goes straight onto the public page.',
+         'قبل الإرسال، تحقّق من اسم المدرسة وأسماء الأطفال والزملاء. فما تُرسله يظهر مباشرة على الصفحة العامّة.'),
+    '送るまえに かならず主催の案内と、日づけを見くらべてください。押すと、そのまま公開のこよみに出ます。':
+        ('Before you send, please check the date against the organiser’s own announcement. What you send goes straight onto the public calendar.',
+         'قبل الإرسال، قارن التاريخ بإعلان الجهة المنظِّمة نفسها. فما تُرسله يظهر مباشرة في التقويم العامّ.'),
+    '押すと、そのまま上のこよみに出ます。数分かかります。 公になっている会だけにしてください。校内の予定は載せられません。':
+        ('It goes straight onto the calendar above; that takes a few minutes. Please only send meetings that are already public. In-school schedules cannot go up.',
+         'يظهر مباشرة في التقويم أعلاه خلال دقائق. ومن فضلك أرسل اللقاءات المعلَنة فقط؛ فالجداول الداخلية للمدرسة لا تُنشر.'),
+
+    # ── このサイトを紹介する（2026-09-23）──
+    'このサイトを紹介する':
+        ('Tell others about this site',
+         'عرِّف الآخرين بهذا الموقع'),
+    '研修の資料や学級だよりに貼れる、QRコードつきの1枚を作ります。<br> 読みこむと、このサイトのホームがひらきます。':
+        ('Makes a single sheet with a QR code, to paste into training materials '
+         'or a class newsletter.<br> Scanning it opens this site’s home page.',
+         'يُنشئ ورقة واحدة برمز QR، تُلصق في مواد التدريب أو نشرة الفصل.<br> '
+         'ومسحُه يفتح الصفحة الرئيسية لهذا الموقع.'),
+    '画面のQRに、そのままカメラを向けても開きます。<br> 紙に貼るなら、下から1枚の絵として保存してください。':
+        ('You can also point a camera straight at the QR on screen.<br> '
+         'To put it on paper, save it below as a single image.',
+         'ويمكنك أيضًا توجيه الكاميرا إلى الرمز على الشاشة مباشرة.<br> '
+         'ولوضعه على الورق، احفظه أدناه كصورة واحدة.'),
+    'はじめかた このサイトを紹介する すぐ使える道具':
+        ('How to start · Tell others · Tools you can use now',
+         'كيف تبدأ · عرِّف الآخرين · أدوات جاهزة'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
@@ -5243,6 +5663,30 @@ KOTOBA_TEKI = (
     (r'(<a class="kanri-a"[^>]*>)(.*?)(</a>)', '管理画面へ'),
     (r'(<span class="btn-ji">)(.*?)(</span>)', 'ボタンの字'),
     (r'(<a class="line-sumi"[^>]*>)(.*?)(</a>)', 'いちばん上のLINEの帯'),
+
+    # ── 送るところ（2026-09-23 追加）────────────────────────
+    #   このサイトの目玉です。ここが日本語のままだと、外の先生は
+    #   「見るだけ」になります。
+    (r'(<p class="okuru-midashi">)(.*?)(</p>)', '送る・見出し'),
+    (r'(<p class="okuru-yomi[^"]*">)(.*?)(</p>)', '送る・説明', 'ji'),
+    (r'(<span class="okuru-shashin-ji">)(.*?)(</span>)', '送る・写真をえらぶ'),
+    (r'(<span class="okuru-shashin-chu">)(.*?)(</span>)', '送る・写真の注', 'ji'),
+    (r'(<label class="okuru-l"[^>]*>)([^<]+)(<span)', '送る・欄の名前'),
+    (r'(<span class="okuru-l"[^>]*>)([^<]+)(<span)', '送る・欄の名前2'),
+    (r'(<span class="okuru-hissu">)(.*?)(</span>)', '送る・必須'),
+    (r'(<span class="okuru-nin">)(.*?)(</span>)', '送る・任意'),
+    (r'(<p class="okuru-check-chu">)(.*?)(</p>)', '送る・チェックの注', 'ji'),
+    (r'(<p class="okuru-kiwo">)(.*?)(</p>)', '送る・気をつけること', 'ji'),
+    (r'(<p class="kakusu-yomi">)(.*?)(</p>)', '隠すところの説明', 'ji'),
+    (r'(<p class="hero-slide">)(.*?)(</p>)', 'よこにスライド'),
+    (r'(<a class="skip">)(.*?)(</a>)', '本文へ進む'),
+    (r'(<span class="moji-l">)(.*?)(</span>)', '字の大きさ'),
+
+    # ── ことばの意味（2026-09-23 追加）──────────────────────
+    (r'(<h3 class="kotoba-go">)(.*?)(</h3>)', 'ことば・見出し語'),
+    (r'(<p class="kotoba-setsu">)(.*?)(</p>)', 'ことば・説明', 'ji'),
+    (r'(<label class="sagasu-l"[^>]*>)(.*?)(</label>)', 'さがす欄の名前'),
+    (r'(<p class="shokai-yo">)(.*?)(</p>)', '紹介の説明'),
 )
 
 
@@ -5766,6 +6210,19 @@ def pdfjs_utsusu():
 def main():
     check_only = '--check' in sys.argv
     simple     = '--simple' in sys.argv          # デザインだけ差しかえた簡素版を出す
+
+    # --kotoba … 止めずに、6枚ぜんぶの「訳の無い言葉」を1回で集めます。
+    #   ふだんは1個でも欠けたら止まる（＝日本語のまま公開されない）ままです。
+    if '--kotoba' in sys.argv:
+        global KOTOBA_TARINAI
+        KOTOBA_TARINAI = []
+        main_shin(check_only=True)
+        mi = sorted(set(KOTOBA_TARINAI))
+        print('\n  訳の無い言葉 %d個。下をそのまま KOTOBA に貼って、'
+              "'' を埋めてください（英語, アラビア語）。\n" % len(mi))
+        for doko, key in mi:
+            print("    %s: ('', ''),   # %s" % (repr(key), doko))
+        return 0
 
     if '--tobira' in sys.argv:
         return main_tobira(check_only)

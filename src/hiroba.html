@@ -450,6 +450,30 @@
   </div>
 </section>
 
+<!-- ══ このサイトを紹介する（2026-09-23 依頼）════════════════
+     実践の札のQRは「その実践」へ飛びます。それは残したまま、
+     **ホームへ飛ぶQR**をここに置きます。研修の資料や学級だよりに
+     貼って、紙からサイトへ来てもらうためのものです。
+     ★QRはこの端末の中で作ります。外の道具は使いません（原則2）。 -->
+<section class="sec" id="shokai">
+  <i class="kazari kazari--migi" data-k="jidokai-share" style="--y:30%;--w:112px;--d:.5s"></i>
+  <div class="uchi">
+    <h2 class="midashi"><span class="en">SHARE</span><span class="ja">このサイトを紹介する</span></h2>
+    <p class="yomi">研修の資料や学級だよりに貼れる、QRコードつきの1枚を作ります。<br>
+      読みこむと、このサイトのホームがひらきます。</p>
+    <div class="shokai">
+      <canvas class="shokai-qr" id="shokai-qr" width="240" height="240"
+              aria-label="TOKKATSU広場のホームへのQRコード"></canvas>
+      <div class="shokai-te">
+        <p class="shokai-yo">画面のQRに、そのままカメラを向けても開きます。<br>
+          紙に貼るなら、下から1枚の絵として保存してください。</p>
+        <button class="bansho-b" type="button" data-shokai>画像保存<i>↓</i></button>
+        <p class="okuru-shirase" id="shokai-shirase" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="sec sec--midori" id="jissen">
   <i class="kazari" data-k="club-tools" style="--y:28%;--w:116px;--d:.3s"></i>
   <i class="kazari kazari--migi" data-b="ki" style="--y:46%;--w:104px;--d:1.4s"></i>
@@ -591,6 +615,19 @@
       </p>
 
       <p class="okuru-kiwo"><b>送るまえに かならず</b>学校名・子どもの名前・同僚の名前が入っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b></p>
+
+      <!-- 送るまえの、最後の関門（2026-09-23 依頼）────────────────
+           「個人情報のチェックは送るときに再度チェックを入れるようにして
+             欲しい。投稿者が確認をできるようにね」
+           ★上の赤い札は「読むもの」でした。読み飛ばせます。
+             ここは **押さないと送れない** ので、かならず一度 目が行きます。
+           ★印は この端末の中だけです。受け口へは送りません
+             （送っても、確かめたことの証しにはならないためです）。
+           ★送ったあとは reset() で外れます。次の1件でも、また押します。 -->
+      <p class="okuru-kakunin">
+        <label for="komari-mita"><input type="checkbox" id="komari-mita">
+          <span><b>見ました。</b>学校名・子どもの名前・同僚の名前は、入っていません。</span></label>
+      </p>
 
       <p class="okuru-botan">
         <button class="btn" type="submit" id="komari-b">送る<span class="btn-ya">→</span></button>
@@ -816,6 +853,19 @@
       <p class="okuru-kiwo"><b>送るまえに かならず</b>子どもの顔や名前、学校名が写っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b><br>
         写っていても、撮り直さなくて大丈夫です。<b>隠したいところは、このページの上で消せます。</b></p>
 
+      <!-- 送るまえの、最後の関門（2026-09-23 依頼）────────────────
+           「個人情報のチェックは送るときに再度チェックを入れるようにして
+             欲しい。投稿者が確認をできるようにね」
+           ★上の赤い札は「読むもの」でした。読み飛ばせます。
+             ここは **押さないと送れない** ので、かならず一度 目が行きます。
+           ★印は この端末の中だけです。受け口へは送りません
+             （送っても、確かめたことの証しにはならないためです）。
+           ★送ったあとは reset() で外れます。次の1件でも、また押します。 -->
+      <p class="okuru-kakunin">
+        <label for="okuru-mita"><input type="checkbox" id="okuru-mita">
+          <span><b>見ました。</b>子どもの顔・名前・学校名は、写っていません（または、隠しました）。</span></label>
+      </p>
+
       <p class="okuru-botan">
         <button class="btn" type="submit" id="okuru-b">送る<span class="btn-ya">→</span></button>
       </p>
@@ -847,7 +897,7 @@
 <footer class="foot">
   <div class="uchi">
     <div class="foot-friends" aria-hidden="true"><svg viewBox="0 0 431 147" focusable="false"><use href="#ill-k-group-thanks"/></svg></div>
-    <p class="foot-koe">特別活動の情報が、溜まる場。<br>LINEで流れていく話も、ここには残ります。</p>
+    <p class="foot-koe">特別活動で、輝く。</p>
 
     <!-- 夜の地なので、ふちと影は墨ではなく地の色（--bg）で出します。
          押せるものはページの中と同じ丸いボタンの形にそろえます。 -->
@@ -1267,6 +1317,14 @@
       moto: bako, saki: b[0]
     };
   }
+
+  /* 「見ました」に印が入ったら、赤い呼びかけを消します（2026-09-23） */
+  document.addEventListener('change', function(ev){
+    var t = ev.target;
+    if(!t || t.id !== 'okuru-mita' && t.id !== 'komari-mita') return;
+    var hako = t.closest('.okuru-kakunin');
+    if(hako && t.checked) hako.classList.remove('okuru-kakunin--yobu');
+  });
 
   var okuruF = document.getElementById('okuru-f');
   if(okuruF){
@@ -1689,6 +1747,19 @@
         if(w.p.length && !nuri_pdf().length){
           shirase.textContent = 'PDFがひらけていません。'
             + '隠せないPDFは送れないので、写真にしてから送ってください。';
+          return;
+        }
+        /* 個人情報の見なおし（2026-09-23 依頼）。**いちばん最後**に置きます。
+           書くところを直しているあいだに外れると、直すたびに押しなおすことに
+           なるためです。ここまで来た人が、最後にもう一度だけ写真を見ます。 */
+        var mita = document.getElementById('okuru-mita');
+        if(mita && !mita.checked){
+          shirase.textContent = '最後に「見ました」に印を入れてください。'
+            + '子どもの顔・名前・学校名が写っていないか、もう一度だけ見てください。';
+          var hako = mita.closest('.okuru-kakunin') || mita;
+          hako.classList.add('okuru-kakunin--yobu');
+          hako.scrollIntoView({block: 'center'});
+          mita.focus();
           return;
         }
         botan.disabled = true;
@@ -2825,6 +2896,86 @@
     if(b) ga_hozon(b);
   });
 
+  /* ══ このサイトを紹介する（2026-09-23 依頼）══════════════════
+     実践の札のQRは「その実践」へ飛びます。それは そのまま。
+     ここは **ホームへ飛ぶQR** です。研修の資料や学級だよりに貼って、
+     紙からサイトへ来てもらうためのもの。
+     ★QRは、この端末の中で作ります（上の qr_matrix）。外へは出ません。
+     ★行き先は og:url から取ります。ページごとに build.py が入れているので、
+       「はじめかた」から押しても、ちゃんと **ホーム** を指します。 */
+  (function(){
+    var men = document.getElementById('shokai-qr');
+    if(!men) return;
+    var moto = document.querySelector('meta[property="og:url"]');
+    var ie = (moto && moto.content ? moto.content : '')
+               .replace(/[^/]*\.html$/, '');      /* どのページからでもホームへ */
+    if(!ie) return;
+
+    function qr_egaku(ctx, qm, x, y, atari){
+      var N = qm.length, ms = Math.floor(atari / (N + 8)) || 1;
+      ctx.fillStyle = '#FFFFFF'; ctx.fillRect(x, y, ms * (N + 8), ms * (N + 8));
+      ctx.fillStyle = '#1C1C1A';
+      for(var r = 0; r < N; r++) for(var c = 0; c < N; c++)
+        if(qm[r][c]) ctx.fillRect(x + (c + 4) * ms, y + (r + 4) * ms, ms, ms);
+      return ms * (N + 8);
+    }
+
+    var qm = null;
+    try { qm = qr_matrix(ie); } catch(e) { qm = null; }
+    if(!qm){ men.hidden = true; return; }
+
+    /* ① 画面のQR（カメラを向けるだけの人むけ） */
+    var d = men.getContext('2d');
+    d.fillStyle = '#FFFFFF'; d.fillRect(0, 0, men.width, men.height);
+    qr_egaku(d, qm, 0, 0, men.width);
+
+    /* ② 紙に貼る1枚（押したときだけ作ります） */
+    var shirase = document.getElementById('shokai-shirase');
+    document.addEventListener('click', function(ev){
+      var b = ev.target.closest && ev.target.closest('[data-shokai]');
+      if(!b) return;
+      shirase.textContent = '作っています…';
+      try {
+        var W = 1080, H = 620, c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        var x = c.getContext('2d');
+        x.fillStyle = '#FCFBF7'; x.fillRect(0, 0, W, H);
+        x.strokeStyle = '#1C1C1A'; x.lineWidth = 8;
+        x.strokeRect(16, 16, W - 32, H - 32);
+
+        var atari = qr_egaku(x, qm, 72, 150, 320);
+        x.lineWidth = 4; x.strokeStyle = '#1C1C1A';
+        x.strokeRect(72, 150, atari, atari);
+
+        var tx = 72 + atari + 56;
+        x.fillStyle = '#1C1C1A'; x.font = '900 68px ' + GA_JI;
+        x.fillText('TOKKATSU広場', 72, 110);
+        x.font = '900 40px ' + GA_JI;
+        x.fillText('特別活動の情報が、', tx, 210);
+        x.fillText('溜まる場。', tx, 262);
+        x.fillStyle = '#63625C'; x.font = '500 27px ' + GA_HON;
+        x.fillText('カメラを向けると、', tx, 330);
+        x.fillText('このサイトがひらきます。', tx, 368);
+        x.fillStyle = '#1C1C1A'; x.font = '700 26px ' + GA_JI;
+        x.fillText('特別活動で、輝く。', tx, 430);
+        x.fillStyle = '#63625C'; x.font = '500 22px ' + GA_HON;
+        x.fillText(ie, 72, H - 56);
+
+        c.toBlob(function(blob){
+          if(!blob){ shirase.textContent = 'うまく絵にできませんでした'; return; }
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'TOKKATSU広場.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+          shirase.textContent = '保存しました。';
+        }, 'image/png');
+      } catch(e) {
+        shirase.textContent = 'うまく絵にできませんでした';
+      }
+    });
+  })();
+
   /* ══ 困りごとを送る（2026-09-21 夜）══════════════════════
      板書と同じ受け口に、kind: 'komari' で投げます。
      写真もPDFもありません。字だけです。
@@ -2855,6 +3006,17 @@
         kShirase.textContent = '内容を1つ押してください。';
         if(kN.saki) kN.saki.focus();
         if(kN.moto) kN.moto.scrollIntoView({block:'center'});
+        return;
+      }
+      /* 個人情報の見なおし（2026-09-23 依頼）。実践と同じ関門です */
+      var kMita = document.getElementById('komari-mita');
+      if(kMita && !kMita.checked){
+        kShirase.textContent = '最後に「見ました」に印を入れてください。'
+          + '学校名・子どもの名前・同僚の名前が入っていないか、もう一度だけ見てください。';
+        var kHako = kMita.closest('.okuru-kakunin') || kMita;
+        kHako.classList.add('okuru-kakunin--yobu');
+        kHako.scrollIntoView({block: 'center'});
+        kMita.focus();
         return;
       }
       kBotan.disabled = true;
@@ -3298,5 +3460,59 @@
   /* 前に選んだことばを、そのまま出します */
   var nokori = window.Store ? Store.get('lang', 'ja') : 'ja';
   if(nokori && nokori !== 'ja') kaeru(nokori);
+})();
+/* ══ 日本の研究会を、地図から絞る（2026-09-23 依頼）══════════════
+   2026-09-22 には「会が7都道県しかないので地図にしない」と決めていました。
+   依頼で入れます。かわりに、白い県が「会が無い」ではなく
+   「まだ載せていないだけ」だと、地図の上に字で必ず出しています。
+
+   ★実践の地図（#sagasu-k）とは別ものです。こちらは #kai-k。
+     同じ id を2つ作るとリンクが迷子になるので、build.py が分けています。
+   ★全国の会は、どの県を押しても出したままにします。
+     どこに住んでいても関わる会なので、消すと不便になるためです。
+   ★押した県をもう一度押すと、外れます（「ぜんぶ」の札を別に置かずに済む）。
+   ★いまどこを押しているかは、色だけでなく **字でも** 出します。 */
+(function(){
+  var ba = document.getElementById('kai-k');
+  var ima = document.getElementById('kaichizu-ima');
+  if(!ba || !ima) return;
+  var fuda = [].slice.call(document.querySelectorAll('.kai[data-ken]'));
+  var kumi = [].slice.call(document.querySelectorAll('.kaigumi'));
+  var futa = document.querySelector('#kai details');
+  var erabi = '';
+
+  var utsusu = function(){
+    fuda.forEach(function(f){
+      var k = f.getAttribute('data-ken') || '';
+      f.hidden = !!(erabi && k && k !== erabi);
+    });
+    /* 中身が1つも残らない地方は、見出しごと ひっこめます */
+    kumi.forEach(function(g){
+      if(g.className.indexOf('kaigumi--zen') >= 0) return;   /* 全国は いつでも出す */
+      g.hidden = !g.querySelector('.kai:not([hidden])');
+    });
+    [].slice.call(ba.querySelectorAll('.chizu-f')).forEach(function(b){
+      b.setAttribute('aria-pressed',
+        b.getAttribute('data-ken') === erabi ? 'true' : 'false');
+    });
+    ima.hidden = !erabi;
+    if(erabi){
+      ima.querySelector('span').textContent =
+        erabi + 'の会だけを出しています（全国の会は、いつでも出します）';
+      /* 各地の会は ふたの中にあります。押した県が中に居るので、開けます */
+      if(futa) futa.open = true;
+    }
+  };
+
+  ba.addEventListener('click', function(ev){
+    var b = ev.target.closest ? ev.target.closest('.chizu-f') : null;
+    if(!b) return;
+    var k = b.getAttribute('data-ken') || '';
+    erabi = (erabi === k) ? '' : k;
+    utsusu();
+  });
+  ima.querySelector('.chizu-modosu').addEventListener('click', function(){
+    erabi = ''; utsusu();
+  });
 })();
 </script>
