@@ -142,6 +142,8 @@ HOME = PAGES[0][0]
 OKURU_HTML = [f for f, _, _, ss in PAGES if 'okuru' in ss][0]
 # 研究会のページ（カレンダーに入れる ときの「出どころ」に付けます）
 ATSUMARU_HTML = [f for f, _, _, ss in PAGES if 'ima' in ss][0]
+# お悩みのページ（1件をLINEに流すときの行き先）
+KOMARI_HTML = [f for f, _, _, ss in PAGES if 'komari' in ss][0]
 
 # 親のページ（帯に出ないページだけ）。頭のところに「← 学ぶ」を出すために使います。
 #   帯で今どこにいるかが出ないぶん、ここで戻り道を見せます。
@@ -1147,6 +1149,14 @@ def load_komari():
         #   長すぎたり、言い方が個別すぎたりしたら、**あとから手で直せます**。
         fm['mijikai'] = (fm.get('title') or '').strip() or mijikaku(hon)
 
+        # 札の見出しに出す題（2026-09-24 依頼：「お悩みのタイトル」）。
+        #   ★出すのは **書いてもらったときだけ** です。title: は送られた時点で
+        #     必ず入りますが、書かれていないときは本文の1行目から機械が作った
+        #     ものなので（Apps Script の _mijikaku ＝ ここの mijikaku と同じ式）、
+        #     見出しに置くと すぐ下の本文と同じ言葉が二度出ます。
+        dai = (fm.get('title') or '').strip()
+        fm['dai'] = '' if (not dai or dai == mijikaku(hon)) else dai
+
         # ここから下の2つは、**あとから人が足す欄**です。
         #   naiyo … 4つの内容のどれか。足すと、その内容のカードにも並びます
         #   saki  … 学級活動(1)の学習過程の段階（1〜5）。足すと、押せる札になり
@@ -1187,8 +1197,15 @@ def mijikaku(hon, n=26):
 # 同じ内容の困りと実践が、同じ色のふだで並ぶようにするためです。
 KOMARI_T = """      <article class="komari-fuda" id="k-{slug}">
         <p class="komari-hi">{tag}{hi}{grade}</p>
-        <div class="komari-hon">{hon}</div>
-{by}      </article>"""
+{dai}        <div class="komari-hon">{hon}</div>
+{by}        <p class="komari-te"><a class="btn btn--line btn--komari" href="{line}" target="_blank" rel="noopener noreferrer">このお悩みをLINEに流す<span class="btn-ya">↗</span></a></p>
+      </article>"""
+# 題（2026-09-24 依頼）。送るときに書いてもらった「お悩みのタイトル」です。
+#   ★書かれていないときは出しません。その場合の title: は
+#     本文の1行目から機械が作ったもの（mijikaku）なので、見出しに置くと
+#     すぐ下の本文と同じ言葉が二度出ます。
+KOMARI_DAI = """        <h3 class="komari-dai">{dai}</h3>
+"""
 # 名乗ってくださった人だけ、下に小さく出します。
 # 名乗らないのが既定なので、無い札のほうが多くて当たり前です。
 KOMARI_BY = """        <p class="komari-by">{by}</p>
@@ -1197,6 +1214,35 @@ KOMARI_TAG = '<span class="bfuda-tag t--{nid}">{ja}</span>　'
 
 KOMARI_KARA = """      <p class="komari-mada">まだ1件も届いていません。<br>
       ホームの <a href="#kiku">お悩みBOX</a> から、いま困っていることを送ってください。</p>"""
+
+
+def komari_url(a):
+    """その1件が、そのまま開くURL。**式はここ1か所だけ**です
+       （2か所に書くと、片方だけ直したときに開かないリンクが LINE に流れます）。"""
+    return SITE_URL + KOMARI_HTML + '#k-' + a['slug']
+
+
+def komari_hira(hon, n=220):
+    """LINEに流すための、飾りを外した本文。長いものは切ります。
+       ★URLに載せるので、長すぎると端末によっては途中で落ちます。"""
+    ji = re.sub(r'^[#\-・\s　]+', '', hon.strip(), flags=re.M)
+    ji = re.sub(r'\n{2,}', '\n', ji).strip()
+    return ji if len(ji) <= n else ji[:n] + '…'
+
+
+def komari_line(a):
+    """オープンチャットに流すための、1押し前までの形（2026-09-24 依頼）。
+       ★外から自動で書きこむ道はありません（ボットは入れられず、
+         LINE Notify も2025年3月で終わりました）。できるのは、文を作って
+         **送り先をえらぶ1押しだけ**を残すところまでです。
+       ★line.me/R/share は、その1押しの画面をひらきます。"""
+    gyo = ['【TOKKATSU広場】お悩みが届いています', '']
+    gyo.append('■ ' + a['mijikai'])
+    gyo.append(komari_hira(a['hon']))
+    gyo.append('')
+    gyo.append('答えられそうな方、ぜひ。')
+    gyo.append(komari_url(a))
+    return 'https://line.me/R/share?text=' + urllib.parse.quote('\n'.join(gyo))
 
 
 def build_komari(komari):
@@ -1208,6 +1254,8 @@ def build_komari(komari):
                                                ja=esc_html(a['scene'] or naiyo_ja(a['naiyo'])))
                              if a['naiyo'] else ''),
                         grade=('　' + esc_html(a['grade'])) if a['grade'] else '',
+                        dai=(KOMARI_DAI.format(dai=esc_html(a['dai'])) if a['dai'] else ''),
+                        line=esc_html(komari_line(a)),
                         by=(KOMARI_BY.format(by=esc_html(sensei_ja(a['by'])))
                             if a['by'] else ''),
                         hon=md_html(a['hon']))
@@ -6642,6 +6690,14 @@ KOTOBA = {
     '議題名・題材名・行事名':
         ('Agenda item, topic or event name',
          'اسم موضوع النقاش أو الموضوع أو الفعالية'),
+    'お悩みのタイトル':
+        ('Title of your question',
+         'عنوان سؤالك'),
+    '札の見出しと、LINEに流すときの題になります。 書かないときは、本文の1行目から こちらで作ります。':
+        ('This becomes the heading on the card and the subject line when it is shared to LINE. '
+         'If you leave it empty, we make one from the first line of your text.',
+         'يصبح هذا عنوان البطاقة وعنوان الرسالة عند مشاركتها على LINE. '
+         'إن تركته فارغًا، فسننشئ عنوانًا من السطر الأول من نصك.'),
     '議題名・題材名・行事名・タイトル':
         ('Agenda item, topic, event name or title',
          'اسم موضوع النقاش أو الموضوع أو الفعالية أو العنوان'),

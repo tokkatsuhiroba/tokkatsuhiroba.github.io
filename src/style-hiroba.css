@@ -2373,6 +2373,18 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   margin:0 0 8px;font-family:var(--f-maru);font-weight:700;
   font-size:12.5px;letter-spacing:.04em;color:var(--mute);
 }
+/* お悩みの題（2026-09-24 依頼）。送るときに書いてもらったものです。
+   書かれていない古い1件には出ません（本文と同じ言葉が二度出るため）。 */
+.komari-dai{
+  margin:0 0 10px;font-family:var(--f-maru);font-weight:900;
+  font-size:clamp(17px,3.4vw,20px);line-height:1.5;color:var(--ink);
+}
+/* 1件ずつの［このお悩みをLINEに流す］。札の中なので、幅いっぱいにはしません。 */
+.komari-te{margin:14px 0 0}
+.btn--komari{
+  margin:0;padding:11px 20px;font-size:14px;
+  box-shadow:3px 3px 0 var(--ink);
+}
 .komari-hon p{margin:0 0 .7em;font-size:15.5px;line-height:1.9}
 .komari-hon p:last-child{margin-bottom:0}
 .komari-hon h4{margin:.9em 0 .4em;font-size:15.5px}

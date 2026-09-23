@@ -560,10 +560,14 @@
         </div>
       </div>
 
+      <!-- 2026-09-24 依頼：「議題名・題材名」→「お悩みのタイトル」。
+           ここが、そのまま札の見出しと、LINEに流すときの題になります。 -->
       <div class="okuru-g">
-        <label class="okuru-l" for="komari-t">議題名・題材名・行事名<span class="okuru-nin">任意</span></label>
+        <label class="okuru-l" for="komari-t">お悩みのタイトル<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">札の<b>見出し</b>と、<b>LINEに流すときの題</b>になります。<br>
+          書かないときは、本文の1行目から こちらで作ります。</p>
         <input class="okuru-i" type="text" id="komari-t" name="t" maxlength="60"
-               placeholder="例：たてわり班であそぶ会をしよう／よりよい食事のとり方／運動会">
+               placeholder="例：計画委員会の指導法">
       </div>
 
       <div class="okuru-g">
@@ -641,10 +645,10 @@
     </p>
     <!--BUILD:KOMARI-->
 
-    <p class="yomi tsugi">
-      あなたのお悩みも <a href="#kiku">お悩みBOX</a> から送れます。<br>
-      <strong>答えが早いのはLINEのほう</strong>です。505人が読んでいます。
-    </p>
+    <!-- 2026-09-24 依頼：「三行はパネルごと除去して。いらない」
+         ここにあった「あなたのお悩みも お悩みBOX から送れます／答えが早いのは
+         LINEのほうです／505人が読んでいます」の枠は外しました。
+         お悩みBOXは帯にあり、1件ずつの札にも［LINEに流す］が付いています。 -->
     <div class="naka">
       <a class="btn btn--line" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer">LINEで聞いてみる<span class="btn-ya">↗</span></a>
     </div>
