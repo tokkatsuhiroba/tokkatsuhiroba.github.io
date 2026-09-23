@@ -34,9 +34,11 @@
   --men-hada:#F7E3D9;      /* 4つめの面。行き先の色分けで使います */
 
   /* LINEの案内だけに使う緑（2026-09-23 依頼）。
-     白い字が読める、いちばん薄い緑です（白字 4.68:1）。
-     ここを薄くするときは、字を墨に変えてください。 */
-  --line-midori:#27814C;
+     **LINEの本物の緑**です。字は墨（--ink）と組にしてください。
+       #06C755 ＋ 墨字 … 7.57:1  ← いまここ
+       #06C755 ＋ 白字 … 2.18:1  ✕ 読めません
+     白い字にしたいときは、緑を #27814C まで濃くします（白字 4.68:1）。 */
+  --line-midori:#06C755;
   --men-fuji:#EFEAF7;      /* 5つめ。ニュースだけに使います（2026-09-23） */
 
   /* 書体は役ごとに変える。温かさは丸ゴシックと硬筆、読みやすさはUD書体。
@@ -2630,32 +2632,30 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    ひと目で分かりませんでした。**LINEへ出るものは、緑地に白字**で
    そろえます。
 
-   ★緑は --line-midori（#27814C）。これは **白い字が読める、
-     いちばん薄い緑**です（白字で 4.68:1。UDの線は 4.5:1）。
-     もっと薄くすると、白い字が読めなくなります。
-       --accent  #1F5C3F … 白字 7.62:1（濃すぎる、という話で やめました）
-       #27814C          … 白字 4.68:1  ← いまここ
-       --midori  #2FBA68 … 白字 2.43:1  ✕
-       LINEの緑 #06C755  … 白字 2.18:1  ✕
-     ★もっと薄い緑にしたいときは、**字を墨に変えてください**。
-       LINEの緑（#06C755）なら、墨の字で 7.57:1 で読めます。
+   ★緑は --line-midori（#06C755）＝ **LINEの本物の緑**。
+     字は **墨**です（7.57:1）。この組でないと読めません。
+       #06C755 ＋ 墨字 … 7.57:1  ← いまここ
+       #06C755 ＋ 白字 … 2.18:1  ✕
+       #27814C ＋ 白字 … 4.68:1（白い字にしたいときは、ここまで濃くする）
+       #1F5C3F ＋ 白字 … 7.62:1（濃すぎる、という話で やめました）
+     ★**緑を薄くしたら字は墨、濃くしたら字は白**。この対で動かします。
    ★中の「LINE」の札だけは、緑地の上で消えないよう **白地に緑字**に
      ひっくり返します。
    ★影は墨のままにします。ここはサイトぜんぶの形なので、
      LINEのものだけ形を変えません。 */
 .btn--line{
-  background:var(--line-midori);color:var(--bg);border-color:var(--ink);
+  background:var(--line-midori);color:var(--ink);border-color:var(--ink);
 }
 .btn--line .btn-ya,.btn--line .btn-ji{color:inherit}
-.btn--line:hover,.btn--line:focus-visible{background:#1f6a3d}
-/* 足もとは夜の地。同じ緑地に白字でそろえます */
-.foot .btn--line{background:var(--line-midori);color:var(--bg);border-color:var(--bg)}
-/* 上の札も、同じ緑地に白字に */
-.line-sumi{background:var(--line-midori);color:var(--bg);border-color:var(--ink)}
-.line-sumi i{color:var(--bg)}
-.line-sumi:hover,.line-sumi:focus-visible{background:#1f6a3d}
-/* 「LINE」の札は、緑の上では白地に緑字へ ひっくり返します */
-.line-sumi b{background:var(--bg);color:var(--line-midori)}
+.btn--line:hover,.btn--line:focus-visible{background:#05b04c}
+/* 足もとは夜の地。同じ緑地に墨字でそろえます */
+.foot .btn--line{background:var(--line-midori);color:var(--ink);border-color:var(--bg)}
+/* 上の札も、同じ緑地に墨字に */
+.line-sumi{background:var(--line-midori);color:var(--ink);border-color:var(--ink)}
+.line-sumi i{color:var(--ink)}
+.line-sumi:hover,.line-sumi:focus-visible{background:#05b04c}
+/* 「LINE」の札は、緑の上で目立つよう 白地に墨字へ ひっくり返します */
+.line-sumi b{background:var(--bg);color:var(--ink)}
 .foot .btn--yoru:focus-visible{outline:3px solid var(--bg);outline-offset:3px}
 
 @media (max-width:719px){
