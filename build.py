@@ -57,6 +57,7 @@ SHIRYO = os.path.join(SRC, 'shiryo')   # 資料の画像（1件＝1フォルダ�
 BANSHO = os.path.join(SRC, 'bansho')   # 板書の写真（1件＝1フォルダ。板書のページにだけ埋めこむ）
 KOMARI = os.path.join(SRC, 'komari')   # 困りごと（1件＝1ファイル。送られたら、そのまま出ます）
 NITTEI = os.path.join(SRC, 'nittei')   # 送られた研究日程（1件＝1ファイル。手で足すぶんは src/app.js の EVENTS）
+ODAI   = os.path.join(SRC, 'odai.md')  # 今週のお題（1回ぶん＝1ファイル。無ければ帯ごと出ません）
 JISSEN_HOME_N = 2                      # ホームに出す実践の数
 
 # 資料をページの中に入れるときの上限。ここを外すと配れない重さになります。
@@ -135,6 +136,10 @@ PAGES = (
      ('komari', 'kiku')),
 )
 HOME = PAGES[0][0]
+# 送るページ。お題の［このお題で送る］の行き先です。
+#   名前を直に書かず、**「送る節が載っているページ」**として引きます
+#   （ページを分けなおしても、お題の行き先が迷子になりません）。
+OKURU_HTML = [f for f, _, _, ss in PAGES if 'okuru' in ss][0]
 
 # 親のページ（帯に出ないページだけ）。頭のところに「← 学ぶ」を出すために使います。
 #   帯で今どこにいるかが出ないぶん、ここで戻り道を見せます。
@@ -1018,6 +1023,81 @@ def load_jissen(goods):
         for g in a['goods_ids']:
             goods[g]['used'].append(a)
     return kiji, tobashita
+
+
+# ══ 今週のお題（2026-09-23 依頼・共有とお題 v1.0 ③）════════
+#   「いつでも送れる」場所には、だれも送りません。
+#   **お題と締め切り**があると、手が動きます。
+#
+#   ★1回ぶん＝1ファイル（src/odai.md）。次のお題に変えるときは、
+#     このファイルを書きかえます（過去のお題は溜めません）。
+#   ★出すのは kara ≦ 今日 ≦ made のあいだだけ。
+#     日が過ぎたら、**帯ごと**消えます（空の帯は出しません）。
+#   ★組み立てたあとで日が過ぎても出つづけないよう、帯に data-made を
+#     持たせて、**見ている端末の今日**でも、もう1度見ます（NEW と同じ考え）。
+
+
+def load_odai(kyou=None):
+    """今週のお題。無いとき・日が合わないときは None（帯を出しません）。"""
+    if not os.path.exists(ODAI):
+        return None
+    fm = parse_md(ODAI)
+    for k in ('id', 'kara', 'made', 'title'):
+        if not fm.get(k):
+            raise Tomeru('src/odai.md：%s が空です' % k)
+    for k in ('kara', 'made'):
+        try:
+            fm[k[0] + '_d'] = datetime.date(*[int(x) for x in fm[k].split('-')])
+        except (ValueError, TypeError):
+            raise Tomeru('src/odai.md：%s が 2026-10-01 の形ではありません（%s）'
+                         % (k, fm[k]))
+    if fm['m_d'] < fm['k_d']:
+        raise Tomeru('src/odai.md：made が kara より前です')
+    if not re.match(r'^[0-9a-z\-]+$', fm['id']):
+        raise Tomeru('src/odai.md：id は 英小文字・数字・- だけにしてください'
+                     '（URLに付けるためです）')
+    kyou = kyou or kyou_jst()
+    if kyou < fm['k_d'] or kyou > fm['m_d']:
+        return None
+    return fm
+
+
+ODAI_T = """<section class="odai" id="odai" data-made="{made}" aria-labelledby="odai-h{ban}">
+  <div class="uchi odai-uchi">
+    <p class="odai-me"><span class="odai-kago">今週のお題</span>\
+<span class="odai-hi">{hi}</span></p>
+    <h2 class="odai-h" id="odai-h{ban}">{title}</h2>
+{sub}    <p class="odai-go"><a class="btn odai-b" href="{saki}" data-odai-go data-odai="{id}">\
+<span class="btn-ji">このお題で送る</span><span class="btn-ya">→</span></a></p>
+  </div>
+</section>"""
+
+
+def build_odai(o, ban=''):
+    """お題の帯。ホームと送るページの2か所に、同じものを出します。
+       ★id は2つ出せないので、送るページのぶんだけ うしろに印を付けます。
+       ★締め切りは **日づけを字で**出します（色だけで急がせません）。"""
+    if not o:
+        return ''
+    return ODAI_T.format(
+        made=o['m_d'].isoformat(), ban=ban, id=esc_html(o['id']),
+        # 日づけは 10/1〜10/7 の形（帯に入れるので短く。foot_hi と同じ形です）
+        hi=esc_html('%s〜%s' % (foot_hi(o['k_d']), foot_hi(o['m_d']))),
+        title=esc_html(o['title']),
+        sub=('    <p class="odai-sub">%s</p>\n' % esc_html(o['sub'])
+             if o.get('sub') else ''),
+        saki=esc_html('%s?odai=%s#okuru' % (OKURU_HTML, o['id'])))
+
+
+def odai_line_bun(o):
+    """お題を LINE に流すための文（管理画面の［お題の文をコピー］）。"""
+    if not o:
+        return ''
+    gyo = ['【今週のお題】%s〜%s' % (foot_hi(o['k_d']), foot_hi(o['m_d'])), o['title']]
+    if o.get('sub'):
+        gyo.append(o['sub'])
+    gyo.append('▶ ' + SITE_URL + OKURU_HTML + '?odai=' + o['id'] + '#okuru')
+    return '\n'.join(gyo)
 
 
 # ══ 困りごと（2026-09-21 夜 新設）════════════════════════
@@ -4033,18 +4113,25 @@ def line_attr(bun):
     return esc_html(bun).replace('\n', '&#10;')
 
 
-def build_kanri_line(jissen):
-    """「届いた実践」の上に置く［今週のまとめをコピー］。"""
+def build_kanri_line(jissen, odai=None):
+    """「届いた実践」の上に置く［今週のまとめをコピー］と［お題の文をコピー］。"""
     bun = line_matome_bun(jissen)
     n = len(line_matome_aru(jissen))
-    if not bun:
-        return ('    <p class="kanri-line-ue"><button class="kanri-line-b" '
-                'type="button" disabled>今週のまとめをコピー</button>'
-                '<span class="kanri-line-chu">今週はまだありません</span></p>')
-    return ('    <p class="kanri-line-ue"><button class="kanri-line-b" '
-            'type="button" data-line="%s">今週のまとめをコピー</button>'
-            '<span class="kanri-line-chu">直近7日に届いた %d件です</span></p>'
-            % (line_attr(bun), n))
+    if bun:
+        te = ('<button class="kanri-line-b" type="button" data-line="%s">'
+              '今週のまとめをコピー</button>'
+              '<span class="kanri-line-chu">直近7日に届いた %d件です</span>'
+              % (line_attr(bun), n))
+    else:
+        te = ('<button class="kanri-line-b" type="button" disabled>'
+              '今週のまとめをコピー</button>'
+              '<span class="kanri-line-chu">今週はまだありません</span>')
+    # お題は、出ているあいだだけ。無い週はボタンごと出しません
+    #   （押せないボタンが2つ並ぶと、どちらが効くのか分からなくなります）。
+    if odai:
+        te += ('<button class="kanri-line-b" type="button" data-line="%s">'
+               'お題の文をコピー</button>' % line_attr(odai_line_bun(odai)))
+    return '    <p class="kanri-line-ue">%s</p>' % te
 
 
 def build_kanri_list(jissen):
@@ -4303,11 +4390,11 @@ def nuru_ireru(body, doko):
     return body.replace(NURU_ME, nuru_js(doko))
 
 
-def build_kanri_page(jissen, komari, ken, tobashita):
+def build_kanri_page(jissen, komari, ken, tobashita, odai=None):
     """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
     body = rd('src/kanri.html')
     body = body.replace('          <!--BUILD:KEN-->', build_ken_options())
-    body = body.replace('    <!--BUILD:KANRI_LINE-->', build_kanri_line(jissen))
+    body = body.replace('    <!--BUILD:KANRI_LINE-->', build_kanri_line(jissen, odai))
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
     body = body.replace('      <!--BUILD:KANRI_HOKA-->',
                         build_kanri_hoka(komari, ken, tobashita))
@@ -6692,6 +6779,13 @@ KOTOBA = {
     #   「新着」は home_shin が数と組にして出します（数は表に置けません）。
     'NEW': ('NEW', 'جديد'),
     '新着': ('New', 'جديد'),
+
+    # ── 今週のお題（2026-09-23）──────────────────────────
+    #   ★お題の中身（title・sub）は訳しません。毎週変わるので、表に置くと
+    #     お題を1つ書きかえるたびにビルドが止まります。届いた実践の題を
+    #     訳さないのと同じ決まりです。
+    '今週のお題': ("This week's theme", 'موضوع هذا الأسبوع'),
+    'このお題で送る': ('Send for this theme', 'أرسل لهذا الموضوع'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
@@ -6756,6 +6850,10 @@ KOTOBA_TEKI = (
 
     # ── NEW の札（2026-09-23 追加）──────────────────────────
     (r'(<span class="new-fuda"[^>]*>)(.*?)(</span>)', 'NEWの札'),
+
+    # ── 今週のお題（2026-09-23 追加）────────────────────────
+    #   お題の中身（odai-h・odai-sub）は、わざと入れていません（上の注）。
+    (r'(<span class="odai-kago">)(.*?)(</span>)', 'お題の名のり'),
 )
 
 
@@ -6868,6 +6966,7 @@ def build_shin():
         raise Tomeru('出せる実践が1件もありません')
 
     ken = load_kenkyukai()
+    odai = load_odai()
     kotoba = load_kotoba()
     komari, tobashita_k = load_komari()
     # 採用済みの学校全景。4つの活動を切らずに、そのまま見せる。
@@ -6957,11 +7056,16 @@ def build_shin():
         if f == HOME:
             # ホームの並び … このサイトは、なに → 8つの札 → こよみ → 中身をざっと
             atama, saki = hero, 'igi'
-            naka_html = '\n\n'.join([igi_html, home_html]
-                                    + [sec[s] for s in setsu] + [gaiyo_html])
+            # お題の帯は、いちばん上の絵のすぐ下（「TOKKATSU広場とは？」より上）
+            naka_html = '\n\n'.join([x for x in [build_odai(odai), igi_html, home_html]
+                                     if x] + [sec[s] for s in setsu] + [gaiyo_html])
         else:
             atama = ko_atama(f, yo)
-            naka_html, saki = '\n\n'.join(sec[s] for s in setsu), setsu[0]
+            # 送るページでは、フォームの上に同じ帯を出します
+            ue = [build_odai(odai, '-o')] if f == OKURU_HTML else []
+            naka_html = '\n\n'.join([x for x in ue if x]
+                                     + [sec[s] for s in setsu])
+            saki = setsu[0]
         # 足もとは、ページごとに中身がちがいます（4人のポーズと、吹き出しの1行）
         foot_p = foot.replace(FOOT_ME, build_foot_rei(
             f, kyara, jissen, komari, ken, kiji, goods, kotoba))
@@ -6985,7 +7089,7 @@ def build_shin():
         ngword_check(html, '公開用/' + f)
         pages[f] = html
     kanri = build_kanri_page(jissen, komari, ken,
-                             list(tobashita_k) + list(NITTEI_TOBASHITA))
+                             list(tobashita_k) + list(NITTEI_TOBASHITA), odai)
     ngword_check(kanri, '公開用/kanri.html')
     pages['kanri.html'] = kanri
     return pages, hyo, kiji, jissen, komari, tobashita_k

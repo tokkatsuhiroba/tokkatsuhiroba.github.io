@@ -1623,6 +1623,39 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   background:var(--ki);border:2px solid var(--ink);border-radius:999px;
   font-family:var(--f-maru);font-weight:700;font-size:11px;letter-spacing:.04em;
 }
+
+/* ══ 今週のお題（2026-09-23 依頼）════════════════════════════
+   「いつでも送れる」場所には、だれも送りません。お題と締め切りが
+   あると、手が動きます。
+   ★いちばん上の絵のすぐ下（ホーム）と、フォームの上（送るページ）。
+     2か所とも **同じ帯**です。
+   ★締め切りは **日づけを字で**出します。色だけで急がせません。
+   ★地は黄（--men-ki）。この色が出ているのは、いまお題があるときだけです。 */
+.odai{
+  background:var(--men-ki);border-block:3px solid var(--ink);
+  padding-block:clamp(16px,3vw,24px);
+}
+.odai[hidden]{display:none}
+.odai-uchi{display:grid;gap:7px;justify-items:start}
+.odai-me{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0}
+.odai-kago{
+  padding:3px 12px;background:var(--ink);color:var(--bg);border-radius:999px;
+  font-family:var(--f-maru);font-weight:700;font-size:12.5px;letter-spacing:.08em;
+}
+.odai-hi{
+  font-family:var(--f-maru);font-weight:700;
+  font-size:calc(13.5px * var(--moji));font-variant-numeric:tabular-nums;
+}
+.odai-h{margin:0;font:900 calc(21px * var(--moji))/1.45 var(--f-maru);letter-spacing:.02em}
+.odai-sub{margin:0;color:var(--mute);font-size:calc(13.5px * var(--moji));line-height:1.75}
+.odai-go{margin:5px 0 0}
+.odai-b{min-height:48px;padding:10px 22px;font-size:calc(15px * var(--moji))}
+@media (max-width:719px){
+  .odai-h{font-size:calc(17px * var(--moji))}
+  .odai-sub{font-size:calc(12.5px * var(--moji))}
+  .odai-b{width:100%;justify-content:center}
+  .odai-go{width:100%}
+}
 /* ★札の地は ぜんぶ同じ（2026-09-23 依頼）。見分けるのは **しるし（絵）** です。
    前はページごとに色を敷いていました。行き先が7つに増えて、色が5つ＋白2つ。
    7つに7色を当てても同じで、**色の数がふえるほど 1つ1つの意味は薄くなります**。

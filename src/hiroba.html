@@ -3214,6 +3214,49 @@
       });
   })();
 
+  /* ══ 今週のお題（2026-09-23 依頼）══════════════════════════
+     「いつでも送れる」場所には、だれも送りません。お題と締め切りが
+     あると、手が動きます。
+     ★ここでやるのは3つだけです。
+       1. 日が過ぎた帯を消す（組み立てたあと日が過ぎても残らないように）
+       2. ?odai=… で来た人の「題」の欄に、お題を入れておく
+       3. 同じページの帯から押されたら、読みなおさずに入れる
+     ★入れた字は **消して書きかえられます**。書きかけがあるときは
+       上書きしません。                                              */
+  (function(){
+    var kyou = new Date();
+    kyou = kyou.getFullYear() + '-' + ('0' + (kyou.getMonth() + 1)).slice(-2)
+         + '-' + ('0' + kyou.getDate()).slice(-2);
+    var obi = [].slice.call(document.querySelectorAll('.odai[data-made]'));
+    var iki = null;
+    obi.forEach(function(o){
+      if(o.getAttribute('data-made') < kyou) o.hidden = true;
+      else if(!iki) iki = o;
+    });
+    var t = document.getElementById('okuru-t');
+    if(!iki || !t) return;
+
+    function ireru(){
+      if(t.value.trim()) return;        /* 書きかけは消しません */
+      var h = iki.querySelector('.odai-h');
+      var ji = 'お題：' + (h ? (h.textContent || '').trim() : '');
+      var n = t.maxLength > 0 ? t.maxLength : 60;
+      t.value = ji.length > n ? ji.slice(0, n) : ji;
+    }
+
+    if(/[?&]odai=/.test(location.search)) ireru();
+
+    document.addEventListener('click', function(ev){
+      var b = ev.target.closest && ev.target.closest('[data-odai-go]');
+      if(!b) return;
+      ev.preventDefault();
+      ireru();
+      var ba = document.getElementById('okuru');
+      if(ba && ba.scrollIntoView) ba.scrollIntoView();
+      t.focus();
+    });
+  })();
+
   /* ══ LINEの覚えを外す しっぽ（2026-09-23）── ここ1か所だけ ══════
      LINEは **一度見たアドレスのカード（絵と字）を、しばらく覚えています。**
      絵を差しかえても、前に貼ったことのあるアドレスだと古いカードが出ます。
