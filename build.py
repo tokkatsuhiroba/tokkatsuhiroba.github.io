@@ -101,8 +101,10 @@ PAGES = (
      ('about', 'yotsu', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
      ('manabu', 'shokai', 'jissen')),
-    ('atsumaru.html', '集まる', '研究日程、ニュース、各地の研究会。',
-     ('ima', 'news', 'kai')),
+    # 2026-09-23 依頼：研究会（つぎの日程 → 各地の会）を先にまとめ、
+    #   ニュースは別枠で いちばん後ろにします。
+    ('atsumaru.html', '集まる', 'つぎの研究会と、各地の会。ニュースも。',
+     ('ima', 'kai', 'news')),
     # みんなの実践（2026-09-21 新設 → 2026-09-22 改称）。
     #   **このサイトの主役です。**だから帯の8つに入れました。
     #   かわりに「すぐ使える道具」を外しています（学ぶ と同じページなので、
@@ -115,8 +117,11 @@ PAGES = (
     #   **書くところと、読むところを、同じページに置きました。**
     #   前は 書くところがホーム、読むところがこのページ で割れていました。
     #   困っている人が開いた先に、書く欄が無いのは おかしい、という話から。
-    ('komari.html',   'お悩みBOX', 'いま困っていることを書く。届いたものを読む。',
-     ('kiku', 'komari')),
+    # 2026-09-23 依頼：**読むところを上に**しました。
+    #   開いた人が最初に見るのは「ほかの人も困っている」という事実です。
+    #   書く欄が最初だと、白紙を差し出されたように見えます。
+    ('komari.html',   'お悩みBOX', '届いたものを読む。いま困っていることを書く。',
+     ('komari', 'kiku')),
 )
 HOME = PAGES[0][0]
 
@@ -127,7 +132,12 @@ HOME = PAGES[0][0]
 OYA = {'komari.html': ('index.html', 'igi', 'ホーム')}
 # 節の名前。ホームの札と、ページの中の見出しで使い回します
 SETSU_NA = {
-    'ima':    '研究日程', 'news':   'ニュース',
+    # 2026-09-23 依頼：「研究会のくくりに、研究日程と研究会の一覧を一緒にして
+    #   ニュースだけ別枠の一番後ろにして」
+    #   ima＝つぎの日程（こよみ）／kai＝各地の会の一覧。場所としては1つなので、
+    #   帯・札・ページの名前は どちらも「研究会」でそろえます（お悩みBOXと同じ考え）。
+    #   ページの中の見出しだけ、研究会／各地の研究会 に分けています。
+    'ima':    '研究会', 'news':   'ニュース',
     # 2026-09-22：「学ぶ」→「はじめかた」。
     #   このサイト全体が学ぶ場所なので、「学ぶ」では何の場所か分かりません。
     #   お悩み別の入口を困りごとへ渡したので、ここに残るのは
@@ -138,7 +148,7 @@ SETSU_NA = {
     'shokai': 'このサイトを紹介する',
     # 2026-09-23：「日本の」を外しました（依頼）。ここは日本のサイトなので、
     #   わざわざ言わなくても分かります。帯・札・ページの名前が短くなります。
-    'kai':    '研究会', 'okuru': '実践を送る',
+    'kai':    '研究会', 'okuru': '実践を送る',   # ↑ ima と同じ名前（1つの場所）
     # 2026-09-22：ここがこのサイトの主役です。
     #   「板書」は狭すぎました（いまは写真もPDFも議題も届きます）。
     #   ファイル名（bansho.html）と front matter の bansho: は、そのままです。
@@ -4413,17 +4423,20 @@ HOME_FUDA = (
     ('okuru',  'okuru',  'jidokai-upload', '写真もPDFも、送るとそのまま出ます。'),
     # 送る の すぐ次が 見る。この2つで1組です（2026-09-22）
     ('bansho', 'bansho', 'jidokai-share', '先生方から届いた実践が、そのまま並びます。'),
-    ('ima',    'nittei', 'gyoji-calendar', 'つぎの研究会と、申込の締切。'),
+    # 研究会 … つぎの日程（こよみ）と、各地の会の一覧。**1つの札にまとめました**
+    #   （2026-09-23 依頼）。押すと こよみに着き、下へ行くと各地の会です。
+    ('ima',    'nittei', 'gyoji-calendar', 'つぎの研究会と申込の締切。各地の会も、ここに。'),
     # komari（困っている → 学ぶ、の順に並べます。2026-09-22）
     ('komari', 'komari', 'gakkatsu-listen', '送られたお悩みが、そのまま並びます。'),
     # manabu（すぐ使える道具は、この「学ぶ」と同じページにあります）
     ('manabu', 'hajime', 'club-tools', '①から⑤の学習過程と、一次資料と、道具。'),
     # atsumaru
-    ('news',   'news',   'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
-    ('kai',    'kai',    'jidokai-speak', '1つずつ開いて、いま見られるものだけ。'),
+
     # shiru（2026-09-22：特活とは と 4つの内容 は同じページなので、1つにまとめました。
     #        4つの内容は、この札から入った先にそのまま置いてあります）
     ('about',  'about',  'gakkatsu-board', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
+    # ニュースは「別枠」。読みものではなく、外の動きです。いちばん後ろに置きます
+    ('news',   'news',   'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
 )
 
 # 節の見出しに立つ人。ホームの札から入ってきた人を、行き先で迎えます。
@@ -4471,7 +4484,10 @@ def home_kazu(sid, sec, kiji, jissen, ken, komari):
     def kazoe(pat):
         return len(re.findall(pat, sec.get(sid, '')))
     if sid == 'ima':
-        return mitsu('%d件' % len(ken), '%d meetings' % len(ken), '%d لقاء' % len(ken))
+        # 研究会の札は、つぎの日程と 各地の会の 両方を持っています（2026-09-23）
+        return mitsu('日程%d件・%d会' % (len(ken), len(KAI)),
+                     '%d dates, %d societies' % (len(ken), len(KAI)),
+                     '%d موعدًا و%d جمعية' % (len(ken), len(KAI)))
     if sid == 'news':
         return mitsu('%d件' % len(kiji), '%d items' % len(kiji), '%d خبر' % len(kiji))
     if sid == 'about':
@@ -4699,14 +4715,19 @@ def build_gaiyo(sec, doko, kiji, jissen, ken, komari):
        ★数は、その場で数えたものだけ（8つの札と同じ home_kazu を使います）。"""
     fuda = []
     for sid, _, _, yo in HOME_FUDA:
-        if sid in ('ima', 'okuru'):   # この2つは、この上に本物が出ているので要りません
+        if sid == 'okuru':   # 送るところは、この上に本物が出ているので要りません
             continue
+        # 研究会の札（ima）は、窓に **各地の会（kai）** を映します。
+        #   こよみは JavaScript が組み立てるので、写しでは空の枠になります
+        #   （2026-09-23。だから前は、この札ごと出していませんでした）。
+        #   行き先は ima のまま＝押すと こよみに着きます。
+        mise = 'kai' if sid == 'ima' else sid
         fuda.append(GFUDA.format(
             page=doko[sid].replace('.html', ''),
             saki='%s#%s' % (doko[sid], sid),
             midashi=esc_html(SETSU_NA[sid]),
             yo=esc_html(yo),
-            atama=build_atama(sec[sid]),
+            atama=build_atama(sec[mise]),
             **kazu_hiku(sid, sec, kiji, jissen, ken, komari)))
     return ('<section class="sec" id="gaiyo">\n'
             '  <div class="uchi">\n'
@@ -5029,9 +5050,15 @@ KOTOBA = {
     '先生方から届いた実践が、そのまま並びます。':
         ('Practices sent in by teachers, shown just as they arrived.',
          'ممارسات أرسلها المعلمون، معروضة كما وصلت.'),
-    'つぎの研究会と、申込の締切。':
-        ('The next meetings, and the registration deadlines.',
-         'اللقاءات القادمة ومواعيد التسجيل.'),
+    'つぎの研究会と申込の締切。各地の会も、ここに。':
+        ('The next meetings and their deadlines. The societies are here too.',
+         'اللقاءات القادمة ومواعيدها. والجمعيات هنا أيضًا.'),
+    '各地の研究会': ('Societies by region', 'الجمعيات حسب المنطقة'),
+    '研究会の当日と、申込の締切。<br>各地の会の一覧は、この下にあります。':
+        ('The day of each meeting, and the registration deadline.<br>'
+         'The list of societies is just below.',
+         'يوم انعقاد كل لقاء وآخر موعد للتسجيل.<br>'
+         'وقائمة الجمعيات أسفل هذا مباشرة.'),
     '送られた困りごとが、そのまま並びます。':
         ('Questions sent in, shown just as they arrived.',
          'أسئلة وردت من المعلمين، معروضة كما وصلت.'),
@@ -5103,12 +5130,10 @@ KOTOBA = {
     '学級会の学習過程と、一次資料と、持ち帰れる道具。':
         ('The steps of a class meeting, the source documents, and tools to take home.',
          'مراحل مجلس الفصل، والمراجع الأصلية، وأدوات تأخذها معك.'),
-    '研究日程 ニュース 研究会':
-        ('Calendar · News · Societies',
-         'التقويم · الأخبار · الجمعيات'),
-    '研究日程、ニュース、各地の研究会。':
-        ('Meetings, news, and societies across the country.',
-         'اللقاءات والأخبار والجمعيات في أنحاء البلاد.'),
+    '研究会 ニュース': ('Societies · News', 'الجمعيات · الأخبار'),
+    'つぎの研究会と、各地の会。ニュースも。':
+        ('The next meetings, the societies — and the news.',
+         'اللقاءات القادمة والجمعيات — والأخبار أيضًا.'),
     '送ってもらった実践が、そのまま並びます。':
         ('Practices that teachers sent in, shown just as they arrived.',
          'ممارسات أرسلها المعلمون، معروضة كما وصلت.'),
@@ -5117,6 +5142,9 @@ KOTOBA = {
     'いま困っていることを書く。届いたものを読む。':
         ('Write what you are stuck on. Read what others have sent.',
          'اكتب ما يصعب عليك، واقرأ ما أرسله غيرك.'),
+    '届いたものを読む。いま困っていることを書く。':
+        ('Read what others have sent. Write what you are stuck on.',
+         'اقرأ ما أرسله غيرك، واكتب ما يصعب عليك.'),
 
     # ── 節の説明（.yomi） ──
     '押すと、そのページがひらきます。見た目も帯もそのままなので、いつでもここへ戻れます。':

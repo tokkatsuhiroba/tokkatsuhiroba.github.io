@@ -367,7 +367,11 @@ img,svg{max-width:100%}
      ・本文（.uchi）より下に居るので、字と重なりません。 */
 @supports selector(:has(*)){
   @media (max-width:1259px){
-    .sec:has(> .kazari){padding-bottom:calc(var(--aki) + 46px)}
+    /* ★ id で下の余白を上書きしている節（#ima）は、名前が強いので
+         こちらも id で書かないと負けます。負けると、足もとの人が
+         いちばん下の中身に重なります（2026-09-23 実測）。 */
+    .sec:has(> .kazari),
+    #ima:has(> .kazari){padding-bottom:calc(var(--aki) + 46px)}
     .sec > .kazari{
       display:block;
       top:auto;bottom:-6px;
@@ -379,7 +383,9 @@ img,svg{max-width:100%}
   }
   /* いちばんせまいところでは、少し小さく */
   @media (max-width:479px){
-    .sec:has(> .kazari){padding-bottom:calc(var(--aki) + 34px)}
+    /* 34px だと、札のベタ影のぶん（4〜5px）だけ人に触っていました（実測） */
+    .sec:has(> .kazari),
+    #ima:has(> .kazari){padding-bottom:calc(var(--aki) + 48px)}
     .sec > .kazari{width:var(--w-sp,60px)}
   }
 }
