@@ -3837,12 +3837,15 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
 }
 /* 4人。絵の箱ではなく **人の幅**で詰めます（切り抜きは build.py の
    FOOT_HABA）。ポーズごとに幅がちがうので、札の幅は中身にまかせます。 */
+/* 人のまわりで切り抜いてあるので（build.py の FOOT_HABA／FOOT_TATE）、
+   絵の高さ＝人の高さです。すき間ぶんを見こむ必要はありません。
+   ★すきまは 0。4人を くっつけて立たせます。 */
 .foot-kao{
   grid-area:e;align-self:center;
-  display:flex;align-items:flex-end;gap:3px;
+  display:flex;align-items:flex-end;gap:0;
   padding:11px 12px;background:#FCFBF7;border-radius:20px;
 }
-.foot-kao svg{display:block;height:62px;width:auto}
+.foot-kao svg{display:block;height:56px;width:auto;flex:none}
 /* 吹き出し。地が墨なので、白い札に墨の字（17.6:1）。
    しっぽは左向き＝4人のほうを指します。 */
 .foot .foot-fuki{
@@ -3885,8 +3888,8 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
     grid-template-areas:"e fuki" "yo yo" "kazu kazu" "b b";
     column-gap:10px;row-gap:7px;
   }
-  .foot-kao{padding:9px 9px;gap:2px}
-  .foot-kao svg{height:60px}
+  .foot-kao{padding:9px 8px}
+  .foot-kao svg{height:48px}
   .foot .foot-fuki{font-size:12px;padding:8px 10px;line-height:1.55}
   .foot .foot-rei-yo{font-size:12.5px}
   /* 数は「8 実践」と よこに寝かせて、2段ぶんを1段にします（26px 節約）。
@@ -3899,8 +3902,9 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
   .foot-rei .btn{width:100%;justify-content:space-between;font-size:14.5px;padding:12px 20px}
 }
 @media (max-width:379px){
-  .foot-kao{padding:8px 7px}
-  .foot-kao svg{height:52px}
+  /* 375px（iPhone SE・8・X）でも 48px のまま。ここで小さくすると
+     4人の顔が読めなくなります。つめるのは、ふちの余白だけ。 */
+  .foot-kao{padding:8px 5px}
   .foot .foot-fuki{font-size:11.5px;padding:7px 9px}
 }
 
