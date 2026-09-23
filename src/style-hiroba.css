@@ -1636,7 +1636,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink);
 }
 .hfuda-e{display:block;height:74px;margin-bottom:10px}
-.hfuda-e svg{display:block;width:auto;height:100%}
+/* 絵は札のまん中に置きます（2026-09-24 依頼）。
+   width:auto なので、絵の横はばは たての 74px（狭い画面では 106px）から
+   決まります。実測（1280px）で、置き場は 163px・絵は 107〜108px でした。
+   左そろえだと、右に 55px の空きが1枚ずつ残ります。まん中なら 27／28px
+   ずつに割れます。
+   字（名前・1行・数）は左そろえのままです。読むものは、左から読むので。 */
+.hfuda-e svg{display:block;width:auto;height:100%;margin-inline:auto}
 .hfuda-h{
   font-family:var(--f-maru);font-weight:700;font-size:calc(17px * var(--moji));line-height:1.5;
   letter-spacing:.04em;
