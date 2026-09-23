@@ -3088,10 +3088,17 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      「すぐ使える道具」（manabu）の資料は、周りの地色がちがうので
      そちらは元の空色のままにしてあります。 */
 .bfuda .shiryo-mado{
-  max-height:56vh;padding:12px;gap:14px;
+  padding:12px;gap:14px;
   background:var(--men-ki);
   border:2px solid var(--rule);border-radius:14px;
 }
+/* ★ここに max-height を書かないこと（2026-09-23 に1度 書いて、直しました）。
+   窓は よこ送り（overflow-y:hidden）です。入れ物に高さの天井を付けると、
+   写真の下に付いている［大きく見る］が**切られて、たどり着けなくなります**
+   （実測：375px で 12px はみ出し、スクロールもできない状態でした）。
+   高さを抑えるのは **写真のほう**です（.shiryo-mado img の max-height）。
+   下の「よこに1枚ずつ送る」の決まりが max-height:none にしていますが、
+   .bfuda .shiryo-mado のほうが名前が2つぶん強いので、勝ってしまいます。 */
 
 /* ══ 字の大きさのつまみ（2026-09-23 依頼）════════════════════
    置き場所は **LINEの案内の右** だけです。
