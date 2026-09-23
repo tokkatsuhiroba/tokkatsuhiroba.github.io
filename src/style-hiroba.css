@@ -1564,8 +1564,12 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   border:2px solid var(--ink);border-radius:999px;
   font-family:var(--f-maru);font-weight:700;font-size:12px;letter-spacing:.04em;
 }
-/* 行き先のページの色を敷く（絵と色で、どこ行きかが分かる） */
-.hfuda{background:var(--p-iro,var(--bg))}
+/* ★札の地は ぜんぶ同じ（2026-09-23 依頼）。見分けるのは **しるし（絵）** です。
+   前はページごとに色を敷いていました。行き先が7つに増えて、色が5つ＋白2つ。
+   7つに7色を当てても同じで、**色の数がふえるほど 1つ1つの意味は薄くなります**。
+   いまは しるしが7つとも別のモノ（封筒・写真・カレンダー・ふきだし・階段・
+   黒板・新聞）なので、色に頼らなくても 一目で見分けられます。 */
+.hfuda{background:var(--bg)}
 
 @media (max-width:1023px){
   .hban{grid-template-columns:repeat(2,1fr)}
@@ -1738,8 +1742,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   content:"";position:absolute;left:0;right:0;bottom:0;height:34px;
   background:linear-gradient(to bottom,transparent,var(--mi-ji,var(--bg)));
 }
-/* 窓の地も、行き先のページの色 */
-.gfuda .atama{--mi-ji:var(--p-iro,var(--bg))}
+/* 窓の地も、札と同じ（2026-09-23 依頼で、色分けをやめました） */
+.gfuda .atama{--mi-ji:var(--bg)}
 
 /* 札の下。名前だけでしたが、8つの札と同じ「数」と「ひとこと」も
    出すようにしました（2026-09-22）。数は、その場で数えたものだけです。 */
@@ -1834,22 +1838,21 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    色は、その行き先のページごと。＝同じ色は、同じページに着きます。
    色だけで伝えないため、いまいる所はベタ塗り（形でも分かる）にします。
    ══════════════════════════════════════════════════════════════ */
-/* ── 色の決まり：同じ色は、同じページに着く ────────────────
-   ページごとに色を決め、**8つの札と「中身を、ざっと」**で同じ色を使います。
+/* ── 行き先ごとの色分けは、やめました（2026-09-23 依頼）──────
+   もとの決まりは「同じ色は、同じページに着く」で、帯・8つの札・
+   中身をざっと の3か所に、ページの色を敷いていました。
 
-   ★2026-09-23 依頼：「帯の色を整理して統一感が欲しい」
-     帯からは色を外しました。行き先が7つに増えて、色が5つ＋白2つになり、
-     どう並べても ばらばらに見えていたためです。
-     7つに7色を当てても同じです。**色の数がふえるほど、意味は薄くなります。**
-     帯は1つ33pxしかないので、色は飾りにしかなっていませんでした。
-   ★帯で色が言うのは「いまどこ」だけにします。ほかを ぜんぶ同じにすると、
-     墨でベタ塗りにした1つが、いちばん強く立ちます。
-   ★札（1枚が大きい）では、色はまだ意味を持てるので そのままです。 */
-.p--index   {--p-iro:var(--men-ki)}
-.p--shiru   {--p-iro:var(--men-sora)}
-.p--manabu  {--p-iro:var(--men-midori)}
-.p--atsumaru{--p-iro:var(--men-hada)}
-.p--news    {--p-iro:var(--men-fuji)}
+   やめた理由 … 行き先が7つに増えて、色が5つ＋白2つになりました。
+     7つに7色を当てても同じです。**色の数がふえるほど、1つ1つの意味は
+     薄くなります。**「統一感が欲しい」「アイコンで見分ける形にしよう」。
+
+   いまの決まり
+     ・帯   … ぜんぶ同じ。色で言うのは「いまどこ」だけ（墨のベタ塗り）
+     ・札   … ぜんぶ同じ地。見分けるのは **しるし（7つとも別のモノ）**
+     ・窓   … 札と同じ
+
+   ★p--◯◯ のクラスは HTML に残しています（行き先の目じるし）。
+     色をまた敷きたくなったら、ここに --p-iro を書けば戻せます。 */
 
 .obi-s{position:relative}
 @media (min-width:720px){
@@ -4129,7 +4132,11 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
    ★足もとの紹介（.foot-shokai）とは行き先がちがいます。
      あちらはホーム、ここは **この送る画面（#okuru）** です。 */
 .onegai{
-  margin:clamp(16px,2.4vw,22px) 0 0;padding:clamp(12px,1.8vw,16px);
+  /* ★下の余白を 0 にしないこと（2026-09-23）。すぐ下の
+     ［送られた実践を見る］の黒いふちと、この点線がくっついて
+     重なって見えました（実測：すきま 0px）。 */
+  margin:clamp(16px,2.4vw,22px) 0 clamp(18px,2.6vw,28px);
+  padding:clamp(12px,1.8vw,16px);
   background:var(--bg);border:2px dashed var(--rule);border-radius:16px;
 }
 .onegai-url{
