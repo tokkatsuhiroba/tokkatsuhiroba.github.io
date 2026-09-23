@@ -570,14 +570,14 @@
         <span class="okuru-l" id="komari-gn-l">学年<span class="okuru-nin">任意</span></span>
         <p class="okuru-yomi okuru-yomi--sub">押すと入ります。いくつでも押せます。もう一度押すと外れます。</p>
         <div class="okuru-nen" id="komari-gn" role="group" aria-labelledby="komari-gn-l">
-          <button type="button" class="okuru-nen-b" aria-pressed="false">1年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">2年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">3年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">4年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">5年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">6年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">中学校</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">全学年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">1<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">2<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">3<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">4<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">5<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">6<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">中<span class="nen-ryaku">学校</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">全<span class="nen-ryaku">学年</span></button>
         </div>
       </div>
 
@@ -738,9 +738,8 @@
              （受け口＝Apps Script を貼り直さずに、今日から効かせるため）。 -->
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-u">デジタル資料のリンク<span class="okuru-nin">任意</span></label>
-        <p class="okuru-yomi okuru-yomi--sub">Canvaやスライドの<b>共有リンク</b>を貼ると、札に<b>押せるボタン</b>で出ます。<br>
-          貼るまえに、<b>「リンクを知っている全員が閲覧可」</b>にしてください。そうでないと、押した人が開けません。<br>
-          受けられるのは <b>Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox</b> です。</p>
+        <p class="okuru-yomi okuru-yomi--sub">Canvaやスライドの<b>共有リンク</b>。札に押せるボタンで出ます。<br>
+          <b>「リンクを知っている全員が閲覧可」</b>にしてから貼ってください。</p>
         <input class="okuru-i" type="url" id="okuru-u" name="u" maxlength="300"
                inputmode="url" placeholder="例：https://www.canva.com/design/……/view">
         <p class="okuru-kazu" id="okuru-u-shirase" aria-live="polite"></p>
@@ -780,14 +779,14 @@
         <span class="okuru-l" id="okuru-gn-l">学年<span class="okuru-nin">任意</span></span>
         <p class="okuru-yomi okuru-yomi--sub">押すと入ります。いくつでも押せます。もう一度押すと外れます。</p>
         <div class="okuru-nen" id="okuru-gn" role="group" aria-labelledby="okuru-gn-l">
-          <button type="button" class="okuru-nen-b" aria-pressed="false">1年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">2年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">3年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">4年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">5年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">6年</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">中学校</button>
-          <button type="button" class="okuru-nen-b" aria-pressed="false">全学年</button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">1<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">2<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">3<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">4<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">5<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">6<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">中<span class="nen-ryaku">学校</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">全<span class="nen-ryaku">学年</span></button>
         </div>
       </div>
 
@@ -1190,7 +1189,9 @@
     if (navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
     var na = (location.pathname.split('/').pop() || 'index.html')
                .replace(/\.html$/, '') || 'index';
-    if (!/^(index|shiru|manabu|atsumaru|bansho|komari)$/.test(na)) return;
+    /* 2026-09-23：帯に出ている画面にそろえました（ニュースが抜けていました）。
+       ここに無い名前は、受け口でも数えません（両方に足すこと）。 */
+    if (!/^(index|okuru|bansho|atsumaru|komari|manabu|shiru|news)$/.test(na)) return;
     var bun = JSON.stringify({ kind: 'miru', p: na });
     /* 2026-09-23：前は「やってみたい」の数を返してもらうために、
        その札がある画面だけ fetch にしていました。札をやめたので、
@@ -1536,11 +1537,14 @@
       var uIn = document.getElementById('okuru-u');
       var uShirase = document.getElementById('okuru-u-shirase');
       /* 画面に出す言い方。SHIRYO_DOKO と同じものを、人の言葉で1行に。
-         ★置き場を足すときに動かすのは 3か所です。
+         ★置き場を足すときに動かすのは 2か所です。
              ① 上の SHIRYO_DOKO（受けるかどうかを決めているのは、ここ）
-             ② この1行（断るときの言葉に出ます）
-             ③ 入力欄の「受けられるのは …」（上のHTML。訳も付いています）
-           ①だけ足しても通りますが、②③がずれると案内が嘘になります。 */
+             ② この1行（受けられないと知らせるときの言葉に出ます）
+           ①だけ足しても通りますが、②がずれると案内が嘘になります。
+         ★2026-09-23 依頼：「フォームはハードルを下げたいから文章は短めに」。
+           入力欄からは、受けられる置き場の並びを外しました。**打ったそばから
+           受けられるかどうかは出る**ので、先に読ませる必要がありません。
+           受けられないときだけ、ここの並びが出ます。 */
       var uDokoJi = 'Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox';
       /* 打っているそばから、受けられるかどうかを出します。
          送ってから断られると、書いたものが宙に浮くためです。 */
@@ -3032,7 +3036,11 @@
     var moto = document.querySelector('meta[property="og:url"]');
     var ie = (moto && moto.content ? moto.content : '').replace(/[^/]*\.html$/, '');
     if(!ie){ b.hidden = true; return; }
-    var u = ie + '#okuru';
+    /* 2026-09-23 依頼：送るところは別ページになりました。
+       お願いのリンクは、その1枚を直に指します。
+       LINEに貼ると「4人が実践共有をお願いしている絵」が出ます
+       （#okuru のままだと、ホームと同じ絵になります）。 */
+    var u = ie + 'okuru.html';
     var uEl = document.getElementById('onegai-url');
     if(uEl) uEl.textContent = u;
     var shirase = document.getElementById('onegai-shirase');

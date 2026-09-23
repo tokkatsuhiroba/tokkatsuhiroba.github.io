@@ -96,7 +96,14 @@ PAGES = (
     #   研究日程は、ホームのいちばん下にありました。目当ての人には遠く、
     #   送りに来た人には邪魔でした。ニュースと同じページの上に移します
     #   （どちらも「外の動きを知る」ものなので、隣どうしが自然です）。
-    ('index.html',    'TOKKATSU広場', '', ('okuru',)),
+    # 2026-09-23 依頼：**実践を送るところを、別ページにしました。**
+    #   LINEは「ページ単位」でしか絵を選べません。#okuru はホームと
+    #   同じページなので、お願い専用の絵（4人組が手をあげている）を
+    #   出せませんでした。別ページにすると、それができます。
+    #   ★いままでの …/#okuru のリンクは、{{SAKI}} の表で自動で送られます。
+    ('index.html',    'TOKKATSU広場', '', ()),
+    ('okuru.html',    '実践を送る', '写真1枚でも大丈夫。ログインも要りません。',
+     ('okuru',)),
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。ことばの意味も。',
      ('about', 'yotsu', 'katei', 'ichiji', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
@@ -2409,6 +2416,10 @@ KO_E = {
                                    '820 0 880 420', True),
     'komari.html':   (_e_komari,   '夕方の校門前で話している、こどもと先生。'
                                    '頭の上に吹き出し', '260 0 880 420', False),
+    # 送るページ（2026-09-23）。板書の絵をそのまま使います
+    # （送ってもらうのは、板書と資料なので）。
+    'okuru.html':    (_e_bansho,   '窓のならぶろうかに、黒板が3枚 立ててある',
+                                   '820 0 880 420', True),
 }
 
 
@@ -5089,6 +5100,15 @@ def robots_tag(f):
     return '<meta name="robots" content="index, follow">' 
 
 
+# LINEに貼ったときの絵。**中身を差しかえたら、必ず版（v=）を1つ上げてください。**
+# 上げないと、LINEもXも前の絵を出しつづけます（向こうが覚えているため）。
+OGP_BAN = 4
+OGP_E = {
+    'okuru.html': ('ogp-okuru.png?v=1',
+                   '4人のキャラクターが手をあげて「実践を、共有してください。」とお願いしている絵'),
+}
+
+
 def head_de(f, na):
     """頭は1つの型を使い回し、題と自分のURLだけをページごとに差しかえます。"""
     head = rd('src/head-hiroba.html')
@@ -5099,6 +5119,14 @@ def head_de(f, na):
         head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))
         head = head.replace('content="TOKKATSU広場｜特別活動で、輝く。"',
                             'content="%s｜TOKKATSU広場"' % esc_html(page_na(f)), 1)
+    # LINEに貼ったときの絵（2026-09-23 依頼）。
+    #   ふだん … 4人が肩を組んでいる絵
+    #   送るページだけ … 4人が手をあげて「実践を共有してください」とお願いする絵
+    if f in OGP_E:
+        e, alt = OGP_E[f]
+        head = head.replace('ogp.png?v=%d' % OGP_BAN, e)
+        head = head.replace('property="og:image:alt" content="TOKKATSU広場｜特別活動で、輝く。"',
+                            'property="og:image:alt" content="%s"' % esc_html(alt))
     return head
 
 
@@ -5289,6 +5317,9 @@ KOTOBA = {
          'ممارسات أرسلها المعلمون، معروضة كما وصلت.'),
     'ちょっと聞きたい 困りごと':
         ('A quick question · Questions', 'سؤال سريع · الأسئلة'),
+    '写真1枚でも大丈夫。ログインも要りません。':
+        ('One photo is enough. No login needed.',
+         'صورة واحدة تكفي. ولا حاجة لتسجيل الدخول.'),
     'いま困っていることを書く。届いたものを読む。':
         ('Write what you are stuck on. Read what others have sent.',
          'اكتب ما يصعب عليك، واقرأ ما أرسله غيرك.'),
@@ -5817,13 +5848,11 @@ KOTOBA = {
     'デジタル資料のリンク':
         ('Link to digital material',
          'رابط إلى مادة رقمية'),
-    'Canvaやスライドの共有リンクを貼ると、札に押せるボタンで出ます。 貼るまえに、「リンクを知っている全員が閲覧可」にしてください。そうでないと、押した人が開けません。 受けられるのは Canva・Googleのドキュメント／スライド／ドライブ・OneDrive・Dropbox です。':
-        ('Paste a Canva or slide share link and it appears on your card as a button people can tap. '
-         'Before you paste it, set it so that anyone with the link can view — otherwise whoever taps it cannot open it. '
-         'Accepted: Canva, Google Docs / Slides / Drive, OneDrive and Dropbox.',
-         'الصق رابط مشاركة من Canva أو من شرائح العرض، فيظهر على بطاقتك زرًّا يمكن النقر عليه. '
-         'واضبطه قبل لصقه بحيث يستطيع كلّ من لديه الرابط الاطّلاع، وإلّا تعذّر الفتح على من ينقره. '
-         'والمقبول: Canva وGoogle Docs وSlides وDrive وOneDrive وDropbox.'),
+    'Canvaやスライドの共有リンク。札に押せるボタンで出ます。 「リンクを知っている全員が閲覧可」にしてから貼ってください。':
+        ('A Canva or slide share link. It appears on your card as a button people can tap. '
+         'Set it to “anyone with the link can view” before you paste it.',
+         'رابط مشاركة من Canva أو من شرائح العرض، يظهر على بطاقتك زرًّا يمكن النقر عليه. '
+         'واضبطه قبل لصقه بحيث يستطيع كلّ من لديه الرابط الاطّلاع.'),
     '写真1枚だけで大丈夫です。ログインもメールも要りません。 内容とお名前だけ、書いてください。名前をサイトに出すかどうかは、下で選べます。':
         ('One photo is enough. No login, no email address. Just write what it was and your name. Whether your name appears on the site is your choice, below.',
          'تكفي صورة واحدة. لا تسجيل دخول ولا بريد إلكتروني. اكتب ما جرى واسمك فقط، ولك أن تختار أدناه إظهار اسمك على الموقع من عدمه.'),
@@ -5918,6 +5947,13 @@ KOTOBA = {
          'With the right tools, the children can run it themselves.',
          'ليس للأنشطة الخاصة كتاب مدرسي.<br>'
          'ومع الأدوات المناسبة، يستطيع التلاميذ إدارتها بأنفسهم.'),
+
+    # 2026-09-23：送るところが別ページになり、リンクの字（href）が
+    #   #okuru → okuru.html#okuru に変わりました。訳の見出しも、
+    #   そのぶんだけ増やしてあります（中身は前と同じです）。
+    'ここは、その手だてが溜まる場です。<br> 話す場は <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINEオープンチャット「みんなの特活ひろば」<i>外部</i></a>。<br> <strong>あなたの実践も、<a href="okuru.html#okuru">送れば そのまま</a> ここに載ります。</strong>':
+        ('This is where those ways of doing it collect.<br> The place to talk is the <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">LINE open chat “Minna no Tokkatsu Hiroba”<i>external</i></a>.<br> <strong>Your practice too — <a href="okuru.html#okuru">send it and it appears</a> right here.</strong>',
+         'هنا تتجمّع هذه الطرائق.<br> ومكان الحديث هو <a class="line-l" href="https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" rel="noopener noreferrer">محادثة LINE المفتوحة «ساحة توكاتسو للجميع»<i>خارجي</i></a>.<br> <strong>وممارستك أيضًا — <a href="okuru.html#okuru">أرسلها فتظهر</a> هنا كما هي.</strong>'),
 }
 
 # 訳を付ける場所。( 正規表現, 何の場所か ) の並び。
@@ -6420,6 +6456,7 @@ def main_shin(check_only):
                 encoding='utf-8', newline='\n').write(pages[f])
     sitemap_kaku(pages)
     pdfjs_utsusu()
+    ogp_utsusu()
     print('')
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
     print('  公開用/ は GitHubに上げません（.gitignore）。上げるのは src/ と build.py。')
@@ -6461,6 +6498,27 @@ def sitemap_kaku(pages):
           % (len(dasu), len(DASANAI), '・'.join(DASANAI)))
     print('  　　　　　　　 %s は 字だけ出します（写真は画像検索に載せません）'
           % '・'.join(KAKUSU_E))
+
+
+OGP_DIR = os.path.join(SRC, 'ogp')    # LINEに貼ったときの絵（1200×630）
+
+
+def ogp_utsusu():
+    """src/ogp/*.png を 公開用/ に写す。
+
+       絵じたいは src/ogp/tsukuru.py が作ります（macOSの qlmanage で、
+       4人のキャラクターをそのまま描いています）。**手で描いた絵ではないので、
+       キャラクターを直したら、作り直してください。**"""
+    import shutil
+    saki = os.path.join(ROOT, '公開用')
+    e = sorted(glob.glob(os.path.join(OGP_DIR, '*.png')))
+    if not e:
+        raise Tomeru('src/ogp/ に絵が1枚もありません。'
+                     'LINEに貼っても、絵が出なくなります（作り方は src/ogp/tsukuru.py）')
+    for f in e:
+        shutil.copy2(f, os.path.join(saki, os.path.basename(f)))
+    print('  LINEの絵　… %d枚を 公開用/ に写しました（%s）'
+          % (len(e), '・'.join(os.path.basename(f) for f in e)))
 
 
 PDFJS = os.path.join(SRC, 'pdfjs')   # PDFを、送る人のブラウザの中で絵にする道具
