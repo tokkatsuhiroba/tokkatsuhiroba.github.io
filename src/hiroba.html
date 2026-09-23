@@ -805,9 +805,11 @@
              ここに手で書くと、いつか片方だけ直ります。 -->
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-ken">地域<span class="okuru-nin">任意</span></label>
-        <p class="okuru-yomi okuru-yomi--sub"><b>サイトに出ます。</b>
-          書いていただいたぶんが溜まったら、地図からさがせるようにします。<br>
-          自治体は、書きたいときだけで大丈夫です（区や市でちがう、を言えるように）。</p>
+        <!-- 2026-09-23 依頼：ここにあった4行の説明をやめました。
+             ★ただし「サイトに出ます」の1行だけは残します。消すと、
+               公開に出る欄と出ない欄（所属）の区別が画面から消えます。
+               長い説明ではなく、**しるし**として1行だけ置いています。 -->
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトに出ます。</b></p>
         <div class="okuru-chi">
           <select class="okuru-i okuru-ken" id="okuru-ken" name="ken">
             <option value="">えらばない</option>
@@ -823,8 +825,15 @@
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-o">推しポイント<span class="okuru-nin">任意</span></label>
         <p class="okuru-yomi okuru-yomi--sub">いちばん伝えたいことを、ひとことで。案内役の吹き出しに入って、題のすぐ下に出ます。<b>40字まで</b>です。</p>
-        <input class="okuru-i" type="text" id="okuru-o" name="o" maxlength="40"
-               placeholder="例：提案理由を真ん中に置くだけで、話合いが迷子になりません">
+        <!-- 2026-09-23 依頼：「入力し続けると最初の方の文字が見えなくなる」。
+             1行の <input> だったので、幅を超えたぶんは横へ流れ、書いた頭が
+             左へ消えていました。40字ぜんぶを見ながら書けるように、
+             **折り返す入れ物**（textarea）にします。
+             ★改行は入れさせません（札は1行ものなので、入ると崩れます）。
+               下の JS が、貼りつけも含めて改行を空白に直します。
+             ★高さは中身に合わせて伸びます（okuru-nobiru）。 -->
+        <textarea class="okuru-i okuru-nobiru" id="okuru-o" name="o" maxlength="40" rows="2"
+                  placeholder="例：提案理由を真ん中に置くだけで、話合いが迷子になりません"></textarea>
         <p class="okuru-kazu" id="okuru-o-kazu" aria-live="polite">0 / 40字</p>
       </div>
 
@@ -853,6 +862,13 @@
 
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-sh">所属<span class="okuru-nin">任意</span></label>
+        <!-- 2026-09-23 依頼：「所属はHP上には表示されません。と明記」。
+             ★ほんとうに出していません。build.py の namae_dake() が、
+               お名前のうしろの（所属）を公開ページから落としています。
+               管理画面（Macの中だけ）には残ります。
+             ★ここを直すときは namae_dake() も一緒に見てください。
+               画面の字だけ変えると、嘘になります。 -->
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトには出ません。</b>管理人にだけ届きます。</p>
         <input class="okuru-i" type="text" id="okuru-sh" name="sh" maxlength="60"
                placeholder="例：◯◯市立◯◯小学校">
       </div>
@@ -938,13 +954,14 @@
            外へは1バイトも出ません（原則2）。
          ★行き先は節のidだけ書きます（page.html#id と書くと、節が別の
            ページへ移ったとき静かに壊れます）。
-         ★スマホでは、4人を小さくして上下に積みます（.foot-rei の
-           @media を見てください）。 -->
+         ★中身は **ページごとにちがいます**（2026-09-23 追いの依頼）。
+           4人のポーズと、吹き出しの1行が、そのページの話に変わります。
+           組み立ては build.py の FOOT_KAO と FOOT_FUKI、
+           差しこみは ページを切り分けたあとの for（1枚ずつ）です。
+         ★スマホでは、4人の **右が空いていました**。そこに吹き出しを
+           入れて、お礼と数を下の全幅へ回します（.foot-rei の @media）。 -->
     <div class="foot-rei">
-      <div class="foot-friends" aria-hidden="true"><svg viewBox="0 0 431 147" focusable="false"><use href="#ill-k-group-thanks"/></svg></div>
-      <div class="foot-rei-te">
-        <!--BUILD:FOOT_KAZU-->
-      </div>
+      <!--BUILD:FOOT_REI-->
     </div>
     <p class="foot-koe">特別活動で、輝く。</p>
 
@@ -1660,8 +1677,32 @@
       var oIn = document.getElementById('okuru-o');
       var oKazu = document.getElementById('okuru-o-kazu');
       if(oIn && oKazu){
+        /* 高さを中身に合わせます（2026-09-23 依頼）。
+           40字ぜんぶが、書いているあいだ ずっと見えている状態にします。
+           ★いちど 'auto' に戻してから測ります。戻さないと、字を消したときに
+             高さが縮みません（scrollHeight が、前の高さのままになります）。 */
+        var o_nobasu = function(){
+          oIn.style.height = 'auto';
+          /* ★ふちのぶん（border 2px × 上下）を足します。box-sizing が
+             border-box なので、height にはふちが入りますが、scrollHeight には
+             入りません。足さないと、いちばん下の行が4pxだけ切れます
+             （実測で踏みました。文字の足が欠けて見えます）。 */
+          var fuchi = oIn.offsetHeight - oIn.clientHeight;
+          oIn.style.height = (oIn.scrollHeight + fuchi) + 'px';
+        };
+        /* 改行は入れさせません。札は1行ものなので、入ると崩れます。
+           打つぶんは Enter で止め、貼りつけたぶんは空白に直します。 */
+        oIn.addEventListener('keydown', function(ev){
+          if(ev.key === 'Enter'){ ev.preventDefault(); }
+        });
         var o_kazoeru = function(){
+          if(/[\r\n]/.test(oIn.value)){
+            var ichi = oIn.selectionStart;
+            oIn.value = oIn.value.replace(/[\r\n]+/g, ' ');
+            try{ oIn.setSelectionRange(ichi, ichi); }catch(e){}
+          }
           oKazu.textContent = oIn.value.length + ' / 40字';
+          o_nobasu();
         };
         oIn.addEventListener('input', o_kazoeru);
         o_kazoeru();

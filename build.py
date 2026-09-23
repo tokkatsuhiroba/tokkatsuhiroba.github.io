@@ -4522,18 +4522,167 @@ def build_okuru_miru(jissen):
             '送られた実践を見る（%d件・%d枚）<i>→</i></a></p>' % (n, mai))
 
 
-# ══ 足もとの4人（おじぎ）の、となりに出す数 ════════════════
-#   2026-09-23 依頼「下のこの4人のこのエリアを有効活用したい」。
-#   おじぎの相手を「送ってくださった先生」と決めて、**その人たちが
-#   足したぶん**だけを数で出します。
-#   ★ここに出すのは「届いたもの」だけです。研究日程やニュースは
-#     こちらで書いているぶんが混ざるので、「おかげさまで」の数には
-#     入れません（お礼の相手が、ぼやけるためです）。
-#   ★0のものは出しません。「困りごと 0」と出すと、お礼の列に
-#     空の札が1枚立ちます。
-#   ★訳（data-en / data-ar）は、この表ではなく ここで直に入れます。
-#     数と一緒に出たり消えたりする札なので、KOTOBA に置くと
-#     1件届くたびにビルドが止まります（home_kazu と同じ考え方）。
+# ══ 足もとの4人（2026-09-23 依頼）════════════════════════════
+#   1回め「下のこの4人のこのエリアを有効活用したい」
+#   2回め「モバイル版だと右側が空いているから活用。なるべくスクロールを
+#          減らしたい。あとページごとにいう内容と4人のポーズを変えたい」
+#   3回め「それも吹き出し風にしたい。さらに有益で更新されるような情報」
+#
+#   ★ページごとに **ポーズ**と**吹き出しの1行**が変わります。
+#     吹き出しに出すのは、その場で数えた・その場で拾った「いまの1行」です。
+#     手で書いた文は1つもありません。実践が1件届けば、次のビルドで
+#     ホームと「みんなの実践」の吹き出しが自分で書きかわります。
+#   ★「あと◯日」のような、**見た日によって変わる字は出しません**。
+#     組み立てるのは push のときだけなので、次の push まで古いままに
+#     なります（日付そのものは、いつ見ても本当のことです）。
+
+# 絵の中で、人が実際に描かれているところ（左端, 幅）。
+#   絵の箱は 170×152 ですが、中の人は 57〜117 しかありません。
+#   そのまま4人ならべると、すき間だらけで小さく見えます。ここで**切り抜いて**、
+#   横にぴったり詰めます。
+#   ★出どころ … ブラウザで getBBox() を読んだ実測値（2026-09-23）。
+#     絵を描きかえたら、ここも measure し直してください。合っていなくても
+#     絵が欠けるだけで止まらないので、**下の検問で名前だけは見ます**。
+FOOT_HABA = {
+    'group-thanks':     (22, 373), 'group-welcome':    (9, 431),
+    'group-shoulders':  (9, 303),
+    'gakkatsu-board':   (20, 107), 'gakkatsu-guide':   (8, 104),
+    'gakkatsu-listen':  (12, 76),  'gakkatsu-thanks':  (22, 58),
+    'gakkatsu-think':   (22, 57),  'gakkatsu-welcome': (9, 80),
+    'gyoji-calendar':   (2, 73),   'gyoji-cheer':      (8, 81),
+    'gyoji-guide':      (8, 104),  'gyoji-news':       (14, 117),
+    'gyoji-thanks':     (14, 66),  'gyoji-welcome':    (9, 80),
+    'jidokai-guide':    (8, 104),  'jidokai-share':    (11, 79),
+    'jidokai-speak':    (4, 92),   'jidokai-thanks':   (10, 81),
+    'jidokai-upload':   (11, 95),  'jidokai-welcome':  (9, 80),
+    'club-cheer':       (8, 81),   'club-guide':       (8, 104),
+    'club-make':        (0, 108),  'club-tools':       (9, 76),
+    'club-try':         (14, 106), 'club-welcome':     (9, 80),
+}
+
+# ページごとの4人。1つだけ書くと、その1枚（4人が組になった絵）を出します。
+#   ★並びは KYARA_MEN の順（緑・赤・青・黄）を崩しません。どのページでも
+#     同じ人が同じ場所に立っていないと、4人が入れかわって見えます。
+FOOT_KAO = {
+    'index.html':    'group-thanks',      # お礼のおじぎ
+    'okuru.html':    'group-welcome',     # 送りに来た人を迎える
+    'bansho.html':   ('gakkatsu-board', 'gyoji-cheer', 'jidokai-share', 'club-cheer'),
+    'komari.html':   ('gakkatsu-listen', 'gyoji-guide', 'jidokai-speak', 'club-guide'),
+    'shiru.html':    ('gakkatsu-think', 'gyoji-guide', 'jidokai-guide', 'club-guide'),
+    'manabu.html':   ('gakkatsu-board', 'gyoji-guide', 'jidokai-guide', 'club-tools'),
+    'atsumaru.html': ('gakkatsu-welcome', 'gyoji-calendar', 'jidokai-welcome', 'club-welcome'),
+    'news.html':     ('gakkatsu-welcome', 'gyoji-news', 'jidokai-welcome', 'club-cheer'),
+}
+
+YOUBI_JA = '月火水木金土日'
+YOUBI_EN = ('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')
+
+
+def foot_hi(d):
+    """10/2 の形。数字は3つのことばで同じなので、曜日だけ足し引きします。"""
+    return '%d/%d' % (d.month, d.day)
+
+
+def foot_kao(f, kyara):
+    """ページごとの4人。絵の箱は切り抜いて、横にぴったり詰めます。"""
+    kao = FOOT_KAO[f]
+    na = (kao,) if isinstance(kao, str) else kao
+    e = []
+    for n in na:
+        if n not in kyara:
+            raise Tomeru('足もとの4人が %s の絵を呼んでいますが、'
+                         'src/ill/approved/characters/%s.svg がありません' % (n, n))
+        if n not in FOOT_HABA:
+            raise Tomeru('足もとの4人が %s を呼んでいますが、FOOT_HABA に'
+                         '「人が描かれているところ」がありません。'
+                         'ブラウザで getBBox() を読んで（左端, 幅）を足してください' % n)
+        w, h = kyara[n][0], kyara[n][1]
+        x, haba = FOOT_HABA[n]
+        x, haba = max(0, x - 4), min(haba + 8, w)        # 左右に4ずつ、のりしろ
+        e.append('<svg viewBox="%g %g %g %g" focusable="false">'
+                 '<use href="#ill-k-%s"/></svg>' % (x, 0, haba, h, n))
+    return ('      <div class="foot-kao" aria-hidden="true">%s</div>'
+            % ''.join(e))
+
+
+def foot_fuki(f, jissen, komari, ken, kiji, goods, kotoba):
+    """吹き出しの1行。そのページの「いま」を、ひとつだけ。
+       戻りは（日本語, English, العربية）の3つ。
+       ★数も日付も、その場で拾ったものです。届けば、次のビルドで変わります。"""
+    okuri = bansho_aru(jissen)
+    if f == 'index.html':
+        if ken:
+            a = ken[0]
+            return mitsu('つぎの研究会は %s（%s）です。'
+                         % (foot_hi(a['d']), YOUBI_JA[a['d'].weekday()]),
+                         'Next meeting: %s (%s).'
+                         % (foot_hi(a['d']), YOUBI_EN[a['d'].weekday()]),
+                         'اللقاء القادم في %s.' % foot_hi(a['d']))
+        return mitsu('つぎの研究会は、まだ決まっていません。',
+                     'No meeting is scheduled yet.',
+                     'لا يوجد لقاء مُحدَّد بعد.')
+    if f == 'okuru.html':
+        n = len(okuri)
+        return mitsu('いま %d件。あなたのが %d件めになります。' % (n, n + 1),
+                     '%d so far. Yours will be number %d.' % (n, n + 1),
+                     'وصلتنا %d. وستكون ممارستك رقم %d.' % (n, n + 1))
+    if f == 'bansho.html':
+        if okuri:
+            a = okuri[0]
+            return mitsu('新しく届いたのは「%s」（%s）です。' % (a['title'], foot_hi(a['d'])),
+                         'Newest: “%s” (%s).' % (a['title'], foot_hi(a['d'])),
+                         'أحدث ما وصلنا: «%s» (%s).' % (a['title'], foot_hi(a['d'])))
+        return mitsu('まだ1件も届いていません。',
+                     'Nothing has been sent yet.', 'لم يصلنا شيء بعد.')
+    if f == 'komari.html':
+        machi = sum(1 for a in komari if not a['saki'])
+        if machi:
+            return mitsu('答えを待っているお悩みが %d件あります。' % machi,
+                         '%d questions are waiting for an answer.' % machi,
+                         'هناك %d سؤال ينتظر جوابًا.' % machi)
+        return mitsu('いまは、答え待ちのお悩みはありません。',
+                     'No question is waiting for an answer right now.',
+                     'لا سؤال ينتظر جوابًا الآن.')
+    if f == 'shiru.html':
+        n = len(kotoba)
+        return mitsu('ことばの意味を %d語のせています。' % n,
+                     '%d terms are explained here.' % n,
+                     'نشرح هنا %d مصطلحًا.' % n)
+    if f == 'manabu.html':
+        n = len(goods)
+        return mitsu('明日から使えるグッズが %d点あります。' % n,
+                     '%d ready-to-use tools are here.' % n,
+                     'هنا %d أداة جاهزة للاستعمال.' % n)
+    if f == 'atsumaru.html':
+        shime = [a for a in ken if a['shurui'] == '申込〆切']
+        if shime:
+            d = shime[0]['d']
+            return mitsu('いちばん近い申込〆切は %s（%s）です。'
+                         % (foot_hi(d), YOUBI_JA[d.weekday()]),
+                         'Nearest registration deadline: %s (%s).'
+                         % (foot_hi(d), YOUBI_EN[d.weekday()]),
+                         'أقرب موعد للتسجيل: %s.' % foot_hi(d))
+        return mitsu('つぎの日程は %d件、各地の会は %d会です。' % (len(ken), len(KAI)),
+                     '%d upcoming dates, %d societies.' % (len(ken), len(KAI)),
+                     '%d موعدًا قادمًا و%d جمعية.' % (len(ken), len(KAI)))
+    if f == 'news.html':
+        # ★「いちばん新しいニュースは◯月◯日」は、このページの上（.news-hi）に
+        #   もう出ています。同じことを2回言わないよう、**出どころ**にします。
+        a = kiji[0]
+        return mitsu('新しい1件の出どころは「%s」です。' % a['source'],
+                     'The newest item comes from “%s”.' % a['source'],
+                     'أحدث خبر مصدره «%s».' % a['source'])
+    raise Tomeru('足もとの吹き出しに、%s のぶんがありません' % f)
+
+
+# お礼のとなりに出す数。
+#   ★ここに出すのは「届いたもの」だけです。研究日程やニュースは こちらで
+#     書いているぶんが混ざるので、お礼の数には入れません。
+#   ★0のものは出しません（「困りごと 0」の空の札を立てないため）。
+#   ★訳は KOTOBA ではなく ここで直に入れます。数と一緒に出たり消えたり
+#     する札なので、表に置くと1件届くたびにビルドが止まります。
+FOOT_ME = '<!--BUILD:FOOT_REI-->'
+
 FOOT_KAZU_MEN = (
     ('実践',     'Practices',     'ممارسات'),
     ('板書',     'Board photos',  'صور السبورة'),
@@ -4541,13 +4690,14 @@ FOOT_KAZU_MEN = (
     ('困りごと', 'Questions',     'أسئلة'),
 )
 
-FOOT_KAZU_T = """        <p class="foot-rei-yo">{yo}</p>{kazu}
-        <p class="foot-rei-b"><a class="btn btn--yoru" href="#okuru"><span class="btn-ji">あなたの実践を送る</span><span class="btn-ya">→</span></a></p>"""
+FOOT_REI_T = """{kao}
+      <p class="foot-fuki" data-en="{fuki_en}" data-ar="{fuki_ar}">{fuki}</p>
+      <p class="foot-rei-yo">{yo}</p>{kazu}
+      <p class="foot-rei-b"><a class="btn btn--yoru" href="#okuru"><span class="btn-ji">あなたの実践を送る</span><span class="btn-ya">→</span></a></p>"""
 
 
-def build_foot_kazu(jissen, komari):
-    """足もとの4人の となりに出す「おかげさまで、いま ここには」。
-       数は、その場で数えたものだけを出します。"""
+def build_foot_rei(f, kyara, jissen, komari, ken, kiji, goods, kotoba):
+    """足もと。4人・吹き出し・お礼の数・送る道。ページごとに組み立てます。"""
     okuri = bansho_aru(jissen)
     kazu = (len(okuri),
             sum(bansho_kazu(a['bansho']) for a in okuri if a.get('bansho')),
@@ -4556,13 +4706,15 @@ def build_foot_kazu(jissen, komari):
     fuda = ['          <li><b>%d</b><span data-en="%s" data-ar="%s">%s</span></li>'
             % (n, esc_html(en), esc_html(ar), esc_html(ja))
             for (ja, en, ar), n in zip(FOOT_KAZU_MEN, kazu) if n]
-    if not fuda:
+    ja, en, ar = foot_fuki(f, jissen, komari, ken, kiji, goods, kotoba)
+    return FOOT_REI_T.format(
+        kao=foot_kao(f, kyara),
+        fuki=esc_html(ja), fuki_en=esc_html(en), fuki_ar=esc_html(ar),
         # まだ1件も届いていないとき。「おかげさまで 0」とは書きません。
-        return FOOT_KAZU_T.format(yo='まだ1件も届いていません。いちばん乗りをどうぞ。',
-                                  kazu='')
-    return FOOT_KAZU_T.format(
-        yo='おかげさまで、いま ここには',
-        kazu='\n        <ul class="foot-kazu">\n%s\n        </ul>' % '\n'.join(fuda))
+        yo=('おかげさまで、いま ここには' if fuda
+            else 'まだ1件も届いていません。いちばん乗りをどうぞ。'),
+        kazu=('\n        <ul class="foot-kazu">\n%s\n        </ul>' % '\n'.join(fuda))
+             if fuda else '')
 
 
 NEWS_H_N = 5      # ニュースを、上から何件だけ出しておくか（のこりはふたの中）
@@ -5416,6 +5568,21 @@ def tsukau_e(html):
     return set(m.groups() for m in re.finditer(r'href="#ill-([kbm])-([a-z0-9-]+)"', html))
 
 
+def kenmon_comment(html, f):
+    """コメントの閉じ忘れを見つける（2026-09-23 に1回やりました）。
+       <!-- の閉じを1つ落とすと、そこから **次の --> までが まるごと**
+       コメントになります。ブラウザは黙って飲みこむので、画面から
+       足もとが1枚 消えていても、ビルドは何も言いませんでした。
+       ★数が合っているかだけ見ます。JS や CSS の中に「-->」と書いたときも
+         ここで止まりますが、そのときは書き方を変えてください
+         （このサイトでは、いまのところ1つもありません）。"""
+    ake, shime = html.count('<!--'), html.count('-->')
+    if ake != shime:
+        raise Tomeru('公開用/%s で、コメントの数が合いません（<!-- が %d個、'
+                     '--> が %d個）。閉じ忘れたところから下が、まるごと'
+                     'コメントになって画面から消えます' % (f, ake, shime))
+
+
 def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
     """ページが呼んでいる絵だけを、そのページの defs に入れる。
        呼んでいない絵は入りません（ページごとに軽くなります）。"""
@@ -6203,9 +6370,15 @@ KOTOBA = {
     '学校名や子どもの名前は書かないでください。そのまま出ます。':
         ('Please do not write the school name or children’s names. It goes out exactly as written.',
          'من فضلك لا تكتب اسم المدرسة ولا أسماء الأطفال؛ فما تكتبه يُنشر كما هو.'),
-    'サイトに出ます。 書いていただいたぶんが溜まったら、地図からさがせるようにします。 自治体は、書きたいときだけで大丈夫です（区や市でちがう、を言えるように）。':
-        ('This appears on the site. Once enough has been written in, we will make it searchable from a map. The municipality is optional — it is there so you can say that things differ from ward to ward.',
-         'يظهر هذا على الموقع. ومتى تجمّع ما يكفي، سنجعل البحث ممكنًا من خريطة. أمّا البلدية فاختيارية، وُضعت كي تتمكّن من بيان اختلاف الأمور بين حيّ وآخر.'),
+    # 地域と所属（2026-09-23 依頼）。長い説明はやめ、**出る／出ない**の
+    #   しるしだけにしました。ここは公開に出るかどうかの話なので、
+    #   3つのことばで、同じだけはっきり書きます。
+    'サイトに出ます。':
+        ('This appears on the site.',
+         'يظهر هذا على الموقع.'),
+    'サイトには出ません。管理人にだけ届きます。':
+        ('This does not appear on the site. It reaches only the person who looks after it.',
+         'لا يظهر هذا على الموقع، ولا يصل إلا إلى القائم على الموقع.'),
     '2日開催のときだけ。1日で終わる会は、空のままで。':
         ('Only for two-day meetings. Leave it empty if it finishes in one day.',
          'لِلقاءات اليومين فقط. اتركه فارغًا إن انتهى في يوم واحد.'),
@@ -6450,6 +6623,7 @@ def build_shin():
         raise Tomeru('出せる実践が1件もありません')
 
     ken = load_kenkyukai()
+    kotoba = load_kotoba()
     komari, tobashita_k = load_komari()
     # 採用済みの学校全景。4つの活動を切らずに、そのまま見せる。
     #   ★ホームだけは <use> ではなく「本物」を出します（2026-09-23 依頼）。
@@ -6472,11 +6646,9 @@ def build_shin():
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen, kyara)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari)),
                        ('          <!--BUILD:KEN-->', build_ken_options()),
-                       ('    <!--BUILD:KOTOBA-->',   build_kotoba(load_kotoba())),
+                       ('    <!--BUILD:KOTOBA-->',   build_kotoba(kotoba)),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
-                       ('        <!--BUILD:FOOT_KAZU-->',
-                        build_foot_kazu(jissen, komari)),
                        ('    <!--BUILD:KENKYUKAI-->',
                         build_kenkyukai(ken, kyara, buhin))):
         if mark not in body:
@@ -6500,13 +6672,19 @@ def build_shin():
     if nokori:
         raise Tomeru('src/hiroba.html に、LINKS に無い目じるしがあります： %s'
                      % '、'.join(sorted(set(nokori))))
-    nokori_mark = re.findall(r'<!--BUILD:[^>]*-->', body)
+    # 足もと（FOOT_REI）だけは、**ページごとに中身がちがう**ので、
+    # ここではまだ差しこみません（1枚ずつ切り分けたあとの for で入れます）。
+    nokori_mark = [m for m in re.findall(r'<!--BUILD:[^>]*-->', body)
+                   if FOOT_ME not in m]
     if nokori_mark:
         raise Tomeru('差しこまれていない目じるしが残っています： %s' % '、'.join(nokori_mark))
 
     # ── ここから、1枚をページごとに切り分けます ──────────────
     hero, sec, foot, shikake = wakeru(body)
     sec = midashi_kao(sec, kyara)
+    if FOOT_ME not in foot:
+        raise Tomeru('足もとに目じるし %s がありません'
+                     '（4人と吹き出しが、どのページにも出なくなります）' % FOOT_ME)
 
     # どの id が、どのページに載るか。これで <a href="#◯◯"> を張りなおします
     doko = {}
@@ -6539,8 +6717,11 @@ def build_shin():
         else:
             atama = ko_atama(f, yo)
             naka_html, saki = '\n\n'.join(sec[s] for s in setsu), setsu[0]
+        # 足もとは、ページごとに中身がちがいます（4人のポーズと、吹き出しの1行）
+        foot_p = foot.replace(FOOT_ME, build_foot_rei(
+            f, kyara, jissen, komari, ken, kiji, goods, kotoba))
         p = '\n'.join(['<a class="skip" href="#%s">本文へ進む</a>' % saki,
-                       atama, build_obi(f, doko), naka_html, foot, shikake])
+                       atama, build_obi(f, doko), naka_html, foot_p, shikake])
         p = tsunagi_naosu(p, f, doko, tsune)
         # ことばの切りかえ（日本語 / English / العربية）。
         # 訳を data-en / data-ar としてその場に足します。外へは何も出ません。
@@ -6555,6 +6736,7 @@ def build_shin():
                        None if f == HOME else ko_e_naka(f, buhin, kyara)),
             p, '</body>', '</html>',
         ]) + '\n'
+        kenmon_comment(html, f)
         ngword_check(html, '公開用/' + f)
         pages[f] = html
     kanri = build_kanri_page(jissen, komari, ken,

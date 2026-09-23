@@ -2228,6 +2228,16 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-family:var(--f-hon);font-size:16px;   /* 16px未満にしない。iPhoneが勝手に寄るため */
 }
 .okuru-i:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+/* 推しポイント（2026-09-23 依頼）。1行の入れ物だと、幅を超えたぶんが
+   横へ流れて、**書いた頭が左へ消えて**いました。折り返して、40字ぜんぶを
+   見ながら書けるようにします。
+   ★高さは中身に合わせて伸びます（src/hiroba.html の o_nobasu）。
+     ここでは、はじめの高さと「自分では伸び縮みさせない」だけを決めます。
+   ★字の大きさは .okuru-i のまま（16px）。iPhoneが勝手に寄るのを防ぎます。 */
+.okuru-nobiru{
+  min-height:0;resize:none;overflow:hidden;
+  line-height:1.6;
+}
 /* 自由に書くところ。せまいと「ひとこと」で止まってしまうので、広くとります */
 .okuru-hiroi{
   /* 2026-09-23 依頼「ここも詰めて」。240px → 132px。
@@ -3740,64 +3750,95 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-size:12px;line-height:1.7;color:var(--mute);
 }
 
-/* ══ 足もとのお礼（2026-09-23 依頼）══════════════════════════
-   「下のこの4人のこのエリアを有効活用したい」。
-   おじぎの4人は、飾り1枚でした（aria-hidden・真ん中寄せ・360px）。
-   左寄せの字の上に札だけが浮いて、**右がまるごと空いて**いました。
+/* ══ 足もとのお礼（2026-09-23 依頼・3回なおしています）═══════════
+   1回め「下のこの4人のこのエリアを有効活用したい」
+   2回め「モバイル版だと右側が空いているから活用。なるべくスクロールを
+          減らしたい。ページごとにポーズを変えたい」
+   3回め「それも吹き出し風にしたい。さらに有益で更新されるような情報」
 
-   ★おじぎの相手を「送ってくださった先生」と決めて、その人たちが
-     足したぶんを、空いていた右に数で出します。
-     形は下の紹介（QR＋字）と同じ「絵が左・字が右」にそろえます。
+   ★4人のとなりに **吹き出し**を置きます。中身はページごとに変わる
+     「いまの1行」（つぎの研究会／新しく届いた実践／答え待ちの数…）。
+   ★スマホでは、4人の右が **147pxも空いて**いました。そこに吹き出しを
+     入れて、お礼と数はその下の全幅へ回します。上下に積んでいたときより
+     **52px 短く**なりました（実測 375×812：235px → 183px）。
    ★数の色は --ki（黄）。墨の地に 10.2:1 出ます。
-   ★スマホ（719px以下）では、右に置くと字が2文字で折れます。
-     **上下に積んで**、4人を204pxまで小さくします。
-     もとの360pxより小さいので、積んでも増えるのは100px足らずです。
    ★字の大きさのつまみ（--moji）は、足もとぜんぶで使っていません。
      ここだけ動くと、足もとが半分だけ大きくなります。 */
 .foot-rei{
-  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
-  max-width:560px;margin:0 0 clamp(18px,2.6vw,26px);
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-areas:"e fuki" "e yo" "e kazu" "e b";
+  align-items:center;justify-items:start;
+  column-gap:14px;row-gap:8px;
+  max-width:600px;margin:0 0 clamp(18px,2.6vw,26px);
 }
-.foot-friends{
-  flex:none;width:min(100%,252px);margin:0;
-  padding:12px 10px;background:#FCFBF7;border-radius:20px;
+/* 4人。絵の箱ではなく **人の幅**で詰めます（切り抜きは build.py の
+   FOOT_HABA）。ポーズごとに幅がちがうので、札の幅は中身にまかせます。 */
+.foot-kao{
+  grid-area:e;align-self:center;
+  display:flex;align-items:flex-end;gap:3px;
+  padding:11px 12px;background:#FCFBF7;border-radius:20px;
 }
-.foot-rei-te{flex:1 1 200px;min-width:0}
+.foot-kao svg{display:block;height:62px;width:auto}
+/* 吹き出し。地が墨なので、白い札に墨の字（17.6:1）。
+   しっぽは左向き＝4人のほうを指します。 */
+.foot .foot-fuki{
+  grid-area:fuki;position:relative;
+  margin:0;padding:9px 12px;
+  background:#FCFBF7;color:var(--ink);border-radius:14px;
+  font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;line-height:1.65;
+}
+.foot .foot-fuki::before{
+  content:"";position:absolute;left:-6px;top:14px;
+  border-block:6px solid transparent;border-right:7px solid #FCFBF7;
+}
 /* .foot p（0-1-1）に負けるので、.foot を付けて書きます */
 .foot .foot-rei-yo{
-  margin:0 0 9px;font-family:var(--f-maru);font-weight:700;
-  font-size:14px;line-height:1.6;color:var(--bg);
+  grid-area:yo;margin:0;
+  font-family:var(--f-maru);font-weight:700;
+  font-size:13.5px;line-height:1.6;color:var(--bg);
 }
 .foot-kazu{
+  grid-area:kazu;
   display:flex;flex-wrap:wrap;gap:4px 18px;
-  margin:0 0 12px;padding:0;list-style:none;
+  margin:0;padding:0;list-style:none;
 }
 .foot-kazu li{min-width:62px}
 .foot-kazu b{
   display:block;font-family:var(--f-maru);font-weight:700;
-  font-size:27px;line-height:1.15;color:var(--ki);
+  font-size:26px;line-height:1.15;color:var(--ki);
 }
 .foot-kazu span{
   display:block;font-family:var(--f-maru);font-weight:700;
   font-size:11.5px;line-height:1.5;color:rgba(252,251,247,.8);
 }
-.foot .foot-rei-b{margin:0}
+.foot .foot-rei-b{grid-area:b;margin:0}
 .foot-rei .btn{font-size:13px;padding:8px 16px;min-height:44px}
+
 @media (max-width:719px){
-  .foot-rei{flex-direction:column;align-items:stretch;gap:12px}
-  /* 上下に積むときは、flex-basis が **たて** に効きます。
-     200px のままだと、ボタンの下に 60px の空きができます。 */
-  .foot-rei-te{flex:0 0 auto}
-  .foot-friends{width:min(100%,204px);padding:10px 8px}
-  .foot-kazu{gap:4px 16px;margin-bottom:11px}
-  .foot-kazu b{font-size:24px}
+  /* 4人と吹き出しは よこ並びのまま。お礼と数とボタンだけ、下の全幅へ。 */
+  .foot-rei{
+    grid-template-areas:"e fuki" "yo yo" "kazu kazu" "b b";
+    column-gap:10px;row-gap:7px;
+  }
+  .foot-kao{padding:9px 9px;gap:2px}
+  .foot-kao svg{height:60px}
+  .foot .foot-fuki{font-size:12px;padding:8px 10px;line-height:1.55}
+  .foot .foot-rei-yo{font-size:12.5px}
+  /* 数は「8 実践」と よこに寝かせて、2段ぶんを1段にします（26px 節約）。
+     数の幅をそろえると、8 と 10 でも札の頭が合います。 */
+  .foot-kazu{gap:3px 15px}
+  .foot-kazu li{display:flex;align-items:baseline;gap:5px;min-width:0}
+  .foot-kazu b{font-size:19px;min-width:1.5em;text-align:right}
+  .foot-kazu span{font-size:11.5px}
   /* 足もとのボタンは、ぜんぶ横いっぱい（.foot-botan と同じ形） */
   .foot-rei .btn{width:100%;justify-content:space-between;font-size:14.5px;padding:12px 20px}
 }
-@media (max-width:479px){
-  .foot-friends{width:min(100%,196px)}
-  .foot-kazu li{min-width:56px}
-  .foot-kazu b{font-size:22px}
+@media (max-width:379px){
+  .foot-kao{padding:8px 7px}
+  .foot-kao svg{height:52px}
+  .foot .foot-fuki{font-size:11.5px;padding:7px 9px}
 }
 
 /* ── このサイトを紹介する（2026-09-23 依頼で、足もとへ移しました）──
@@ -4106,7 +4147,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .igi-intro{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:center}
 .igi-intro .igi-bun{margin:0}
 .igi-friends{max-width:390px;width:100%;justify-self:center}
-.igi-friends svg,.foot-friends svg{display:block;width:100%;height:auto}
+.igi-friends svg{display:block;width:100%;height:auto}
 /* 4人の名前（2026-09-23 依頼）。絵の下に小さく。
    絵の中の4人は横に等しく並んでいるので、4等分のますに入れると
    それぞれの真下に来ます（数を手で書かずに済みます）。 */
@@ -4131,8 +4172,8 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .hfuda-e svg{max-width:100%;max-height:none}
 .hitori .e svg{max-width:100%;height:110px}
 .naiyo-e > svg{aspect-ratio:4 / 3;background:#F8DF9D}
-/* .foot-friends は「足もとのお礼」の節へ移しました（2026-09-23）。
-   数とボタンが となりに付いたので、1か所にまとめます。 */
+/* 足もとの4人は .foot-kao（「足もとのお礼」の節）へ移りました。
+   ポーズがページごとに変わるので、絵の出し方もあちらに置いています。 */
 @media(max-width:719px){
   .hero-koe{padding-block:16px 8px}
   .hero-logo{font-size:clamp(28px,7.3vw,46px);letter-spacing:.04em}
