@@ -2939,7 +2939,12 @@ def ken_kao(a, kyara, buhin):
 # 2026-09-21：前は、押すといきなり外のサイトが開いていました。
 #   いまは1回めで「ここで」中身がひらき、申し込みたい人だけが外へ出ます。
 #   （原則「押した先で見た目を変えない」の、最後まで残っていたところ）
-KEN_T = """      <details class="gyo ken{tsugi}" id="ken-{ban}">
+# 2026-09-24：**はじめから ひらいた形**にしました（依頼）。
+#   縦に積んでいたころは、ぜんぶ ひらくとページが何枚ぶんにもなるので、
+#   ＋を押してもらっていました。いまは よこにスライドで、一度に見えるのは
+#   1〜2枚です。見える数が決まっているなら、中身は出しておいてよい、という
+#   ことになりました。＋（−）は残してあるので、たためます。
+KEN_T = """      <details class="gyo ken{tsugi}" id="ken-{ban}" open>
         <summary>
         <span class="hizuke"><b aria-hidden="true">{md}</b><i aria-hidden="true">{youbi}</i>\
 <span class="kakure">{ja_date}（{youbi}）</span></span>
