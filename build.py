@@ -5848,11 +5848,9 @@ KOTOBA = {
     'デジタル資料のリンク':
         ('Link to digital material',
          'رابط إلى مادة رقمية'),
-    'Canvaやスライドの共有リンク。札に押せるボタンで出ます。 「リンクを知っている全員が閲覧可」にしてから貼ってください。':
-        ('A Canva or slide share link. It appears on your card as a button people can tap. '
-         'Set it to “anyone with the link can view” before you paste it.',
-         'رابط مشاركة من Canva أو من شرائح العرض، يظهر على بطاقتك زرًّا يمكن النقر عليه. '
-         'واضبطه قبل لصقه بحيث يستطيع كلّ من لديه الرابط الاطّلاع.'),
+    'Canvaやスライドの共有リンク。「リンクを知っている全員が閲覧可」にしてから貼ってください。':
+        ('A Canva or slide share link. Set it to “anyone with the link can view” before you paste it.',
+         'رابط مشاركة من Canva أو من شرائح العرض. اضبطه قبل لصقه بحيث يستطيع كلّ من لديه الرابط الاطّلاع.'),
     '写真1枚だけで大丈夫です。ログインもメールも要りません。 内容とお名前だけ、書いてください。名前をサイトに出すかどうかは、下で選べます。':
         ('One photo is enough. No login, no email address. Just write what it was and your name. Whether your name appears on the site is your choice, below.',
          'تكفي صورة واحدة. لا تسجيل دخول ولا بريد إلكتروني. اكتب ما جرى واسمك فقط، ولك أن تختار أدناه إظهار اسمك على الموقع من عدمه.'),
@@ -5865,9 +5863,9 @@ KOTOBA = {
     '1つだけ押してください。押したもののカードに集まります。 その内容の実践と、同じところに並びます。':
         ('Press one only. It will be gathered on that card, alongside the practices for the same one of the four.',
          'اضغط واحدًا فقط، فيُجمع على تلك البطاقة إلى جانب الممارسات من النوع نفسه.'),
-    '押すと入ります。いくつでも押せます。もう一度押すと外れます。':
-        ('Press to add. You can press as many as you like. Press again to remove.',
-         'اضغط للإضافة، ولك أن تضغط ما شئت، واضغط ثانية للإزالة.'),
+    'いくつでも押せます。もう一度押すと外れます。':
+        ('Press as many as you like. Press again to remove.',
+         'اضغط ما شئت، واضغط ثانية للإزالة.'),
     'いちばん伝えたいことを、ひとことで。題のすぐ下に、大きく出ます。':
         ('The one thing you most want to get across, in a single line. It appears large, just under the title.',
          'أهمّ ما تودّ إيصاله في سطر واحد، ويظهر كبيرًا تحت العنوان مباشرة.'),

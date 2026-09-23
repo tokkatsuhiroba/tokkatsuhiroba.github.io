@@ -2829,6 +2829,32 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
      サイトのほかの「いまここ」の出し方（帯の obi-ima）とそろえています。
    ★1つ44px以上。指で押しても となりに当たりません。            */
 .okuru-nen{display:flex;flex-wrap:wrap;gap:8px}
+.nen-ryaku{font-style:normal}
+
+/* ══ 学年は1行に（2026-09-23 依頼）══════════════════════
+   「学年選択の項目が2行になっているから1行に詰めて」
+   8つ（1〜6年・中学校・全学年）で 449px あり、スマホの内寸 310px には
+   どうやっても入りません。字を14pxより小さくするのは、ここではしません
+   （押す札なので、読めないと押せません）。
+   そこで、**せまい画面でだけ「年」「学校」を隠します**。
+     1年 → 1 ／ 中学校 → 中 ／ 全学年 → 全
+   上の「学年」という見出しがすぐ横にあるので、数字だけで通じます。
+
+   ★隠すだけです。**送る字は「1年」「中学校」のまま**変わりません。
+     読んでいるのは textContent で、これは display:none の中身も拾います
+     （nen_fuda の yomu／ireru／「全学年」の見分け、ぜんぶそのまま動きます）。
+     .md の grade: も、札に出る字も、1バイトも変わりません。
+   ★広い画面では、いままでどおり「1年」「中学校」と出ます。
+     そちらは1行に収まっているので、隠す理由がありません。 */
+@media (max-width:719px){
+  #okuru-gn,#komari-gn{
+    display:grid;grid-template-columns:repeat(8,1fr);gap:5px;
+  }
+  #okuru-gn .okuru-nen-b,#komari-gn .okuru-nen-b{
+    padding:9px 2px;font-size:15px;letter-spacing:0;
+  }
+  #okuru-gn .nen-ryaku,#komari-gn .nen-ryaku{display:none}
+}
 .okuru-nen-b{
   min-height:44px;padding:9px 16px;
   background:var(--bg);color:var(--ink);
