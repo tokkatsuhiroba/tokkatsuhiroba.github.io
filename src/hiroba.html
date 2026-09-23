@@ -946,10 +946,14 @@
               aria-label="TOKKATSU広場のホームへのQRコード"></canvas>
       <div class="foot-shokai-te">
         <p class="foot-shokai-yo">このサイトを紹介する</p>
-        <p class="foot-shokai-url" id="shokai-url"></p>
-        <!-- 2026-09-23 依頼：「このサイト共有も画像保存いらない。QR表示はあっていいと思う」
-             紙に貼る1枚（画像を作って保存）のボタンを外しました。
-             QRと、その下のURLだけ残します。 -->
+        <!-- 2026-09-23 依頼：「コピーするボタンを配置。リンク名は表記しなくていい」
+             ★長いURLの字は出しません（読む字ではないので、場所だけ食います）。
+             ★QRはそのまま。カメラを向ける人と、リンクを送る人の両方に。 -->
+        <p class="foot-shokai-b">
+          <button class="btn btn--yoru" type="button" data-copy-shokai><span class="btn-ji">リンクをコピー</span></button>
+        </p>
+        <!-- 押したあとの言づて。これが無いと、写せたのかどうか分かりません -->
+        <p class="okuru-shirase" id="shokai-shirase" role="status" aria-live="polite"></p>
       </div>
     </div>
 
@@ -3133,6 +3137,42 @@
         t.style.position = 'fixed'; t.style.opacity = '0';
         document.body.appendChild(t);
         t.select(); t.setSelectionRange(0, u.length);
+        var ok = document.execCommand('copy');
+        t.remove();
+        owari(ok);
+      } catch(e) { owari(false); }
+    });
+  })();
+
+  /* ══ このサイトを紹介する（リンクを写す）（2026-09-23 依頼）══════
+     「サイトの紹介リンクはコピーするボタンを配置。リンク名は表記しなくていい」
+     ★長いURLの字は出しません。読む字ではないので、場所だけ食います。
+     ★行き先は og:url から取るので、どのページの足もとからでも **ホーム**です。
+     ★写すのは この端末の中だけ。外へは何も出ません。               */
+  (function(){
+    var b = document.querySelector('[data-copy-shokai]');
+    if(!b) return;
+    var moto = document.querySelector('meta[property="og:url"]');
+    var ie = (moto && moto.content ? moto.content : '').replace(/[^/]*\.html$/, '');
+    if(!ie){ b.hidden = true; return; }
+    var shirase = document.getElementById('shokai-shirase');
+    function owari(ok){
+      if(!shirase) return;
+      shirase.textContent = ok ? 'コピーしました。'
+        : 'コピーできませんでした。左のQRを読みこんでください。';
+    }
+    b.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(ie)
+          .then(function(){ owari(true); })['catch'](function(){ owari(false); });
+        return;
+      }
+      try {
+        var t = document.createElement('textarea');
+        t.value = ie; t.setAttribute('readonly', '');
+        t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t);
+        t.select(); t.setSelectionRange(0, ie.length);
         var ok = document.execCommand('copy');
         t.remove();
         owari(ok);

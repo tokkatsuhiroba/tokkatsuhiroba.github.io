@@ -4952,6 +4952,18 @@ def build_obi(ima_file, doko):
        数がちがって分かりにくい、という話になったので8つに戻しました。
        行き先はページをまたぎます。いまのページにある項目には印をつけます。"""
     gyo = []
+    # ホーム（2026-09-23 依頼「帯の中にホームを左上に設置して」）。
+    #   いちばん左＝スマホでは左上に置きます。
+    #   ★前は帯の左に「TOKKATSU広場」の字を出していましたが、
+    #     同じ行き先が2つ並ぶので、そちらをやめて これ1つにしました。
+    ie_ima = (ima_file == HOME)
+    gyo.append('      <li class="o--home"><a class="obi-s s--home%s" href="%s"%s>'
+               '<span class="obi-e" aria-hidden="true">'
+               '<svg viewBox="0 0 %d %d" focusable="false">'
+               '<use href="#ill-m-home"/></svg></span>'
+               '<span class="obi-ji">ホーム</span></a></li>'
+               % (' obi-ima' if ie_ima else '', '#ue' if ie_ima else HOME,
+                  ' aria-current="page"' if ie_ima else '', MARK_BOX, MARK_BOX))
     for sid, shirushi, _, _ in HOME_FUDA:
         saki = doko[sid]
         ima = (saki == ima_file)
@@ -4974,10 +4986,9 @@ def build_obi(ima_file, doko):
                       '<span class="obi-ji">%s</span>'
                       % esc_html(OBI_NA.get(sid, SETSU_NA[sid]))))
     return ('<nav class="obi" aria-label="TOKKATSU広場の中の、%d の行き先">\n'
-            % len(HOME_FUDA) + 
+            % (len(HOME_FUDA) + 1) + 
             '  <div class="obi-uchi">\n'
-            '    <a class="obi-na" href="%s">TOKKATSU広場</a>\n'
-            '    <ul class="obi-l">\n' % HOME
+            '    <ul class="obi-l">\n'
             + '\n'.join(gyo) + '\n'
             '    </ul>\n'
             '  </div>\n'
@@ -5264,6 +5275,7 @@ KOTOBA = {
     #   前の2つの見出し（ちょっと聞きたい／困りごと）は、まだ表に残しています。
     #   どこかで使っていたときに、訳だけ消えるのを防ぐためです。
     # 帯だけの短い名前（2026-09-23）
+    'ホーム': ('Home', 'الرئيسية'),
     '送る':   ('Send', 'أرسل'),
     '実践集': ('Practices', 'الممارسات'),
     'お悩み': ('Questions', 'الأسئلة'),

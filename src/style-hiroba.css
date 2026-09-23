@@ -4415,3 +4415,26 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
 @media (max-width:719px){
   .obi-l .o--manabu{grid-column:auto}
 }
+
+/* ── 頭の2つのボタンを、1行にする（2026-09-23 依頼）──────────
+   「まだボタンが大きい。丸いボタンにして1行にするのはどうかな」
+   スマホでは 281×56 が縦に2つ並び、**121px**を使っていました。
+   横に並べて、字と内余白を詰めます。
+   ★押せる高さは **46px** を保ちます（指で押せる下限は44px）。
+   ★実測（390px）：119＋169＋すきま8＝296px。使える362pxに収まります。
+   ★パソコンは前のまま（もともと横1行で、窮屈ではないため）。 */
+@media (max-width:719px){
+  .hero-botan{
+    flex-direction:row;flex-wrap:nowrap;justify-content:center;
+    align-items:center;gap:8px;
+  }
+  .hero-botan .btn{
+    width:auto;min-height:46px;padding:8px 13px;
+    font-size:14px;letter-spacing:.02em;gap:5px;
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  .hero-botan .btn:hover,.hero-botan .btn:focus-visible{
+    box-shadow:5px 5px 0 var(--ink);
+  }
+  .hero-botan .btn-ya{font-size:15px}
+}
