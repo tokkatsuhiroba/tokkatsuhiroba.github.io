@@ -1,0 +1,30 @@
+{
+  "svg_parse": "passed",
+  "visible_text": false,
+  "external_images": false,
+  "palette": "warm sand, cream walls, fresh green, light blue",
+  "png_dimensions": {
+    "detail-club.png": [
+      1500,
+      1329
+    ],
+    "school.png": [
+      3200,
+      1333
+    ],
+    "detail-council.png": [
+      1500,
+      1536
+    ],
+    "detail-events.png": [
+      1500,
+      810
+    ],
+    "detail-class.png": [
+      1500,
+      1101
+    ]
+  },
+  "review": "Rendered overall image and activity details; adjusted roof lines, clock, face clearance and tool direction",
+  "live_site_modified": false
+}

@@ -1,0 +1,34 @@
+{
+  "svg_parse": "passed",
+  "palette": "original 9 colors only",
+  "external_images": false,
+  "approved_characters": "characters-refined-v6",
+  "png_sizes": {
+    "detail-club.png": [
+      1400,
+      797
+    ],
+    "school.png": [
+      3200,
+      1200
+    ],
+    "detail-council.png": [
+      1400,
+      926
+    ],
+    "detail-events.png": [
+      1400,
+      636
+    ],
+    "school-close.png": [
+      3200,
+      890
+    ],
+    "detail-class.png": [
+      1400,
+      709
+    ]
+  },
+  "visual_review": "panorama and all four activity regions inspected; final table adjustment rendered",
+  "live_site_modified": false
+}

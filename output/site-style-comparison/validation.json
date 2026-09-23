@@ -1,0 +1,32 @@
+{
+  "themes": [
+    "three",
+    "pixel"
+  ],
+  "avatar_order": [
+    "0",
+    "1",
+    "3",
+    "2"
+  ],
+  "embedded_pngs": 3,
+  "unique_ids": 14,
+  "svg_references": "pass",
+  "external_scripts": [],
+  "link_count": 20,
+  "browser_check": "not performed: local preview rejected by browser URL security policy",
+  "notes": "Source HP preserved; comparison is an unpublished prototype.",
+  "javascript_syntax": "passed node --check",
+  "route_anchors": [
+    "index.html#okuru",
+    "atsumaru.html#ima",
+    "atsumaru.html#kai",
+    "atsumaru.html#news",
+    "bansho.html#bansho",
+    "komari.html#kiku",
+    "komari.html#komari",
+    "manabu.html#jissen",
+    "manabu.html#manabu",
+    "shiru.html#about"
+  ]
+}

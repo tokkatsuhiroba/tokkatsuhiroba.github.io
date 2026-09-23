@@ -1,0 +1,8 @@
+
+document.querySelectorAll("img[data-avatar]").forEach(image=>{image.src=document.querySelector(".avatar img[src]").src;});
+const sceneConfig={all:{origin:'50% 70%',tint:'#edf4eb',alt:'4人のキャラクターと多くの仲間が過ごす、レトロな学校の遠景。学級会・運動会・児童会・クラブ活動と日常の小さな場面がつながる広場。'},class:{origin:'9% 76%',tint:'#e5efe5',alt:'学活くんと学級会。黒板と机を囲んで話し合う仲間たち。'},events:{origin:'39% 71%',tint:'#f8e4da',alt:'行人と運動会。旗で応援しながら、仲間がリレーをする場面。'},council:{origin:'65% 72%',tint:'#e2edf5',alt:'児童会ちゃんの集会。マイクで呼びかけ、仲間が参加する場面。'},club:{origin:'96% 75%',tint:'#fbf0c9',alt:'クラブマンとクラブ活動。絵を描いたり模型を作ったりする場面。'}};
+document.querySelectorAll('[data-scene]').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.scene;const config=sceneConfig[key];document.querySelectorAll('[data-scene]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));const world=document.getElementById('world');world.classList.toggle('zoomed',key!=='all');world.style.setProperty('--origin',config.origin);world.style.setProperty('--chosen',config.tint);document.getElementById('world-image').alt=config.alt;}));
+let opener=null;
+document.querySelectorAll('[data-dialog]').forEach(button=>button.addEventListener('click',()=>{opener=button;document.getElementById(button.dataset.dialog).showModal();}));
+document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>button.closest('dialog').close()));
+document.querySelectorAll('dialog').forEach(dialog=>{dialog.addEventListener('close',()=>opener?.focus());dialog.addEventListener('click',event=>{if(event.target!==dialog)return;const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();});});

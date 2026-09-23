@@ -1,0 +1,224 @@
+"""School panorama based on the live site's SVG parts and approved v6 mascots.
+
+Only writes this output directory. The source site and its build are untouched.
+"""
+from pathlib import Path
+import copy
+import importlib.util
+import re
+from html import escape
+import xml.etree.ElementTree as ET
+
+HERE=Path(__file__).resolve().parent
+PROJECT=HERE.parent.parent
+NS='http://www.w3.org/2000/svg'
+ET.register_namespace('',NS)
+spec=importlib.util.spec_from_file_location('site_build',PROJECT/'build.py')
+site=importlib.util.module_from_spec(spec);spec.loader.exec_module(site)
+parts,_=site.load_buhin()
+INK='#1C1C1A';PAPER='#FCFBF7';GREEN='#1F5C3F';RED='#D2552A';BLUE='#3A6EA5';YELLOW='#E8C547';SKIN='#F6D8B8'
+colors=[GREEN,RED,BLUE,YELLOW]
+stroke=f'stroke="{INK}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"'
+
+# Give the small supporting pupils the same fringe, oval eyes and line smile.
+# Retain each pose and its original head/body scale.
+for key in ['ko-tatsu','ko-te','ko-suwaru','ko-hashiru','sensei','shosho']:
+    w,h,body=parts[key]
+    root=ET.fromstring(f'<svg xmlns="{NS}">{body}</svg>')
+    group=root.find('{'+NS+'}g')
+    face=next((n for n in group if n.tag=='{'+NS+'}circle' and n.get('fill')==SKIN and float(n.get('r','0'))>8),None)
+    if face is None:continue
+    cx,cy,r=(float(face.get(attr)) for attr in ['cx','cy','r'])
+    face_index=list(group).index(face)
+    for n in list(group)[face_index:]:group.remove(n)
+    head=ET.fromstring(f'''<g xmlns="{NS}" transform="translate({cx},{cy}) scale({r/25})" stroke="{INK}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle r="25" fill="{SKIN}"/>
+      <path d="M-25-2C-25-17-14-25 0-25S24-16 25-2L18-8 16-4 12-13C5-6-5-4-16-5L-12-11Z" fill="{INK}" stroke="none"/>
+      <ellipse cx="-9" cy="2" rx="2.65" ry="3.45" fill="{INK}" stroke="none"/><ellipse cx="9" cy="2" rx="2.65" ry="3.45" fill="{INK}" stroke="none"/>
+      <path d="M-6 11q6 6 12 0" fill="none" stroke-width="2.7"/>
+      <circle cx="-18" cy="8" r="2.8" fill="{RED}" opacity=".65" stroke="none"/><circle cx="18" cy="8" r="2.8" fill="{RED}" opacity=".65" stroke="none"/>
+    </g>''')
+    group.append(head)
+    parts[key]=(w,h,''.join(ET.tostring(n,encoding='unicode') for n in root))
+
+# A clear back of the head, rather than a blank face-shaped patch.
+w,h,body=parts['ko-ushiro']
+root=ET.fromstring(f'<svg xmlns="{NS}">{body}</svg>')
+for n in root.iter():
+    if n.tag=='{'+NS+'}circle' and n.get('r')=='14.5':n.set('fill',INK)
+parts['ko-ushiro']=(w,h,''.join(ET.tostring(n,encoding='unicode') for n in root))
+
+for key in ['gakkatsu','gyoji','jidokai','club']:
+    root=ET.parse(HERE.parent/'characters-refined-v6'/f'{key}.svg').getroot()
+    parts[key]=(96,126,ET.tostring(root.find('{'+NS+'}g'),encoding='unicode'))
+
+def place(key,x,base,color=None,scale=1):
+    w,h,body=parts[key]
+    # Recolor clothes, keeping the warm cheek color unchanged.
+    if color:
+        root=ET.fromstring(f'<svg xmlns="{NS}">{body}</svg>')
+        for n in root.iter():
+            if n.get('fill')==RED and n.tag!='{'+NS+'}circle':n.set('fill',color)
+        body=''.join(ET.tostring(n,encoding='unicode') for n in root)
+    return f'<g transform="translate({x-w*scale/2},{base-(h-8)*scale}) scale({scale})">{body}</g>'
+
+def rect(x,y,w,h,fill,rx=0):
+    return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" fill="{fill}" {stroke}/>'
+
+def path(d,fill='none',color=INK,width=2.5):
+    return f'<path d="{d}" fill="{fill}" stroke="{color}" stroke-width="{width}" stroke-linecap="round" stroke-linejoin="round"/>'
+
+def text(x,y,label,size=15,fill=INK,anchor='start'):
+    return f'<text x="{x}" y="{y}" font-family="Hiragino Sans, Noto Sans CJK JP, sans-serif" font-size="{size}" font-weight="500" text-anchor="{anchor}" fill="{fill}" stroke="none">{escape(label)}</text>'
+
+def making_child(x,base,color,activity):
+    # Hold the tool in a shaped hand instead of drawing a line through the body.
+    root=ET.fromstring(f'<svg xmlns="{NS}">{parts["ko-tatsu"][2]}</svg>')
+    group=root.find('{'+NS+'}g')
+    for n in list(group)[:2]:group.remove(n)
+    for n in group.iter():
+        if n.get('fill')==RED and n.tag!='{'+NS+'}circle':n.set('fill',color)
+    if activity=='drum':
+        tools=path('M-14 35-53 23M12 41-42 29',color='#92754E',width=3)
+        arms=[path('M11 40Q8 36 4 37L-13 32Q-18 31-18 35Q-18 38-14 39L4 47Q10 49 12 45Z',SKIN),path('M34 39Q38 40 35 46Q34 49 29 48L12 44Q7 43 8 39Q9 36 13 37L30 40Z',SKIN)]
+    else:
+        tools=path('M-15 30-44 12',color='#92754E',width=2.5)+path('M-44 12-49 9',color=GREEN,width=3.5)
+        arms=[path('M11 39Q8 35 4 36L-12 27Q-17 25-18 29Q-19 32-15 34L1 44Q7 48 11 44Z',SKIN),f'<rect x="31.7" y="38" width="7.5" height="20" rx="3.75" fill="{SKIN}" {stroke}/>']
+    for a in reversed(arms):group.insert(0,ET.fromstring(a))
+    return f'<g transform="translate({x-22},{base-82})">{tools}{ET.tostring(group,encoding="unicode")}</g>'
+
+# School-specific architecture: a broad high-roofed gym and a classroom block.
+gym=[rect(32,182,536,258,PAPER),path('M12 188 92 108H510L588 188Z',BLUE),path('M92 108 300 45 510 108',BLUE)]
+for x in range(65,545,80):
+    gym.append(rect(x,216,58,58,'#A9E1F5',1))
+    gym.append(path(f'M{x+29} 216v58'))
+for x in range(70,570,55):gym.append(path(f'M{x} 186l30-74',color='#274A69',width=1.6))
+gym += [path('M32 296H568',color='#C5C8BC'),rect(206,326,188,114,PAPER),rect(224,341,76,99,GREEN),rect(300,341,76,99,GREEN),path('M290 378v18M310 378v18',color=PAPER),text(300,315,'体育館',22,INK,'middle'),path('M0 442H600')]
+parts['taiikukan']=(600,450,'<title>高い屋根と高窓、大きな出入口のある体育館</title>'+''.join(gym))
+
+school=[rect(27,166,566,326,PAPER),rect(18,150,584,18,BLUE),rect(269,100,82,50,PAPER),path('M259 100H361',color=BLUE,width=9)]
+for y in [207,298,389]:
+    for x in [51,119,187,374,442,510]:
+        school += [rect(x,y,54,55,'#A9E1F5',1),path(f'M{x+27} {y}v55M{x} {y+37}h54',color='#547478',width=1.5)]
+for y in [279,370]:school.append(path(f'M27 {y}H593',color='#B8C0B7'))
+school += [rect(275,407,70,85,GREEN),path('M310 407v85M298 447v13M322 447v13',color=PAPER),rect(262,397,96,10,BLUE),rect(274,196,72,147,'#A9E1F5'),path('M310 196v147M274 245h72M274 294h72',color='#547478'),f'<circle cx="310" cy="125" r="19" fill="{PAPER}" {stroke}/>',path('M310 113v12l10 6'),path('M0 492H620')]
+parts['kosha']=(620,500,'<title>教室の窓が並ぶ三階建ての小学校校舎</title>'+''.join(school))
+
+board=[rect(8,10,394,154,GREEN,3),path('M12 164H399',color='#92754E',width=7)]
+board += [text(23,34,'議題　雨の日の遊びを決めよう',17,PAPER),text(23,57,'提案理由　みんなで仲よく遊びたい',12,PAPER),path('M23 67H385',color=PAPER,width=1.5),text(25,87,'出た意見',13,YELLOW),text(230,87,'決まったこと',13,YELLOW),path('M209 76v71',color=PAPER,width=1.3),text(28,111,'・クイズ',14,PAPER),text(28,134,'・宝さがし',14,PAPER),rect(226,98,158,45,GREEN,2),text(305,126,'クイズ大会',17,PAPER,'middle'),path('M228 144H381',color=YELLOW,width=2)]
+board += [path('M42 166v24M368 166v24'),rect(341,151,33,8,PAPER,1)]
+parts['kokuban']=(410,200,'<title>学級会の議題・提案理由・意見・決定を整理した黒板</title>'+''.join(board))
+
+gate=[rect(25,32,23,240,PAPER),rect(292,32,23,240,PAPER),rect(25,36,290,58,RED),text(170,76,'うんどうかい',28,PAPER,'middle'),path('M15 272H59M282 272H325')]
+parts['nyutaijo']=(340,280,'<title>運動会の入場門</title>'+''.join(gate))
+
+notice=[path('M18 47 36 18H244L262 47Z',GREEN),rect(25,45,230,137,GREEN),rect(38,57,204,112,PAPER),text(140,77,'児童会からのお知らせ',14,GREEN,'middle')]
+for x,label,color in [(45,'あいさつ',RED),(111,'集会',YELLOW),(177,'そうじ',BLUE)]:
+    notice += [rect(x,87,58,72,PAPER,1),rect(x,87,58,20,color),text(x+29,121,label,10,INK,'middle'),path(f'M{x+9} 132h40M{x+9} 143h28',color=color,width=2)]
+notice += [rect(44,182,13,30,GREEN),rect(223,182,13,30,GREEN),path('M15 212H265')]
+parts['keijiban']=(280,220,'<title>児童会が企画するあいさつ運動や集会の掲示板</title>'+''.join(notice))
+
+# Keep the familiar sky, trees, fence, schoolhouse, gym and yellow ground.
+background=site.hiroba_naka(parts).split('<path d="M74 946')[0]
+# Replace the incomplete running lane with a complete, readable oval below.
+background=re.sub(r'<path d="M900 1060[^>]+/>','',background)
+# Earth, rather than a yellow floor; keep character yellows unchanged.
+background=re.sub(r'(<path d="M0 828[^>]*fill=")#E8C547',r'\g<1>#E9D7B2',background)
+background=re.sub(r'<path d="M0 828[^>]*fill="url\(#ill-sen\)"[^>]*/>','',background)
+background=background.replace('#2FBA68','#7FB574').replace('opacity=".10"','opacity=".025"')
+art=[background]
+
+# 1. Class meeting: chalkboard, facilitator and U-shaped discussion seats.
+art.append(rect(48,850,694,350,PAPER,12))
+art.append(place('kokuban',289,1050))
+art.append(place('gakkatsu',543,1060))
+for i,(x,y) in enumerate([(658,1056),(140,1132),(300,1176),(465,1176),(640,1150)]):
+    art.append(place('ko-te' if i in [0,1] else 'ko-suwaru',x,y,colors[(i+2)%4]))
+    # Individual desks leave the center open for the discussion.
+    desk_y=y-8
+    art.append(path(f'M{x-38} {desk_y+5}v26M{x+38} {desk_y+5}v26'))
+    art.append(rect(x-52,desk_y-12,104,17,PAPER,3))
+    art.append(path(f'M{x-18} {desk_y-7}h29',color=BLUE))
+
+# 2. School events: a flower arch, sports-day gate, relay, basket and cheering.
+art.append(place('hana-arch',920,982))
+art.append(place('shosho',920,979))
+for i,x in enumerate([815,868,974,1027]):
+    art.append(place('ko-ushiro',x,880,colors[i]))
+for x in [1085,1515]:art.append(place('bankokki',x,814))
+art.append(place('nyutaijo',1260,1000))
+art.append(place('kago',1652,1017))
+art.append(f'<ellipse cx="1390" cy="1095" rx="306" ry="86" fill="none" stroke="{PAPER}" stroke-width="7"/>')
+art.append(f'<ellipse cx="1390" cy="1095" rx="265" ry="63" fill="none" stroke="{PAPER}" stroke-width="3"/>')
+art.append(place('gyoji',1020,1174))
+for i,(x,y) in enumerate([(1190,1112),(1370,1137),(1550,1090)]):
+    art.append(place('ko-hashiru',x,y,[RED,BLUE,GREEN][i]))
+    art.append(rect(x+22,y-55,6,23,YELLOW,2))
+for i,x in enumerate([1190,1295,1400,1505,1610]):
+    art.append(place('ko-te' if i%2==0 else 'ko-tatsu',x,982 if i<2 else 1000,colors[(i+1)%4]))
+for x in [790,1720]:art.append(place('hata',x,1190))
+
+# 3. Student council: the mascot speaks, friends bring ideas, peers listen.
+art.append(place('keijiban',1870,940))
+art.append(path('M2350 845V987M2330 987h40'))
+art.append(rect(2268,846,155,43,PAPER,3))
+art.append(text(2345,874,'あいさつ運動',19,GREEN,'middle'))
+art.append(rect(2002,960,196,18,PAPER,2))
+art.append(path('M2020 978v20M2180 978v20'))
+art.append(place('jidokai',2080,957))
+art.append(place('ko-te',2248,987,BLUE))
+art.append(place('ko-tatsu',1936,1024,GREEN))
+art.append(rect(1924,973,25,32,PAPER,1))
+art.append(path('M1929 982h15M1929 990h15',color=GREEN))
+for row,(base,start,count) in enumerate([(1071,1830,6),(1122,1860,6),(1174,1890,5)]):
+    for i in range(count):art.append(place('ko-ushiro',start+i*65,base,colors[(i+row)%4]))
+
+# 4. Clubs: music, painting, science, and exercise around the yellow mascot.
+art.append(place('taiko',2530,975,scale=.72))
+art.append(making_child(2620,966,RED,'drum'))
+art.append(place('easel',2780,981,scale=.68))
+art.append(making_child(2865,982,BLUE,'paint'))
+art.append(place('ko-tatsu',2997,978,GREEN))
+art.append(place('ko-te',3147,978,YELLOW))
+art.append(rect(2970,934,210,14,PAPER,2))
+art.append(path('M2984 948v35M3166 948v35'))
+art.append(path('M3058 899h12v12l9 18h-29l8-18Z','#A9E1F5'))
+art.append(path('M3110 903v21q0 8 7 8t7-8v-21M3107 903h20',PAPER))
+art.append(path('M3111 921h12',color=BLUE,width=3))
+art.append(place('club',2485,1156))
+art.append(place('ko-tatsu',2700,1130,RED))
+art.append(place('ko-tatsu',2820,1130,BLUE))
+art.append(rect(2656,1098,210,17,PAPER,2))
+art.append(path('M2672 1115v47M2850 1115v47'))
+art.append(path('M2724 1078H2797L2810 1098H2711Z',YELLOW))
+for x in [2735,2747,2759,2771,2783]:art.append(path(f'M{x} 1078l{(x-2760)*.3} 20',color=GREEN,width=1))
+for y in [1083,1088,1093]:art.append(path(f'M{2724-(y-1078)*.65} {y}H{2797+(y-1078)*.65}',color=GREEN,width=1))
+for x,y,c in [(2737,1084,INK),(2750,1092,PAPER),(2773,1088,INK),(2785,1084,PAPER)]:
+    art.append(f'<ellipse cx="{x}" cy="{y}" rx="3.5" ry="2.5" fill="{c}" stroke="{INK}" stroke-width="1"/>')
+art.append(place('ko-tatsu',3020,1150,BLUE))
+art.append(place('ko-suwaru',3130,1150,GREEN))
+# A familiar low worktable with paper and a little airplane.
+art.append(rect(2970,1121,197,18,PAPER,3))
+art.append(path('M2983 1139v42M3152 1139v42'))
+art.append(path('M3048 1109l48-25-18 32-8-10Z',PAPER))
+art.append(path('M3070 1106l26-22',color=BLUE))
+art.append(rect(2993,1106,31,13,YELLOW,1))
+
+content='\n'.join(art)
+assert 'ns0:' not in content
+title='特活広場：学級会・学校行事・児童会・クラブ活動が広がる学校'
+def svg(box):return f'<svg xmlns="{NS}" viewBox="{box}"><title>{title}</title>{content}</svg>'
+(HERE/'school.svg').write_text(svg('0 0 3200 1200'))
+(HERE/'school-close.svg').write_text(svg('0 310 3200 890'))
+for key,box in [('class','20 820 750 380'),('events','765 750 990 450'),('council','1740 750 680 450'),('club','2410 750 790 450')]:
+    (HERE/f'detail-{key}.svg').write_text(svg(box))
+# A review sheet makes the important small details visible without a website.
+panels=[]
+for i,(key,title,sub,color) in enumerate([('class','学級活動','話し合って、決める',GREEN),('events','学校行事','力を合わせて、取り組む',RED),('council','児童会活動','学校全体に、働きかける',BLUE),('club','クラブ活動','好きなことを、仲間と深める','#7D641A')]):
+    x=30+(i%2)*990;y=25+(i//2)*595
+    piece=ET.parse(HERE/f'detail-{key}.svg').getroot()
+    body=''.join(ET.tostring(n,encoding='unicode') for n in piece)
+    body=body.replace('ill-ami',f'{key}-ami').replace('ill-sen',f'{key}-sen')
+    panels += [text(x,y+30,title,28,color),text(x+220,y+29,sub,20,INK),f'<svg x="{x}" y="{y+54}" width="950" height="510" viewBox="{piece.get("viewBox")}" preserveAspectRatio="xMidYMid meet">{body}</svg>']
+(HERE/'four-activities.svg').write_text(f'<svg xmlns="{NS}" viewBox="0 0 2020 1230"><rect width="2020" height="1230" fill="{PAPER}"/>'+''.join(panels)+'</svg>')
+print('Created panorama, closer view and four activity details.')

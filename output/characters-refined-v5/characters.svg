@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 230"><rect width="640" height="230" fill="#FCFBF7" /><g transform="translate(16,12) scale(1.3)"><g stroke="#1C1C1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<rect x="25" y="24" width="10" height="40" rx="5" fill="#F6D8B8" transform="rotate(-25 30 64)" />
+<rect x="35" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<rect x="51" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<path d="M33 110h11a1 1 0 0 1 1 1v4a3 3 0 0 1-3 3H32a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z" fill="#FCFBF7" />
+<path d="M63 110H52a1 1 0 0 0-1 1v4a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z" fill="#FCFBF7" />
+<path d="M48 52c-14 0-22 8-22 19v29h44V71c0-11-8-19-22-19z" fill="#1F5C3F" />
+<path d="M48 56v18" fill="none" stroke="#FCFBF7" />
+<path d="M66 76h20a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H66a2 2 0 0 1-2-2V78a2 2 0 0 1 2-2z" fill="#FCFBF7" />
+<path d="M70 82h12M70 88h8" fill="none" stroke="#1F5C3F" />
+<rect x="66" y="58" width="10" height="26" rx="5" fill="#F6D8B8" transform="rotate(-16 71 60)" />
+<circle cx="48" cy="30" r="25" fill="#F6D8B8" />
+<path d="M22 28C22 14 33 5 48 5c15 0 25 9 26 23l-7-6-2 5-4-10c-7 7-17 9-28 8l4-6c-5 3-10 6-15 9z" fill="#1C1C1A" stroke="none" />
+<ellipse cx="39" cy="32" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<ellipse cx="57" cy="32" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<path d="M42 41q6 6 12 0" fill="none" stroke="#1C1C1A" stroke-width="1.8" />
+<circle cx="30" cy="38" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<circle cx="66" cy="38" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<path d="M33 115h10M53 115h10" fill="none" stroke="#1C1C1A" stroke-width="1.2" /><path d="M35 25q4-2 7 0M54 25q4-2 7 0" fill="none" stroke-width="1.6" /><path d="M52 58l-4 5-4-5" fill="none" stroke="#FCFBF7" stroke-width="1.6" /></g>
+</g><text x="80" y="204" text-anchor="middle" fill="#1C1C1A" font-size="19" font-family="Hiragino Sans,sans-serif" font-weight="600">学活くん</text><g transform="translate(176,12) scale(1.3)"><g stroke="#1C1C1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M76 8v30" fill="none" />
+<path d="M77 12l17 9-17 9z" fill="#E8C547" />
+<rect x="20" y="58" width="10" height="28" rx="5" fill="#F6D8B8" transform="rotate(16 25 60)" />
+<rect x="35" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<rect x="51" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<path d="M33 110h11a1 1 0 0 1 1 1v4a3 3 0 0 1-3 3H32a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z" fill="#FCFBF7" />
+<path d="M63 110H52a1 1 0 0 0-1 1v4a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z" fill="#FCFBF7" />
+<path d="M48 52c-14 0-22 8-22 19v29h44V71c0-11-8-19-22-19z" fill="#D2552A" />
+<path d="M32 66h32" fill="none" stroke="#FCFBF7" />
+<rect x="66" y="32" width="10" height="28" rx="5" fill="#F6D8B8" transform="rotate(14 71 60)" />
+<circle cx="48" cy="30" r="25" fill="#F6D8B8" />
+<path d="M22 28C22 14 33 5 48 5c15 0 25 9 26 23l-7-6-2 5-4-10c-7 7-17 9-28 8l4-6c-5 3-10 6-15 9z" fill="#1C1C1A" stroke="none" />
+<path d="M23 25c5-7 14-11 25-11s20 4 25 11c-1 3-2 5-3 7-6-6-13-9-22-9s-16 3-22 9c-1-2-2-4-3-7z" fill="#FCFBF7" />
+<path d="M22 27l-8 3M22 31l-7 6" fill="none" />
+<ellipse cx="39" cy="34" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<ellipse cx="57" cy="34" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<path d="M41 41h14c-1 10-12 10-14 0z" fill="#1C1C1A" stroke="none" />
+<circle cx="30" cy="40" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<circle cx="66" cy="40" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<path d="M33 115h10M53 115h10" fill="none" stroke="#1C1C1A" stroke-width="1.2" /><path d="M30 94h36" fill="none" stroke="#FCFBF7" stroke-width="1.4" /></g>
+</g><text x="240" y="204" text-anchor="middle" fill="#1C1C1A" font-size="19" font-family="Hiragino Sans,sans-serif" font-weight="600">行人</text><g transform="translate(336,12) scale(1.3)"><g stroke="#1C1C1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<rect x="20" y="58" width="10" height="28" rx="5" fill="#F6D8B8" transform="rotate(16 25 60)" />
+<path d="M69 59q-5 0-5 5l2 15q1 7 7 5l9-11q3-4-1-7-4-2-6 2l-2 3-1-8q0-4-3-4z" fill="#F6D8B8" />
+<rect x="35" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<rect x="51" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<path d="M33 110h11a1 1 0 0 1 1 1v4a3 3 0 0 1-3 3H32a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z" fill="#FCFBF7" />
+<path d="M63 110H52a1 1 0 0 0-1 1v4a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z" fill="#FCFBF7" />
+<path d="M48 52c-15 0-23 8-23 19l-2 29h50l-2-29c0-11-8-19-23-19z" fill="#3A6EA5" />
+<path d="M32 55h10l26 41H58z" fill="#E8C547" />
+<path d="M79 80l7-18" fill="none" />
+<rect x="80" y="50" width="14" height="10" rx="5" fill="#FCFBF7" transform="rotate(25 87 55)" />
+<circle cx="48" cy="30" r="25" fill="#F6D8B8" />
+<path d="M22 28C22 14 33 5 48 5c15 0 25 9 26 23l-7-6-2 5-4-10c-7 7-17 9-28 8l4-6c-5 3-10 6-15 9z" fill="#1C1C1A" stroke="none" />
+<circle cx="19" cy="38" r="8.5" fill="#1C1C1A" />
+<circle cx="77" cy="38" r="8.5" fill="#1C1C1A" />
+<ellipse cx="39" cy="33" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<ellipse cx="57" cy="33" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<path d="M42 42q6 6 12 0" fill="none" stroke="#1C1C1A" stroke-width="1.8" />
+<circle cx="30" cy="39" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<circle cx="66" cy="39" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<path d="M33 115h10M53 115h10" fill="none" stroke="#1C1C1A" stroke-width="1.2" /><circle cx="32" cy="59" r="2" fill="#FCFBF7" stroke="none" /><path d="M26 96h44" fill="none" stroke="#FCFBF7" stroke-width="1.3" /><path d="M84 53l6 3M83 56l5 2" fill="none" stroke-width="1.2" /></g>
+</g><text x="400" y="204" text-anchor="middle" fill="#1C1C1A" font-size="19" font-family="Hiragino Sans,sans-serif" font-weight="600">児童会ちゃん</text><g transform="translate(496,12) scale(1.3)"><g stroke="#1C1C1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M32 56C18 66 12 84 14 102l34-8 34 8c2-18-4-36-18-46z" fill="#D2552A" />
+<rect x="19" y="28" width="10" height="32" rx="5" fill="#F6D8B8" transform="rotate(-24 24 60)" />
+<rect x="67" y="28" width="10" height="32" rx="5" fill="#F6D8B8" transform="rotate(24 72 60)" />
+<rect x="35" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<rect x="51" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<path d="M33 110h11a1 1 0 0 1 1 1v4a3 3 0 0 1-3 3H32a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z" fill="#FCFBF7" />
+<path d="M63 110H52a1 1 0 0 0-1 1v4a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z" fill="#FCFBF7" />
+<path d="M48 52c-14 0-22 8-22 19v29h44V71c0-11-8-19-22-19z" fill="#E8C547" />
+<path d="M48 67l2.7 7.3 7.8.3-6.1 4.8 2.1 7.5-6.5-4.3-6.5 4.3 2.1-7.5-6.1-4.8 7.8-.3z" fill="#FCFBF7" />
+<circle cx="48" cy="30" r="25" fill="#F6D8B8" />
+<path d="M22 28C22 14 33 5 48 5c15 0 25 9 26 23l-7-6-2 5-4-10c-7 7-17 9-28 8l4-6c-5 3-10 6-15 9z" fill="#1C1C1A" stroke="none" />
+<path d="M23 24c6-6 15-9 25-9s19 3 25 9l-3 8c-6-6-13-9-22-9s-16 3-22 9z" fill="#3A6EA5" />
+<ellipse cx="39" cy="35" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<ellipse cx="57" cy="35" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<path d="M41 42h14c-1 10-12 10-14 0z" fill="#1C1C1A" stroke="none" />
+<circle cx="30" cy="41" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<circle cx="66" cy="41" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<path d="M33 115h10M53 115h10" fill="none" stroke="#1C1C1A" stroke-width="1.2" /><path d="M25 75l-5 18M71 75l5 18" fill="none" stroke-width="1.2" /></g>
+</g><text x="560" y="204" text-anchor="middle" fill="#1C1C1A" font-size="19" font-family="Hiragino Sans,sans-serif" font-weight="600">クラブマン</text></svg>

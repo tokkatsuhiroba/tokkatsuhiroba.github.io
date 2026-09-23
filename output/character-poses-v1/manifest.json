@@ -1,0 +1,164 @@
+[
+  {
+    "file": "gakkatsu-welcome",
+    "character": "学活くん",
+    "use": "ようこそ",
+    "transparent": true
+  },
+  {
+    "file": "gakkatsu-listen",
+    "character": "学活くん",
+    "use": "ちょっと聞きたい",
+    "transparent": true
+  },
+  {
+    "file": "gakkatsu-think",
+    "character": "学活くん",
+    "use": "一緒に考える",
+    "transparent": true
+  },
+  {
+    "file": "gakkatsu-guide",
+    "character": "学活くん",
+    "use": "こちらへどうぞ",
+    "transparent": true
+  },
+  {
+    "file": "gakkatsu-board",
+    "character": "学活くん",
+    "use": "学ぶ・学級会",
+    "transparent": true
+  },
+  {
+    "file": "gakkatsu-thanks",
+    "character": "学活くん",
+    "use": "ありがとう",
+    "transparent": true
+  },
+  {
+    "file": "gyoji-welcome",
+    "character": "行人",
+    "use": "ようこそ",
+    "transparent": true
+  },
+  {
+    "file": "gyoji-calendar",
+    "character": "行人",
+    "use": "研究日程",
+    "transparent": true
+  },
+  {
+    "file": "gyoji-news",
+    "character": "行人",
+    "use": "最新のニュース",
+    "transparent": true
+  },
+  {
+    "file": "gyoji-guide",
+    "character": "行人",
+    "use": "こちらへどうぞ",
+    "transparent": true
+  },
+  {
+    "file": "gyoji-cheer",
+    "character": "行人",
+    "use": "応援する",
+    "transparent": true
+  },
+  {
+    "file": "gyoji-thanks",
+    "character": "行人",
+    "use": "ありがとう",
+    "transparent": true
+  },
+  {
+    "file": "jidokai-welcome",
+    "character": "児童会ちゃん",
+    "use": "ようこそ",
+    "transparent": true
+  },
+  {
+    "file": "jidokai-speak",
+    "character": "児童会ちゃん",
+    "use": "伝える・発表",
+    "transparent": true
+  },
+  {
+    "file": "jidokai-share",
+    "character": "児童会ちゃん",
+    "use": "みんなの実践",
+    "transparent": true
+  },
+  {
+    "file": "jidokai-upload",
+    "character": "児童会ちゃん",
+    "use": "実践を送る",
+    "transparent": true
+  },
+  {
+    "file": "jidokai-guide",
+    "character": "児童会ちゃん",
+    "use": "こちらへどうぞ",
+    "transparent": true
+  },
+  {
+    "file": "jidokai-thanks",
+    "character": "児童会ちゃん",
+    "use": "ありがとう",
+    "transparent": true
+  },
+  {
+    "file": "club-welcome",
+    "character": "クラブマン",
+    "use": "ようこそ",
+    "transparent": true
+  },
+  {
+    "file": "club-try",
+    "character": "クラブマン",
+    "use": "ちょっと試したい",
+    "transparent": true
+  },
+  {
+    "file": "club-tools",
+    "character": "クラブマン",
+    "use": "すぐ使える道具",
+    "transparent": true
+  },
+  {
+    "file": "club-make",
+    "character": "クラブマン",
+    "use": "作ってみよう",
+    "transparent": true
+  },
+  {
+    "file": "club-guide",
+    "character": "クラブマン",
+    "use": "こちらへどうぞ",
+    "transparent": true
+  },
+  {
+    "file": "club-cheer",
+    "character": "クラブマン",
+    "use": "やったね！",
+    "transparent": true
+  },
+  {
+    "file": "group-shoulders",
+    "character": "４人",
+    "use": "４人で肩を組む",
+    "transparent": true
+  },
+  {
+    "file": "group-welcome",
+    "character": "４人",
+    "use": "４人でようこそ",
+    "transparent": true
+  },
+  {
+    "file": "group-thanks",
+    "character": "４人",
+    "use": "４人でありがとう",
+    "transparent": true
+  }
+]

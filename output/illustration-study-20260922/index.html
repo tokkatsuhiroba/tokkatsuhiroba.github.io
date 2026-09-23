@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOKKATSU広場｜イラストの比較</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f7f5ef;color:#283b35;font-family:system-ui,-apple-system,sans-serif;line-height:1.7}main{max-width:1440px;margin:auto;padding:32px 24px 60px}.eyebrow{font-size:14px;letter-spacing:.14em;color:#626c65}h1{font-size:clamp(24px,3vw,38px);margin:6px 0 12px;line-height:1.4}.intro{max-width:820px;margin:0 0 24px}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0}button,select{font:inherit;border:1px solid #a8b4aa;border-radius:10px;background:white;color:inherit;padding:10px 16px;min-height:46px;cursor:pointer}button[aria-pressed=true]{background:#215c47;color:white;border-color:#215c47}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #c05b33;outline-offset:3px}.size{margin-left:auto;display:flex;gap:8px;align-items:center}figure{margin:0 auto;width:100%;max-width:1200px;background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 35px #253c3510}figure a{display:block;line-height:0}figure img{display:block;width:100%;height:auto}figcaption{padding:16px 22px}#name{font-size:21px;margin:0 0 4px}#note{margin:0}small{color:#59655e}.points{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:30px 0}.point{background:white;padding:20px;border-radius:14px;border-top:4px solid #427b5e}.point:nth-child(1){border-color:#c65b3a}.point:nth-child(2){border-color:#3a73a5}.point h2{font-size:19px;margin:0 0 6px}.point p{margin:0}.decision{background:#e9efe5;padding:20px 24px;border-radius:14px}.decision h2{font-size:20px;margin:0 0 6px}.decision p{margin:8px 0}details{margin-top:28px}summary{cursor:pointer;padding:14px 0;font-weight:600}details img{width:100%;height:auto;border-radius:12px}footer{margin-top:30px;font-size:14px;color:#59655e}a{color:#245d49}.status{font-size:14px;color:#59655e}@media(max-width:700px){main{padding:22px 14px 40px}.points{grid-template-columns:1fr}.size{margin-left:0;width:100%}button{flex:1;padding:10px 8px}.controls{gap:6px}figcaption{padding:12px 16px}}
+</style>
+<main>
+<div class="eyebrow">TOKKATSU広場 / ILLUSTRATION STUDY</div>
+<p><a href="../hp-mascot-design/index.html" style="font-weight:700">最新：人型マスコットのHP・UI試作を見る →</a></p>
+<p><a href="mascots-humanoid-v4.png" style="font-weight:700">最新：人型マスコットの4人を見る →</a></p>
+<p><a href="hiroba-world.html" style="font-weight:700">新しい広場の全景と4人を見る →</a></p>
+<h1>活動が伝わる。表情が見える。</h1>
+<p class="intro">「マリオのような親しみやすさ」を軸に、ゲームらしい2D・3Dを追加しました。大きな顔、はっきりした形、元気なポーズで活動を伝える比較見本です。</p>
+<div class="controls" aria-label="絵柄を比較">
+<button type="button" data-style="d" aria-pressed="true">D · ゲーム風2D</button>
+<button type="button" data-style="e" aria-pressed="false">E · ゲーム風3D</button>
+<button type="button" data-style="a" aria-pressed="false">A · くっきり線画</button>
+<button type="button" data-style="b" aria-pressed="false">B · 柔らかな絵本</button>
+<button type="button" data-style="c" aria-pressed="false">C · 立体・クレイ</button>
+<label class="size">表示幅 <select id="width"><option value="1200">大きく · 1200px</option><option value="840">中くらい · 840px</option><option value="480">小さく · 480px</option></select></label>
+</div>
+<p class="status" id="status">画像を押すと原寸で開きます。表示幅はウィンドウ幅を上限とします。</p>
+<figure id="figure"><a id="full" href="d-game-2d.png" target="_blank" rel="noopener"><img id="art" src="d-game-2d.png" width="1536" height="1024" alt="ゲーム風2Dで描いた運動会のリレー、児童会の集会進行、学級会の話合い"></a><figcaption aria-live="polite"><h2 id="name">D · ゲーム風2D</h2><p id="note">太い輪郭・単純な顔・弾むポーズ。今回のイメージに最も近いと考える案です。</p></figcaption></figure>
+<div class="points">
+<section class="point"><h2>運動会：競技の瞬間</h2><p>赤白帽・体操服・トラック。バトンの受け渡しと曲げた手足で、走っていることを伝えます。</p></section>
+<section class="point"><h2>児童会：子どもが進行</h2><p>マイク・進行表・集会の舞台。子どもが呼びかけ、参加する子が応える関係を描きました。</p></section>
+<section class="point"><h2>学級会：意見を交わす</h2><p>司会・挙手・記録・黒板のカード。机を囲む距離感と視線で、話合いの場面を伝えます。</p></section>
+</div>
+<section class="decision"><h2>広場に使うなら、顔が見える大きさで</h2><p>絵を精細にしても、広い校庭の中に小さく置くと顔は見えなくなります。活動ごとに近景を設けて人物を大きく見せる構成が合います。</p><p>D・Eはゲームのキャラクターらしさを試した案です。最終素材では、顔・髪形・体格の異なる基本キャラクターを決め、同じキャラクターが各活動に登場する形にそろえると、親しみが積み重なります。</p></section>
+<details><summary>元の広場と比べる</summary><img src="original.png" alt="元の広場。校舎と校庭の全景に小さな人物が配置されている" loading="lazy"></details>
+<footer>2026-09-22 比較試作 · 内蔵画像生成を使用 · <a href="prompts-game.json">ゲーム風の生成プロンプト</a> · <a href="prompts.json">最初の3案のプロンプト</a><br>本番ページへの反映前に、絵柄と構図を検討するためのページです。</footer>
+</main>
+<script>
+const styles={d:{file:'d-game-2d.png',title:'D · ゲーム風2D',note:'太い輪郭・単純な顔・弾むポーズ。今回のイメージに最も近いと考える案です。'},e:{file:'e-game-3d.png',title:'E · ゲーム風3D',note:'大きな顔と丸い形で、ゲームの世界らしい楽しさを出した案。まだ質感や背景に生成画像らしさが残ります。'},a:{file:'a-clear.png',title:'A · くっきり線画',note:'輪郭と表情が読み取りやすい案。活動をぱっと伝えたい今回の目的に、まずおすすめです。'},b:{file:'b-storybook.png',title:'B · 柔らかな絵本',note:'紙の質感と温かい色合い。親しみやすさが魅力です。小さく表示したときに顔の線が残るかを確認してください。'},c:{file:'c-clay.png',title:'C · 立体・クレイ',note:'表情と立体感が際立つ案。今の広場から印象が大きく変わり、サイト全体の絵柄を合わせる必要があります。'}};
+document.querySelectorAll('[data-style]').forEach(button=>button.addEventListener('click',()=>{const item=styles[button.dataset.style];document.querySelectorAll('[data-style]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));document.getElementById('art').src=item.file;document.getElementById('art').width=button.dataset.style==='d'||button.dataset.style==='e'?1536:1774;document.getElementById('art').height=button.dataset.style==='d'||button.dataset.style==='e'?1024:887;document.getElementById('art').alt=item.title+'で描いた運動会のリレー、児童会の集会進行、学級会の話合い';document.getElementById('full').href=item.file;document.getElementById('name').textContent=item.title;document.getElementById('note').textContent=item.note;}));
+document.getElementById('width').addEventListener('change',event=>{document.getElementById('figure').style.maxWidth=event.target.value+'px';});
+</script>
+</html>

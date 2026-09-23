@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 126">
+<title>児童会ちゃん（児童会活動のキャラクター）のイラスト</title>
+<g stroke="#1C1C1A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<rect x="20" y="58" width="10" height="28" rx="5" fill="#F6D8B8" transform="rotate(16 25 60)" />
+<path d="M66 62C69 58 73 61 75 66L78 73 82 66C84 62 90 65 88 69L81 84C78 88 73 87 71 83L64 70C62 66 63 64 66 62Z" fill="#F6D8B8" />
+<rect x="35" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<rect x="51" y="94" width="10" height="24" rx="5" fill="#F6D8B8" />
+<path d="M33 110h11a1 1 0 0 1 1 1v4a3 3 0 0 1-3 3H32a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3z" fill="#FCFBF7" />
+<path d="M63 110H52a1 1 0 0 0-1 1v4a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-2a3 3 0 0 0-3-3z" fill="#FCFBF7" />
+<path d="M48 52c-15 0-23 8-23 19l-2 29h50l-2-29c0-11-8-19-23-19z" fill="#3A6EA5" />
+<path d="M32 55h10l26 41H58z" fill="#E8C547" />
+<path d="M83 69l3-7" fill="none" />
+<rect x="80" y="50" width="14" height="10" rx="5" fill="#FCFBF7" transform="rotate(25 87 55)" />
+<circle cx="48" cy="30" r="25" fill="#F6D8B8" />
+<path d="M22 28C22 14 33 5 48 5c15 0 25 9 26 23l-7-6-2 5-4-10c-7 7-17 9-28 8l4-6c-5 3-10 6-15 9z" fill="#1C1C1A" stroke="none" />
+<circle cx="19" cy="38" r="8.5" fill="#1C1C1A" />
+<circle cx="77" cy="38" r="8.5" fill="#1C1C1A" />
+<ellipse cx="39" cy="33" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<ellipse cx="57" cy="33" fill="#1C1C1A" stroke="none" rx="2.65" ry="3.45" />
+<path d="M42 42q6 6 12 0" fill="none" stroke="#1C1C1A" stroke-width="1.8" />
+<circle cx="30" cy="39" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<circle cx="66" cy="39" r="2.8" fill="#D2552A" stroke="none" opacity=".65" />
+<path d="M33 115h10M53 115h10" fill="none" stroke="#1C1C1A" stroke-width="1.2" /><path d="M26 96h44" fill="none" stroke="#FCFBF7" stroke-width="1.3" /><path d="M84 53l6 3M83 56l5 2" fill="none" stroke-width="1.2" /></g>
+</svg>

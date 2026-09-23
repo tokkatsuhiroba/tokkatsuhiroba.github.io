@@ -1,0 +1,23 @@
+{
+  "svg_files_parsed": 6,
+  "unique_ids": 19,
+  "references_valid": true,
+  "scene_states": 5,
+  "dialogs": 3,
+  "route_anchors": [
+    "index.html#okuru",
+    "atsumaru.html#ima",
+    "atsumaru.html#kai",
+    "atsumaru.html#news",
+    "bansho.html#bansho",
+    "komari.html#kiku",
+    "komari.html#komari",
+    "manabu.html#jissen",
+    "manabu.html#manabu",
+    "shiru.html#about"
+  ],
+  "javascript_syntax": "node --check passed",
+  "raster_art_preview": "Rendered from SVG; visually inspected",
+  "browser_layout_and_interactions": "Not run: browser URL policy blocked prior local preview; no workaround attempted",
+  "production_files_changed": false
+}

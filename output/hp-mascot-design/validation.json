@@ -1,0 +1,38 @@
+{
+  "checks": {
+    "all_local_route_anchors_valid": true,
+    "duplicate_ids": 0,
+    "missing_image_alt": 0,
+    "embedded_pngs": 2,
+    "remote_scripts": 0,
+    "scene_states": 5,
+    "dialogs": 2
+  },
+  "route_files": [
+    "atsumaru.html",
+    "bansho.html",
+    "index.html",
+    "komari.html",
+    "manabu.html",
+    "shiru.html"
+  ],
+  "browser_layout_check": "Not performed: browser URL policy rejected file:// preview; no workaround attempted.",
+  "requested_viewports": [
+    [
+      1470,
+      830
+    ],
+    [
+      1280,
+      700
+    ],
+    [
+      1180,
+      760
+    ]
+  ],
+  "background": "school-world-retro.png",
+  "self_contained_bytes": 5086597,
+  "javascript_syntax": "passed node --check; rerun after final build",
+  "last_revision": "More people, more distant retro panorama; embedded assets and all route anchors rechecked."
+}
