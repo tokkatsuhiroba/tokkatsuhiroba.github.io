@@ -6464,11 +6464,6 @@ KOTOBA = {
     'いま困っていることを、そのまま書いてください。':
         ('Write what you are stuck on, just as it is.',
          'اكتب ما يصعب عليك الآن، كما هو.'),
-    '答えが見つかったものから、<a href="manabu.html#manabu">学ぶ</a>の入口で押せる札になっていきます。':
-        ('As answers are found, each one becomes a card you can tap at the entrance to '
-         '<a href="manabu.html#manabu">How to start</a>.',
-         'وكلّما وُجد جواب، صار سؤاله بطاقة يمكن الضغط عليها عند مدخل '
-         '<a href="manabu.html#manabu">كيف تبدأ</a>.'),
     '送られてきたものを、そのまま並べています。<br> 答えが見つかったものは、'
     '<a href="manabu.html#manabu">学ぶ</a>の入口で<strong>押せる札</strong>になります。':
         ('Shown just as they were sent.<br> Once an answer is found, it becomes a '
