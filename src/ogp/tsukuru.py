@@ -60,7 +60,7 @@ def kaku(f, s):
     print('%-14s %s  %.0fKB' % (f + '.png', Image.open(f + '.png').size,
                                 os.path.getsize(f + '.png') / 1024))
 
-kaku('ogp', svg('group-shoulders',
+kaku('ogp-hiroba', svg('group-shoulders',
                 'TOKKATSU広場', '特別活動の情報が、溜まる場。',
                 'ニュース・実践・板書・研究日程・お悩みBOX',
                 '#FCFBF7', '#2FBA68'))

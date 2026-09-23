@@ -5156,11 +5156,13 @@ def robots_tag(f):
     return '<meta name="robots" content="index, follow">' 
 
 
-# LINEに貼ったときの絵。**中身を差しかえたら、必ず版（v=）を1つ上げてください。**
-# 上げないと、LINEもXも前の絵を出しつづけます（向こうが覚えているため）。
-OGP_BAN = 4
+# LINEに貼ったときの絵。**中身を差しかえたら、必ず「ファイル名」を変えてください。**
+# （2026-09-23：前は ?v=4 のように ? で版を上げていました。しかし ? のうしろは
+#   取りに来る側がうまく読まないことがあるので、名前で版を分けます。）
+# 名前を変えたら、ここと src/head-hiroba.html の2か所を合わせます。
+OGP_MOTO = 'ogp-hiroba.png'
 OGP_E = {
-    'okuru.html': ('ogp-okuru.png?v=1',
+    'okuru.html': ('ogp-okuru.png',
                    '4人のキャラクターが手をあげて「実践を、共有してください。」とお願いしている絵'),
 }
 
@@ -5180,7 +5182,7 @@ def head_de(f, na):
     #   送るページだけ … 4人が手をあげて「実践を共有してください」とお願いする絵
     if f in OGP_E:
         e, alt = OGP_E[f]
-        head = head.replace('ogp.png?v=%d' % OGP_BAN, e)
+        head = head.replace(OGP_MOTO, e)
         head = head.replace('property="og:image:alt" content="TOKKATSU広場｜特別活動で、輝く。"',
                             'property="og:image:alt" content="%s"' % esc_html(alt))
     return head
