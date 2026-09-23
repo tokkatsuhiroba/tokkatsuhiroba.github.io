@@ -1697,7 +1697,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   position:relative;overflow:hidden;
   /* 2段にしたぶん、1枚の窓は半分の高さです（2026-09-22 夜）。
      実寸に戻したので、1行ぶんだけ高さを足してあります。 */
-  max-height:clamp(165px,19vw,225px);
+  max-height:clamp(186px,21vw,250px);
   padding:clamp(12px,1.4vw,16px) clamp(13px,1.5vw,17px) 0;
   background:var(--mi-ji,var(--bg));
   pointer-events:none;-webkit-user-select:none;user-select:none;
@@ -1707,15 +1707,15 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    だから入れ物ごと縮めます。先に幅を 1/倍率 に広げてから縮めるので、
    右が余ることも、はみ出すこともありません。
 
-   2026-09-22 昼は .78 でした（「字が小さくなっていいから量を増やして」）。
-   同じ日の夜、1画面4枚にして窓が半分の高さになったところで
-   「概要が見にくい」となり、**実寸（1）に戻しました**。
-   ご本人に3つならべて選んでいただいた答えです：
-     字を大きく（本物のまま）／見出しだけの一覧にする／切れ方と枠を直す
-   → 1つめ。読める字を取り、映る行数が減るほうを受け入れています。
-   もう一度 量を増やしたくなったら、この数だけ下げれば戻せます。 */
+   2026-09-22 昼は .78 → 夜に 実寸（1）へ戻す、と1日で往復しました。
+   2026-09-23 依頼：「中身をざっとでは。もっと中身が見えるようにして。
+   内容が小さくなってもいいから」。**量のほうを取ります。**
+     ・縮める（.72）… 同じ窓に 1.4倍の行が入ります
+     ・窓も少し高く   … さらに 1.1倍
+     合わせて、いままでの 1.5倍ちかく映ります。
+   ★読めなくなったら、この数を上げれば戻せます（1 が実寸）。 */
 .atama-in{
-  --mi-z:1;
+  --mi-z:.72;
   width:calc(100% / var(--mi-z));
   transform:scale(var(--mi-z));transform-origin:top left;
 }
@@ -1775,7 +1775,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .yoko-ban.gban{grid-template-rows:1fr;--yoko-w:100%;gap:12px;padding:3px 8px 10px 3px}
   #gaiyo .yoko{margin-top:18px}
   .gfuda{border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
-  .atama{max-height:270px;padding:13px 12px 0}
+  .atama{max-height:300px;padding:13px 12px 0}
   .gfuda-h{font-size:14px}
   .gfuda-yo{font-size:11px}
 }
@@ -1834,28 +1834,29 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    色は、その行き先のページごと。＝同じ色は、同じページに着きます。
    色だけで伝えないため、いまいる所はベタ塗り（形でも分かる）にします。
    ══════════════════════════════════════════════════════════════ */
-/* ── 色の決まりは1つだけ：同じ色は、同じページに着く ──────────
-   ページごとに色を決め、帯・8つの札・中身をざっと の3か所で同じ色を使います。
-   並び順も行き先ごとにまとめてあるので、同じ色がとなり合って見えます。
-   色だけで伝えないため、いまいる所はベタ塗り（形でも分かる）にします。 */
+/* ── 色の決まり：同じ色は、同じページに着く ────────────────
+   ページごとに色を決め、**8つの札と「中身を、ざっと」**で同じ色を使います。
+
+   ★2026-09-23 依頼：「帯の色を整理して統一感が欲しい」
+     帯からは色を外しました。行き先が7つに増えて、色が5つ＋白2つになり、
+     どう並べても ばらばらに見えていたためです。
+     7つに7色を当てても同じです。**色の数がふえるほど、意味は薄くなります。**
+     帯は1つ33pxしかないので、色は飾りにしかなっていませんでした。
+   ★帯で色が言うのは「いまどこ」だけにします。ほかを ぜんぶ同じにすると、
+     墨でベタ塗りにした1つが、いちばん強く立ちます。
+   ★札（1枚が大きい）では、色はまだ意味を持てるので そのままです。 */
 .p--index   {--p-iro:var(--men-ki)}
 .p--shiru   {--p-iro:var(--men-sora)}
 .p--manabu  {--p-iro:var(--men-midori)}
 .p--atsumaru{--p-iro:var(--men-hada)}
-
-/* ★1つだけ、決まりから外します（2026-09-23 依頼）。
-   研究会とニュースは どちらも atsumaru.html なので、上の決まりでは
-   同じ色になり、帯でとなり合って見分けがつきませんでした。
-   ニュースだけ別の色にします。「同じ色＝同じページ」は、これ1つを
-   のぞいて そのまま生きています。
-   ★色だけで伝えないため、字はもちろん、いまいる所はベタ塗りのままです。 */
-.s--news{--p-iro:var(--men-fuji)}
+.p--news    {--p-iro:var(--men-fuji)}
 
 .obi-s{position:relative}
 @media (min-width:720px){
+  /* 下線は ぜんぶ同じ色。いまいる所だけ、地の色でくっきり出します */
   .obi-l a.obi-s::after{
     content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;
-    border-radius:2px;background:var(--p-iro,transparent);
+    border-radius:2px;background:var(--rule);
   }
   .obi-l a.obi-ima::after{background:var(--bg);opacity:.5}
 }
@@ -1882,7 +1883,7 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .obi-l a{
     width:100%;min-height:33px;padding:5px 4px;justify-content:center;
     text-align:center;font-size:11.5px;letter-spacing:0;line-height:1.3;
-    border-width:2px;background:var(--p-iro,var(--bg));border-color:var(--p-iro,var(--rule));
+    border-width:2px;background:var(--bg);border-color:var(--rule);
   }
   .obi-l a.obi-ima{background:var(--ink);border-color:var(--ink);color:var(--bg)}
   .obi-l a:hover,.obi-l a:focus-visible{border-color:var(--ink)}
@@ -4067,6 +4068,23 @@ html[data-moji="chiisai"] .motto>summary{min-height:46px;padding:8px 18px}
    ★赤い注意書き（.okuru-kiwo）の下余白は 0 のままにします。
      すぐ下の最終確認の札と、1枚につながって見せているためです。 */
 .okuru-f{padding:clamp(16px,2.4vw,24px)}
+
+/* ══ 送る欄は「小」の大きさから始める（2026-09-23 依頼）══════
+   「実践のフォーム送る場所に関しては、小の時のサイズをデフォルトに
+     して欲しい」
+   送る欄は、欄・札・説明が いちばん多いところです。ふつうの大きさだと
+   ホームでいちばん背が高い節になります。ここだけ **1段ぶん小さい所から**
+   始めます（つまみが「中」のときに .8 ＝ いままでの「小」）。
+
+   ★つまみは そのまま効きます。大きくしたい人は、ちゃんと大きくなります。
+   ★「小」より下には行きません。小さくしすぎると、書く所が読めません。
+   ★入力欄の字（.okuru-i）は 16px のままです。掛け算していません。
+     16px未満だと、iPhoneが勝手に画面を寄せます。
+   ★押せる大きさ（44px以上）も、掛け算していないので変わりません。 */
+.okuru-f{--moji:.8}
+html[data-moji="chiisai"] .okuru-f{--moji:.8}    /* これ以上は小さくしない */
+html[data-moji="ookii"]   .okuru-f{--moji:.9}
+html[data-moji="totemo"]  .okuru-f{--moji:1.01}
 .okuru-g{margin-bottom:11px}
 .okuru-yomi{margin:5px 0 13px}
 .okuru-yomi--sub{margin:0 0 6px}

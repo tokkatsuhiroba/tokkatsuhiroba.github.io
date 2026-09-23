@@ -4579,10 +4579,18 @@ def build_home(doko, sec, mark, kiji, jissen, ken, komari):
             saki='%s#%s' % (doko[sid], sid), na=na, w=w, h=h,
             midashi=esc_html(SETSU_NA[sid]), yo=esc_html(yo),
             **kazu_hiku(sid, sec, kiji, jissen, ken, komari)))
+    # 2026-09-23 依頼：「「７つのできること」の表記にして」
+    #   数は **その場で数えます**（手で書くと、札を足したとき古い数が残ります。
+    #   げんに「8つ」のまま7つになっていました）。
+    #   数が変わる字なので、訳は KOTOBA ではなく ここで直に入れます
+    #   （札の件数と同じ考えです → home_kazu）。
+    n = len(HOME_FUDA)
     honbun = ('<section class="sec sec--ki" id="ichiran">\n'
               '  <div class="uchi">\n'
               '    <h2 class="midashi"><span class="en">CONTENTS</span>'
-              '<span class="ja">ぜんぶで、8つ</span></h2>\n'
+              '<span class="ja" data-en="%d things you can do here" '
+              'data-ar="%d أشياء يمكنك فعلها هنا">%dつのできること</span></h2>\n'
+              % (n, n, n) +
               '    <p class="yomi">押すと、そのページがひらきます。'
               '見た目も帯もそのままなので、いつでもここへ戻れます。</p>\n'
               '    <div class="hban">\n' + '\n'.join(fuda) + '\n    </div>\n'
@@ -4810,9 +4818,11 @@ def build_obi(ima_file, doko):
     for sid, _, _, _ in HOME_FUDA:
         saki = doko[sid]
         ima = (saki == ima_file)
-        # s--◯◯ … 項目ごとの印。色を1つだけ変えたいとき（ニュース）と、
-        #   幅を2ます分にしたいとき（明日から使えるグッズ）に使います。
-        #   p--◯◯（ページの色）はそのまま残します。ふだんはページの色です。
+        # s--◯◯ … 項目ごとの印。いまは 幅を2ます分にしたいとき
+        #   （明日から使えるグッズ）だけに使っています。
+        # p--◯◯ … ページの色。2026-09-23 の依頼で **帯では使っていません**
+        #   （帯は ぜんぶ同じ。色で言うのは「いまどこ」だけ）。
+        #   札と「中身を、ざっと」では、いまも ページの色です。
         gyo.append('      <li class="o--%s"><a class="obi-s p--%s s--%s%s" '
                    'href="%s"%s>%s</a></li>'
                    % (sid, saki.replace('.html', ''), sid,
@@ -4820,7 +4830,8 @@ def build_obi(ima_file, doko):
                       '#%s' % sid if ima else '%s#%s' % (saki, sid),
                       ' aria-current="page"' if ima else '',
                       esc_html(SETSU_NA[sid])))
-    return ('<nav class="obi" aria-label="TOKKATSU広場の中の、8つの行き先">\n'
+    return ('<nav class="obi" aria-label="TOKKATSU広場の中の、%d の行き先">\n'
+            % len(HOME_FUDA) + 
             '  <div class="obi-uchi">\n'
             '    <a class="obi-na" href="%s">TOKKATSU広場</a>\n'
             '    <ul class="obi-l">\n' % HOME
@@ -5054,7 +5065,7 @@ def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
 KOTOBA = {
     # ── 節の見出し ──
     'このサイトは、なに': ('What this site is', 'ما هذا الموقع'),
-    'ぜんぶで、8つ': ('Eight places in all', 'ثمانية أقسام'),
+
     'あなたの実践を、ここに': ('Your practice belongs here', 'شارك ممارستك هنا'),
     '中身を、ざっと': ('A quick look inside', 'نظرة سريعة على المحتوى'),
     '特別活動って、なに': ('What is Tokkatsu?', 'ما هي الأنشطة الخاصة (توكاتسو)؟'),
