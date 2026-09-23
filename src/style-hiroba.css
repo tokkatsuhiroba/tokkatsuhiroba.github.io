@@ -4006,7 +4006,23 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   .hfuda-e svg{max-height:34px}
   .hfuda-h{font-size:calc(11px * var(--moji));letter-spacing:0;line-height:1.35}
   .hfuda-yo{display:none}
-  .hfuda-kazu{margin-top:4px;padding:1px 6px;font-size:calc(9.5px * var(--moji))}
+  /* ★件数の札（2026-09-23 依頼で直し）
+     カードが79pxしかないのに「5件とどいた」「日程8件・15会」は
+     入りきらず、**2行に折れていました**。そこへ border-radius:999px が
+     かかるので、**丸い風船**のように見えていました（実測 66×35px）。
+     丸みをやめて、**カードいっぱいの角丸の札**にします。
+     2行になっても、ただの四角い札に見えます。
+     ★7つとも同じ幅になるので、並びもそろいます。 */
+  .hfuda-kazu{
+    /* ★align-self:start が要ります。これが無いと、**その段でいちばん
+       高いカードに合わせて 札がタテに引き伸ばされます**。
+       2段目（特活とは・ニュース）だけ札が34pxになって、
+       丸みと相まって「風船」に見えていました（実測）。 */
+    justify-self:stretch;align-self:start;text-align:center;
+    margin-top:4px;padding:2px 4px;
+    border-radius:8px;border-width:1.5px;
+    font-size:calc(9px * var(--moji));letter-spacing:0;line-height:1.4;
+  }
 
   .igi-intro{gap:8px}
   /* 4人の絵。名前が1行に収まる幅にします（「児童会ちゃん」が
