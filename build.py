@@ -3375,16 +3375,37 @@ BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-to
         <p class="bfuda-me"><span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-lead">{lead}</p>
-{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>{zen}\
-<button class="bansho-b bansho-b--hoshi" type="button" data-hoshi="{slug}" aria-pressed="false" hidden>あとで見る<i aria-hidden="true">☆</i></button>\
-<button class="bansho-b bansho-b--yaritai" type="button" data-yaritai="{slug}" hidden>やってみたい<span class="yaritai-n" data-yaritai-n="{slug}"></span></button>\
-<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>印刷</button>\
-<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">画像保存<i>↓</i></button></p>
+{more}{mado}{shiryo}        <p class="bfuda-ashi"><span class="bfuda-by">提供：{by}</span>\
+<span class="bfuda-te">{zen}\
+<button class="bansho-b bansho-b--kami" type="button" data-kami="{slug}" hidden>{ICON_KAMI}<span>印刷</span></button>\
+<button class="bansho-b bansho-b--ga" type="button" data-ga data-url="{ima}">{ICON_GA}<span>画像保存</span></button></span></p>
       </article>"""
+
+# ── 札の足のボタンに付けるしるし（2026-09-23 依頼）────────────
+#   「アイコンにするともっとスタイリッシュになるよね」
+#   ★字は消しません。先生がはじめて見て、絵だけで分かるとは限りません。
+#     しるしは **字の上**に置きます（3つ横ならびでも、字が読めます）。
+#   ★線は本文と同じ墨（currentColor）。緑のボタンの上でも読めます。
+def icon(d, w=22):
+    return ('<svg class="b-i" viewBox="0 0 24 24" width="%d" height="%d" '
+            'fill="none" stroke="currentColor" stroke-width="2" '
+            'stroke-linecap="round" stroke-linejoin="round" '
+            'aria-hidden="true" focusable="false">%s</svg>' % (w, w, d))
+
+
+ICON_ZEN  = icon('<circle cx="10.5" cy="10.5" r="6.5"/>'      # 虫めがね
+                 '<path d="M15.3 15.3 21 21"/>'
+                 '<path d="M10.5 7.8v5.4M7.8 10.5h5.4"/>')
+ICON_KAMI = icon('<path d="M7 9V3h10v6"/>'                    # プリンター
+                 '<rect x="3" y="9" width="18" height="8" rx="2"/>'
+                 '<path d="M7 14h10v7H7z"/>')
+ICON_GA   = icon('<rect x="3" y="3" width="18" height="12" rx="2"/>'   # 写真＋↓
+                 '<path d="m7 12 3-3 2.5 2.5"/><circle cx="15" cy="8" r="1.3"/>'
+                 '<path d="M12 17v4m0 0-2.5-2.5M12 21l2.5-2.5"/>')
 
 # 札の足に置く［大きく見る］。どの窓を開くかを data-zen で渡します。
 ZEN_B = ('<button class="bansho-b bansho-b--zen" type="button" '
-         'data-zen="{doko}">{na}</button>')
+         'data-zen="{doko}">' + ICON_ZEN + '<span>{na}</span></button>')
 
 BFUDA_MADO = """        <div class="bfuda-mado bfuda-mado--hiro">
 {gazou}
@@ -3495,6 +3516,7 @@ def build_bansho(jissen):
             chiho=esc_html(a.get('chiho') or ''),
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             mado=mado, shiryo=sh, zen=zen, more=more, by=esc_html(a['by']),
+            ICON_KAMI=ICON_KAMI, ICON_GA=ICON_GA,
             ima=esc_html(ima)))
     return (JIBUN_TANA + '\n' + sagasu_obi(aru)
             + '\n    <div class="bantana" id="bantana">\n'
@@ -3961,13 +3983,6 @@ SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
         <div class="okuru-nen" role="group" aria-labelledby="sagasu-g-l" id="sagasu-g">
           <button type="button" class="okuru-nen-b" data-g="" aria-pressed="true">ぜんぶ</button>
 {nen}        </div>
-      </div>
-      <div class="sagasu-gyo" id="sagasu-h-gyo" hidden>
-        <span class="sagasu-l" id="sagasu-h-l">あとで見る</span>
-        <div class="okuru-nen" role="group" aria-labelledby="sagasu-h-l" id="sagasu-h">
-          <button type="button" class="okuru-nen-b" data-h="" aria-pressed="true">ぜんぶ</button>
-          <button type="button" class="okuru-nen-b" data-h="1" aria-pressed="false">☆だけ<span class="sagasu-b-kazu" id="sagasu-h-kazu">0</span></button>
-        </div>
       </div>
       <div class="sagasu-gyo">
         <span class="sagasu-l" id="sagasu-j-l">並び</span>

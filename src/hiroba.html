@@ -1065,22 +1065,17 @@
                .replace(/\.html$/, '') || 'index';
     if (!/^(index|shiru|manabu|atsumaru|bansho|komari)$/.test(na)) return;
     var bun = JSON.stringify({ kind: 'miru', p: na });
-    /* 「やってみたい」の札がある画面では、**返事を読みます**。
-       受け口が、見られた数を足したついでに、やってみたい の数を返します。
-       どうせ1回投げるので、通信を2回にはしません。
-       札が無い画面では、返事は要らないので sendBeacon（軽い・速い）。 */
-    var iru = !!document.querySelector('[data-yaritai]');
+    /* 2026-09-23：前は「やってみたい」の数を返してもらうために、
+       その札がある画面だけ fetch にしていました。札をやめたので、
+       返事は要りません。どの画面でも sendBeacon（軽い・速い）です。 */
     try {
-      if (!iru && navigator.sendBeacon) {
+      if (navigator.sendBeacon) {
         navigator.sendBeacon(OKURU_URL, new Blob([bun], {type:'text/plain;charset=UTF-8'}));
         return;
       }
       fetch(OKURU_URL, { method:'POST',
                          headers:{'Content-Type':'text/plain;charset=UTF-8'},
-                         body: bun })
-        .then(function(r){ return r.json(); })
-        .then(function(o){ if(o && o.yaritai && window.YARITAI_KAKU) YARITAI_KAKU(o.yaritai); })
-        ['catch'](function(){});
+                         body: bun })['catch'](function(){});
     } catch (e) {}
   })();
 
@@ -1837,88 +1832,14 @@
     })();
   }
 
-  /* ══ あとで見る（☆）と やってみたい（2026-09-23 依頼）══════
-     いままで、このサイトで何かできるのは **送る人だけ** でした。
-     読む人は読むだけ。ここを両方あけます。
-
-       ☆あとで見る … 端末の中（storage.js）にだけ残ります。
-                      **外へは1バイトも出ません。**ほかの人にも見えません。
-       やってみたい … 押した1回を受け口に足します。残るのは
-                      「実践の slug と、のべの回数」だけ。誰が押したかは
-                      受けとりませんし、残しません。
-
-     ★どちらも、押せるようになってから出します（JSが動かない人には
-       出しません。押しても何も起きない札を、画面に置かないため）。      */
-  (function(){
-    var hoshiB = [].slice.call(document.querySelectorAll('[data-hoshi]'));
-    var yaritaiB = [].slice.call(document.querySelectorAll('[data-yaritai]'));
-    if(!hoshiB.length && !yaritaiB.length) return;
-
-    function yomu(na){
-      var a = Store.get(na, []);
-      return Object.prototype.toString.call(a) === '[object Array]' ? a : [];
-    }
-
-    /* ── ☆あとで見る ───────────────────────────── */
-    var hoshi = yomu('stock');
-    function hoshi_utsusu(){
-      hoshiB.forEach(function(b){
-        var iru = hoshi.indexOf(b.getAttribute('data-hoshi')) >= 0;
-        b.setAttribute('aria-pressed', iru ? 'true' : 'false');
-        b.querySelector('i').textContent = iru ? '★' : '☆';
-        b.hidden = false;
-      });
-      if(window.HOSHI_KAWATTA) HOSHI_KAWATTA(hoshi);
-    }
-    hoshiB.forEach(function(b){
-      b.addEventListener('click', function(){
-        var v = b.getAttribute('data-hoshi'), i = hoshi.indexOf(v);
-        if(i < 0) hoshi.push(v); else hoshi.splice(i, 1);
-        Store.set('stock', hoshi);
-        hoshi_utsusu();
-      });
-    });
-    hoshi_utsusu();
-
-    /* ── やってみたい ─────────────────────────────
-       数は、開いたときに受け口から返ってきます（上のビーコンの返事）。
-       返ってくるまでは、数を出しません（0と出すと、0件なのか
-       まだ来ていないのか 分からないためです）。                       */
-    var oshita = yomu('yaritai');
-    var kazu = null;
-    function yaritai_utsusu(){
-      yaritaiB.forEach(function(b){
-        var v = b.getAttribute('data-yaritai');
-        var sumi = oshita.indexOf(v) >= 0;
-        b.hidden = false;
-        b.disabled = sumi;
-        b.setAttribute('aria-pressed', sumi ? 'true' : 'false');
-        b.firstChild.nodeValue = sumi ? 'やってみたい ✓' : 'やってみたい';
-        var n = b.querySelector('[data-yaritai-n]');
-        if(n && kazu) n.textContent = kazu[v] ? kazu[v] : '';
-      });
-    }
-    /* 受け口の返事が来たら、数を入れます（上のビーコンから呼ばれます） */
-    window.YARITAI_KAKU = function(y){ kazu = y || {}; yaritai_utsusu(); };
-
-    yaritaiB.forEach(function(b){
-      b.addEventListener('click', function(){
-        var v = b.getAttribute('data-yaritai');
-        if(oshita.indexOf(v) >= 0) return;
-        oshita.push(v); Store.set('yaritai', oshita);
-        if(kazu) kazu[v] = (kazu[v] || 0) + 1;     // 待たずに1つ増やす
-        yaritai_utsusu();
-        if(!OKURU_URL) return;
-        try{
-          fetch(OKURU_URL, { method:'POST',
-                             headers:{'Content-Type':'text/plain;charset=UTF-8'},
-                             body: JSON.stringify({ kind:'yaritai', v:v }) })
-            ['catch'](function(){});
-        }catch(e){}
-      });
-    });
-    yaritai_utsusu();
-  })();
+  /* ══ 2026-09-23：［あとで見る（☆）］と［やってみたい］をやめました ══
+     依頼で、札の足のボタンを **大きく見る・印刷・画像保存 の3つ**に
+     しぼりました。押す所が無くなったので、この2つを動かしていた
+     仕掛けも外してあります（動かない札を画面に置かないのと同じ考えです）。
+     ★もし戻すときは、build.py の BFUDA にボタンを足してから、
+       ここに読み書き（Store の stock / yaritai）を書きなおしてください。
+     ★受け口に残っている「やってみたい」の数は、そのままです。
+       こちらから足さなくなるだけで、消してはいません。            */
 
   /* ══ ことばをさがす（2026-09-23 依頼）════════════════════
      25語もあると、上から読むのは しんどくなります。
@@ -2047,10 +1968,6 @@
     var sgK    = document.getElementById('sagasu-k');      /* 日本の地図 */
     var sgFuda = [].slice.call(sgTana.querySelectorAll('.bfuda'));
     var sgNai = '', sgNen = '', sgKen = '', sgShi = '', sgJun_ima = 'atarashii';
-    var sgH = document.getElementById('sagasu-h');
-    var sgHgyo = document.getElementById('sagasu-h-gyo');
-    var sgHkazu = document.getElementById('sagasu-h-kazu');
-    var sgHoshi = '', sgHoshiL = [];
     /* 学年の札が1つも無いとき（学年を書かずに届いたものばかりのとき）は、
        その行ごと出しません。「ぜんぶ」しか無い行は、押す意味がないためです。 */
     if(sgGgyo && sgG.querySelectorAll('[data-g]').length < 2) sgGgyo.hidden = true;
@@ -2087,7 +2004,6 @@
         if(sgShi && f.getAttribute('data-shi') !== sgShi) return false;
         /* ☆あとで見る（2026-09-23）。端末の中だけの印なので、
            ほかの人の画面では、この絞りこみは何も変えません。 */
-        if(sgHoshi && sgHoshiL.indexOf(f.id.replace(/^b-/, '')) < 0) return false;
         if(ji && f._ji.indexOf(ji) < 0) return false;
         return true;
       });
@@ -2117,28 +2033,9 @@
       }
     }
 
-    /* ☆の数が変わったら、ここに知らせが来ます（上の あとで見る から）。
-       1つも付いていないときは、行ごと出しません。押す意味がないためです。 */
-    window.HOSHI_KAWATTA = function(l){
-      sgHoshiL = l || [];
-      if(sgHkazu) sgHkazu.textContent = sgHoshiL.length;
-      if(sgHgyo) sgHgyo.hidden = !sgHoshiL.length;
-      if(!sgHoshiL.length && sgHoshi){         // 最後の1つを外したら、ぜんぶに戻す
-        sgHoshi = ''; sg_osu(sgH, '', 'data-h');
-      }
-      sg_utsusu();
-    };
-    /* ☆の帯は、上の「あとで見る」より **あとに** 作られます。
-       だから初回の知らせを取りこぼします。ここで1回、自分で読みます。 */
-    (function(){
-      var l = Store.get('stock', []);
-      HOSHI_KAWATTA(Object.prototype.toString.call(l) === '[object Array]' ? l : []);
-    })();
-    if(sgH) sgH.addEventListener('click', function(ev){
-      var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
-      sgHoshi = b.getAttribute('data-h') || '';
-      sg_osu(sgH, sgHoshi, 'data-h'); sg_utsusu();
-    });
+    /* 2026-09-23：［あとで見る（☆）］をやめたので、「☆だけ」で絞る行も
+       外しました。★を付ける所が無いのに絞りこみだけ残すと、
+       いつまでも0件の行になります。 */
     sgN.addEventListener('click', function(ev){
       var b = ev.target.closest('.okuru-nen-b'); if(!b) return;
       sgNai = b.getAttribute('data-n') || '';

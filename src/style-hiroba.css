@@ -3438,28 +3438,6 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .news-hi b{color:var(--ink)}
 
-/* ── あとで見る（☆）と やってみたい（2026-09-23）──────────────
-   ★どちらも「押したか／押していないか」を、色だけでなく
-     **形（☆と★・✓）**でも出します。
-   ★押せる大きさは、ほかの札と同じ 40px 以上を保ちます。 */
-.bansho-b--hoshi[aria-pressed="true"]{
-  background:var(--men-ki);border-color:var(--ink);color:var(--ink);
-}
-.bansho-b--hoshi i{font-style:normal;font-size:15px;line-height:1;margin-inline-start:6px}
-.bansho-b--yaritai[aria-pressed="true"],.bansho-b--yaritai:disabled{
-  background:var(--accent);border-color:var(--accent);color:var(--bg);
-  opacity:1;cursor:default;
-}
-.yaritai-n{
-  display:inline-block;margin-inline-start:7px;padding:0 7px;
-  min-width:1.6em;border-radius:999px;
-  background:var(--ink);color:var(--bg);
-  font-size:11.5px;font-variant-numeric:tabular-nums;
-}
-.yaritai-n:empty{display:none}
-.bansho-b--yaritai[aria-pressed="true"] .yaritai-n,
-.bansho-b--yaritai:disabled .yaritai-n{background:var(--bg);color:var(--accent)}
-
 /* ── 管理人だけのメモ（2026-09-22）──────────────────────
    どこにも公開しません。だから見た目も、公開ページの言葉とは
    はっきり変えます（うすい地 ＋ 左の縦棒）。 */
@@ -3813,3 +3791,35 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* 窓の外に置いた［大きく見る］（「すぐ使える道具」の資料）。
    窓の中に戻さないこと … 写真の高さを、この行に取られます。 */
 .shiryo-zen{margin:8px 0 0;display:flex;justify-content:flex-end}
+
+/* ══ 札の足を、3つ横ならびに（2026-09-23 依頼）════════════════
+   「あとでやってみる と やってみたい の2項目を消す。
+     大きくみると印刷と画像を1列にして。
+     アイコンにするともっとスタイリッシュになるよね」
+
+   5つを2列で折り返していたのを、**3つ・1列**にしました。
+   ★しるし（アイコン）は足しましたが、**字は消していません**。
+     はじめて来た先生が、絵だけで「印刷」と分かるとは限りません。
+     しるしを字の上に置けば、3つ横ならびでも字が読めます。
+   ★押せる大きさ（44px以上）は、そのままです。 */
+.bfuda-te{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  width:100%;margin:0;
+}
+.bfuda-ashi{display:block}
+.bfuda-by{display:block;margin:0 0 9px}
+.bfuda-te .bansho-b{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;width:100%;min-width:0;
+  padding:8px 6px;min-height:58px;
+  font-size:calc(12px * var(--moji));letter-spacing:.02em;line-height:1.3;
+}
+.bfuda-te .bansho-b .b-i{display:block;flex:none}
+.bfuda-te .bansho-b > span{display:block;white-space:nowrap}
+/* 2つしか出ないとき（印刷が使えない端末）でも、すき間が空かないように */
+.bfuda-te:has(.bansho-b[hidden]){grid-template-columns:repeat(2,1fr)}
+.bfuda-te .bansho-b[hidden]{display:none}
+@media (max-width:379px){
+  .bfuda-te{gap:6px}
+  .bfuda-te .bansho-b{padding:7px 3px;font-size:calc(11px * var(--moji))}
+}
