@@ -3033,6 +3033,18 @@
      ★上だけ切り出すと、紙の下半分が誰にも届きません。縮めれば、
        小さくても ぜんぶ写ります。読めないぶんはQRから本物へ行けます。 */
   var GA_E_TAKASA = 950;        /* 資料の置き場の高さ。ここに収まるまで縮めます */
+  /* 写真の下限（2026-09-24 依頼「むしろ資料を小さくして」）。
+     字を ぜんぶ出すために写真を縮めますが、**ここより小さくはしません**。
+     小さすぎると、板書が何も読めない点になって、載せた意味が無くなります。 */
+  var GA_E_SAITEI = 420;
+  /* 写真を下限まで縮めても 字が入りきらない1件のための大きさ。
+     ★そこまで来たら、どうせ上限（1.85倍）は越えます。**越えるなら、
+       写真を つぶす意味がありません。**だから楽な大きさに戻して、
+       たてを少し伸ばします（字は ぜんぶ出す、が先だからです）。 */
+  var GA_E_RAKU = 700;
+  /* ほんとうの限界。ここを越えたときだけ、本文を切ります。
+     （送られてくる字が、思いもよらない長さだったとき用の安全網です） */
+  var GA_TAKASA_GENKAI_HI = 2.6;
   var GA_E_MAX = 4;             /* 入れる資料の枚数。これ以上はQRの先で */
   var GA_JI = '"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif';
   var GA_HON = '"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif';
@@ -3323,7 +3335,7 @@
     })).then(function(a){ return a.filter(Boolean); });
   }
 
-  function ga_e_kumi(ims, naka){
+  function ga_e_kumi(ims, naka, takaMax){
     /* 資料の並べ方。1枚ならはばいっぱい、2枚以上なら2列。
        **どれも縮めるだけで、切りません。** 全部写るのが先です。 */
     var n = ims.length;
@@ -3332,7 +3344,9 @@
     var retsu = Math.ceil(n / cols);
     var aki = 16;
     var cw = (naka - aki * (cols - 1)) / cols;
-    var maxH = GA_E_TAKASA / retsu;
+    /* 2026-09-24：天井を 外から渡せるようにしました。
+       字をぜんぶ出したあとの「残り」が渡ってきます。 */
+    var maxH = (takaMax || GA_E_TAKASA) / retsu;
     var ms = [], y = 0;
     for(var r = 0; r < retsu; r++){
       var takaGyo = 0, gyo = [];
@@ -3545,8 +3559,14 @@
        札の行は、いま **題の上**にあります（上の 'meta'）。 */
     y += 34; okiba.push({t:'sen', y:y - 17});
 
-    var kumi = ga_e_kumi(shashin || [], naka);
-    if(kumi){ okiba.push({t:'e', y:y, k:kumi}); y += kumi.h + 34; }
+    /* ══ 写真は、あとで組みます（2026-09-24 依頼）══════════════
+       「文章は全部見れるようにして欲しいな。むしろ資料を小さくして」
+       だから順番を入れかえました。**字を先にぜんぶ数えて、余った
+       ところを写真に渡します。**（前は写真が先で、あふれた字を切って
+       いました）
+       ここでは 置き場所だけ取っておいて、高さは下で決めます。 */
+    var eOki = {t:'e', y:y, k:null};
+    okiba.push(eOki);
     /* ★本文は UD の書体で（2026-09-23 依頼「実践の本文をUDにして」）。
        前は丸ゴシック（GA_JI）でした。すぐ下に続く「つづき」（hon）は
        はじめから GA_HON だったので、**1枚の絵の中で書体が2つ**に
@@ -3555,14 +3575,10 @@
          合わず、絵の右はしから字がはみ出します。 */
     ctx.font = '500 32px ' + GA_HON;
     var leadG = lead ? ga_oru(ctx, lead, naka) : [];
-    /* ひとことにも天井（2026-09-24）。ここが長いと、本文を切っても
-       絵が上限を越えます。切ったことは、すぐ下の本文で言います。 */
-    if(leadG.length > GA_LEAD_MAX) leadG = leadG.slice(0, GA_LEAD_MAX);
-    if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 50 + 22; }
-
     ctx.font = '400 29px ' + GA_HON;
     var honG = hon ? ga_oru(ctx, hon, naka) : [];
-    /* 入りきらないぶんは切る。切ったことは、画面の中で正直に言う */
+    /* 字は **ぜんぶ出します**（2026-09-24 依頼）。切るのは、写真を
+       いちばん小さくしても どうしても入らないときだけです（下）。 */
     /* ══ 足もと（2026-09-24 依頼「まだ縦に長い」）══════════════
        前は **QRの段が2つ**ありました。
          本文の下 … デジタル資料（QR150＋字）　218px
@@ -3573,17 +3589,41 @@
        ★資料が無い実践は、これまでどおり1つだけ（332px。案内役も出ます）。
        ★上下の余白は そのままです。 */
     var ashi = sotoU ? 306 : 332;
-    /* 本文に出せる行数。**上限から、本文いがいの ぜんぶを引いた残り**です。
-       12（本文のあとのすきま）＋46（「つづきは」の1行）＋28（足もとの前）を
-       先に取っておかないと、切ったのに上限を越えます。 */
-    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi - 12 - 46 - 28) / 50);
+    /* ── 写真に渡せる高さ＝上限から、字と足もとを引いた残り ──────
+       ★字（ひとこと＋本文）を先に確保します。写真は そのあとです。
+       ★写真は GA_E_SAITEI より小さくしません。小さすぎると、板書が
+         何も読めない点になり、**写真を載せた意味が無くなる**ためです。
+       ★そこまで縮めても入らない1件だけ、最後に本文を切ります。 */
+    var jiTakasa = (leadG.length ? leadG.length * 50 + 22 : 0)
+                 + (honG.length  ? honG.length  * 50 + 12 : 0);
+    var eNokori = GA_TAKASA_MAX - y - jiTakasa - 28 - ashi - 34;   /* 34＝写真のあとのすきま */
+    /* 写真の高さの決め方（2026-09-24 依頼）
+         ① 残りが 下限より広い … 残りいっぱい（ただし天井 950 まで）
+         ② 残りが 下限より狭い … **上限をあきらめて**、楽な大きさ（700）
+       ②で写真を下限（420）までつぶしても、どうせ上限は越えます。
+       越えるなら つぶす意味がないので、写真は読める大きさに戻して、
+       たてを少し伸ばします。**字を ぜんぶ出すのが先**だからです。 */
+    var eTaka = (eNokori >= GA_E_SAITEI)
+              ? Math.min(GA_E_TAKASA, eNokori)
+              : GA_E_RAKU;
+    var kumi = ga_e_kumi(shashin || [], naka, eTaka);
     var kitta = false;
-    if(honG.length > kiru){
-      /* 1行も残らないのは やりすぎです。すくなくとも GA_HON_SAITEI 行は
-         出します（そのぶん、上限を少しだけ越えることがあります）。 */
-      honG = honG.slice(0, Math.max(GA_HON_SAITEI, kiru));
+    if(kumi){
+      eOki.k = kumi;
+      y += kumi.h + 34;
+    } else {
+      okiba.splice(okiba.indexOf(eOki), 1);       /* 写真が無い実践 */
+    }
+    /* ほんとうの限界を越えたときだけ、本文を切ります（安全網）。
+       ふだんは ここを通りません。 */
+    var genkai = Math.round(GA_W * GA_TAKASA_GENKAI_HI);
+    var sugita = (y + jiTakasa + 28 + ashi) - genkai;
+    if(sugita > 0 && honG.length > GA_HON_SAITEI){
+      var kesu = Math.min(honG.length - GA_HON_SAITEI, Math.ceil((sugita + 46) / 50));
+      honG = honG.slice(0, honG.length - kesu);
       kitta = true;
     }
+    if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 50 + 22; }
     if(honG.length){ okiba.push({t:'hon', g:honG, y:y}); y += honG.length * 50 + 12; }
     if(kitta){ okiba.push({t:'kitta', y:y}); y += 46; }
     y += 28;
