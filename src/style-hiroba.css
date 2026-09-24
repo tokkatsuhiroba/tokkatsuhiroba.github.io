@@ -5329,3 +5329,9 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
   .bfuda-naka--tojita::after{display:none !important}
   .bfuda-motto{display:none !important}
 }
+
+/* もう一度押すと とじる、の合図（2026-09-24 依頼）。
+   ★［大きく］のときは、押すのではなく **動かして読む** ので、
+     手のかたちを変えます（動かしても とじません → src/hiroba.html）。 */
+.zen-naka{cursor:zoom-out}
+.zen--ookiku .zen-naka{cursor:move}

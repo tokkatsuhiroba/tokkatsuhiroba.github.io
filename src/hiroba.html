@@ -4759,6 +4759,13 @@
 (function(){
   'use strict';
   var zen = null, img = null, modoru = null;
+  /* 「押した」と「動かした」の分かれめ（2026-09-24）。
+     ★10px … 指は じっとしていても数px ぶれます。0にすると、
+       ほとんどの人が「とじられない」になります。
+     ★700ms … 長押し（写真を保存するときのメニュー）は とじません。 */
+  var oshita = null;
+  var TAP_UGOKI = 10;   // 指の動いた長さ（px）
+  var TAP_TOKI  = 700;  // 押していた長さ（ミリ秒）
 
   function tsukuru(){
     zen = document.createElement('div');
@@ -4776,9 +4783,36 @@
       '</div>';
     document.body.appendChild(zen);
     img = zen.querySelector('img');
+    /* ══ もう一度タップしたら、とじる（2026-09-24 依頼）══════════
+       「画像が大きく表示したあと、もう一回タップしたら閉じるようにして」
+       ★ボタン（よこにする・大きく・とじる）の上だけは、とじません。
+       ★［大きく］のときは、指で写真を動かして読みます。**動かしたのか、
+         押したのか**を、指の動いた長さで分けます（下の TAP_UGOKI まで
+         なら「押した」）。これが無いと、読もうとして動かすたびに
+         とじてしまいます。
+       ★［とじる］のボタンは残します。押すところがはっきり見えるのは、
+         はじめて開いた人のためです。 */
+    zen.addEventListener('pointerdown', function(ev){
+      oshita = { x: ev.clientX, y: ev.clientY, t: Date.now() };
+    });
+    zen.addEventListener('pointercancel', function(){ oshita = null; });
+
     zen.addEventListener('click', function(ev){
       var b = ev.target.closest && ev.target.closest('[data-zen-te]');
-      if(!b){ if(ev.target === zen) tojiru(); return; }
+      if(!b){
+        /* pointerdown が来ない端末では、これまでどおり
+           「まわりの黒いところ」だけで とじます */
+        if(!oshita){ if(ev.target === zen) tojiru(); return; }
+        var ugoki = Math.abs(ev.clientX - oshita.x) + Math.abs(ev.clientY - oshita.y);
+        if(ugoki <= TAP_UGOKI && Date.now() - oshita.t < TAP_TOKI){
+          /* この1押しは「とじる」だけに使います。押したところの下に
+             リンクがあっても、そちらへは行きません（用心のため）。 */
+          ev.preventDefault();
+          tojiru();
+        }
+        oshita = null;
+        return;
+      }
       var te = b.getAttribute('data-zen-te');
       if(te === 'tojiru') return tojiru();
       /* もう一度押すと もどります。ほかの札は外します
