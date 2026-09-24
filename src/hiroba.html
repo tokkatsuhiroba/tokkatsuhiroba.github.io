@@ -3431,23 +3431,55 @@
     var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
     var by   = ga_moji(fuda.querySelector('.bfuda-by'));
     var me   = fuda.querySelector('.bfuda-me');
-    /* 見出しの行から、内容の札をのぞいた残り＝場面・学年・日づけ
-       （2026-09-23 依頼で「議題」の札をやめたので、その1つぶんを外しました） */
-    var meta = ga_moji(me).replace(tag ? tag.textContent : '', '').trim();
+    /* ══ 札の行（2026-09-24 依頼）════════════════════════════
+       「東京都　町田市　全学年を囲って欲しい。HPと同じようにしてね。
+         この灰色の文章一行はいらない。」
+       前は ぜんぶを「・」でつないだ **灰色の字1行**でした
+       （NEW・東京都　町田市・全学年・9月23日）。HPでは NEW も地域も
+       学年も、それぞれ囲いです。同じ形にして、置き場も HPと同じ
+       **題の上**へ move します（前は吹き出しの下にいました）。
+       ★色と枠は HP の CSS と同じ数にしてあります。
+           NEW  … 地は黄（--ki）／墨の枠2px／丸
+           地域 … 地は淡い黄（--men-ki）／墨の枠2px／丸
+           学年 … 地は淡い空（--men-sora）／鼠の枠1.5px／角丸7
+         ここを直すときは .new-fuda / .bfuda-chi / .bfuda-nen も見てください。
+       ★日づけ（と場面）は、HPと同じく **字のまま**です。囲いません。 */
+    var meNew = me && me.querySelector('.new-fuda');
+    var meChi = me && me.querySelector('.bfuda-chi');
+    var meNen = me && me.querySelector('.bfuda-nen');
+    var metaF = [];
+    if(meNew && !meNew.hidden)
+      metaF.push({ji:'NEW', ha:'#E8C547', wa:'#1C1C1A', fu:3, r:22, ji_iro:'#1C1C1A'});
+    if(meChi && meChi.textContent.trim())
+      metaF.push({ji:meChi.textContent.trim(), ha:'#FBF2D8', wa:'#1C1C1A', fu:3, r:22, ji_iro:'#1C1C1A'});
+    if(meNen && meNen.textContent.trim())
+      metaF.push({ji:meNen.textContent.trim(), ha:'#EAF5FA', wa:'#63625C', fu:2, r:9, ji_iro:'#1C1C1A'});
+    /* のこり（場面・日づけ）だけを、字で拾います */
+    var meta = ga_moji(me);
+    [tag, meNew, meChi, meNen].forEach(function(e){
+      if(e && e.textContent) meta = meta.split(e.textContent.trim()).join('');
+    });
     var iro = tag ? getComputedStyle(tag).backgroundColor : '#1F5C3F';
     var jiIro = tag ? getComputedStyle(tag).color : '#FCFBF7';
 
     /* 提供者は **右上**へ（2026-09-23 依頼）。足もとからは外します。 */
     var sensei = ga_sensei(by);
-    /* 場面・学年・日づけは **1行**にまとめます（前は2〜3行ありました） */
+    /* 場面・日づけは **1行**にまとめます（前は2〜3行ありました） */
     meta = meta.split('\n').map(function(x){ return x.trim(); })
-               .filter(Boolean).join('・');
+               .filter(Boolean).join('・')
+               .replace(/^[・\s]+/, '').replace(/[・\s]+$/, '').replace(/・{2,}/g, '・');
 
     /* ── まず、高さを測る（描かずに数えるだけ）── */
     var c = document.createElement('canvas');
     var ctx = c.getContext('2d');
     var okiba = [];
     var y = GA_P + 62;                                   /* 頭の1行ぶん */
+
+    /* ── 札の行。HPと同じく **題の上**に置きます（2026-09-24 依頼）── */
+    if(metaF.length || meta){
+      okiba.push({t:'meta', y:y, f:metaF, ji:meta});
+      y += 52;
+    }
 
     ctx.font = '900 54px ' + GA_JI;
     var daiG = ga_oru(ctx, dai, naka);
@@ -3479,11 +3511,8 @@
                   bh:oshiBh, row:oshiRow, kw:oshiKw});
       y += 44 + 12 + oshiRow + 20;
     }
-    if(meta){
-      ctx.font = '500 27px ' + GA_HON;
-      var metaG = ga_oru(ctx, meta, naka);
-      okiba.push({t:'meta', g:metaG, y:y}); y += metaG.length * 42 + 10;
-    }
+    /* 2026-09-24 依頼：ここにあった「灰色の字1行」はやめました。
+       札の行は、いま **題の上**にあります（上の 'meta'）。 */
     y += 34; okiba.push({t:'sen', y:y - 17});
 
     var kumi = ga_e_kumi(shashin || [], naka);
@@ -3581,27 +3610,38 @@
         /* ② 案内役（左） */
         if(o.kw) ctx.drawImage(oshiKyara, GA_P, ry + (o.row - OSHI_K_H) / 2,
                                o.kw, OSHI_K_H);
-        /* ③ 吹き出し。白地に、太めの緑のふち（画面と同じ） */
+        /* ③④ 吹き出しと しっぽ。HPと同じ **3枚かさね**で作ります。
+           ★2026-09-24 依頼「推しポイントの吹き出しがずれている」。
+             前は「三角を描いて、根もとを白い線でなぞって消す」でした。
+             なぞった白が三角のふちまで食べてしまい、**三角だけが
+             左に離れて浮いて**見えていました（実物で確認）。
+           ★HPの CSS は ::before（外＝線の色）と ::after（内＝地の色）の
+             2枚で作っています。canvas でも同じ順にします。
+               1. 外の三角（緑のベタ）… 右はしを 吹き出しの中へ少し入れる
+               2. 吹き出し（白で塗り、緑のふち）… 三角の右半分を隠す
+               3. 内の三角（白のベタ）… ふちを内がわから開けて「口」にする
+             こうすると、線が切れも重なりもしません。 */
+        var sy = by + o.bh / 2;
+        if(o.kw){
+          ctx.beginPath();
+          ctx.moveTo(bx + 6, sy - 19);
+          ctx.lineTo(bx - OSHI_SHIPPO, sy);
+          ctx.lineTo(bx + 6, sy + 19);
+          ctx.closePath();
+          ctx.fillStyle = '#1F5C3F'; ctx.fill();
+        }
         ctx.beginPath();
         if(ctx.roundRect) ctx.roundRect(bx, by, o.bw, o.bh, 22);
         else ctx.rect(bx, by, o.bw, o.bh);
         ctx.fillStyle = '#FCFBF7'; ctx.fill();
         ctx.lineWidth = 4; ctx.strokeStyle = '#1F5C3F'; ctx.stroke();
-        /* ④ しっぽ。案内役がいるときだけ、そちらへ向けます。
-           ★先にふちごと三角を描き、そのあと根もとの縦線を
-             白でなぞって消します（枠と二重にならないように）。 */
         if(o.kw){
-          var sy = by + o.bh / 2;
           ctx.beginPath();
-          ctx.moveTo(bx + 2, sy - 17);
-          ctx.lineTo(bx - OSHI_SHIPPO, sy);
-          ctx.lineTo(bx + 2, sy + 17);
+          ctx.moveTo(bx + 6, sy - 13);
+          ctx.lineTo(bx - OSHI_SHIPPO + 9, sy);
+          ctx.lineTo(bx + 6, sy + 13);
           ctx.closePath();
           ctx.fillStyle = '#FCFBF7'; ctx.fill();
-          ctx.lineWidth = 4; ctx.strokeStyle = '#1F5C3F'; ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(bx + 2, sy - 14); ctx.lineTo(bx + 2, sy + 14);
-          ctx.lineWidth = 7; ctx.strokeStyle = '#FCFBF7'; ctx.stroke();
         }
         ctx.fillStyle = '#1C1C1A'; ctx.font = '700 36px ' + GA_HON;
         ga_kaku(ctx, o.g, bx + OSHI_PAD, by + OSHI_PAD - 8, 54);
@@ -3646,8 +3686,29 @@
         if(sug.length > 2){ sug = sug.slice(0, 2); sug[1] = sug[1].slice(0, -1) + '…'; }
         ga_kaku(ctx, sug, sTx, sy2 + 112, 32);
       } else if(o.t === 'meta'){
-        ctx.fillStyle = '#63625C'; ctx.font = '500 27px ' + GA_HON;
-        ga_kaku(ctx, o.g, GA_P, o.y, 42);
+        /* 囲いを左から並べ、そのうしろに 場面・日づけを字で添えます。
+           ★HPと同じ形です（.new-fuda / .bfuda-chi / .bfuda-nen）。 */
+        var mx = GA_P;
+        o.f.forEach(function(k){
+          ctx.font = '700 25px ' + GA_HON;
+          var kw2 = ctx.measureText(k.ji).width + 34;
+          ctx.beginPath();
+          if(ctx.roundRect) ctx.roundRect(mx, o.y, kw2, 42, k.r);
+          else ctx.rect(mx, o.y, kw2, 42);
+          ctx.fillStyle = k.ha; ctx.fill();
+          ctx.lineWidth = k.fu; ctx.strokeStyle = k.wa; ctx.stroke();
+          ctx.fillStyle = k.ji_iro; ctx.fillText(k.ji, mx + 17, o.y + 9);
+          mx += kw2 + 10;
+        });
+        if(o.ji){
+          ctx.fillStyle = '#63625C'; ctx.font = '500 26px ' + GA_HON;
+          /* 入らなければ、うしろを「…」で切ります（札を押しのけない） */
+          var mji = o.ji, noko2 = GA_W - GA_P - mx - 4;
+          while(mji.length > 2 && ctx.measureText(mji).width > noko2){
+            mji = mji.slice(0, -2) + '…';
+          }
+          if(ctx.measureText(mji).width <= noko2) ctx.fillText(mji, mx + 2, o.y + 10);
+        }
       } else if(o.t === 'sen'){
         ctx.strokeStyle = '#1C1C1A'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(GA_P, o.y); ctx.lineTo(GA_W - GA_P, o.y); ctx.stroke();
