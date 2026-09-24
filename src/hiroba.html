@@ -2995,14 +2995,31 @@
        iPhoneでは「ファイル」に入るだけで、送るまでが遠いためです。
      ★字の折り返しは、1字ずつ measureText で測ります。日本語はどこでも
        折れますが、行あたまに 。、）」 が来ないところだけ直します。      */
-  var GA_W = 1080;              /* 絵のはば。スマホでもPCでも、これ1つ */
+  /* ══ 保存する絵の形（2026-09-24 依頼）══════════════════════
+     「画像保存形式が縦長すぎるから修正できる。上下に少し余白を」
+     実測（8件）… たて 1344〜3053px。はばに対して **1.24〜2.83倍**。
+     LINEやXに貼ると、2.5倍のものは まんなかだけ切り取られて出ます。
+
+     いちばん背を伸ばしていたのは **写真**でした（1件の実測 2724px の
+     うち 1290px＝47%）。たて長の写真は、はばいっぱいに置くと それだけで
+     はばの1.33倍になります。
+     直したのは3つです。
+       ① はばを 1080 → 1200 … 中身を1つも減らさずに 比を下げられます。
+          1行に入る字も増えるので、本文の行数も減ります。
+       ② 写真の天井を 1250 → 1100 … たて長の写真は、そのぶん
+          **はばが細くなって まんなかに**入ります（切りません）。
+       ③ 上と下に、余白を少し … 下は 22px しかなく、上（50px）と
+          そろっていませんでした。
+     ★写真は いまも **縮めるだけで、切りません**。全部写るのが先、は
+       変えていません（→ ga_e_kumi）。 */
+  var GA_W = 1200;              /* 絵のはば。スマホでもPCでも、これ1つ */
   var GA_TAKASA_MAX = 3000;     /* これを超えたら、本文を切って「つづきはサイトで」 */
   var GA_P = 64;                /* まわりの余白 */
   /* 資料の置き場の高さ。2026-09-23（依頼）で **切るのをやめました**。
      「添付資料が全部写るようにする。２枚のものは小さくして入れる」
      ★上だけ切り出すと、紙の下半分が誰にも届きません。縮めれば、
        小さくても ぜんぶ写ります。読めないぶんはQRから本物へ行けます。 */
-  var GA_E_TAKASA = 1250;       /* 資料の置き場の高さ。ここに収まるまで縮めます */
+  var GA_E_TAKASA = 1100;       /* 資料の置き場の高さ。ここに収まるまで縮めます */
   var GA_E_MAX = 4;             /* 入れる資料の枚数。これ以上はQRの先で */
   var GA_JI = '"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic",sans-serif';
   var GA_HON = '"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",sans-serif';
@@ -3473,7 +3490,7 @@
     var c = document.createElement('canvas');
     var ctx = c.getContext('2d');
     var okiba = [];
-    var y = GA_P + 62;                                   /* 頭の1行ぶん */
+    var y = GA_P + 70;                                   /* 頭の1行ぶん＋少しの余白 */
 
     /* ── 札の行。HPと同じく **題の上**に置きます（2026-09-24 依頼）── */
     if(metaF.length || meta){
@@ -3509,14 +3526,14 @@
       var oshiRow = Math.max(oshiBh, oshiKw ? OSHI_K_H : 0);
       okiba.push({t:'oshi', g:oshiG, y:y, bx:oshiBx, bw:oshiBw,
                   bh:oshiBh, row:oshiRow, kw:oshiKw});
-      y += 44 + 12 + oshiRow + 20;
+      y += 44 + 12 + oshiRow + 16;
     }
     /* 2026-09-24 依頼：ここにあった「灰色の字1行」はやめました。
        札の行は、いま **題の上**にあります（上の 'meta'）。 */
     y += 34; okiba.push({t:'sen', y:y - 17});
 
     var kumi = ga_e_kumi(shashin || [], naka);
-    if(kumi){ okiba.push({t:'e', y:y, k:kumi}); y += kumi.h + 40; }
+    if(kumi){ okiba.push({t:'e', y:y, k:kumi}); y += kumi.h + 34; }
     /* ★本文は UD の書体で（2026-09-23 依頼「実践の本文をUDにして」）。
        前は丸ゴシック（GA_JI）でした。すぐ下に続く「つづき」（hon）は
        はじめから GA_HON だったので、**1枚の絵の中で書体が2つ**に
@@ -3525,20 +3542,23 @@
          合わず、絵の右はしから字がはみ出します。 */
     ctx.font = '500 32px ' + GA_HON;
     var leadG = lead ? ga_oru(ctx, lead, naka) : [];
-    if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 52 + 26; }
+    if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 50 + 22; }
 
     ctx.font = '400 29px ' + GA_HON;
     var honG = hon ? ga_oru(ctx, hon, naka) : [];
     /* 入りきらないぶんは切る。切ったことは、画面の中で正直に言う */
-    var ashi = 300;     /* QRコードと「TOKKATSU広場へ」のぶん */
+    /* 足もとの取り分。QR（250）＋上下の余白です。
+       ★300 だと QRの下が 22px しかなく、上（50px）とそろっていませんでした
+         （2026-09-24 依頼「上下に少し余白を」）。 */
+    var ashi = 332;     /* QRコードと「TOKKATSU広場へ」のぶん */
     /* デジタル資料の1かたまり（QR＋名前＋URL）のぶんも、先に取っておきます。
        取らないと、本文が資料の分まで伸びて、絵が上限を越えます。 */
     var SOTO_QR = 150, SOTO_H = SOTO_QR + 44;
     var sotoTakasa = sotoU ? (SOTO_H + 24) : 0;
-    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi - sotoTakasa) / 54);
+    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi - sotoTakasa) / 50);
     var kitta = false;
     if(honG.length > kiru && kiru > 3){ honG = honG.slice(0, kiru); kitta = true; }
-    if(honG.length){ okiba.push({t:'hon', g:honG, y:y}); y += honG.length * 54 + 12; }
+    if(honG.length){ okiba.push({t:'hon', g:honG, y:y}); y += honG.length * 50 + 12; }
     if(kitta){ okiba.push({t:'kitta', y:y}); y += 46; }
     if(sotoU){ okiba.push({t:'soto', y:y + 8}); y += sotoTakasa; }
     y += 28;
@@ -3730,10 +3750,10 @@
         });
       } else if(o.t === 'lead'){
         ctx.fillStyle = '#1C1C1A'; ctx.font = '500 32px ' + GA_HON;
-        ga_kaku(ctx, o.g, GA_P, o.y, 52);
+        ga_kaku(ctx, o.g, GA_P, o.y, 50);
       } else if(o.t === 'hon'){
         ctx.fillStyle = '#1C1C1A'; ctx.font = '400 29px ' + GA_HON;
-        ga_kaku(ctx, o.g, GA_P, o.y, 54);
+        ga_kaku(ctx, o.g, GA_P, o.y, 50);
       } else if(o.t === 'kitta'){
         ctx.fillStyle = '#63625C'; ctx.font = '700 26px ' + GA_JI;
         ctx.fillText('…つづきは、下のURLで読めます', GA_P, o.y);
