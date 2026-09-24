@@ -565,13 +565,13 @@
         <p class="okuru-kazu" id="gd-m-kazu" aria-live="polite">0 / 600字</p>
       </div>
 
-      <div class="okuru-g">
-        <label class="okuru-l" for="gd-u">デジタル資料のリンク<span class="okuru-nin">任意</span></label>
-        <p class="okuru-yomi okuru-yomi--sub">Canvaやスライドの共有リンク。<b>「リンクを知っている全員が閲覧可」</b>にしてから貼ってください。</p>
-        <input class="okuru-i" type="url" id="gd-u" maxlength="300"
-               inputmode="url" placeholder="例：https://www.canva.com/design/……/view">
-        <p class="okuru-kazu" id="gd-u-shirase" aria-live="polite"></p>
-      </div>
+      <!-- ここに「デジタル資料のリンク」はありません（2026-09-24 依頼）。
+           「グッズに関しては、デジタル資料リンクはいらないのでは、
+             なぜなら元々デジタル資料を埋め込むわけだから」
+           そのとおりで、**配るもの自体がデジタル資料**です。外の置き場へ
+           出す道をもう1本つくる意味がありません。
+           ★実践を送るほうには残っています（あちらは写真と字が本体で、
+             資料は添えものなので）。 -->
 
       <!-- ══ 直して使ってよいか（2026-09-24）══════════════════
            **Wordを配る意味は「直せる」ことです。**
@@ -4423,7 +4423,6 @@
     var gdShirase = document.getElementById('gd-shirase');
     var gdBotan   = document.getElementById('gd-b');
     var gdNen     = nen_fuda('gd-gn');
-    var gdU       = document.getElementById('gd-u');
 
     var gd_shippo = function(f){
       var m = String(f.name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
@@ -4487,9 +4486,6 @@
         if(gdD.value.indexOf('\n') >= 0) gdD.value = gdD.value.replace(/\n+/g, ' ');
       });
     }
-    /* 資料リンクの行き先を、書いているそばから見せます。
-       実践と同じ共用のものに任せます（受ける置き場の並びが1か所で済みます）。 */
-    shiryo_shirase_tsunagu(gdU, document.getElementById('gd-u-shirase'));
     /* この端末が覚えているお名前を、はじめから入れておきます */
     var gdOboe = nanori_yomu();
     if(gdOboe){
@@ -4515,15 +4511,14 @@
       var sh = document.getElementById('gd-sh').value;
       var no = document.getElementById('gd-naoshi').value;
       var na = document.getElementById('gd-na').value.trim();
-      var u  = gdU ? gdU.value.trim() : '';
 
       var tomeru = function(ji, doko){
         gdShirase.textContent = ji;
         var e = doko && document.getElementById(doko);
         if(e){ e.scrollIntoView({block:'center'}); e.focus({preventScroll:true}); }
       };
-      if(!kata.length && !u){
-        return tomeru('ファイルか、資料のリンクが要ります。'
+      if(!kata.length){
+        return tomeru('ファイルをえらんでください。'
           + (k.dame.length ? '（' + k.dame[0] + '）' : ''), 'gd-f');
       }
       if(!t)  return tomeru('グッズの名前を書いてください。', 'gd-t');
@@ -4541,9 +4536,6 @@
             + naoseru.join('・') + ' は公開できません（直せる形のため）。'
             + 'PDFだけにするか、「直してOK」を選んでください。', 'gd-naoshi');
         }
-      }
-      if(u && !shiryo_doko(u)){
-        return tomeru('資料リンクの行き先が受けられません（' + uDokoJi + '）。', 'gd-u');
       }
       if(!na) return tomeru('お名前を書いてください。サイトに出すかどうかは、下でえらべます。', 'gd-na');
 
@@ -4586,7 +4578,6 @@
             kami: document.getElementById('gd-kami').value,
             no: no,                                      /* 直して使ってよいか */
             m:  document.getElementById('gd-m').value.slice(0, 600),
-            u:  u.slice(0, 300),                         /* 外の資料リンク */
             ken: document.getElementById('gd-ken').value,
             shk: document.getElementById('gd-shk').value.trim().slice(0, 20),
             na: na.slice(0, 40),                         /* お名前（必須） */

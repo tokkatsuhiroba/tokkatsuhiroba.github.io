@@ -792,20 +792,16 @@ def load_goods():
         fm['ken'], fm['shi'] = ken, shi
         fm['chiiki'] = (ken + ('　' + shi if shi else '')) if ken else ''
 
-        # ── 外の資料リンク（Canvaなど）。受ける置き場だけです ──
-        #   ★実践の「デジタル資料のリンク」と同じ表（SHIRYO_SOTO_DOKO）を
-        #     見ます。行き先を素通しにすると、このサイトが
-        #     「知らない所への入口」になります。
-        u = (fm.get('u') or '').strip()
-        if u and len(u) > SHIRYO_URL_MAX:
-            if dame('u が長すぎます（%d字。%d字まで）' % (len(u), SHIRYO_URL_MAX)):
-                u = ''
-        if u and not shiryo_soto_na(u):
-            if dame('u の行き先「%s」は受けていません。受けるのは %s です'
-                    % (url_no_doko(u) or u,
-                       '・'.join(d for d, _ in SHIRYO_SOTO_DOKO))):
-                u = ''
-        fm['u'] = u
+        # ── 外の資料リンクは、グッズには置きません（2026-09-24 依頼）──
+        #   「グッズに関しては、デジタル資料リンクはいらないのでは、
+        #     なぜなら元々デジタル資料を埋め込むわけだから」
+        #   そのとおりで、**配るもの自体がデジタル資料**です。外の置き場へ
+        #   出す道をもう1本つくる意味がありません。
+        #   ★実践のほう（kenmon_jissen の SHIRYO_SHIRUSHI）には残っています。
+        #     あちらは写真と字が本体で、資料は添えものだからです。
+        if (fm.get('u') or '').strip():
+            dame('グッズに u（デジタル資料のリンク）は置けません。'
+                 '配るファイルそのものを入れてください')
 
         try:
             fm['order'] = int(fm.get('order', '99'))
@@ -827,8 +823,8 @@ def load_goods():
                 #   出せません）。止めはしません。
                 GOODS_TOBASHITA.append('%s（by が空）' % f)
                 continue
-            if not aru and not u:
-                GOODS_TOBASHITA.append('%s（配るものが1つも残らなかった）' % f)
+            if not aru:
+                GOODS_TOBASHITA.append('%s（配るファイルが1つも残らなかった）' % f)
                 continue
             # 出してはいけない語（src/_ngword.txt）。
             #   ★ここは**落とすだけ**です。止めると、1件のために
@@ -1801,11 +1797,7 @@ def goods_status(g):
        PowerPoint と Excel も受けるので、GOODS_FILE の並びから作ります。
        ★ここに新しい形を書き足さないこと。足すのは GOODS_FILE だけです。
     """
-    na = [na for _, na, _ in g.get('file', ())]
-    if na:
-        return '・'.join(na)
-    # ファイルは無いが、外の資料リンクだけあるとき（Canvaなど）
-    return '資料リンク' if g.get('u') else ''
+    return '・'.join(na for _, na, _ in g.get('file', ()))
 
 
 def line_share(text):
@@ -2065,12 +2057,6 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
         for _, na, url in g.get('file', ()):
             dl.append('<a class="btn gt-b" href="%s" download>%s</a>'
                       % (esc_html(url), esc_html(na)))
-        if g.get('u'):
-            dl.append('<a class="btn gt-b btn--wa" href="%s" target="_blank" '
-                      'rel="noopener noreferrer">%s<span class="gt-soto">'
-                      '（%s へ）</span></a>'
-                      % (esc_html(g['u']), esc_html(shiryo_soto_na(g['u'])),
-                         esc_html(url_no_doko(g['u']))))
         if not dl:
             dl.append('<span class="gt-mada">準備中</span>')
 
@@ -4971,7 +4957,7 @@ def build_kanri_hoka(komari, ken, tobashita, goods=None):
     if todoita:
         for g in todoita:
             meta = '・'.join(x for x in (
-                '・'.join(na for _, na, _ in g.get('file', ())) or '資料リンクのみ',
+                '・'.join(na for _, na, _ in g.get('file', ())) or '準備中',
                 GOODS_NAOSHI_NA.get(g.get('naoshi'), ''),
                 g.get('kami') or '', '・'.join(g.get('nen') or []),
                 g.get('chiiki') or '',
@@ -5648,6 +5634,12 @@ def foot_fuki(f, jissen, komari, ken, kiji, goods, kotoba):
                      'نشرح هنا %d مصطلحًا.' % n)
     if f == 'manabu.html':
         n = len(goods)
+        # 2026-09-24：0点のときに「0点あります」と言わせません。
+        #   数えるものが無いときは、数を出さないほうが正直です。
+        if not n:
+            return mitsu('グッズは、いま用意しているところです。',
+                         'The tools are being prepared.',
+                         'الأدوات قيد الإعداد الآن.')
         return mitsu('明日から使えるグッズが %d点あります。' % n,
                      '%d ready-to-use tools are here.' % n,
                      'هنا %d أداة جاهزة للاستعمال.' % n)

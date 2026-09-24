@@ -1655,9 +1655,11 @@ function _goods(d) {
     oku.push({ s: s, na: slug + '.' + s, b64: Utilities.base64Encode(b.getBytes()) });
   }
 
-  var u = _goods_link(d.u);
-  if (!oku.length && !u) {
-    return _kotae({ ok: false, riyu: 'ファイルも 資料リンクもありません' });
+  /* 資料リンク（u）は受けません（2026-09-24 依頼）。
+     グッズは **配るもの自体がデジタル資料**なので、外の置き場へ出す道を
+     もう1本つくる意味がありません。実践のほうには残っています。 */
+  if (!oku.length) {
+    return _kotae({ ok: false, riyu: 'ファイルがありません' });
   }
   if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
 
@@ -1671,7 +1673,7 @@ function _goods(d) {
        先に .md を置くと、ファイルの着く前のビルドが「404になるリンク」を
        見つけて、その欄を削ってしまいます。 */
     _github('src/goods/' + slug + '.md',
-            Utilities.base64Encode(_md_goods(slug, d, t, de, oku, u, naoseru),
+            Utilities.base64Encode(_md_goods(slug, d, t, de, oku, naoseru),
                                    Utilities.Charset.UTF_8),
             'グッズを1点のせる（' + slug + '）');
     nose.ok = true;
@@ -1679,7 +1681,7 @@ function _goods(d) {
     nose.riyu = String(err);
   }
 
-  _shiraseru_goods(slug, d, t, de, oku, u, naoseru, nose);
+  _shiraseru_goods(slug, d, t, de, oku, naoseru, nose);
   return _kotae({ ok: true, noseta: nose.ok });
 }
 
@@ -1717,24 +1719,7 @@ function _dataURI_kata(s, kata) {
   return Utilities.newBlob(Utilities.base64Decode(m[2]), kata);
 }
 
-/* 外の資料リンク。受ける置き場だけです（build.py の SHIRYO_SOTO_DOKO と
-   src/hiroba.html の SHIRYO_DOKO と、同じ顔ぶれにしてください）。 */
-var GOODS_DOKO = ['canva.com', 'canva.link', 'docs.google.com',
-                  'drive.google.com', 'onedrive.live.com', '1drv.ms', 'dropbox.com'];
-
-function _goods_link(u) {
-  u = String(u || '').trim().slice(0, 300);
-  var m = /^https:\/\/([^\/?#]+)/i.exec(u);
-  if (!m) return '';
-  var h = m[1].toLowerCase().split(':')[0];
-  for (var i = 0; i < GOODS_DOKO.length; i++) {
-    var dd = GOODS_DOKO[i];
-    if (h === dd || h.slice(-(dd.length + 1)) === '.' + dd) return u;
-  }
-  return '';
-}
-
-function _md_goods(slug, d, t, de, oku, u, naoseru) {
+function _md_goods(slug, d, t, de, oku, naoseru) {
   var gyo = ['---'];
   /* 届いたぶん、という印。**これが無いと道具箱のほうに出ます**
      （build.py の load_goods が、ここだけを見て棚を分けています）。 */
@@ -1767,7 +1752,6 @@ function _md_goods(slug, d, t, de, oku, u, naoseru) {
     var shi = _arau(d.shk).slice(0, 20);
     if (shi) gyo.push('shi: ' + shi);
   }
-  if (u) gyo.push('u: ' + u);
 
   for (var i = 0; i < oku.length; i++) {
     gyo.push(GOODS_KATA[oku[i].s][0] + ': ' + GOODS_SITE + oku[i].na);
@@ -1781,7 +1765,7 @@ function _md_goods(slug, d, t, de, oku, u, naoseru) {
   return gyo.join('\n');
 }
 
-function _shiraseru_goods(slug, d, t, de, oku, u, naoseru, nose) {
+function _shiraseru_goods(slug, d, t, de, oku, naoseru, nose) {
   var url = _webapp();
   var katachi = oku.map(function (o) { return GOODS_KATA[o.s][1]; }).join('・') || '（なし）';
   var kesareta = [];
@@ -1803,7 +1787,6 @@ function _shiraseru_goods(slug, d, t, de, oku, u, naoseru, nose) {
     (kesareta.length
        ? '　　★' + kesareta.join('・') + ' は受けとっていません'
          + '（「そのまま刷って使ってください」が選ばれているため）\n' : '') +
-    '　資料リンク：' + (u || '（なし）') + '\n' +
     /* ★お名前は、サイトに出ていなくても ここには必ず出します。 */
     '　お名前：' + (d.na || '（名乗られていません）')
       + (String(d.na || '').trim()
