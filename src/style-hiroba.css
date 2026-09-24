@@ -1658,7 +1658,9 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 
 /* ══ NEW と 新着（2026-09-23 依頼）════════════════════════════
    「いつ来ても同じ」に見えるのが、いちばん人を遠ざけます。
-   14日以内のものに「NEW」を出して、動いていることを見せます。
+   投稿から7日以内のものに「NEW」を出して、動いていることを見せます。
+   （2026-09-24 依頼で 14日→7日。日数を決めているのは build.py の
+     NEW_HI ひとつだけです。ここは説明なので、数字を持ちません。）
    ★色だけにしません。**字で「NEW」**と書いてあります。
    ★地は黄（--ki）＋墨字で 10.1:1。朱（--shu）は白字でも墨字でも
      4.1:1 しか出ないので、小さい字には使いません。 */
@@ -1673,6 +1675,81 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   justify-self:start;margin-top:6px;padding:2px 9px;
   background:var(--ki);border:2px solid var(--ink);border-radius:999px;
   font-family:var(--f-maru);font-weight:700;font-size:11px;letter-spacing:.04em;
+}
+
+/* ══ 最新情報の掲示板（2026-09-24 依頼）════════════════════════
+   「7つのできること」の すぐ下に置く、1枚の板です。
+   ★新しい見た目を作っていません。**もうあるものを組み合わせただけ**です。
+       板のふち … みんなの実践の札（.bfuda）と同じ
+                  墨2.5px・角丸16px・影は墨のベタ
+       行の区切り … 本体の .rows と同じ「1本の線で区切る」
+       学年の囲い … .bfuda-nen を そのまま呼んでいます
+   ★1行に「何が・いつ・どこへ」。
+       何が … 種類の札（実践／お悩み／答え／ニュース）と、題
+       いつ … 日づけ（9月23日）。色ではなく **字** です
+       どこへ … 行ぜんたいが1本のリンク。右はしに「→」
+   ★色だけで伝えません。種類は **字で** 書いてあります。
+     実践だけ墨のベタにしているのは「主役はこれ」という目じるしで、
+     色が見えなくても「実践」と読めます。
+       墨地 × 地紙の字 … 15.9:1
+       地紙 × 墨の字   … 15.9:1
+       鼠の字 × 地紙   … 5.9:1（そえ書きと日づけ。4.5:1 を超えています）
+   ★押せる高さは 56px（44px より大きく取ってあります）。
+   ★字は 14px より小さくしていません（札だけ12.5px。これは字ではなく
+     名ふだなので、本体の .new-fuda（10.5px）より大きく取っています）。 */
+.shinban{
+  list-style:none;margin:0;padding:0;
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:16px;
+  box-shadow:5px 5px 0 var(--ink);overflow:hidden;
+}
+.shin-gyo + .shin-gyo{border-top:2px solid var(--rule)}
+.shin-gyo[hidden]{display:none}
+.shin-a{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;
+  gap:5px 14px;padding:12px clamp(12px,1.6vw,18px);min-height:56px;
+  color:var(--ink);text-decoration:none;
+  transition:background-color .14s ease;
+}
+.shin-a:hover,.shin-a:focus-visible{background:var(--men-ki)}
+.shin-a:hover .shin-dai{text-decoration:underline;text-underline-offset:3px}
+.shin-me{display:flex;align-items:center;gap:9px;flex:none}
+.shin-tane{
+  font-family:var(--f-maru);font-weight:700;font-size:calc(12.5px * var(--moji));
+  letter-spacing:.06em;line-height:1.6;white-space:nowrap;
+  background:var(--bg);color:var(--ink);
+  border:2px solid var(--ink);border-radius:999px;padding:1px 11px;
+}
+/* 実践だけ、墨のベタ。このサイトの主役だからです（2026-09-24 依頼「主に実践」） */
+.shin-tane--j{background:var(--ink);color:var(--bg)}
+.shin-hi{
+  font-family:var(--f-en);font-weight:500;font-size:calc(14px * var(--moji));
+  letter-spacing:.04em;color:var(--mute);white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.shin-naka{min-width:0}
+.shin-dai{
+  display:block;font-family:var(--f-maru);font-weight:700;
+  font-size:calc(16px * var(--moji));line-height:1.5;letter-spacing:.02em;
+  word-break:auto-phrase;text-wrap:pretty;
+}
+.shin-sub{
+  display:block;margin-top:3px;
+  font-family:var(--f-hon);font-size:calc(14px * var(--moji));line-height:1.7;
+  color:var(--mute);
+}
+/* そえ書きの中の学年は、みんなの実践の札と同じ囲いです（.bfuda-nen）。
+   「・」の並びの中に入るので、前後だけ少し空けます。 */
+.shin-sub .bfuda-nen{margin-inline:2px}
+.shin-ya{
+  font-family:var(--f-en);font-size:19px;line-height:1;color:var(--ink);flex:none;
+}
+
+/* せまい画面では、種類と日づけを **上の1行** に出して、
+   題を下の行いっぱいに使います（題が2〜3字で折れないように）。 */
+@media (max-width:719px){
+  .shin-a{grid-template-columns:1fr auto;gap:4px 12px}
+  .shin-me{grid-column:1 / -1}
+  .shin-dai{font-size:calc(15.5px * var(--moji))}
 }
 
 /* ══ 今週のお題（2026-09-23 依頼）════════════════════════════
@@ -2189,6 +2266,25 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   font-family:var(--f-maru);font-size:11.5px;font-weight:700;letter-spacing:.06em;
   color:var(--ink);background:var(--men-ki);
   border:2px solid var(--ink);border-radius:999px;padding:2px 11px;
+}
+/* 学年（2026-09-24 依頼「実践の学年を囲って。少し目立たせて」）──────
+   これまで学年は「場面・学年・日づけ」と「・」でつないだ字の まん中に
+   いました。ほかの字と同じ大きさ・同じ色なので、**さがしている人が
+   いちばん先に見たい「何年生の実践か」が、いちばん見つけにくい**
+   ところにありました。だから、そこから抜き出して囲います。
+   ★NEWより目立たせません。NEWのほうが大事です（届いたばかり、は
+     その日だけの知らせ。学年はいつ見ても同じ字です）。
+     地を 濃い黄（--ki）ではなく **いちばん淡い空色**（--men-sora）に、
+     枠を 墨の2.5pxではなく **鼠の1.5px** にして、一段下げています。
+   ★色だけで伝えません。枠線と地の両方を使い、字は「4年」と読めます。
+     墨字 × 淡い空 … 15.4:1（本文の4.5:1を大きく超えます）
+     鼠の枠 × 地紙 … 5.9:1（枠だけでも、囲いだと分かります）
+   ★書体は本（--f-hon）。押せない字だからです（→ 書体の役）。 */
+.bfuda-nen{
+  font-family:var(--f-hon);font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--ink);background:var(--men-sora);
+  border:1.5px solid var(--mute);border-radius:7px;padding:1px 8px;
+  white-space:nowrap;
 }
 .bfuda-h{
   margin:7px 0 6px;font-family:var(--f-maru);font-weight:700;
@@ -3019,9 +3115,31 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
   /* スマホは「全画面」が身上なので、まわりの余白を落として
      写真に1pxでも多くまわします。 */
   .zen-naka{padding:0}
-  .zen-te{gap:8px;padding:8px 10px}
+  /* ★2026-09-24（依頼）：［大きく］［とじる］が 下すぎて 押しにくい。
+     前はここの padding が 上の padding-bottom（safe-area）を
+     まるごと消していて、ボタンの足が 画面のふちから 8px しか
+     ありませんでした。スマホの下のふちは、ブラウザの帯や
+     ホームバーと重なるところです。指が当たっても、押せたり
+     押せなかったりします。
+     だから **ボタンの下だけ**を厚くして、ボタンの行ごと
+     持ち上げます（写真は 40px ぶん低くなるだけで、
+     いちばん大きく見えることは変わりません）。
+     ・ふつうの端末 … 36px 上げる
+     ・ホームバーのある端末 … そのぶん＋16px（max でどちらか大きいほう）
+     字の大きさ（12.5px）と 押せる大きさ（min-height:44px）は
+     そのままです。 */
+  .zen-te{
+    gap:8px;padding:8px 10px;
+    padding-bottom:max(36px,calc(env(safe-area-inset-bottom,0px) + 16px));
+  }
   .zen-b{font-size:12.5px;padding:9px 13px}
   .zen-tojiru{margin-inline-start:0}
+}
+/* よこ持ちのスマホは、そもそも高さがありません（375pxほど）。
+   36px も持ち上げると、こんどは写真がつぶれます。
+   ここだけ、上げるぶんを半分にします（2026-09-24）。 */
+@media (max-width:719px) and (max-height:480px){
+  .zen-te{padding-bottom:max(18px,calc(env(safe-area-inset-bottom,0px) + 10px))}
 }
 
 /* ══ 送るところ：必須の印と、名前を出すかのチェック（2026-09-22）══
@@ -3369,14 +3487,53 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
      なるためです。プルダウンの上に、小さく残します。
    ★せまい画面では3つが横に並びきらないので、2つ＋1つに折ります。
      **字は小さくしません。**折るほうを選びます。 */
+/* ── ［さがす］［内容］［学年］を 横1行に（2026-09-24 依頼）──────
+   さがすが1行、その下に内容と学年……と縦に積んでいたので、帯だけで
+   スマホの3分の1を使い、写真の札が下へ押しやられていました。
+
+   ★「何px以下で折る」を **画面の幅では決めません**。
+     広い画面では帯の左を地図が260px取るので、画面が広くても
+     この欄じたいは せまいままです。画面の幅で折ると、地図のぶんを
+     数えそこねて、さがす欄が指1本ぶんまで つぶれます。
+     だから **欄に入る幅そのもの**で折ります（flex-wrap）。
+     どの欄も「150pxは ほしい」と言うので、入る幅のめやすは
+       ・462px以上 … ［さがす］［内容］［学年］が 横1行（並びは次の行）
+       ・306px以上 … 2つずつ 2行
+       ・306px未満 … 1つずつ 素直に縦へ
+     スマホ375pxでは 欄が318pxなので、2つずつの2行になります。
+     広い画面（1200px）では 地図のぶんを引いて569pxなので、横1行です。
+   ★150px より せまくしません。「児童会活動（2）」のような長い
+     えらび札が、まんなかで切れてしまうためです。
+   ★字も、押せる大きさ（44px）も、ひとつも小さくしていません。
+     減らしたのは **すきまと、行の数**だけです。
+   ★名前（さがす／内容／学年／並び）は消しません。 */
 .sagasu-gyo--eranbu{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  display:flex;flex-wrap:wrap;gap:8px;
 }
-@media (max-width:519px){
-  .sagasu-gyo--eranbu{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .sagasu-gyo--eranbu .sagasu-e:last-child{grid-column:1 / -1}
+/* えらぶ欄（内容・学年）。150pxが、折るかどうかの分かれめ */
+.sagasu-gyo--eranbu .sagasu-e{flex:1 1 150px}
+/* さがす欄は、あまった幅を 2倍もらいます（打った字が見えるように） */
+.sagasu-gyo--eranbu .sagasu-e--ji{flex:2 1 150px}
+/* 「並び」は4つめなので、次の行へ落ちることがあります。そのとき
+   ひとりで横いっぱいに のびると、帯のまんなかに 長い1本の棒が
+   できて、何の欄か分かりにくくなります。**のばさない**でおきます。 */
+.sagasu-gyo--eranbu .sagasu-e--nara{flex:0 1 150px}
+/* ── いちばん せまい端末（画面359px以下）だけ、めやすを下げます ──
+   150pxのままだと、欄の幅が263pxしかない端末で 1つずつ4行に落ちて、
+   直すまえより **74px 高く**なっていました（実測）。それでは
+   直したことになりません。
+   ★さがす欄は 横いっぱい1行、内容と学年は 2つならび、並びは次の行。
+     直すまえと同じ行数です。**高くはしない**、が下限です。
+   ★ここでも 字と44pxは そのままです。変えるのは めやすの幅だけ。 */
+@media (max-width:359px){
+  .sagasu-gyo--eranbu .sagasu-e{flex-basis:118px}
+  .sagasu-gyo--eranbu .sagasu-e--ji{flex-basis:100%}
+  .sagasu-gyo--eranbu .sagasu-e--nara{flex-basis:118px}
 }
-.sagasu-e{display:grid;gap:3px;margin:0;min-width:0}
+/* 名前は上、入れる欄は下。下だけを のばして、同じ行の高さをそろえます
+   （そろえないと、さがす欄だけ背が高く、えらぶ欄の下が空いて見えます）。
+   のびる側はプルダウンなので、押せる大きさは **増えます**。減りません。 */
+.sagasu-e{display:grid;grid-template-rows:auto 1fr;gap:3px;margin:0;min-width:0}
 .sagasu-s{
   width:100%;min-height:44px;padding:8px 30px 8px 12px;
   font-family:var(--f-maru);font-weight:700;font-size:14.5px;
@@ -3392,7 +3549,11 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
   background-repeat:no-repeat;
 }
 .sagasu-s:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.sagasu-e .sagasu-l{font-size:12px}
+/* 名前の字は、4つとも同じ13pxにそろえます（2026-09-24）。
+   さがすの名前だけ13px、えらぶ欄の名前だけ12px でした。同じ1行に
+   ならぶと、そのちがいが「ずれ」に見えます。**小さいほうへは
+   そろえません。**字は1pxも小さくしない、と決めているためです。 */
+.sagasu-e .sagasu-l{font-size:13px}
 /* ── 押し札は1行に（2026-09-23 依頼）──────────────────────
    スマホで「学年」は7つあり、2行に折れて120pxありました。
    ★字も押せる大きさも、減らしません（減らすと押せなくなります）。
@@ -3414,7 +3575,10 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
    ここで地図を **左の列** へ動かします。
    ★地域が1件も書かれていないときは .sagasu--futatsu が付かないので、
      空の列ができません。 */
-.sagasu-migi{display:grid;gap:9px;min-width:0}
+/* 行と行のすきまは 9px → 7px（2026-09-24 依頼「詰めて」）。
+   中身は3つから2つ（欄の行と、件数の行）になったので、
+   すきまを2px縮めても、ぎゅうぎゅうには見えません。 */
+.sagasu-migi{display:grid;gap:7px;min-width:0}
 .sagasu-hidari{min-width:0}
 @media (min-width:760px){
   .sagasu--futatsu{
@@ -3558,6 +3722,12 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
   .sagasu .okuru-nen-b{padding:9px 12px;font-size:13.5px;letter-spacing:.02em}
   .sagasu .sagasu-b-kazu{margin-inline-start:5px;padding:1px 6px;font-size:11px}
   .sagasu-gyo{gap:5px}
+  /* ★えらぶ欄の すきまは、ここで 6px に決め直します（2026-09-24）。
+     上の .sagasu-gyo{gap:5px} が、あとから書かれているぶんだけ
+     強く、8px を 5px に書きかえてしまっていました。
+     横に何個ならぶかは このすきまで変わるので、数えられるように
+     わざと1行で言い切ります。 */
+  .sagasu-gyo--eranbu{gap:6px}
   .sagasu-i{min-height:46px;padding:10px 12px}
 }
 

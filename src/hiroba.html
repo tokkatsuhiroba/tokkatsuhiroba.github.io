@@ -3444,7 +3444,11 @@
   /* ══ 古くなった「NEW」を消す（2026-09-23 依頼）══════════════
      日づけは **2回** 見ます。1回めは build.py（組み立てるとき）。
      ここが2回めで、**見ている端末の今日**で もう一度見ます。
-     組み立ててから1週間 push が無くても、15日めの札に「NEW」が
+     ★ここに日数は書きません。**消える日そのもの**が data-new-made に
+       入っているので、build.py の NEW_HI を何日に変えても、ここは
+       そのままで合います（2026-09-24 に 14日→7日 にしたときも、
+       直したのは build.py だけです）。
+     組み立ててから何日か push が無くても、期限を過ぎた札に「NEW」が
      残りません。
      ★消えるだけです。付け足しはしません（新しくなったかどうかは、
        こちら（組み立て）でしか分からないため）。 */
@@ -3457,6 +3461,25 @@
         /* 字の並びで比べられます（2026-10-07 の形にそろえてあるので）。 */
         if(f.getAttribute('data-new-made') < kyou) f.hidden = true;
       });
+
+    /* ── 最新情報の掲示板の行も、同じ日づけで消します（2026-09-24 依頼）──
+       掲示板は「NEW_HI 日以内のものだけ」という決まりで組んでいます。
+       ところが 組み立てるのは push のときだけなので、何日か push が
+       無いと、期限の切れた行がそのまま残ります。NEWの札とまったく
+       同じ「消える日」を行にも持たせて、ここで落とします。
+       ★行は新しい順なので、消えるのはいつも下からです。
+       ★ぜんぶ消えたら、**掲示板ごと** 隠します。空の板を出さない、
+         という このサイトの決まり（→ .karappo の覚え書き）と同じです。
+       ★ここも消すだけです。付け足しはしません（新しく届いたかどうかは、
+         組み立てるときにしか分かりません）。 */
+    var ban = document.getElementById('shin');
+    if(ban){
+      var gyo = [].slice.call(ban.querySelectorAll('.shin-gyo[data-new-made]'));
+      gyo.forEach(function(g){
+        if(g.getAttribute('data-new-made') < kyou) g.hidden = true;
+      });
+      if(gyo.length && gyo.every(function(g){ return g.hidden; })) ban.hidden = true;
+    }
   })();
 
   /* ══ 研究会をカレンダーに入れる（2026-09-23 依頼）══════════════
@@ -3633,7 +3656,13 @@
         return;
       } catch(e) { /* 共有が使えない機種は、下の「写す」へ落ちます */ }
     }
-    var ji = dai + '\n' + url;
+    /* URLの すぐ上に 道しるべを置きます（2026-09-24 依頼）。
+       LINEやメールに貼ると、URLは **そのまま字として**出ます。
+       「こちらをタップ」という言葉にリンクを隠すことはできないので、
+       せめて 目が その下の1行へ行くようにします。
+       ★貼る先は3行になりますが、URLは いちばん下のまま動かしません。
+         行を足してURLを上げると、こんどは題が下に回ってしまいます。 */
+    var ji = dai + '\n▼ こちらをタップ\n' + url;
     var owari = function(ok){ link_shirase(botan, ok ? 'data-ok' : 'data-ng'); };
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(ji).then(function(){ owari(true); },

@@ -326,14 +326,24 @@ def ar_date(d): return '%d %s %d' % (d.day, AR_MONTH[d.month - 1], d.year)
 
 # ══ NEW（2026-09-23 依頼・共有とお題 v1.0 ④）════════════════
 #   「いつ来ても同じ」に見えるのが、いちばん人を遠ざけます。
-#   14日以内に出たものに「NEW」の札を付けて、**動いていることを見せます**。
+#   出たばかりのものに「NEW」の札を付けて、**動いていることを見せます**。
+#
+#   ★何日までを「新着」と呼ぶか（2026-09-24 依頼）
+#     「実践の新着の定義はなんだろう。投稿して１週間にするか。」
+#     → **投稿から7日**にしました。「1週間」なら、見る人が数えなくても
+#       分かります。14日だと、先週の話が今週も「NEW」のままで、
+#       札が付いていても「新しい」と思われなくなります。
+#     ★実践だけ別の日数にはしていません。同じ「NEW」の札が、ページに
+#       よって別の意味になると、見る人がまぎれます。ニュースもお悩みも
+#       グッズも、ぜんぶ ここの1つの数を見ます。
+#       （研究日程には「NEW」を出していません。これから来るものなので）
 #
 #   ★色だけにしません。**字で「NEW」**と書きます（色の見え方は人それぞれ）。
 #   ★日づけは **2回** 見ます。
 #     1回め … ここ（組み立てるとき）。古いものには、そもそも付けません。
 #     2回め … 見ている端末（src/hiroba.html）。組み立てたあと日が過ぎても
-#             「NEW」が残らないようにします。push が1週間空いても大丈夫です。
-NEW_HI = 14
+#             「NEW」が残らないようにします。push が何日か空いても大丈夫です。
+NEW_HI = 7
 
 
 def atarashii(d, kyou=None):
@@ -611,8 +621,9 @@ def load_goods():
             fm['order'] = int(fm.get('order', '99'))
         except ValueError:
             raise Tomeru('%s：order が数字ではありません' % f)
-        # date: は書かなくてかまいません。書いたときだけ、14日のあいだ
+        # date: は書かなくてかまいません。書いたときだけ、しばらく
         #   「NEW」が付きます（2026-09-23）。
+        #   何日のあいだかは NEW_HI が1か所で決めます（数字はここに書きません）。
         if fm.get('date'):
             try:
                 fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
@@ -1326,11 +1337,22 @@ def komari_url(a):
     return SITE_URL + KOMARI_HTML + '#k-' + a['slug']
 
 
-def komari_hira(hon, n=220):
+def komari_hira(hon, n=100):
     """LINEに流すための、飾りを外した本文。長いものは切ります。
-       ★URLに載せるので、長すぎると端末によっては途中で落ちます。"""
+       ★URLに載せるので、長すぎると端末によっては途中で落ちます。
+       ★2026-09-24 依頼：220字 → **100字**にしました。
+         LINEは、長い文の下に リンクと その札（プレビュー）を出します。
+         本文が220字あると、札が画面の下へ押しやられて、
+         指を動かさないと見えませんでした。
+         **続きは、リンクの先に全部あります。**ここは「何の話か」が
+         分かるだけでよく、読ませるところではありません。"""
     ji = re.sub(r'^[#\-・\s　]+', '', hon.strip(), flags=re.M)
-    ji = re.sub(r'\n{2,}', '\n', ji).strip()
+    # 改行を ぜんぶ1つの行にまとめます（2026-09-24）。
+    #   前は 段落のぶんだけ行が増えたので、100字に切っても
+    #   3行4行になることがありました。行が増えたぶん、
+    #   下のリンクが そのまま押し下がります。
+    #   ★100字なので、1行につないでも読めます。
+    ji = re.sub(r'\s*\n\s*', ' ', ji).strip()
     return ji if len(ji) <= n else ji[:n] + '…'
 
 
@@ -1339,13 +1361,27 @@ def komari_line(a):
        ★外から自動で書きこむ道はありません（ボットは入れられず、
          LINE Notify も2025年3月で終わりました）。できるのは、文を作って
          **送り先をえらぶ1押しだけ**を残すところまでです。
-       ★line.me/R/share は、その1押しの画面をひらきます。"""
-    gyo = ['【TOKKATSU広場】お悩みが届いています', '']
-    gyo.append('■ ' + a['mijikai'])
-    gyo.append(komari_hira(a['hon']))
-    gyo.append('')
-    gyo.append('答えられそうな方、ぜひ。')
-    gyo.append(komari_url(a))
+       ★line.me/R/share は、その1押しの画面をひらきます。
+
+       ★2026-09-24 依頼「リンクが少し下になっている」。
+         前は 8行258字あって、URLは いちばん下の8行めでした。
+         いまは **5行**で、URLは5行め。上に詰めたぶんだけ、
+         リンクと その札が 画面の上のほうに出ます。
+         空行と「答えられそうな方、ぜひ。」の1行は、すぐ下の
+         道しるべ（▼）に混ぜて、行数を減らしました。
+
+       ★「こちらをタップ」を **押せる字**にすることはできません。
+         LINEのふつうのメッセージは、本文に書いたURLを そのまま字として
+         出すだけで、別の言葉にリンクを隠す書き方を受けつけません
+         （それができるのは、公式アカウントが送るメッセージだけです）。
+         短縮URLの業者にも頼れません（原則2）。
+         そこで、**URLの すぐ上の行に 道しるべを置く**ところまでにします。
+         押せはしませんが、目は必ずその下のURLへ行きます。"""
+    gyo = ['【TOKKATSU広場】お悩みが届いています',
+           '■ ' + a['mijikai'],
+           komari_hira(a['hon']),
+           '▼ こちらをタップ（その場で答えられます）',
+           komari_url(a)]
     return 'https://line.me/R/share?text=' + urllib.parse.quote('\n'.join(gyo))
 
 
@@ -4036,7 +4072,7 @@ def build_jissen_hiroba(jissen, goods):
 #   道具箱の節へ飛ばしていました。棚を分けたので、飛ぶ先がもうありません。
 #   **1件ぶんを、ここで丸ごと出します。**
 BFUDA = """      <article class="bfuda" id="b-{slug}" data-naiyo="{nid}" data-toki="{toki}" data-nen="{nen}"{nushi} data-t="{dai}" data-grade="{grade}" data-scene="{scene}" data-oshi="{oshi_nama}" data-hon="{hon_nama}" data-ken="{ken}" data-shi="{shi}" data-chiho="{chiho}" data-shiryo="{shiryo_url}">
-        <p class="bfuda-me">{new}<span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{meta}</p>
+        <p class="bfuda-me">{new}<span class="bfuda-tag t--{nid}">{naiyo}</span>{kindtag}{chiiki}{nenf}{meta}</p>
         <h3 class="bfuda-h">{title}</h3>
 {oshi}        <p class="bfuda-by bfuda-by--ue">{by}</p>
         <p class="bfuda-lead">{lead}</p>
@@ -4236,8 +4272,16 @@ def build_bansho(jissen, kyara):
             zen += ZEN_B.format(doko='shiryo', na='資料' if futatsu else '大きく')
         more = BFUDA_MORE.format(body=md_html(a['rest'])) if a['rest'].strip() else ''
         ba, ba_nokori = ba_wakeru(a)
-        meta = '・'.join(x for x in (esc_html(ba_nokori), esc_html(a['grade']),
-                                     ja_md(a['d'])) if x)
+        # ── 学年は「・」の並びから **外に出して**、囲います（2026-09-24 依頼）──
+        #   「実践の学年を囲って。少し目立たせて。」
+        #   前は 場面・学年・日づけ を1本につないでいたので、学年だけを
+        #   囲うことができませんでした。ここで先に抜いてから、残りをつなぎます。
+        #   ★抜くだけなので「・」は二重になりません（join は空を落とします）。
+        #   ★学年が書かれていない実践では、囲い自体を出しません
+        #     （中身の無い枠が1つ、ぽつんと残らないようにします）。
+        nenf = ('<span class="bfuda-nen">%s</span>' % esc_html(a['grade'])
+                if a['grade'] else '')
+        meta = '・'.join(x for x in (esc_html(ba_nokori), ja_md(a['d'])) if x)
         # ── この実践を画像で保存（2026-09-22 夜。依頼で差しかえ）────────
         #   前は「LINEで聞く」でした。押すとLINEが開いて、題とURLが本文に
         #   入った状態で送り先を選ぶ、というものです。
@@ -4278,6 +4322,7 @@ def build_bansho(jissen, kyara):
                     if a.get('chiiki') else ''),
             ken=esc_html(a.get('ken') or ''), shi=esc_html(a.get('shi') or ''),
             chiho=esc_html(a.get('chiho') or ''),
+            nenf=nenf,
             meta=meta, title=esc_html(a['title']), lead=inline_md(a['lead']),
             mado=mado, shiryo=sh, soto=soto, zen=zen, more=more,
             by=esc_html(sensei_ja(a['by'])),
@@ -4652,6 +4697,11 @@ def build_kanri_page(jissen, komari, ken, tobashita, odai=None):
     head = head.replace('<!--BUILD:ROBOTS-->', robots_tag('kanri.html'))
     head = head.replace('<title>TOKKATSU広場</title>', '<title>実践の管理｜TOKKATSU広場</title>')
     head = re.sub(r'<meta property="og:[^>]+>\n?', '', head)
+    # アイコンは 公開用/ に置いてあり、管理画面は 管理/ にあります（2026-09-24）。
+    # そのままだと1つ上の引き出しを探しに行って見つからず、札が出ません。
+    # ホームへのリンク（{{HOME}}）と同じように、道を1つ足します。
+    head = head.replace('href="apple-touch-icon', 'href="../公開用/apple-touch-icon')
+    head = head.replace('href="favicon',          'href="../公開用/favicon')
     return '\n'.join([
         '<!DOCTYPE html>', '<html lang="ja" dir="ltr">', '<head>', head,
         '<style>', rd(CSS_H), '</style>', '</head>', '<body>', body, '</body>', '</html>',
@@ -4857,14 +4907,22 @@ def build_chizu(aru, mid='sagasu-k', yomi=None, nashi=None):
 #   ★高さは 44px を保ちます（押せる大きさは減らさない）。
 #   ★名前は消しません。プルダウンの上に小さく残します
 #     （何を選ぶ欄か分からなくなるため）。
+# 2026-09-24 依頼：さがすの欄を、**［さがす］［内容］［学年］の横1行**にします。
+#   さがすが1行、その下に内容と学年……と縦に積んでいたので、帯だけで
+#   スマホの3分の1を使い、写真の札が下へ押しやられていました。
+#   ★入れ物を分けていたのをやめ、4つとも **同じ1つの入れ物**に入れます。
+#     並べ直すのは CSS の仕事なので、HTMLは「4つが横にならぶ」だけにします。
+#     幅が足りないぶんは、CSSが2つ・1つと素直に折ります。
+#   ★名前（さがす／内容／学年／並び）は消しません。
+#   ★高さ44px・字の大きさは、ひとつも小さくしていません。
 SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
       <div class="sagasu-migi">
-      <div class="sagasu-gyo">
-        <label class="sagasu-l" for="sagasu-ji">さがす</label>
-        <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
-               placeholder="題・中身・学年・実践者から（例：たてわり）">
-      </div>
       <div class="sagasu-gyo sagasu-gyo--eranbu">
+        <p class="sagasu-e sagasu-e--ji">
+          <label class="sagasu-l" for="sagasu-ji">さがす</label>
+          <input class="sagasu-i" type="search" id="sagasu-ji" autocomplete="off"
+                 placeholder="題・中身・学年・実践者から（例：たてわり）">
+        </p>
         <p class="sagasu-e">
           <label class="sagasu-l" for="sagasu-n">内容</label>
           <select class="sagasu-s" id="sagasu-n">
@@ -4877,7 +4935,7 @@ SAGASU_OBI = """    <div class="sagasu{futatsu}" id="sagasu" hidden>
             <option value="">ぜんぶ</option>
 {nen}          </select>
         </p>
-        <p class="sagasu-e">
+        <p class="sagasu-e sagasu-e--nara">
           <label class="sagasu-l" for="sagasu-j">並び</label>
           <select class="sagasu-s" id="sagasu-j">
             <option value="atarashii">新しい順</option>
@@ -5374,18 +5432,32 @@ def build_kyara_narabi(kyara):
 #   LINEオープンチャット「みんなの特活ひろば（仮）」の案内に合わせた4行。
 #   ポスターの「ちょっと聞きたい／知りたい／伝えたい」を、
 #   4人に1つずつ持たせて、このサイトの行き先につなげています。
-#   （id, 「ちょっと◯◯」, このサイトでできること, 行き先の節のid）
+#   （id, 見出し, このサイトでできること, 行き先の節のid）
+#   ★並びは KYARA_MEN と同じ 学活くん→行人→児童会ちゃん→クラブマン です。
+#     色は class（h--gakkatsu など）で決まるので、並べかえても色はついてきます。
 #   ★行き先は **節の id だけ** を書きます（page.html#id と書かないこと）。
 #     節がどのページに移っても、tsunagi_naosu() が張りなおしてくれます。
 #     2026-09-21 夜、「伝えたい」が atsumaru.html#okuru を指したまま
 #     送るところがホームへ移り、行き先が消えかけました。
 # 2026-09-23 依頼：4つの言い方を「悩みを解決／知りたい／試したい／伝えたい」に
 #   そろえました。「ちょっと」を外して、**したいこと**だけを4つ並べます。
+# 2026-09-24 依頼：並びを **学活くん→行人→児童会ちゃん→クラブマン** に変え、
+#   言い方を「◯◯を◯◯する」の形で4つそろえました。
+#   ★「特活を知る」は、行き先を ima（集まる＝研究日程とニュース）から
+#     about（知る＝特別活動とは）へ移しました。「知る」と書いてあるのに
+#     日程の表に着くと、押した人の期待と合いません。**言葉のほうを
+#     動かさず、行き先のほうを言葉に合わせました。**
+#     研究日程への道は、帯とホームの札に残っています。ここから消えても行けます。
+#   ★「悩みを話す」は、依頼に無かった4つめです。ほかの3つと同じ
+#     「◯◯を◯◯る／す」の形にそろえるために、こちらで決めました。
+#     はじめ「悩みを相談する」にしましたが、スマホ（375px）で7字が入らず、
+#     「悩みを相談す／る」と1字だけ落ちました。ほかの3つと同じ **6字まで**
+#     にそろえます。
 IGI_MEN = (
-    ('gakkatsu', '悩みを解決', 'いま困っていることを。',       'kiku'),
-    ('gyoji',    '知りたい',   '研究日程とニュース。',         'ima'),
-    ('club',     '試したい',   '明日から使える学級会グッズ！', 'manabu'),
-    ('jidokai',  '伝えたい',   '板書も資料も、ここから。',     'okuru'),
+    ('gakkatsu', '悩みを話す',     'いま困っていることを書くと、答えが返ってきます。', 'kiku'),
+    ('gyoji',    '特活を知る',     '特別活動とは何か。4つの内容も、ことばの意味も。',   'about'),
+    ('jidokai',  '実践を伝える',   'あなたの板書や資料を、写真1枚から送れます。',       'okuru'),
+    ('club',     'グッズを試す',   '明日の学級会でそのまま使える道具が、ここに。',       'manabu'),
 )
 
 IGI_T = """      <li class="igi-h h--{n}">
@@ -5405,7 +5477,14 @@ IGI_T_NASHI = """      <li class="igi-h h--{n}">
 def build_igi(kyara):
     """ホームのいちばん上。このサイトが何のためにあるかを、4人で短く渡します。"""
     men = []
-    poses = {'gakkatsu': 'listen', 'gyoji': 'calendar', 'jidokai': 'share', 'club': 'try'}
+    # どのポーズで立つか。**行き先と合うポーズ**をえらびます。
+    #   2026-09-24 依頼：行人の行き先が「研究日程」から「特活を知る」に
+    #   変わったので、カレンダーを持つ calendar をやめて、案内する guide に
+    #   しました。日程の表へ行かないのにカレンダーを持っていると、絵のほうが
+    #   うそをつきます。
+    #   ★この4つは、ばらばらのポーズにします（同じポーズが2つあると、
+    #     ただ並んでいるだけに見えます）。
+    poses = {'gakkatsu': 'listen', 'gyoji': 'guide', 'jidokai': 'share', 'club': 'try'}
     for n, chotto, dekiru, saki in IGI_MEN:
         if n not in kyara:
             raise Tomeru('意義の節が %s.svg を呼んでいますが、その絵がありません' % n)
@@ -5429,6 +5508,14 @@ def build_igi(kyara):
             #     下のボタン・足もとのボタン）。ここから消えても行けます。
             '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
             '<span>実践や研究日程を共有して、<b>特別活動を盛ん</b>にしたいです。</span>'
+            # 2026-09-24 依頼で2文 足しました。**差しかえずに足した**のは、
+            #   上の2文が見出し「TOKKATSU広場とは？」の答えだからです。
+            #   消すと、見出しだけあって答えが無い節になります。
+            #   足したぶんは「だれ向けか」と「どうすればいいか」で、
+            #   すぐ下の4人の札への道しるべになります。
+            #   ★4行になりますが、9/23までは4行だったので、幅は足ります。
+            '<span>こんな方に向けたHPです。</span>'
+            '<span>4人の誰かを<b>タップ</b>してください。</span>'
             '</p><div class="igi-friends">'
             '<svg viewBox="0 0 345 143" aria-hidden="true" focusable="false">'
             '<use href="#ill-k-group-shoulders"/></svg>'
@@ -5645,6 +5732,167 @@ def build_home(doko, sec, mark, kiji, jissen, ken, komari):
               '  </div>\n'
               '</section>')
     return honbun, tsukatta
+
+
+# ══ 最新情報の掲示板（2026-09-24 依頼）══════════════════════
+#   「ホームの7つのできることの真下に最新情報の掲示板を設置。
+#     主に実践が更新されたら、そこにも最新のものだけ表示されるようにする。」
+#
+#   ★何を載せるか … **日づけを持っているもの、ぜんぶ**です。
+#     みんなの実践・お悩み・お悩みへの答え・ニュースの4つ。
+#     依頼は「主に実践」ですが、実践だけにはしませんでした。
+#     この掲示板が答えるのは「**前に来たときから、何が動いたか**」で、
+#     動くのは実践だけではないからです。お悩みが1件届いたのに
+#     掲示板が空のままだと、「何も無い」と読めてしまいます。
+#     かわりに、**実践が主役だと分かる見た目**にしています
+#       ・札が「実践」のときだけ、墨のベタ（→ .shin-tane--j）
+#       ・同じ日に2つ届いたら、実践のほうを上に（→ SHIN_JUN）
+#     実際、いまここに載るのは実践ばかりです。実践は毎日のように
+#     届き、ニュースは月に数本だからです。物差しが1つでも、
+#     **多く動くものが自然に多く出ます**。
+#
+#   ★新しいかどうかの物差しは atarashii()＝ NEW_HI 日以内、ひとつだけです。
+#     ここに日数は書きません。NEW_HI を動かせば、ここも一緒に動きます。
+#     （同じ「新着」が場所によって別の日数になると、見る人がまぎれます
+#       → NEW_HI の覚え書き）
+#
+#   ★「最新のものだけ」…… 条件は **2つを両方** かけます。
+#       ① NEW_HI 日以内であること
+#       ② 新しい順に SHIN_N 件まで
+#     ①だけだと、お題の週に実践が10件届いた日に10行並びます。
+#     ②だけだと、半年なにも届かなくても4行出たままで、掲示板が
+#     「動いていない」ことを隠してしまいます。
+#
+#   ★1件も無ければ、**節ごと出しません**（見出しも出しません）。
+#     お題の帯（build_odai）と同じ考えです。押しても何も無いものを
+#     置かない、という このサイトの決まりに合わせました。
+#     すぐ上の「7つのできること」の札には、それぞれ「新着◯件」が
+#     出ているので、掲示板が無い日でも 動きが分からなくなることは
+#     ありません。
+#
+#   ★日づけは **2回** 見ます（NEWの札と同じ）。
+#     1回め … ここ。組み立てるときに、古いものは入れません。
+#     2回め … 見ている端末（src/hiroba.html の「古くなったNEWを消す」）。
+#       行ごとに data-new-made＝**その行が消える日** を持たせてあります。
+#       push が何日か空いても、8日めの行が残りません。
+#       全部消えたら、掲示板ごと隠れます。
+SHIN_N = 4
+
+# 同じ日に届いたときの、上下の順。小さいほど上です。
+#   実践が主役なので、実践をいちばん上にします。
+SHIN_JUN = {'jissen': 0, 'komari': 1, 'kotae': 2, 'news': 3}
+
+# 行のあたまに出す、種類の札。**字で書きます**（色だけにしません）。
+#   j … 実践だけ、墨のベタにします（主役なので）。
+#   ★字は KOTOBA の表で3つのことばになります（→ KOTOBA_TEKI の「掲示板の種類」）。
+#     答えを「お答え」にしてあるのは、送る欄の「答え」（＝あなたの答え、と
+#     呼びかける字）と **同じ字にすると、訳が1つしか持てない** ためです。
+SHIN_NA = {'jissen': ('実践', ' shin-tane--j'), 'komari': ('お悩み', ''),
+           'kotae':  ('お答え', ''),           'news':   ('ニュース', '')}
+
+SHIN_GYO = """        <li class="shin-gyo" data-new-made="{kieru}">
+          <a class="shin-a" href="{saki}">
+            <span class="shin-me"><span class="shin-tane{iro}">{tane}</span><span class="shin-hi">{hi}</span></span>
+            <span class="shin-naka"><b class="shin-dai">{dai}</b>{sub}</span>
+            <span class="shin-ya" aria-hidden="true">→</span>
+          </a>
+        </li>"""
+
+
+def shin_atsumeru(kiji, jissen, komari, kotae):
+    """掲示板に出すものを、1つの物差しで集めて、新しい順に SHIN_N 件だけ返す。
+       1件＝（種類, 行き先の id, 題, そえ書き, 日づけ）。
+
+       ★行き先は **節の id だけ** を書きます（page.html#id と書きません）。
+         どのページに載るかは、そのときの PAGES しだいなので、
+         tsunagi_naosu() が最後に張りなおします（→ そちらの覚え書き）。
+       ★実践・お悩み・答えは、**その1件そのもの**へ着きます
+         （#b-… / #k-… / #a-…）。ニュースだけは、記事そのものが
+         外のページなので、ニュースの節（#news）へ着きます。
+         ニュースは新しい順に並んでいるので、いちばん上に出ています。"""
+    tama = []
+
+    for a in bansho_aru(jissen):
+        if not atarashii(a['d']):
+            continue
+        ba, nokori = ba_wakeru(a)
+        # そえ書きは「場面・学年・送ってくださった方」。学年だけは、
+        #   みんなの実践の札と同じ囲い（.bfuda-nen）をそのまま使います。
+        sub = [esc_html(x) for x in (ba, nokori) if x]
+        if a['grade']:
+            sub.append('<span class="bfuda-nen">%s</span>' % esc_html(a['grade']))
+        if a.get('by'):
+            sub.append(esc_html(sensei_ja(a['by'])))
+        tama.append(('jissen', 'b-' + a['slug'], a['title'], sub, a['d']))
+
+    for a in komari:
+        if not atarashii(a.get('d')):
+            continue
+        sub = [esc_html(x) for x in (a.get('scene'),) if x]
+        if a['grade']:
+            sub.append('<span class="bfuda-nen">%s</span>' % esc_html(a['grade']))
+        # 題が書かれていない お悩みは、短い言葉（本文の1行目）を題にします
+        tama.append(('komari', 'k-' + a['slug'], a['dai'] or a['mijikai'], sub, a['d']))
+
+    # 答えは、**相手（お悩み）がページに出ているものだけ**。出ていない
+    #   お悩みに ぶら下がった答えは、行き先の id がどこにも無いので、
+    #   ここで落とします（落とさないと tsunagi_naosu が止まります）。
+    aru_k = {a['slug']: a for a in komari}
+    for toi, v in (kotae or {}).items():
+        oya = aru_k.get(toi)
+        if not oya:
+            continue
+        for k in v:
+            if not atarashii(k.get('d')):
+                continue
+            sub = [esc_html('「%s」への答え' % oya['mijikai'])]
+            if k.get('by'):
+                sub.append(esc_html(sensei_ja(k['by'])))
+            tama.append(('kotae', 'a-' + k['slug'], komari_hira(k['hon'], 34), sub, k['d']))
+
+    for a in kiji:
+        if not atarashii(a['d']):
+            continue
+        tama.append(('news', 'news', a.get('home') or a['title'],
+                     [esc_html(a['source'])], a['d']))
+
+    # 新しい順。同じ日なら SHIN_JUN の順（実践がいちばん上）、
+    #   それも同じなら行き先の名前で決めます（毎回おなじ並びにするため）。
+    tama.sort(key=lambda x: (-x[4].toordinal(), SHIN_JUN[x[0]], x[1]))
+    return tama[:SHIN_N]
+
+
+def build_shinchaku(kiji, jissen, komari, kotae):
+    """ホームの「7つのできること」の、すぐ下に置く掲示板。
+       1件も無ければ **空の字** を返します（呼ぶ側が、節ごと落とします）。"""
+    tama = shin_atsumeru(kiji, jissen, komari, kotae)
+    if not tama:
+        return ''
+    gyo = []
+    for tane, saki, dai, sub, d in tama:
+        na, iro = SHIN_NA[tane]
+        gyo.append(SHIN_GYO.format(
+            kieru=(d + datetime.timedelta(days=NEW_HI)).isoformat(),
+            saki='#' + saki, iro=iro, tane=esc_html(na), hi=ja_md(d),
+            dai=esc_html(mijikaku_ten(dai, 42)),
+            sub=('<span class="shin-sub">%s</span>' % '・'.join(sub)) if sub else ''))
+    n = len(tama)
+    # 数が変わる字なので、訳は KOTOBA の表ではなく **ここで直に** 入れます
+    #   （表に置くと、1件届くたびにビルドが止まります → home_kazu と同じ考え）。
+    yomi = ('この%d日のあいだに届いた%d件です。押すと、その1件の所へ着きます。'
+            % (NEW_HI, n))
+    yomi_en = ('%d item%s that arrived in the last %d days. '
+               'Tap one to go straight to it.' % (n, '' if n == 1 else 's', NEW_HI))
+    yomi_ar = ('%d عنصر وصل خلال %d أيام. انقر للانتقال إليه مباشرة.' % (n, NEW_HI))
+    return ('<section class="sec" id="shin">\n'
+            '  <div class="uchi">\n'
+            '    <h2 class="midashi"><span class="en">WHAT&rsquo;S NEW</span>'
+            '<span class="ja">最新情報</span></h2>\n'
+            '    <p class="yomi" data-en="%s" data-ar="%s">%s</p>\n'
+            % (attr(yomi_en), attr(yomi_ar), esc_html(yomi)) +
+            '    <ul class="shinban">\n' + '\n'.join(gyo) + '\n    </ul>\n'
+            '  </div>\n'
+            '</section>')
 
 
 # ══ ホームの「中身を、ざっと」（2026-09-21に追加）════════════
@@ -6088,7 +6336,39 @@ OGP_MOTO = 'ogp-hiroba.png'
 OGP_E = {
     'okuru.html': ('ogp-okuru.png',
                    '4人のキャラクターが手をあげて「実践を、共有してください。」とお願いしている絵'),
+    # お悩みBOX（2026-09-24 依頼）。1件をLINEに流したとき、札に出ていたのは
+    #   4人が肩を組んだ絵と サイト全体の説明で、**何の話か分かりません**でした。
+    #   ここだけ、困っている絵に差しかえます。
+    'komari.html': ('ogp-komari.png',
+                    '学活くんが あごに手をあてて考えている絵と'
+                    '「お悩みBOX｜答えを、待っています。」の字'),
 }
+
+# LINEに貼ったときの札に出る、題と説明（2026-09-24 依頼）。
+#   何も書かないと、どのページでも 説明は
+#   「ニュース・一次資料・研究日程・すぐ使える実践。…」＝サイト全体の話になります。
+#   お悩み1件を流したときに これが出ると、受けとった人には
+#   **何を頼まれているのか分かりません**。だから、ここだけ言葉を分けます。
+#   ★足すときは、そのページを開いた人**みんな**に当てはまる言葉にしてください。
+#     札はページに1つで、1件ごとには変えられません（#k-◯◯ は札に効きません）。
+OGP_JI = {
+    'komari.html': ('お悩みBOX｜答えを、待っています。',
+                    '全国の先生から届いた、特別活動の困りごとが並びます。'
+                    'タップすると その1件がひらいて、その場で答えを書けます'
+                    '（ログインは要りません）。'),
+}
+
+
+def meta_kaku(head, na, ji):
+    """頭の中の meta を1つだけ、名前で探して 中身を入れかえる。
+       ★名前で探すので、上の行で題を入れかえたあとでも効きます。
+         （前はもとの字を丸ごと書いて探していて、head-hiroba.html の
+           言葉を直したときに 静かに効かなくなっていました。
+           実際 okuru.html の og:image:alt が、差しかえた絵とは
+           ちがう絵の説明のままでした ＝ 2026-09-24 に見つけました。）"""
+    p = r'((?:property|name)="%s" content=)"[^"]*"' % re.escape(na)
+    atara = esc_html(ji)
+    return re.sub(p, lambda m: m.group(1) + '"%s"' % atara, head, count=1)
 
 
 def head_de(f, na):
@@ -6104,11 +6384,21 @@ def head_de(f, na):
     # LINEに貼ったときの絵（2026-09-23 依頼）。
     #   ふだん … 4人が肩を組んでいる絵
     #   送るページだけ … 4人が手をあげて「実践を共有してください」とお願いする絵
+    #   お悩みBOXだけ … 学活くんが困っている絵
     if f in OGP_E:
         e, alt = OGP_E[f]
-        head = head.replace(OGP_MOTO, e)
-        head = head.replace('property="og:image:alt" content="TOKKATSU広場｜特別活動で、輝く。"',
-                            'property="og:image:alt" content="%s"' % esc_html(alt))
+        head = head.replace(OGP_MOTO, e)   # og: と twitter: の両方が変わります
+        head = meta_kaku(head, 'og:image:alt', alt)
+    # 札の題と説明（2026-09-24 依頼）。
+    #   ★og: と twitter: の両方を書きかえます。読む側（LINE・X・Slackなど）に
+    #     よって、どちらを見るかが違うためです。片方だけ直すと、
+    #     送り先によって言葉が変わります。
+    if f in OGP_JI:
+        dai_o, setsu = OGP_JI[f]
+        for na_m in ('og:title', 'twitter:title'):
+            head = meta_kaku(head, na_m, dai_o)
+        for na_m in ('og:description', 'twitter:description'):
+            head = meta_kaku(head, na_m, setsu)
     return head
 
 
@@ -6184,6 +6474,19 @@ KOTOBA = {
          '<span>موقع لرفع <b>تبادل المعلومات</b> حول الأنشطة الخاصة في اليابان.</span>'
          '<span>بمشاركة الممارسات ومواعيد اللقاءات البحثية، نريد أن '
          '<b>تزدهر الأنشطة الخاصة</b>.</span>'),
+    # 2026-09-24 依頼：上の2文のうしろに2文 足した、いまの4行ぶんです。
+    #   ★前の2行ぶんのかぎ（すぐ上）も、消さずに残してあります。
+    '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>実践や研究日程を共有して、<b>特別活動を盛ん</b>にしたいです。</span><span>こんな方に向けたHPです。</span><span>4人の誰かを<b>タップ</b>してください。</span>':
+        ('<span>A site for raising the <b>flow of information</b> in Japanese special activities.</span>'
+         '<span>By sharing practices and study-meeting dates, we want to see '
+         '<b>special activities thrive</b>.</span>'
+         '<span>This site is made for people like these four.</span>'
+         '<span>Please <b>tap</b> whichever of them fits you.</span>',
+         '<span>موقع لرفع <b>تبادل المعلومات</b> حول الأنشطة الخاصة في اليابان.</span>'
+         '<span>بمشاركة الممارسات ومواعيد اللقاءات البحثية، نريد أن '
+         '<b>تزدهر الأنشطة الخاصة</b>.</span>'
+         '<span>هذا الموقع موجَّه لمن يشبه هؤلاء الأربعة.</span>'
+         '<span>من فضلك <b>انقر</b> على من يناسبك منهم.</span>'),
     # ★このかぎは HTML ごと入ります（<a> は訳の仕組みが外さないため）。
     #   LINEの招待URLを変えたら、ここも一緒に直してください。
     #   直し忘れても、ビルドが止まって「足す行」を出してくれます。
@@ -6200,6 +6503,15 @@ KOTOBA = {
 
     'あなたの実践を、ここに': ('Your practice belongs here', 'شارك ممارستك هنا'),
     '中身を、ざっと': ('A quick look inside', 'نظرة سريعة على المحتوى'),
+    # 2026-09-24 依頼：ホームの掲示板の見出し（→ build_shinchaku）。
+    #   すぐ下の説明文と件数は、数が変わる字なので、この表ではなく
+    #   build_shinchaku がその場で data-en / data-ar を入れています。
+    '最新情報': ('Latest updates', 'أحدث المستجدات'),
+    # 掲示板の、行のあたまの札（→ SHIN_NA）。
+    #   「お悩み」「ニュース」は、帯の名前と同じ字なので この表の下のほうに
+    #   もう入っています（同じ字は1か所だけ）。ここに足すのは2つだけです。
+    '実践': ('Practice', 'ممارسة'),
+    'お答え': ('Answer', 'إجابة'),
     '特別活動って、なに': ('What is Tokkatsu?', 'ما هي الأنشطة الخاصة (توكاتسو)؟'),
     '4つの内容': ('The four areas', 'المجالات الأربعة'),
     'ことばの意味': ('What the words mean', 'معاني المصطلحات'),
@@ -6319,6 +6631,24 @@ KOTOBA = {
     'ちょっと伝えたい': ('Something to pass on', 'ما يستحق المشاركة'),
     '板書も資料も、ここから。': ('Blackboards and handouts — send them from here.',
                                 'السبورات والمواد — أرسلها من هنا.'),
+    # 2026-09-24 依頼：言い方を「◯◯を◯◯する」の形にそろえ、説明も長くしました。
+    #   上の古い言い方は、消さずに残してあります（9/23と同じ理由）。
+    '悩みを話す': ('Talk about a problem', 'تحدّث عن مشكلتك'),
+    'いま困っていることを書くと、答えが返ってきます。':
+        ('Write what you are stuck on, and an answer comes back.',
+         'اكتب ما يصعب عليك الآن، وسيصلك جواب.'),
+    '特活を知る': ('Learn what Tokkatsu is', 'تعرّف على توكّاتسو'),
+    '特別活動とは何か。4つの内容も、ことばの意味も。':
+        ('What special activities are, the four areas, and what the words mean.',
+         'ما هي الأنشطة الخاصة، والمجالات الأربعة، ومعاني المصطلحات.'),
+    '実践を伝える': ('Share your practice', 'شارِك ممارستك'),
+    'あなたの板書や資料を、写真1枚から送れます。':
+        ('Send your blackboards and handouts — one photo is enough.',
+         'أرسل سبوراتك وموادك — صورة واحدة تكفي.'),
+    'グッズを試す': ('Try the tools', 'جرّب الأدوات'),
+    '明日の学級会でそのまま使える道具が、ここに。':
+        ("Tools you can use as they are in tomorrow's class meeting.",
+         'أدوات تصلح كما هي في اجتماع الفصل غدًا.'),
 
     # ── ページの名前とひとこと（子ページの頭） ──
     'ホーム': ('Home', 'الرئيسية'),
@@ -7117,6 +7447,13 @@ KOTOBA_TEKI = (
     # ── NEW の札（2026-09-23 追加）──────────────────────────
     (r'(<span class="new-fuda"[^>]*>)(.*?)(</span>)', 'NEWの札'),
 
+    # ── 最新情報の掲示板（2026-09-24 追加）──────────────────
+    #   見るのは **種類の札の字だけ**（実践／お悩み／お答え／ニュース）です。
+    #   題・そえ書き・日づけは訳しません。届いたものの字そのものなので、
+    #   1件届くたびに表へ足すことになり、ビルドが止まります
+    #   （届いた実践の題を訳さないのと同じ決まりです）。
+    (r'(<span class="shin-tane[^"]*">)(.*?)(</span>)', '掲示板の種類'),
+
     # ── 今週のお題（2026-09-23 追加）────────────────────────
     #   お題の中身（odai-h・odai-sub）は、わざと入れていません（上の注）。
     (r'(<span class="odai-kago">)(.*?)(</span>)', 'お題の名のり'),
@@ -7319,13 +7656,23 @@ def build_shin():
     for i in re.findall(r'\sid="([^"]+)"', igi_html):
         doko[i] = HOME
 
+    # 最新情報の掲示板（2026-09-24 依頼）。1件も新しいものが無い日は
+    #   空の字が返り、下の並びから **節ごと** 落ちます（→ build_shinchaku）。
+    shin_html = build_shinchaku(kiji, jissen, komari, kotae)
+    for i in re.findall(r'\sid="([^"]+)"', shin_html):
+        doko[i] = HOME
+
     pages = {}
     for f, na, yo, setsu in PAGES:
         if f == HOME:
-            # ホームの並び … このサイトは、なに → 8つの札 → こよみ → 中身をざっと
+            # ホームの並び … このサイトは、なに → 7つの札 → 最新情報 → 中身をざっと
             atama, saki = hero, 'igi'
             # お題の帯は、いちばん上の絵のすぐ下（「TOKKATSU広場とは？」より上）
-            naka_html = '\n\n'.join([x for x in [build_odai(odai), igi_html, home_html]
+            # 最新情報の掲示板は「7つのできること」の **すぐ下**（2026-09-24 依頼）。
+            #   押す場所（7つの札）を見せたあとに、いま動いているものを出します。
+            #   逆にすると、はじめて来た人がいきなり見知らぬ題名を読まされます。
+            naka_html = '\n\n'.join([x for x in [build_odai(odai), igi_html,
+                                                 home_html, shin_html]
                                      if x] + [sec[s] for s in setsu] + [gaiyo_html])
         else:
             atama = ko_atama(f, yo)
@@ -7596,6 +7943,7 @@ def main_shin(check_only):
     sitemap_kaku(dict((f, h) for f, h in pages.items() if f != KANRI_F))
     pdfjs_utsusu()
     ogp_utsusu()
+    icon_utsusu()
     print('')
     print('  書きました。入口は 公開用/index.html（ホーム）です。')
     print('  公開用/ は GitHubに上げません（.gitignore）。上げるのは src/ と build.py。')
@@ -7681,6 +8029,32 @@ def ogp_utsusu():
     for f in e:
         shutil.copy2(f, os.path.join(saki, os.path.basename(f)))
     print('  LINEの絵　… %d枚を 公開用/ に写しました（%s）'
+          % (len(e), '・'.join(os.path.basename(f) for f in e)))
+
+
+ICON_DIR = os.path.join(SRC, 'icon')  # ホーム画面に追加したときの札（180と32）
+
+
+def icon_utsusu():
+    """src/icon/*.png を 公開用/ に写す（2026-09-24 依頼）。
+
+       LINEの絵（ogp）と同じ写し方です。別の引き出しに分けているのは、
+       数え上げるときに混ざらないようにするためです。
+       ★絵じたいは src/icon/tsukuru.py が作ります。
+         キャラクターを直したら、作り直してください。
+       ★1枚も無いときは止めます。止めないと、
+         「付けたつもりなのに、ページの写真が札になったまま」になり、
+         iPhoneの画面を見るまで気づけません。"""
+    import shutil
+    saki = os.path.join(ROOT, '公開用')
+    e = sorted(glob.glob(os.path.join(ICON_DIR, '*.png')))
+    if not e:
+        raise Tomeru('src/icon/ にアイコンが1枚もありません。'
+                     'ホーム画面に追加すると、ページを縮めた写真が札になります'
+                     '（作り方は src/icon/tsukuru.py）')
+    for f in e:
+        shutil.copy2(f, os.path.join(saki, os.path.basename(f)))
+    print('  ホームの札… %d枚を 公開用/ に写しました（%s）'
           % (len(e), '・'.join(os.path.basename(f) for f in e)))
 
 
