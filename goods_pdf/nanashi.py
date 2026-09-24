@@ -105,27 +105,39 @@ def main():
     if not os.path.isdir(DL):
         print('src/downloads/ がありません')
         return
-    kaeta = 0
+    kaeta, dame = 0, 0
     for p in sorted(glob.glob(os.path.join(DL, '*'))):
         e = os.path.splitext(p)[1].lower()
         na = os.path.basename(p)
-        if e in OFFICE:
-            aru = office_miru(p)
-            if miru:
-                print('  %s … %s' % (na, aru or '（名前の欄は空です）'))
-            elif aru:
-                office_kesu(p)
-                kaeta += 1
-                print('  消しました … %s （%s）'
-                      % (na, '、'.join('%s=%s' % (r, v) for _, r, v in aru)))
-        elif e == '.pdf':
-            if miru:
-                print('  %s … %s' % (na, pdf_kesu(p, True) or '（名前の欄は空です）'))
-            elif pdf_kesu(p):
-                kaeta += 1
-                print('  消しました … %s' % na)
+        # ★1つ読めなくても、**絶対に止めません**（2026-09-24 実測）。
+        #   壊れた .docx が1つ届いただけで、ここが例外を投げ、ビルドが
+        #   落ち、**サイトがまるごと更新されなくなりました**。
+        #   読めないものは そのままにして、先へ進みます。
+        #   （読めないファイルは、知らせメールの［すぐ消す］で下ろせます。
+        #     受け口も、いまは読めないものを はじめから断っています。）
+        try:
+            if e in OFFICE:
+                aru = office_miru(p)
+                if miru:
+                    print('  %s … %s' % (na, aru or '（名前の欄は空です）'))
+                elif aru:
+                    office_kesu(p)
+                    kaeta += 1
+                    print('  消しました … %s （%s）'
+                          % (na, '、'.join('%s=%s' % (r, v) for _, r, v in aru)))
+            elif e == '.pdf':
+                if miru:
+                    print('  %s … %s' % (na, pdf_kesu(p, True) or '（名前の欄は空です）'))
+                elif pdf_kesu(p):
+                    kaeta += 1
+                    print('  消しました … %s' % na)
+        except Exception as err:
+            dame += 1
+            print('  ⚠ 読めませんでした（そのままにします） … %s … %s'
+                  % (na, str(err)[:120]))
     if not miru:
-        print('\n  %d個から、作成者の名前を消しました\n' % kaeta)
+        print('\n  %d個から、作成者の名前を消しました%s\n'
+              % (kaeta, ('（%d個は読めませんでした）' % dame) if dame else ''))
 
 
 if __name__ == '__main__':

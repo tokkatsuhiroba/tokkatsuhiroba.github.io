@@ -95,7 +95,18 @@ def main():
         if os.path.exists(out) and not zenbu:
             print('  そのまま … %s.webp' % na)
             continue
-        kb = tsukuru(pdf, out)
+        # ★1枚 作れなくても、**絶対に止めません**（2026-09-24）。
+        #   壊れたPDFが1つ届いただけでビルドが落ちると、サイトが
+        #   まるごと更新されなくなります。見本が無ければ、札は
+        #   種類の字で出ます（build.py の build_goods_hiroba）。
+        try:
+            kb = tsukuru(pdf, out)
+        except Exception as err:
+            if os.path.exists(out):
+                os.remove(out)      # 書きかけを残さない
+            print('  ⚠ 見本が作れませんでした（札は字で出ます） … %s.pdf … %s'
+                  % (na, str(err)[:120]))
+            continue
         tsukutta += 1
         print('  できました … %s.webp （%.0fKB）' % (na, kb))
     kaita = md_ni_kaku()

@@ -1644,6 +1644,14 @@ function _goods(d) {
       return _kotae({ ok: false,
         riyu: GOODS_KATA[s][1] + 'が大きすぎます（' + GOODS_KATA[s][2] + 'MBまで）' });
     }
+    /* ★ほんとうに開けるか、ここで1度あけてみます（2026-09-24 実測）。
+       壊れた .docx が1つ置かれただけで、ワークフローの
+       「作成者を消す」が落ち、**サイトがまるごと更新されなくなりました**。
+       あちらも止まらないように直しましたが、**読めないものは
+       はじめから置かない**のが、いちばん確かです。 */
+    if (!_akeru(b, s)) {
+      return _kotae({ ok: false, riyu: GOODS_KATA[s][1] + 'が開けません（壊れています）' });
+    }
     oku.push({ s: s, na: slug + '.' + s, b64: Utilities.base64Encode(b.getBytes()) });
   }
 
@@ -1673,6 +1681,27 @@ function _goods(d) {
 
   _shiraseru_goods(slug, d, t, de, oku, u, naoseru, nose);
   return _kotae({ ok: true, noseta: nose.ok });
+}
+
+/* ほんとうに開けるファイルかどうか。
+     PDF   … 頭が %PDF- で始まるか
+     Office … zip として開けて、[Content_Types].xml が入っているか
+   ★ここで見るのは「形が壊れていないか」だけです。中身は見ません。 */
+function _akeru(b, shippo) {
+  try {
+    if (shippo === 'pdf') {
+      var atama = b.getBytes().slice(0, 5);
+      return String.fromCharCode.apply(null, atama) === '%PDF-';
+    }
+    var naka = Utilities.unzip(b.setContentType('application/zip'));
+    b.setContentType(GOODS_KATA[shippo][3]);      // 型を戻す
+    for (var i = 0; i < naka.length; i++) {
+      if (naka[i].getName().indexOf('[Content_Types].xml') >= 0) return true;
+    }
+    return false;
+  } catch (err) {
+    return false;
+  }
 }
 
 /* data URI を、決めた型のときだけ受けとります。
