@@ -5,6 +5,9 @@ ar_title: بطاقة الاقتراح
 desc: 議題と提案理由を、1枚で書けるようにしたカード
 ar_desc: الموضوع وسبب الاقتراح في ورقة واحدة
 icon: g-card
-pdf:
+pdf: https://yuutennis657-beep.github.io/tokkatsu-hiroba/downloads/teian-card.pdf
 docx:
+kami: A4たて
+mihon: teian-card
+naoshi: kubatte
 ---

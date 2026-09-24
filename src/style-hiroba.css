@@ -5139,3 +5139,102 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
   }
   .hero-botan .btn-ya{font-size:15px}
 }
+
+/* ══ 学級会グッズの棚（2026-09-24 依頼）════════════════════
+   「学級会グッズのデータも募集できるようにしたい」
+   棚は2つ（道具箱／みんなのグッズ）ですが、**見た目は同じ**です。
+   分けているのは見出し（.gh）だけ。届いたものを格下に見せないためです。
+
+   左は「見本」＝PDFの1ページ目です。画像はHTMLの中に入っています
+   （原則2＝開いても外に1バイトも出ない）。見本が無いときは、
+   種類の名前を面に出します（→ build.py の GOODS_SHURUI）。
+   ★ここは style-hiroba.css の **いちばん最後**に置いています。
+     .btn の上書き（.gt-b）が、うしろの @media に負けないためです。
+     上へ動かすと、ボタンの枠と影が消えます。 */
+.gh{
+  margin:clamp(40px,5vw,72px) 0 6px;
+  display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+}
+.gh-en{font-family:var(--f-en);font-size:12.5px;letter-spacing:.18em;color:var(--mute)}
+.gh-ja{
+  font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(20px,2.4vw,27px);letter-spacing:.06em;
+}
+
+.gtl{
+  list-style:none;margin:clamp(18px,2.4vw,26px) 0 0;padding:0;
+  display:grid;gap:clamp(16px,2.2vw,22px);
+}
+.gt{
+  display:grid;grid-template-columns:clamp(96px,14vw,148px) 1fr;
+  gap:clamp(14px,2vw,22px);align-items:start;
+  background:var(--bg);border:2.5px solid var(--ink);border-radius:20px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:clamp(14px,1.8vw,20px);
+}
+/* 見本のわく。A4のたて長（1:1.414）にそろえます。よこ向きの紙も
+   同じわくに入れて、上をそろえて切ります（並びが波打たないように）。 */
+.gt-mi{
+  border:2px solid var(--ink);border-radius:12px;overflow:hidden;
+  display:grid;place-items:center;aspect-ratio:1 / 1.414;
+  background:var(--men-ki);
+}
+.gt-mi img{
+  display:block;width:100%;height:100%;
+  object-fit:cover;object-position:top center;
+}
+.gt-mi--sora{background:var(--men-sora)}
+.gt-mi--midori{background:var(--men-midori)}
+.gt-mi--hada{background:var(--men-hada)}
+.gt-mi--fuji{background:var(--men-fuji)}
+.gt-mi-ji{
+  font-family:var(--f-maru);font-weight:700;font-size:13px;
+  letter-spacing:.04em;line-height:1.6;text-align:center;padding:6px;
+}
+.gt-hon{display:grid;gap:8px;min-width:0}
+.gt-me{
+  margin:0;display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+  font-size:12.5px;color:var(--mute);letter-spacing:.04em;
+}
+.gt-tag{
+  font-family:var(--f-maru);font-size:11.5px;font-weight:700;letter-spacing:.06em;
+  color:var(--bg);background:var(--accent);
+  border:2px solid var(--ink);border-radius:999px;padding:1px 11px;
+}
+.gt-na{
+  margin:0;font-family:var(--f-maru);font-weight:700;
+  font-size:clamp(17px,2vw,21px);letter-spacing:.05em;line-height:1.55;
+}
+.gt-de{margin:0;font-size:14.5px;line-height:1.9}
+.gt-naka{font-size:14px;line-height:1.9}
+.gt-naka p{margin:0 0 8px}
+.gt-naka ul,.gt-naka ol{margin:0 0 8px;padding-inline-start:1.4em}
+.gt-naka li{margin:0 0 5px}
+.gt-naka h4{
+  margin:12px 0 5px;font-family:var(--f-maru);font-weight:700;font-size:14.5px;
+  padding-inline-start:10px;border-inline-start:5px solid var(--ki);
+}
+/* 直して使ってよいか。ここが Word を出す／出さないの根拠なので、
+   小さくても はっきり見える色にします（→ build.py の GOODS_NAOSHI）。 */
+.gt-naoshi{
+  margin:0;font-family:var(--f-maru);font-weight:700;
+  font-size:12.5px;letter-spacing:.04em;color:var(--accent);
+}
+.gt-by{
+  margin:0;display:flex;gap:9px;align-items:center;flex-wrap:wrap;
+  font-size:12.5px;color:var(--mute);letter-spacing:.04em;
+}
+.gt-dot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.5}
+.gt-dl{margin:4px 0 0;display:flex;gap:10px;flex-wrap:wrap}
+.gt-b{
+  min-height:44px;padding:8px 20px;font-size:14.5px;gap:8px;
+  border:2.5px solid var(--ink);border-radius:999px;
+  box-shadow:4px 4px 0 var(--ink);
+}
+.gt-soto{font-size:11.5px;font-weight:400;letter-spacing:0}
+.gt-mada{font-family:var(--f-maru);font-weight:700;font-size:13px;color:var(--mute)}
+
+@media (max-width:719px){
+  .gt{grid-template-columns:84px 1fr;gap:12px;padding:12px}
+  .gt-b{min-height:42px;padding:7px 16px;font-size:14px}
+}

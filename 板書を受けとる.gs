@@ -214,6 +214,10 @@ function doPost(e) {
     // お悩みへの答え（2026-09-24）。字だけ。お悩みにぶら下がります。
     if (d.kind === 'kotae') return _kotae_okuru(d);
 
+    // 学級会グッズ（2026-09-24 依頼）。PDF・Word・PowerPoint・Excel を
+    //   そのまま配ります（画像に変えません）。→ _goods
+    if (d.kind === 'goods') return _goods(d);
+
     // なおす（2026-09-22 夜）。本人と管理人だけ通ります（→ _naosu）
     if (d.kind === 'naosu') return _naosu(d);
 
@@ -1035,7 +1039,11 @@ function _noseru(slug, n) {
 function doGet(e) {
   var slug = (e.parameter.v || '').trim();
   var key  = String(e.parameter.k || '').trim();
-  if (!/^(bansho|komari|nittei)-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
+  /* 2026-09-24：kotae と todoita を足しました。
+       ★kotae … 答えの知らせメールに［すぐ消す］は出ていたのに、
+         ここで弾かれて「行き先がありません」になっていました（積み残し）。
+       ★todoita … 届いた学級会グッズです。 */
+  if (!/^(bansho|komari|nittei|kotae|todoita)-[0-9]{8}-[0-9a-z]+$/.test(slug)) return _html('行き先がありません');
 
   /* ★ここが無いと、URLを知った人が誰でも消せます（2026-09-22 夜に入れました）。
        通るのは次の2つだけです。
@@ -1236,7 +1244,7 @@ function _kanri_kesu(d) {
   /* 2026-09-22：困りごと・研究日程も、管理画面から下ろせるようにしました。
      _slug_kesu は もともと3つとも扱えます（komari- / nittei- / それ以外）。
      ここの形あわせだけが、実践に絞られていました。 */
-  if (!/^(bansho|komari|nittei)-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
+  if (!/^(bansho|komari|nittei|kotae|todoita)-[0-9]{8}-[0-9a-z]+$/.test(slug)) {
     kotae.riyu = '行き先がありません';
     return _kanri_mado(kotae);
   }
@@ -1385,6 +1393,16 @@ function _slug_kesu(slug) {
     n += _kesu_md(slug, 'src/kotae');
   } else if (slug.indexOf('nittei-') === 0) {
     n += _kesu_md(slug, 'src/nittei');
+  } else if (slug.indexOf('todoita-') === 0) {
+    /* グッズ（2026-09-24）。.md と、配っていたファイルと、見本を消します。
+       ★.md の名前には日づけが付きません（名前がそのまま id になり、
+         URL の #goods-… になるためです）。だから _kesu_md ではなく、
+         名ざしで消します。 */
+    n += _kesu_hitotsu('src/goods/' + slug + '.md', slug);
+    n += _kesu_hitotsu('src/goods/mihon/' + slug + '.webp', slug);
+    for (var gk in GOODS_KATA) {
+      n += _kesu_hitotsu('src/downloads/' + slug + '.' + gk, slug);
+    }
   } else {
     n += _kesu_folder('src/bansho/' + slug, slug);
     n += _kesu_folder('src/shiryo/' + slug, slug);
@@ -1417,6 +1435,16 @@ function _kotae_kesu(toi) {
     }
   }
   return n;
+}
+
+/* 名ざしで1つ消す（2026-09-24）。無ければ 0 を返すだけです。
+   ★_kesu_md は「2026-09-24_<slug>.md」の形を探します。グッズの .md には
+     日づけが付かないので、こちらを使います。 */
+function _kesu_hitotsu(michi, slug) {
+  var ichiran = _github_miru(michi);
+  if (!ichiran || !ichiran.length) return 0;
+  _github_kesu(michi, ichiran[0].sha, '1つ消す（' + slug + '）');
+  return 1;
 }
 
 function _kesu_md(slug, doko) {
@@ -1540,6 +1568,230 @@ function _md(slug, n) {
   gyo.push('');
   gyo.push(m || (n.uri.length ? '送ってもらった板書です。' : '送ってもらった資料です。'));
   return gyo.join('\n');
+}
+
+
+
+/* ══ 1の6. 学級会グッズ（2026-09-24 依頼）═════════════════
+   「学級会グッズのデータも募集できるようにしたい。
+     ワードとかPDFのデータを受信できるようにしたい」
+
+   ★板書のPDFとちがって、**画像に変えません**。そのまま配ります。
+     グッズは「刷って使う／Wordで直して使う」ものなので、画像にしたら
+     用が足りないためです。置き場は src/downloads/ で、workflow が
+     _site/downloads/ に写します。**押した人だけ**が取りにいきます。
+   ★Driveには残しません（GitHubに置いたものが、そのまま配るものです）。
+   ★誰の目も通りません。そのまま公開ページへ出ます（板書と同じ）。
+     知らせの［すぐ消す］で、1押しで下ろせます。
+
+   ★ここを直すときに いっしょに見るところ
+       build.py の load_goods（front matter の検問）
+       src/hiroba.html の GD_KATA（受けとる形と上限）
+     3つのうち1つだけ直すと、送れたのに出ない（またはその逆）になります。 */
+
+/* しっぽ → [front matter の欄, 画面に出す名前, 上限MB, 中身の型] */
+var GOODS_KATA = {
+  pdf:  ['pdf',  'PDF',        8, 'application/pdf'],
+  docx: ['docx', 'Word',       4, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  pptx: ['pptx', 'PowerPoint', 8, 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+  xlsx: ['xlsx', 'Excel',      4, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+};
+/* 種類。build.py の GOODS_SHURUI と同じ合いことばにしてください。
+   知らないものが来たら g-sonota に寄せます（落とすと札が消えるため）。 */
+var GOODS_ICON = { 'g-post':1, 'g-card':1, 'g-note':1, 'g-shikai':1, 'g-flow':1,
+                   'g-mark':1, 'g-corner':1, 'g-digital':1, 'g-sonota':1 };
+/* 刷る紙・学年。build.py の GOODS_KAMI / GOODS_NEN と同じ並びです。 */
+var GOODS_KAMI = { 'A4たて':1, 'A4よこ':1, 'B4たて':1, 'B4よこ':1,
+                   'A3たて':1, 'A3よこ':1, 'その他':1 };
+var GOODS_NEN  = { '1年':1, '2年':1, '3年':1, '4年':1, '5年':1, '6年':1,
+                   '中学校':1, '全学年':1 };
+/* 直して使ってよいか。**直せる形を配ってよいのは下の2つだけ**です。
+   空や知らない合いことばは「そのまま刷るだけ」に倒します
+   （許しの無いほうへ倒す。Wordを出してからでは取り返せません）。 */
+var GOODS_NAOSERU = { naoshite:1, kubatte:1 };
+var GOODS_SITE = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/downloads/';
+var GOODS_T_MAX = 30;     // グッズの名前
+var GOODS_D_MAX = 60;     // どんなものか（1行）
+var GOODS_M_MAX = 600;    // 使い方
+
+function _goods(d) {
+  var f = d.f || {};
+  var naoseru = !!GOODS_NAOSERU[String(d.no || '')];
+
+  var t = _arau(d.t).slice(0, GOODS_T_MAX);
+  var de = _arau(d.d).slice(0, GOODS_D_MAX);
+  if (!t) return _kotae({ ok: false, riyu: 'グッズの名前がありません' });
+  if (!de) return _kotae({ ok: false, riyu: '「どんなものか」がありません' });
+
+  /* 送られたファイルを、先に ぜんぶ読んで確かめます。
+     1つでもだめなら、GitHubには1つも置きません（半分だけ置いて、
+     .md が それを指す、という形を作らないため）。 */
+  /* 名前は todoita- で始めます（2026-09-24）。
+     ★goods- にすると、札のidが #goods-goods-… と二重になります。
+     ★_slug_kesu は、この頭の字を見てグッズだと決めています。 */
+  var slug = _slug('todoita');
+  var oku = [];
+  for (var s in GOODS_KATA) {
+    if (!f[s]) continue;
+    /* そのまま刷るだけ、と決めた人のぶんは、直せる形を受けとりません。
+       受けとってから出さないのではなく、**はじめから置きません**。 */
+    if (s !== 'pdf' && !naoseru) continue;
+    var b = _dataURI_kata(f[s], GOODS_KATA[s][3]);
+    if (!b) {
+      return _kotae({ ok: false, riyu: GOODS_KATA[s][1] + 'の形が読めません' });
+    }
+    if (b.getBytes().length > GOODS_KATA[s][2] * 1024 * 1024) {
+      return _kotae({ ok: false,
+        riyu: GOODS_KATA[s][1] + 'が大きすぎます（' + GOODS_KATA[s][2] + 'MBまで）' });
+    }
+    oku.push({ s: s, na: slug + '.' + s, b64: Utilities.base64Encode(b.getBytes()) });
+  }
+
+  var u = _goods_link(d.u);
+  if (!oku.length && !u) {
+    return _kotae({ ok: false, riyu: 'ファイルも 資料リンクもありません' });
+  }
+  if (!_kazoeru()) return _kotae({ ok: false, riyu: '今日はもう受けとれません' });
+
+  var nose = { ok: false, riyu: '' };
+  try {
+    for (var i = 0; i < oku.length; i++) {
+      _github('src/downloads/' + oku[i].na, oku[i].b64,
+              'グッズのファイルを1つ置く（' + oku[i].na + '）');
+    }
+    /* .md は **いちばん最後**です。build.py は .md から辿るので、
+       先に .md を置くと、ファイルの着く前のビルドが「404になるリンク」を
+       見つけて、その欄を削ってしまいます。 */
+    _github('src/goods/' + slug + '.md',
+            Utilities.base64Encode(_md_goods(slug, d, t, de, oku, u, naoseru),
+                                   Utilities.Charset.UTF_8),
+            'グッズを1点のせる（' + slug + '）');
+    nose.ok = true;
+  } catch (err) {
+    nose.riyu = String(err);
+  }
+
+  _shiraseru_goods(slug, d, t, de, oku, u, naoseru, nose);
+  return _kotae({ ok: true, noseta: nose.ok });
+}
+
+/* data URI を、決めた型のときだけ受けとります。
+   ★型を見ないと、拡張子だけ .docx の何かを置けてしまいます。 */
+function _dataURI_kata(s, kata) {
+  var m = String(s).match(/^data:([^;,]*);base64,(.+)$/);
+  if (!m) return null;
+  var kita = String(m[1] || '').toLowerCase();
+  /* 端末によっては型が空で来ます（拡張子から決められなかったとき）。
+     そのときは、こちらで決めた型として受けます。ちがう型を名のって
+     いるときだけ、断ります。 */
+  if (kita && kita !== kata && kita !== 'application/octet-stream') return null;
+  return Utilities.newBlob(Utilities.base64Decode(m[2]), kata);
+}
+
+/* 外の資料リンク。受ける置き場だけです（build.py の SHIRYO_SOTO_DOKO と
+   src/hiroba.html の SHIRYO_DOKO と、同じ顔ぶれにしてください）。 */
+var GOODS_DOKO = ['canva.com', 'canva.link', 'docs.google.com',
+                  'drive.google.com', 'onedrive.live.com', '1drv.ms', 'dropbox.com'];
+
+function _goods_link(u) {
+  u = String(u || '').trim().slice(0, 300);
+  var m = /^https:\/\/([^\/?#]+)/i.exec(u);
+  if (!m) return '';
+  var h = m[1].toLowerCase().split(':')[0];
+  for (var i = 0; i < GOODS_DOKO.length; i++) {
+    var dd = GOODS_DOKO[i];
+    if (h === dd || h.slice(-(dd.length + 1)) === '.' + dd) return u;
+  }
+  return '';
+}
+
+function _md_goods(slug, d, t, de, oku, u, naoseru) {
+  var gyo = ['---'];
+  /* 届いたぶん、という印。**これが無いと道具箱のほうに出ます**
+     （build.py の load_goods が、ここだけを見て棚を分けています）。 */
+  gyo.push('okurareta: true');
+  gyo.push('order: 99');
+  gyo.push('date: ' + _kyou());
+  gyo.push('title: ' + t);
+  gyo.push('desc: ' + de);
+  gyo.push('icon: ' + (GOODS_ICON[String(d.sh || '')] ? d.sh : 'g-sonota'));
+
+  var kami = _arau(d.kami);
+  if (GOODS_KAMI[kami]) gyo.push('kami: ' + kami);
+
+  var nen = String(d.g || '').split('・').filter(function (x) {
+    return GOODS_NEN[x.trim()];
+  }).map(function (x) { return x.trim(); });
+  if (nen.length) gyo.push('nen: ' + nen.join(','));
+
+  /* 直して使ってよいか。知らない合いことばは sonomama に倒します。 */
+  gyo.push('naoshi: ' + (naoseru ? d.no : 'sonomama'));
+
+  /* 提供者。サイトに名前を出すかどうかは、本人が決めています（→ _by）。
+     所属は かっこの中に入り、公開ページでは build.py の namae_dake() が
+     落とします（管理画面には残ります）。 */
+  gyo.push('by: ' + _by({ ko: d.ko, na: d.na, sh: d.s }));
+
+  var ken = _arau(d.ken);
+  if (/^.{2,5}[都道府県]$/.test(ken)) {
+    gyo.push('ken: ' + ken);
+    var shi = _arau(d.shk).slice(0, 20);
+    if (shi) gyo.push('shi: ' + shi);
+  }
+  if (u) gyo.push('u: ' + u);
+
+  for (var i = 0; i < oku.length; i++) {
+    gyo.push(GOODS_KATA[oku[i].s][0] + ': ' + GOODS_SITE + oku[i].na);
+  }
+  /* mihon: は書きません。見本（PDFの1ページ目）は、このあと
+     .github/workflows/build.yml が作って、ここへ書き足します。
+     先に書くと、画像の無いうちに検問へかかります。 */
+  gyo.push('---');
+  gyo.push('');
+  gyo.push(_arau_hon(d.m).slice(0, GOODS_M_MAX));
+  return gyo.join('\n');
+}
+
+function _shiraseru_goods(slug, d, t, de, oku, u, naoseru, nose) {
+  var url = _webapp();
+  var katachi = oku.map(function (o) { return GOODS_KATA[o.s][1]; }).join('・') || '（なし）';
+  var kesareta = [];
+  for (var s in GOODS_KATA) {
+    if (d.f && d.f[s] && s !== 'pdf' && !naoseru) kesareta.push(GOODS_KATA[s][1]);
+  }
+  var honbun =
+    (nose.ok ? 'グッズが1点とどき、そのまま載せました。数分でページに出ます。\n'
+             : 'グッズが1点とどきましたが、載せられませんでした。\n' +
+               '　理由：' + (nose.riyu || '（不明）') + '\n') +
+    '\n' +
+    '　名前　：' + t + '\n' +
+    '　1行　 ：' + de + '\n' +
+    '　種類　：' + (d.sh || '（なし）') + '\n' +
+    '　学年　：' + (d.g || '（なし）') + '\n' +
+    '　刷る紙：' + (d.kami || '（なし）') + '\n' +
+    '　直して：' + (naoseru ? d.no : 'sonomama（直せる形は出しません）') + '\n' +
+    '　ファイル：' + katachi + '\n' +
+    (kesareta.length
+       ? '　　★' + kesareta.join('・') + ' は受けとっていません'
+         + '（「そのまま刷って使ってください」が選ばれているため）\n' : '') +
+    '　資料リンク：' + (u || '（なし）') + '\n' +
+    /* ★お名前は、サイトに出ていなくても ここには必ず出します。 */
+    '　お名前：' + (d.na || '（名乗られていません）')
+      + (String(d.na || '').trim()
+           ? (d.ko ? '　← サイトにも出しています' : '　← サイトには出していません')
+           : '') + '\n' +
+    '　所属　：' + (d.s || '（なし）') + '\n\n' +
+    '＜使い方＞\n' + (_arau_hon(d.m) || '（なし）') + '\n\n' +
+    '★ ファイルの中（本文・ヘッダー・フッター）に 学校名や子どもの名前が\n' +
+    '　 残っていないか、**かならず開いて**確かめてください。\n' +
+    '　 作成者の名前だけは、こちらで機械が消しています。中身は消せません。\n\n' +
+    '★ 市販のワークシートが混ざっていないかも、あわせて見てください。\n\n' +
+    (url ? 'すぐ消す：' + url + '?v=' + slug + '&k=' + _kanri_key() + '\n\n' +
+           '（公開ページとファイルの置き場から消えます。GitHubの履歴には残ります）\n'
+         : '（WEBAPP_URL が空なので、消すところを出せていません）');
+
+  var mail = _mail();
+  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】学級会グッズが1点とどきました', honbun);
 }
 
 

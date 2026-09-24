@@ -599,8 +599,68 @@ def slug_of(path):
     return b.split('_', 1)[1] if '_' in b else b
 
 
+# ══ 学級会グッズ ══════════════════════════════════════════
+# 2026-09-24 依頼：「学級会グッズのデータも募集できるようにしたい。
+#   ワードとかPDFのデータを受信できるようにしたい」
+#
+#   ★棚を2つに分けます。分け目は front matter の okurareta: だけです。
+#       印が無い        … 道具箱（こちらで用意したもの）
+#       okurareta: true … みんなのグッズ（届いたぶん）
+#     src/hiroba.html は本文で「ここはこちらで用意したものです」
+#     「あちらが本物の持ち寄り、ここが道具箱です」と言い切っています。
+#     同じ棚に混ぜると、その字が嘘になります。
+#
+#   ★配るのは **ファイルそのもの** です（PDFを画像に変えません）。
+#     板書のPDFを画像に変えているのは「ページの中で読ませる」ためですが、
+#     グッズは **刷って使う／Wordで直して使う** ものなので、画像にしたら
+#     用が足りません。
+#     原則2（開いても外に1バイトも出ない）は守れています。downloads/ は
+#     このサイトと同じ置き場で、**押した人だけ**が取りにいきます。
+#
+#     （front matter の欄, 画面に出す名前, ファイルのしっぽ）
+GOODS_FILE = (
+    ('pdf',  'PDF',        '.pdf'),
+    ('docx', 'Word',       '.docx'),
+    ('pptx', 'PowerPoint', '.pptx'),
+    ('xlsx', 'Excel',      '.xlsx'),
+)
+GOODS_FILE_NA = dict((k, na) for k, na, _ in GOODS_FILE)
+# 自分の置き場。ここを指すURLは src/downloads/ に実体があるかまで見ます。
+#   押して404になるリンクを、公開ページに出さないためです。
+#   ★workflow が src/downloads/ を _site/downloads/ に写しています。
+#     あちらを外すと、ここを通ったリンクが ぜんぶ404になります。
+GOODS_OKIBA = SITE_URL + 'downloads/'
+GOODS_OKI   = os.path.join(SRC, 'downloads')     # 配るファイルの実体
+GOODS_MIHON = os.path.join(GOODS, 'mihon')       # 見本（PDFの1ページ目）
+# 見本1枚の上限。札に出すだけなので、資料の画像より ずっと小さくします。
+GOODS_MIHON_KB_MAX = 160.0
+
+# 「直して使ってよいか」（2026-09-24）。
+#   Wordを配る意味は「直せる」ことです。だから、直されるのが困る人の
+#   ぶんは Word を出しません。ここが無いと、Wordを送った時点で
+#   「改変を黙って許した」ことになってしまいます。
+#     （合いことば, 画面に出す字, 直せる形を配ってよいか）
+GOODS_NAOSHI = (
+    ('sonomama', 'そのまま刷って使ってください', False),
+    ('naoshite', '学校に合わせて直してOK',       True),
+    ('kubatte',  '直して、また配ってもOK',       True),
+)
+GOODS_NAOSHI_NA = dict((k, na) for k, na, _ in GOODS_NAOSHI)
+GOODS_NAOSHI_OK = dict((k, ok) for k, _, ok in GOODS_NAOSHI)
+# 刷る紙。刷る前に分かると助かるので、札に出します。
+GOODS_KAMI = ('A4たて', 'A4よこ', 'B4たて', 'B4よこ', 'A3たて', 'A3よこ', 'その他')
+GOODS_NEN  = ('1年', '2年', '3年', '4年', '5年', '6年', '中学校', '全学年')
+# 出してはいけない語で落としたグッズ（組み立ての最後に ⚠ で出します）。
+#   ★落とすだけで、ビルドは止めません。1件のために全部が止まると、
+#     サイトがまるごと更新されなくなります（困りごとと同じ考え）。
+GOODS_TOBASHITA = []
+# 届いたグッズから **削ったところ**（欄ひとつぶん）。これも ⚠ で出します。
+GOODS_KEZUTTA = []
+
+
 def load_goods():
     goods = {}
+    del GOODS_TOBASHITA[:]
     for p in sorted(glob.glob(os.path.join(GOODS, '*.md'))):
         if os.path.basename(p).startswith('_'):
             continue
@@ -612,11 +672,141 @@ def load_goods():
         for k in ('title', 'desc', 'icon'):
             if not fm.get(k):
                 raise Tomeru('%s：%s が空です' % (f, k))
-        for k in ('pdf', 'docx'):
-            v = fm.get(k, '')
-            if v and not re.match(r'^https?://', v):
-                raise Tomeru('%s：%s は https:// で始まる置き場のURLにしてください（%s）。'
-                             '相対パスにすると、1ファイル配布が割れます' % (f, k, v))
+        # 2026-09-24：icon を「決めた種類のどれか」に限りました。
+        #   送る人には g-card のような合いことばを選ばせません（種類の名前を
+        #   押してもらい、受け口が icon に直します）。ここで限っておくと、
+        #   打ちまちがいが 見本の無い灰色の札として静かに出るのを防げます。
+        if fm['icon'] not in GOODS_SHURUI_NA:
+            raise Tomeru('%s：icon の「%s」は決めた種類にありません。'
+                         '使えるのは %s です'
+                         % (f, fm['icon'], '・'.join(GOODS_SHURUI_NA)))
+        fm['id'] = gid
+        # 届いたぶん、という印（2026-09-24）。棚の分け目はこれ1つです
+        fm['okurareta'] = (fm.get('okurareta') or '').strip().lower() in ('true', 'yes', '1')
+
+        # ── 止めるか、削るか（2026-09-24）─────────────────
+        #   こちらで用意したもの … 止めます（打ちまちがいを、その場で直せる）
+        #   届いたもの          … その欄だけ削って、先へ進みます
+        #     ★1件の送りもののために サイト全体が更新されなくなるのは、
+        #       割に合いません（困りごと・実践と同じ考え）。
+        #     ★削ったところは、組み立ての最後に ⚠ で出ます。
+        #       黙って消えると、送ってくださった方に説明できません。
+        def dame(riyuu):
+            if fm['okurareta']:
+                GOODS_KEZUTTA.append('%s … %s' % (f, riyuu))
+                return True
+            raise Tomeru('%s：%s' % (f, riyuu))
+
+        # ── 配るファイル（PDF・Word・PowerPoint・Excel）────────
+        aru = []
+        for k, na, shippo in GOODS_FILE:
+            v = (fm.get(k) or '').strip()
+            if not v:
+                continue
+            if not re.match(r'^https://', v):
+                if dame('%s は https:// で始まる置き場のURLにしてください（%s）。'
+                        '相対パスにすると、1ファイル配布が割れます' % (k, v)):
+                    continue
+            if not v.lower().endswith(shippo):
+                if dame('%s のURLが %s で終わっていません（%s）。'
+                        '押した人の端末が、何のファイルか分からなくなります'
+                        % (k, shippo, v)):
+                    continue
+            # 自分の置き場を指しているなら、実体があるかまで見ます。
+            #   ★押して404 になるリンクを、公開ページに出さないためです。
+            if v.startswith(GOODS_OKIBA):
+                nafile = v[len(GOODS_OKIBA):]
+                if not re.match(r'^[A-Za-z0-9._-]+$', nafile):
+                    if dame('%s のファイル名が使えません（%s）' % (k, nafile)):
+                        continue
+                if not os.path.exists(os.path.join(GOODS_OKI, nafile)):
+                    if dame('%s の指す src/downloads/%s がありません（押しても404）'
+                            % (k, nafile)):
+                        continue
+            aru.append((k, na, v))
+        fm['file'] = aru
+
+        # ── 直して使ってよいか（2026-09-24）──────────────────
+        naoshi = (fm.get('naoshi') or '').strip()
+        if naoshi and naoshi not in GOODS_NAOSHI_NA:
+            if dame('naoshi は %s のどれかにしてください（%s）'
+                    % ('・'.join(GOODS_NAOSHI_NA), naoshi)):
+                naoshi = ''
+        fm['naoshi'] = naoshi
+        # 「そのまま刷って使ってください」と決めた人のぶんは、直せる形を出しません。
+        #   ★書いていない（空）ときも、同じ扱いにします。**許しの無いほうへ倒す**
+        #     ためです。Wordを出してしまってからでは取り返せません。
+        if not GOODS_NAOSHI_OK.get(naoshi, False):
+            warui = [na for k, na, _ in aru if k != 'pdf']
+            if warui:
+                riyuu = ('naoshi が「%s」なので %s は出せません（直せる形のため）'
+                         % (GOODS_NAOSHI_NA.get(naoshi, '未記入'), '・'.join(warui)))
+                if fm['okurareta']:
+                    GOODS_KEZUTTA.append('%s … %s' % (f, riyuu))
+                    aru = [x for x in aru if x[0] == 'pdf']
+                    fm['file'] = aru
+                else:
+                    raise Tomeru('%s：%s' % (f, riyuu))
+
+        # ── 見本（PDFの1ページ目）。無ければ 絵（icon）で出します ──
+        #   ★実体は src/goods/mihon/<mihon>.webp。作るのは goods_pdf/make_mihon.py
+        #     （ワークフローが、届いたPDFのぶんを毎回作って書き戻します）。
+        mihon = (fm.get('mihon') or '').strip()
+        if mihon and not re.match(r'^[a-z0-9-]+$', mihon):
+            if dame('mihon は 英小文字・数字・- だけにしてください（%s）' % mihon):
+                mihon = ''
+        if mihon and not os.path.exists(os.path.join(GOODS_MIHON, mihon + '.webp')):
+            if dame('mihon の指す src/goods/mihon/%s.webp がありません' % mihon):
+                mihon = ''
+        fm['mihon'] = mihon
+
+        # ── 学年・刷る紙（任意。札に出るだけ）────────────────
+        nen, warui_nen = [], []
+        for n in [x.strip() for x in (fm.get('nen') or '').split(',') if x.strip()]:
+            (nen if n in GOODS_NEN else warui_nen).append(n)
+        if warui_nen:
+            dame('nen の %s が %s にありません'
+                 % ('・'.join(warui_nen), '・'.join(GOODS_NEN)))
+        fm['nen'] = nen
+        kami = (fm.get('kami') or '').strip()
+        if kami and kami not in GOODS_KAMI:
+            if dame('kami は %s のどれかにしてください（%s）'
+                    % ('・'.join(GOODS_KAMI), kami)):
+                kami = ''
+        fm['kami'] = kami
+
+        # ── 地域（実践と同じ。47都道府県の外は通しません）────
+        ken = (fm.get('ken') or '').strip()
+        shi = (fm.get('shi') or '').strip()
+        if ken and ken not in KEN_CHIHO:
+            if dame('ken の「%s」が 47都道府県にありません。'
+                    '「東京都」「神奈川県」「北海道」のように書いてください' % ken):
+                ken, shi = '', ''
+        if shi and not ken:
+            if dame('shi（自治体）だけ書いてあって、ken（都道府県）がありません'):
+                shi = ''
+        if len(shi) > CHIIKI_SHI_MAX:
+            if dame('shi（自治体）が長すぎます（%d字。%d字まで）'
+                    % (len(shi), CHIIKI_SHI_MAX)):
+                shi = shi[:CHIIKI_SHI_MAX]
+        fm['ken'], fm['shi'] = ken, shi
+        fm['chiiki'] = (ken + ('　' + shi if shi else '')) if ken else ''
+
+        # ── 外の資料リンク（Canvaなど）。受ける置き場だけです ──
+        #   ★実践の「デジタル資料のリンク」と同じ表（SHIRYO_SOTO_DOKO）を
+        #     見ます。行き先を素通しにすると、このサイトが
+        #     「知らない所への入口」になります。
+        u = (fm.get('u') or '').strip()
+        if u and len(u) > SHIRYO_URL_MAX:
+            if dame('u が長すぎます（%d字。%d字まで）' % (len(u), SHIRYO_URL_MAX)):
+                u = ''
+        if u and not shiryo_soto_na(u):
+            if dame('u の行き先「%s」は受けていません。受けるのは %s です'
+                    % (url_no_doko(u) or u,
+                       '・'.join(d for d, _ in SHIRYO_SOTO_DOKO))):
+                u = ''
+        fm['u'] = u
+
         try:
             fm['order'] = int(fm.get('order', '99'))
         except ValueError:
@@ -629,7 +819,28 @@ def load_goods():
                 fm['d'] = datetime.date(*[int(x) for x in fm['date'].split('-')])
             except ValueError:
                 raise Tomeru('%s：date が 2026-09-21 の形ではありません' % f)
-        fm['id'] = gid
+
+        # ── 届いたぶんだけの決まり（2026-09-24）─────────────
+        if fm['okurareta']:
+            if not (fm.get('by') or '').strip():
+                # ここだけは、その1件を落とします（誰から届いたか分からない札は
+                #   出せません）。止めはしません。
+                GOODS_TOBASHITA.append('%s（by が空）' % f)
+                continue
+            if not aru and not u:
+                GOODS_TOBASHITA.append('%s（配るものが1つも残らなかった）' % f)
+                continue
+            # 出してはいけない語（src/_ngword.txt）。
+            #   ★ここは**落とすだけ**です。止めると、1件のために
+            #     サイト全体が更新されなくなります（困りごとと同じ考え）。
+            #   ★落とさずに通すと、最後の ngword_check(html) で
+            #     **ビルドが止まります**。だから、ここで必ず落とします。
+            #   ★語そのものは書きません（_ngword.txt は上げていない表です）。
+            if ngword_aru(' '.join((fm['title'], fm['desc'], fm.get('summary') or '',
+                                    fm.get('by') or ''))):
+                GOODS_TOBASHITA.append(f)
+                continue
+
         fm['used'] = []            # この後、実践側から埋める
         goods[gid] = fm
     return goods
@@ -1584,10 +1795,17 @@ def shiryo_mado(midashi, oki, alt, moto=None, page='manabu.html', zen=True):
 
 
 def goods_status(g):
-    if g.get('pdf') and g.get('docx'): return 'PDF・Word'
-    if g.get('pdf'):  return 'PDF'
-    if g.get('docx'): return 'Word'
-    return ''
+    """いま配れる形を、字で1つに（「PDF・Word」のように）。
+
+       2026-09-24：欄を2つ（pdf・docx）決め打ちで見るのをやめました。
+       PowerPoint と Excel も受けるので、GOODS_FILE の並びから作ります。
+       ★ここに新しい形を書き足さないこと。足すのは GOODS_FILE だけです。
+    """
+    na = [na for _, na, _ in g.get('file', ())]
+    if na:
+        return '・'.join(na)
+    # ファイルは無いが、外の資料リンクだけあるとき（Canvaなど）
+    return '資料リンク' if g.get('u') else ''
 
 
 def line_share(text):
@@ -1697,13 +1915,16 @@ def build_goods(goods):
     out = []
     for g in sorted(goods.values(), key=lambda x: (x['order'], x['id'])):
         st = goods_status(g)
-        if st:
+        # 2026-09-24：欄を決め打ちで2つ見るのをやめ、GOODS_FILE の並びから
+        #   作ります（PowerPoint・Excel も同じ形で出ます）。
+        if g.get('file'):
             dl = '<span class="dl">'
-            if g.get('pdf'):
-                dl += '<a class="btn" href="%s" target="_blank" rel="noopener noreferrer">PDF</a>' % esc_html(g['pdf'])
-            if g.get('docx'):
-                dl += '<a class="btn" href="%s" target="_blank" rel="noopener noreferrer">Word</a>' % esc_html(g['docx'])
+            for _, na, url in g['file']:
+                dl += ('<a class="btn" href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
+                       % (esc_html(url), esc_html(na)))
             dl += '</span>'
+        elif st:
+            dl = '<span class="go">%s</span>' % esc_html(st)
         else:
             dl = '<span class="go" data-ar="قيد الإعداد">準備中</span>'
         use = ''
@@ -1718,6 +1939,155 @@ def build_goods(goods):
                       new_fuda(g.get('d')),
                       attr(g.get('ar_desc', '')), esc_html(g['desc']), use, dl))
     return '    <ul class="tiles">\n' + '\n'.join(out) + '\n    </ul>'
+
+
+# ══ 学級会グッズの棚（新版）════════════════════════════════
+# 2026-09-24 依頼。ここまで、新版（公開しているほう）には
+#   **グッズが1点も出ていませんでした**。
+#   `<!--BUILD:GOODS-->` は旧タブ版の src/body.html にしかなく、
+#   manabu.html は「道具は、いま用意しているところです」の空札だけでした。
+#   src/downloads/ に6つのPDFがあるのに、配られてもいませんでした。
+#   募集を始めるなら、まず受け皿（棚）が要ります。
+#
+#   棚は2つです。分け目は okurareta: だけ（→ load_goods）。
+#     道具箱       … こちらで用意したもの
+#     みんなのグッズ … 届いたぶん
+#
+#   ★見本の絵が無いときの「面」の色。種類ごとに決めます
+#     （並べたときに、同じ種類が同じ色で見えるように）。
+GOODS_SHURUI = (
+    ('g-post',    '議題ポスト',    'ki'),
+    ('g-card',    '提案カード',    'sora'),
+    ('g-note',    '学級会ノート',  'midori'),
+    ('g-shikai',  '司会・進行',    'hada'),
+    ('g-flow',    '話合いの流れ',  'fuji'),
+    ('g-mark',    '賛成・反対',    'sora'),
+    ('g-corner',  '学級の掲示',    'ki'),
+    ('g-digital', 'デジタル',      'midori'),
+    ('g-sonota',  'そのほか',      'hada'),
+)
+GOODS_SHURUI_NA  = dict((k, na) for k, na, _ in GOODS_SHURUI)
+GOODS_SHURUI_MEN = dict((k, m) for k, _, m in GOODS_SHURUI)
+# 見本の横幅（px）。札に出すだけなので、資料の画像（1000px）より小さくします。
+GOODS_MIHON_W = 480
+
+
+def goods_mihon_yomu(g, page):
+    """見本（PDFの1ページ目）を data URI にして返す。無ければ None。
+
+       ★PDFのままページに貼りません（端末しだいで開かない・外に通信が飛ぶ）。
+         1枚の画像にして、このHTMLの中に入れます。
+       ★配るファイルそのものは downloads/ にあり、**押した人だけ**が
+         取りにいきます。見本は「刷る前に中を見せる」ためだけのものです。
+    """
+    if not g.get('mihon'):
+        return None
+    import base64
+    na = 'src/goods/mihon/%s.webp' % g['mihon']
+    b = io.open(os.path.join(GOODS_MIHON, g['mihon'] + '.webp'), 'rb').read()
+    kb = len(b) / 1024.0
+    if kb > GOODS_MIHON_KB_MAX:
+        raise Tomeru('%s が %.0fKB あります（上限 %.0fKB）。'
+                     '横 %dpx くらいの WebP にしてください（goods_pdf/make_mihon.py）'
+                     % (na, kb, GOODS_MIHON_KB_MAX, GOODS_MIHON_W))
+    w, h = gazou_size(b, na)
+    _GOUKEI[page] = _GOUKEI.get(page, 0) + len(b)
+    zen = _GOUKEI[page] / 1024.0 / 1024.0
+    if zen > SHIRYO_ZEN_MAX:
+        raise Tomeru('%s に入れた画像が合わせて %.1fMB になりました（上限 %.0fMB）。'
+                     'グッズの見本が増えすぎています。古いものを外すか、'
+                     '見本の横幅（GOODS_MIHON_W）を小さくしてください'
+                     % (page, zen, SHIRYO_ZEN_MAX))
+    return ('data:image/webp;base64,' + base64.b64encode(b).decode(), w, h)
+
+
+GT = """      <li class="gt{cls}" id="goods-{id}">
+        <div class="gt-mi gt-mi--{men}">{mi}</div>
+        <div class="gt-hon">
+{me}          <h3 class="gt-na">{title}{new}</h3>
+          <p class="gt-de">{desc}</p>
+{naka}{naoshi}{by}          <p class="gt-dl">{dl}</p>
+        </div>
+      </li>"""
+
+
+def build_goods_hiroba(goods, okurareta, page='manabu.html'):
+    """グッズの棚を1つ組む。okurareta=False なら道具箱、True なら届いたぶん。"""
+    out = []
+    for g in sorted(goods.values(),
+                    key=lambda x: ((-(x['d'].toordinal()) if x.get('d') else 0),
+                                   x['order'], x['id'])):
+        if bool(g.get('okurareta')) != okurareta:
+            continue
+
+        # ── 左の絵。見本があれば見本、無ければ種類の字 ──────
+        mi = goods_mihon_yomu(g, page)
+        if mi:
+            uri, w, h = mi
+            mi_html = ('<img src="%s" width="%d" height="%d" loading="lazy" '
+                       'decoding="async" alt="%s の1ページ目">'
+                       % (uri, w, h, esc_html(g['title'])))
+        else:
+            mi_html = ('<span class="gt-mi-ji">%s</span>'
+                       % esc_html(GOODS_SHURUI_NA.get(g['icon'], 'グッズ')))
+
+        # ── 上の1行（刷る紙・学年）。無ければ行ごと出しません ──
+        me = []
+        if g.get('kami'):
+            me.append('<span class="gt-tag">%s</span>' % esc_html(g['kami']))
+        if g.get('nen'):
+            me.append('<span>%s</span>' % esc_html('・'.join(g['nen'])))
+        me_html = ('          <p class="gt-me">%s</p>\n' % ''.join(me)) if me else ''
+
+        # ── 使い方（本文）。届いたぶんだけ、書いてあれば出します ──
+        naka = ''
+        if g['okurareta'] and (g.get('summary') or '').strip():
+            naka = ('          <div class="gt-naka">\n%s\n          </div>\n'
+                    % md_html(g['summary']))
+
+        # ── 直して使ってよいか。Wordを配る／配らないの根拠です ──
+        naoshi = ''
+        if g.get('naoshi'):
+            naoshi = ('          <p class="gt-naoshi">%s</p>\n'
+                      % esc_html(GOODS_NAOSHI_NA[g['naoshi']]))
+
+        # ── 誰から。所属（かっこの中）は namae_dake が落とします ──
+        by = ''
+        if g.get('by'):
+            shime = [esc_html(namae_dake(g['by']))]
+            if g.get('chiiki'):
+                shime.append(esc_html(g['chiiki']))
+            by = ('          <p class="gt-by">提供：%s</p>\n'
+                  % '<span class="gt-dot"></span>'.join(shime))
+
+        # ── 取りにいくボタン。押した人だけが動きます ──────
+        dl = []
+        for _, na, url in g.get('file', ()):
+            dl.append('<a class="btn gt-b" href="%s" download>%s</a>'
+                      % (esc_html(url), esc_html(na)))
+        if g.get('u'):
+            dl.append('<a class="btn gt-b btn--wa" href="%s" target="_blank" '
+                      'rel="noopener noreferrer">%s<span class="gt-soto">'
+                      '（%s へ）</span></a>'
+                      % (esc_html(g['u']), esc_html(shiryo_soto_na(g['u'])),
+                         esc_html(url_no_doko(g['u']))))
+        if not dl:
+            dl.append('<span class="gt-mada">準備中</span>')
+
+        out.append(GT.format(
+            cls=' gt--todoita' if g['okurareta'] else '',
+            id=g['id'], men=GOODS_SHURUI_MEN.get(g['icon'], 'ki'),
+            mi=mi_html, me=me_html,
+            title=esc_html(g['title']), new=new_fuda(g.get('d')),
+            desc=esc_html(g['desc']), naka=naka, naoshi=naoshi, by=by,
+            dl=''.join(dl)))
+
+    if not out:
+        if okurareta:
+            return ('    <p class="karappo">届いたグッズは、まだありません。'
+                    '<b>あなたのが1点めです。</b>下の欄から送れます。</p>')
+        return '    <p class="karappo">道具は、いま用意しているところです。</p>'
+    return '    <ul class="gtl">\n' + '\n'.join(out) + '\n    </ul>'
 
 
 # ══════════════════════════════════════════════════════════
@@ -4046,9 +4416,12 @@ def build_jissen_hiroba(jissen, goods):
     #   4つの内容から #j-◯◯ で飛んできたときは、akeru() がふたを先に開きます。
     if not fuda:
         # 用意したものが1つも無いとき。空の棚を押せる形で出しません
-        return ('    <p class="karappo">道具は、いま用意しているところです。'
-                '学級会グッズ・映像資料・よく出る困りごとに効く手だてを、'
-                '1つずつここに置いていきます。<br>'
+        # 2026-09-24：ここは「こちらで用意した**実践**」の棚です。
+        #   グッズの棚は、この上に別に出ました（BUILD:GOODS_H）。
+        #   前は「道具は、いま用意しているところです」と書いていましたが、
+        #   すぐ上に道具が並ぶので、字が食いちがいます。
+        return ('    <p class="karappo">こちらで用意した実践は、'
+                'いま書いているところです。<br>'
                 '<b>先生方から届いた実践は「みんなの実践」にあります。</b></p>')
     ue, ato = fuda[:JISSEN_UE_N], fuda[JISSEN_UE_N:]
     honbun = '    <div class="tefuda">\n' + '\n'.join(ue) + '\n    </div>'
@@ -4582,9 +4955,37 @@ data-kesu data-title="{dai}" data-nani="{nani}">消す</button></div>
       </article>"""
 
 
-def build_kanri_hoka(komari, ken, tobashita):
-    """困りごと・送られた研究日程・出していないもの の3つ。"""
+def build_kanri_hoka(komari, ken, tobashita, goods=None):
+    """届いたグッズ・困りごと・送られた研究日程・出していないもの の4つ。"""
     out = []
+
+    # ── 届いたグッズ（2026-09-24 依頼）────────────────────
+    #   ★ここに出るのは okurareta: true のぶんだけです。こちらで用意した
+    #     6点は出しません（消す相手ではないので）。
+    #   ★［消す］は .md と、配っていたファイルと、見本を まとめて落とします
+    #     （板書を受けとる.gs の _slug_kesu）。
+    todoita = sorted([g for g in (goods or {}).values() if g.get('okurareta')],
+                     key=lambda x: x['id'], reverse=True)
+    out.append('      <h3 class="kanri-hoka-h">届いた学級会グッズ'
+               '<span>%d点</span></h3>' % len(todoita))
+    if todoita:
+        for g in todoita:
+            meta = '・'.join(x for x in (
+                '・'.join(na for _, na, _ in g.get('file', ())) or '資料リンクのみ',
+                GOODS_NAOSHI_NA.get(g.get('naoshi'), ''),
+                g.get('kami') or '', '・'.join(g.get('nen') or []),
+                g.get('chiiki') or '',
+                # 管理画面には、かっこの中（所属）も残します
+                '提供：' + (g.get('by') or '')) if x)
+            out.append(KANRI_HOKA_T.format(
+                v=esc_html(g['id']), dai=esc_html(g['title']),
+                meta=esc_html(meta), nani='グッズ',
+                sagasu=esc_html(' '.join((g['title'], g['desc'],
+                                          g.get('summary') or '',
+                                          g.get('by') or '')))))
+    else:
+        out.append('      <p class="karappo">届いたグッズは、まだありません。'
+                   '<br>（こちらで用意した道具箱のぶんは、ここには出ません）</p>')
 
     out.append('      <h3 class="kanri-hoka-h">困りごと'
                '<span>%d件</span></h3>' % len(komari))
@@ -4678,14 +5079,14 @@ def nuru_ireru(body, doko):
     return body.replace(NURU_ME, nuru_js(doko))
 
 
-def build_kanri_page(jissen, komari, ken, tobashita, odai=None):
+def build_kanri_page(jissen, komari, ken, tobashita, odai=None, goods=None):
     """帯には出さない管理専用ページ。入り口と更新時の2回、受け口で鍵を確かめる。"""
     body = rd('src/kanri.html')
     body = body.replace('          <!--BUILD:KEN-->', build_ken_options())
     body = body.replace('    <!--BUILD:KANRI_LINE-->', build_kanri_line(jissen, odai))
     body = body.replace('      <!--BUILD:KANRI_LIST-->', build_kanri_list(jissen))
     body = body.replace('      <!--BUILD:KANRI_HOKA-->',
-                        build_kanri_hoka(komari, ken, tobashita))
+                        build_kanri_hoka(komari, ken, tobashita, goods))
     body = body.replace('      <!--BUILD:KATAYORI-->', build_katayori(jissen))
     body = body.replace('{{OKURU_URL}}', OKURU_URL)
     # 管理画面は 管理/ にあるので、ホームは1つ上の 公開用/ にあります。
@@ -4986,6 +5387,18 @@ def nen_bunkai(grade):
 def han(c):
     """１ → 1。全角で書かれていても、同じ学年として数えます。"""
     return chr(ord(c) - 0xFEE0) if '１' <= c <= '６' else c
+
+
+def build_goods_options(hyo):
+    """グッズを送るフォームのプルダウンの中身（2026-09-24）。
+
+       種類・刷る紙・直して使ってよいか の3つに使います。
+       ★並びを画面に手で書かないこと。書くと、いつか片方だけ直り、
+         送れたのに build.py が止める（またはその逆）になります。
+         出どころは GOODS_SHURUI / GOODS_KAMI / GOODS_NAOSHI だけです。
+    """
+    return '\n'.join('          <option value="%s">%s</option>'
+                     % (esc_html(k), esc_html(na)) for k, na in hyo)
 
 
 def build_ken_options():
@@ -6465,6 +6878,53 @@ def build_tane(html, e_naka, buhin, kyara, mark, atama_naka=None):
 #     下の KOTOBA_TEKI に当たる場所の字が表に無ければ、ビルドが止まります。
 #     新しい見出しや説明文を足したら、ここにも1行足してください。
 KOTOBA = {
+    # ══ 学級会グッズの募集（2026-09-24 依頼）══════════════════
+    #   「学級会グッズのデータも募集できるようにしたい」
+    #   ★ここに足さないと、ビルドが止まります（訳の無い言葉の検問）。
+    #     外の翻訳サービスは原則2で使えないので、訳はページに埋めこみます。
+    '先生方から<strong>届いたグッズ</strong>です。押すと、そのまま落ちてきます。<br> '
+    '<strong>PDFは刷るため、Wordは学校に合わせて直すため</strong>に置いてあります。':
+        ('Tools <strong>sent in by teachers</strong>. Tap and the file comes down as it is.<br> '
+         '<strong>The PDF is for printing, the Word file for adapting to your own school.</strong>',
+         'أدوات <strong>أرسلها المعلمون</strong>. اضغط فينزل الملف كما هو.<br> '
+         '<strong>ملف PDF للطباعة، وملف Word لتعديله بما يناسب مدرستك.</strong>'),
+    'PDF・Word・PowerPoint・Excel／同じ形は1つずつ 刷る形のまま送ってください（PDFは8MB・ほかは4MBまで）':
+        ('PDF, Word, PowerPoint, Excel — one of each. Send it in the form you print it in '
+         '(PDF up to 8MB, the rest up to 4MB).',
+         'PDF وWord وPowerPoint وExcel، واحد من كل نوع. أرسله بالشكل الذي تطبعه به '
+         '(حتى ٨ ميغابايت لملف PDF، و٤ لغيره).'),
+    'ファイルをえらぶ': ('Choose a file', 'اختر ملفًا'),
+    'グッズの名前': ('Name of the tool', 'اسم الأداة'),
+    'どんなものか（1行）': ('What it is (one line)', 'ما هو (سطر واحد)'),
+    '種類': ('Kind', 'النوع'),
+    '刷る紙': ('Paper size', 'حجم الورق'),
+    '使い方・作ったときの話': ('How to use it, and how it came about',
+                              'كيف يُستعمل، وكيف صنعته'),
+    '直して使ってよいか': ('May others adapt it?', 'هل يُسمح بتعديله؟'),
+    'グッズを送る': ('Send a tool', 'أرسل أداة'),
+    'あなたが作った紙を、そのまま置けます。ログインもメールも要りません。 '
+    'PDFでもWordでも、どちらでも大丈夫です。':
+        ('You can put the sheet you made here as it is. No login, no email address. '
+         'PDF or Word — either is fine.',
+         'يمكنك وضع الورقة التي أعددتها كما هي. لا تسجيل دخول ولا بريد إلكتروني. '
+         'سواء كانت PDF أو Word، لا فرق.'),
+    '札にそのまま出ます。60字まで。': ('This goes onto the card as it is. Up to 60 characters.',
+                                      'يظهر على البطاقة كما هو. حتى ٦٠ حرفًا.'),
+    '近いものを1つ。棚の色と、見本が無いときの札に使います。':
+        ('Pick the nearest one. It sets the colour on the shelf, and the card when there is no preview.',
+         'اختر الأقرب. يحدّد لون الرفّ، وشكل البطاقة عند غياب المعاينة.'),
+    'ひとことでも大丈夫です。札の中に出ます。':
+        ('A single line is fine. It appears inside the card.',
+         'سطر واحد يكفي. يظهر داخل البطاقة.'),
+    'サイトに出ます。受けとった先生は、ここに書いてあるとおりに使います。':
+        ('This appears on the site. Teachers who take it will use it exactly as stated here.',
+         'يظهر على الموقع. والمعلّم الذي يأخذه سيستعمله تمامًا كما هو مذكور هنا.'),
+    '送るまえに かならずファイルを開いて、子どもの名前・学校名が 本文やヘッダー・フッターに残っていないか見てください。'
+    '押すと、そのまま公開のページに出ます。':
+        ('Before you send, open the file and check that no child’s name or school name is left '
+         'in the text, the header or the footer. What you send goes straight onto the public page.',
+         'قبل الإرسال، افتح الملف وتحقّق من أنه لم يبقَ فيه اسم طفل أو اسم مدرسة، '
+         'لا في المتن ولا في الرأس ولا في التذييل. فما تُرسله يظهر مباشرة على الصفحة العامّة.'),
     # ── 節の見出し ──
     'TOKKATSU広場とは？': ('What TOKKATSU Hiroba is', 'ما هو ميدان توكّاتسو'),
     '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>実践や研究日程を共有して、<b>特別活動を盛ん</b>にしたいです。</span>':
@@ -7589,12 +8049,26 @@ def build_shin():
                        ('    <!--BUILD:YOTSU-->',  build_yotsu(kyara, jissen, komari)),
                        ('    <!--BUILD:KYARA-->',  build_kyara_narabi(kyara)),
                        ('    <!--BUILD:JISSEN_H-->', build_jissen_hiroba(jissen, goods)),
+                       # 2026-09-24：グッズの棚を2つ。道具箱（こちらで用意した
+                       #   もの）と、みんなのグッズ（届いたぶん）です。
+                       ('    <!--BUILD:GOODS_H-->',
+                        build_goods_hiroba(goods, False)),
+                       ('    <!--BUILD:GOODS_MINNA-->',
+                        build_goods_hiroba(goods, True)),
                        ('    <!--BUILD:FUSHIME-->', build_fushime(jissen, buhin)),
                        ('    <!--BUILD:OKURU_MIRU-->', build_okuru_miru(jissen)),
                        ('    <!--BUILD:KOMARI_MIRU-->', build_komari_miru(komari, kotae)),
                        ('    <!--BUILD:BANSHO-->',     build_bansho(jissen, kyara)),
                        ('    <!--BUILD:KOMARI-->',     build_komari(komari, kotae)),
                        ('          <!--BUILD:KEN-->', build_ken_options()),
+                       # グッズを送るフォームの3つのプルダウン（2026-09-24）。
+                       #   並びの出どころは build.py の表だけです。
+                       ('        <!--BUILD:GOODS_SHURUI-->',
+                        build_goods_options([(k, na) for k, na, _ in GOODS_SHURUI])),
+                       ('        <!--BUILD:GOODS_KAMI-->',
+                        build_goods_options([(k, k) for k in GOODS_KAMI])),
+                       ('        <!--BUILD:GOODS_NAOSHI-->',
+                        build_goods_options([(k, na) for k, na, _ in GOODS_NAOSHI])),
                        ('    <!--BUILD:KOTOBA-->',   build_kotoba(kotoba)),
                        ('    <!--BUILD:KAI-->',      build_kai()),
                        ('    <!--BUILD:NEWS_H-->',   build_hyo_news(kiji)),
@@ -7704,7 +8178,9 @@ def build_shin():
         ngword_check(html, '公開用/' + f)
         pages[f] = html
     kanri = build_kanri_page(jissen, komari, ken,
-                             list(tobashita_k) + list(NITTEI_TOBASHITA), odai)
+                             list(tobashita_k) + list(NITTEI_TOBASHITA) +
+                             # 出さなかったグッズも、管理画面の「出していないもの」へ
+                             list(GOODS_TOBASHITA), odai, goods)
     ngword_check(kanri, '公開用/kanri.html')
     pages['kanri.html'] = kanri
     return pages, hyo, kiji, jissen, komari, tobashita_k
@@ -7886,6 +8362,13 @@ def main_shin(check_only):
         print('  ⚠ %s：推しポイントが %d字あったので %d字で切りました' %
               (f_nagai, n_nagai, OSHI_MOJI_MAX))
         print('     %s' % ji_nagai)
+    # 届いたグッズを、落としたり 削ったりしたところ（2026-09-24）。
+    #   ★黙って消すと、送ってくださった方に説明できません。
+    #     ここに出しておけば、知らせメールと突き合わせられます。
+    for t_g in GOODS_TOBASHITA:
+        print('  ⚠ グッズを1点 出しませんでした … %s' % t_g)
+    for k_g in GOODS_KEZUTTA:
+        print('  ⚠ グッズの欄を1つ 削りました … %s' % k_g)
     print('  実践　　　　… %d件（うち議題が%d件。ぜんぶ、中身までこのページに）'
           % (len(jissen), sum(1 for a in jissen if a['kind'] == 'gidai')))
     print('  板書　　　　… %d件・%d枚（写真は bansho.html にだけ入れています）'

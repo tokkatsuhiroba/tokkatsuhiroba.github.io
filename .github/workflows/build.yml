@@ -141,6 +141,39 @@ jobs:
           done < <(printf '%s\n' "$shashin")
           echo "kaeta=yes" >> "$GITHUB_OUTPUT"
 
+      # ══ 学級会グッズ（2026-09-24 依頼）═══════════════════════
+      #   グッズのPDF・Wordは **そのまま配ります**（画像に変えません）。
+      #   刷って使う／Wordで直して使うものなので、画像では用が足りません。
+      #   ここでやるのは2つだけです。
+      #     ① 作成者の名前を消す … Wordは docProps に、PDFは /Author に
+      #        作った人の名前と学校名を抱えています。送る人は気づきません。
+      #        ★消えるのは**名前の欄だけ**です。本文・ヘッダー・フッターの
+      #          学校名は消せません（送る人と管理人が目で見ます）。
+      #     ② 見本を作る … PDFの1ページ目を小さなWebPにして、札に出します。
+      #        できたら .md に mihon: を1行 足します（受け口は書きません。
+      #        画像の着くまえに書くと、検問にかかるためです）。
+      #   ★どちらも **同じものを2度走らせても、2度めは何もしません**。
+      #     毎回 書き戻すことになると、ぐるぐる回ります。
+      - name: グッズの作成者を消して、見本を作る
+        id: goods
+        run: |
+          set -e
+          if [ ! -d src/downloads ] || [ -z "$(ls -A src/downloads 2>/dev/null)" ]; then
+            echo "配るファイルはありません"
+            echo "kaeta=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 -m pip install --quiet pymupdf pillow
+          mae=$(git status --porcelain src/downloads src/goods | wc -l)
+          python3 goods_pdf/nanashi.py
+          python3 goods_pdf/make_mihon.py
+          ato=$(git status --porcelain src/downloads src/goods | wc -l)
+          if [ "$mae" != "$ato" ]; then
+            echo "kaeta=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "kaeta=no" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 組み立てる（検問に引っかかったら、ここで止まる）
         run: python3 build.py
 
@@ -148,12 +181,14 @@ jobs:
       #   ★1回の push にまとめます。2回に分けると、2つめが弾かれます
       #     （1つめで main が進むので、こちらの HEAD が古くなります）。
       - name: 画像にしたぶんを書き戻す
-        if: steps.pdf.outputs.kaeta == 'yes' || steps.webp.outputs.kaeta == 'yes'
+        if: steps.pdf.outputs.kaeta == 'yes' || steps.webp.outputs.kaeta == 'yes' || steps.goods.outputs.kaeta == 'yes'
         run: |
           git config user.name  'tokkatsu-bot'
           git config user.email 'bot@users.noreply.github.com'
-          git add -A src/shiryo src/bansho
-          git commit -m '送られたPDFと写真を、軽い画像にする' || exit 0
+          # グッズのぶん（作成者を消したファイル・見本・mihon: を足した .md）も
+          #   いっしょに1回で押します。分けると、2つめが弾かれます。
+          git add -A src/shiryo src/bansho src/downloads src/goods
+          git commit -m '送られたPDFと写真を軽くし、グッズの作成者を消して見本を作る' || exit 0
           git push origin HEAD:main
 
       - name: 公開するものだけを取り出す
@@ -174,6 +209,16 @@ jobs:
             if [ -f "公開用/$f" ]; then cp "公開用/$f" "_site/$f"; else
               echo "⚠ 公開用/$f がありません（検索よけが効きません）"; exit 1; fi
           done
+          # 学級会グッズの、配るファイル（2026-09-24 依頼）。
+          #   ★ここで写さないと、札のボタンが **ぜんぶ404** になります。
+          #     build.py の load_goods は「src/downloads/ に実体があるか」まで
+          #     見ていますが、_site へ写ったかどうかまでは見られません。
+          #   ★押した人だけが取りにいきます（開いても、何も出ません）。
+          if [ -d src/downloads ]; then
+            mkdir -p _site/downloads
+            cp src/downloads/* _site/downloads/
+            echo "配るファイル … $(ls -1 _site/downloads | wc -l) 個"
+          fi
           # PDFを塗る道具（pdf.js）。PDFを選んだ人だけが取りに行きます。
           # ページには入れていないので、ここで一緒に配らないと動きません。
           if [ -d 公開用/pdfjs ]; then cp -r 公開用/pdfjs _site/pdfjs; fi

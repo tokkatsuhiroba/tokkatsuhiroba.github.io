@@ -34,6 +34,13 @@ tokkatsu-hiroba-news*.html
 
 # 手もとの資料・記録（設計書、反映メモ、指示書、PDF）
 *.pdf
+# ただし、配る学級会グッズだけは上げます（2026-09-24 依頼）。
+#   ★ここが無いと、src/downloads/*.pdf が1つも上がりません。
+#     受け口（Apps Script）は GitHub の API で直に置くので、そちらは
+#     .gitignore を見ずに入ります。けれど **Actions の書き戻し**
+#     （作成者を消したぶん）は git add なので、ここで許しておかないと
+#     「消したはずの作成者が、置き場のファイルには残ったまま」になります。
+!src/downloads/*.pdf
 260*.md
 特活広場_Web版_指示書_v1.0.md
 

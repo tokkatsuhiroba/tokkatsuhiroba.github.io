@@ -454,6 +454,16 @@
            build.py の目じるしの表にも足してください（目じるしの文字を
            このコメントに書くと、検問に当たるうえ、コメントの入れ子は
            HTMLでは途中で閉じてしまいます）。 -->
+    <!-- ══ 棚は2つです（2026-09-24 依頼）════════════════════
+         「学級会グッズのデータも募集できるようにしたい。
+           ワードとかPDFのデータを受信できるようにしたい」
+         ★ここまで、このページには **グッズが1点も出ていませんでした**。
+           目じるしが旧タブ版（src/body.html）にしかなく、src/downloads/ の
+           6つのPDFも配られていませんでした。募集を始めるにあたって、
+           まず受け皿（棚）を出しています。
+         ★道具箱と みんなのグッズを **混ぜません**。下の「ここは
+           こちらで用意したものです」の字が嘘になるためです。
+           分け目は .md の okurareta: だけ（→ build.py の load_goods）。 -->
     <p class="yomi">
       ここは<strong>こちらで用意したもの</strong>です。学級会グッズ、映像資料、<br>
       よく出る困りごとに効く手だて。<strong>持ち帰って、明日そのまま使えるもの</strong>だけを置きます。
@@ -462,6 +472,189 @@
       先生方から届いた実践は、こちらではなく <strong>「みんなの実践」</strong>にあります。<br>
       あちらが本物の持ち寄り、ここが道具箱です。
     </p>
+    <!--BUILD:GOODS_H-->
+
+    <h3 class="gh" id="minna-goods"><span class="gh-en">SHARED KIT</span><span class="gh-ja">みんなのグッズ</span></h3>
+    <p class="yomi">
+      先生方から<strong>届いたグッズ</strong>です。押すと、そのまま落ちてきます。<br>
+      <strong>PDFは刷るため、Wordは学校に合わせて直すため</strong>に置いてあります。
+    </p>
+    <!--BUILD:GOODS_MINNA-->
+
+    <!-- ══ グッズを送る（2026-09-24 依頼）════════════════════
+         ★実践と同じで、押したときだけ出ます。開いただけでは1バイトも
+           出ません（原則2）。
+         ★押したら、誰の目も通さずに上の棚へ出ます。知らせは管理人に
+           届き、［すぐ消す］で1押しで下ろせます（板書・困りごとと同じ）。
+         ★写真とちがって、**ファイルの中は塗って隠せません**。だから
+           最後の関門の字を変えてあります（下の gd-mita）。 -->
+    <form class="okuru-f" id="goods-f" novalidate>
+      <p class="okuru-midashi">グッズを送る</p>
+      <p class="okuru-yomi">あなたが作った紙を、そのまま置けます。ログインもメールも要りません。<br>
+        <b>PDFでもWordでも</b>、どちらでも大丈夫です。</p>
+
+      <div class="okuru-g">
+        <label class="okuru-shashin" for="gd-f">
+          <span class="okuru-shashin-ji">ファイルをえらぶ</span>
+          <span class="okuru-shashin-chu">PDF・Word・PowerPoint・Excel／同じ形は1つずつ<br>
+            <b>刷る形のまま</b>送ってください（PDFは8MB・ほかは4MBまで）</span>
+          <input type="file" id="gd-f" name="gf" multiple
+                 accept=".pdf,.docx,.pptx,.xlsx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        </label>
+        <p class="okuru-mihon" id="gd-mihon" aria-live="polite"></p>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-t">グッズの名前<span class="okuru-hissu">必須</span></label>
+        <input class="okuru-i" type="text" id="gd-t" maxlength="30"
+               placeholder="例：ふりかえりカード">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-d">どんなものか（1行）<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">札にそのまま出ます。<b>60字まで</b>。</p>
+        <textarea class="okuru-i okuru-nobiru" id="gd-d" maxlength="60" rows="2"
+                  placeholder="例：話合いのあと、決まったことと自分の役を1枚に書く紙"></textarea>
+        <p class="okuru-kazu" id="gd-d-kazu" aria-live="polite">0 / 60字</p>
+      </div>
+
+      <!-- 種類（2026-09-24）。送る人に g-card のような合いことばは選ばせません。
+           並びは build.py の GOODS_SHURUI 1か所から入ります。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-sh">種類<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">近いものを1つ。棚の色と、見本が無いときの札に使います。</p>
+        <select class="okuru-i okuru-ken" id="gd-sh">
+          <option value="">えらんでください</option>
+        <!--BUILD:GOODS_SHURUI-->
+        </select>
+      </div>
+
+      <div class="okuru-g">
+        <span class="okuru-l" id="gd-gn-l">学年<span class="okuru-nin">任意</span></span>
+        <p class="okuru-yomi okuru-yomi--sub">いくつでも押せます。もう一度押すと外れます。</p>
+        <div class="okuru-nen" id="gd-gn" role="group" aria-labelledby="gd-gn-l">
+          <button type="button" class="okuru-nen-b" aria-pressed="false">1<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">2<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">3<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">4<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">5<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">6<span class="nen-ryaku">年</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">中<span class="nen-ryaku">学校</span></button>
+          <button type="button" class="okuru-nen-b" aria-pressed="false">全<span class="nen-ryaku">学年</span></button>
+        </div>
+      </div>
+
+      <!-- 刷る紙（2026-09-24）。刷る前に分かると助かるので、札に出します。
+           並びは build.py の GOODS_KAMI 1か所から入ります。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-kami">刷る紙<span class="okuru-nin">任意</span></label>
+        <select class="okuru-i okuru-ken" id="gd-kami">
+          <option value="">えらばない</option>
+        <!--BUILD:GOODS_KAMI-->
+        </select>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-m">使い方・作ったときの話<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">ひとことでも大丈夫です。札の中に出ます。</p>
+        <textarea class="okuru-i okuru-hiroi" id="gd-m" maxlength="600" rows="4"
+                  placeholder="例：
+はじめは書く欄が多すぎて、5年でも埋まりませんでした。
+
+3つに減らしたら、全員が最後まで書けました。"></textarea>
+        <p class="okuru-kazu" id="gd-m-kazu" aria-live="polite">0 / 600字</p>
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-u">デジタル資料のリンク<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub">Canvaやスライドの共有リンク。<b>「リンクを知っている全員が閲覧可」</b>にしてから貼ってください。</p>
+        <input class="okuru-i" type="url" id="gd-u" maxlength="300"
+               inputmode="url" placeholder="例：https://www.canva.com/design/……/view">
+        <p class="okuru-kazu" id="gd-u-shirase" aria-live="polite"></p>
+      </div>
+
+      <!-- ══ 直して使ってよいか（2026-09-24）══════════════════
+           **Wordを配る意味は「直せる」ことです。**
+           ここが無いと、Wordを送った時点で「改変を黙って許した」ことに
+           なってしまいます。だから、送る人に決めてもらいます。
+           ★「そのまま刷って使ってください」を選んだ人のぶんは、
+             **Word・PowerPoint・Excel を公開しません**（PDFだけ出します）。
+             止めているのは build.py の load_goods です。画面の字だけ
+             変えると、嘘になります。
+           ★並びは build.py の GOODS_NAOSHI 1か所から入ります。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-naoshi">直して使ってよいか<span class="okuru-hissu">必須</span></label>
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトに出ます。</b>受けとった先生は、ここに書いてあるとおりに使います。</p>
+        <select class="okuru-i okuru-ken" id="gd-naoshi">
+          <option value="">えらんでください</option>
+        <!--BUILD:GOODS_NAOSHI-->
+        </select>
+      </div>
+
+      <!-- ══ 自分が作ったものです（2026-09-24）════════════════
+           写真とちがって、ファイルは **市販のワークシートをスキャンした
+           もの** が混ざりえます。消しても、落とした人の手もとには残ります。
+           だから、送る前に1度 目が行く形にします。 -->
+      <p class="okuru-kakunin">
+        <label for="gd-jibun"><input type="checkbox" id="gd-jibun">
+          <span><b>自分が作ったものです。</b>市販のワークシート・教科書・ほかの人が作ったものは、含んでいません。</span></label>
+      </p>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-na">お名前<span class="okuru-hissu">必須</span></label>
+        <input class="okuru-i" type="text" id="gd-na" maxlength="40"
+               autocomplete="name" placeholder="例：伊藤 優">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-shozoku">所属<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトには出ません。</b>管理人にだけ届きます。</p>
+        <input class="okuru-i" type="text" id="gd-shozoku" maxlength="60"
+               placeholder="例：◯◯市立◯◯小学校">
+      </div>
+
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-ken">地域<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトに出ます。</b></p>
+        <div class="okuru-chi">
+          <select class="okuru-i okuru-ken" id="gd-ken">
+            <option value="">えらばない</option>
+          <!--BUILD:KEN-->
+          </select>
+          <input class="okuru-i okuru-shk" type="text" id="gd-shk" maxlength="20"
+                 placeholder="市区町村">
+        </div>
+      </div>
+
+      <p class="okuru-check">
+        <label for="gd-ko"><input type="checkbox" id="gd-ko">
+          <span>サイトに<b>名前を出してよい</b></span></label>
+        <span class="okuru-check-chu">入れなければ「提供：送ってくださった先生」と出ます。<br>
+          どちらでも、お名前は管理人にだけ届きます。</span>
+      </p>
+
+      <!-- ══ 送るまえの、最後の関門 ══════════════════════════
+           ★実践のほうとは **字がちがいます**。あちらは「このページの上で
+             塗って隠せる」ので済みました。**ファイルの中は塗れません。**
+             Wordは docProps に作成者名が、PDFは作成者と ヘッダー・フッター・
+             透かしに 学校名が残ります。
+           ★作成者の名前だけは、こちらでも機械で消しています
+             （.github/workflows/build.yml の「送られたファイルの作成者を消す」）。
+             それでも **本文・ヘッダー・フッターは消せません**。 -->
+      <p class="okuru-kiwo"><b>送るまえに かならず</b>ファイルを開いて、子どもの名前・学校名が
+        本文やヘッダー・フッターに残っていないか見てください。<b>押すと、そのまま公開のページに出ます。</b></p>
+
+      <p class="okuru-kakunin">
+        <label for="gd-mita"><input type="checkbox" id="gd-mita">
+          <span><b>見ました。</b>子どもの名前・学校名は、<b>ファイルの中</b>（本文・ヘッダー・フッター）に入っていません。</span></label>
+      </p>
+
+      <p class="okuru-botan">
+        <button class="btn" type="submit" id="gd-b">送る<span class="btn-ya">→</span></button>
+      </p>
+      <p class="okuru-shirase" id="gd-shirase" role="status" aria-live="polite"></p>
+    </form>
+
     <!--BUILD:JISSEN_H-->
   </div>
 </section>
@@ -4197,6 +4390,229 @@
           + ((err && (err.message || err.name)) || '理由不明')
           + '）。電波のいいところで、もう一度ためしてください。';
         ntBotan.disabled = false;
+      });
+    });
+  }
+
+  /* ══ グッズを送る（2026-09-24 依頼）════════════════════════
+     「学級会グッズのデータも募集できるようにしたい。
+       ワードとかPDFのデータを受信できるようにしたい」
+
+     ★写真とちがって、**縮められません**。Wordの中身も、PDFの紙面も、
+       こちらでは作り直せないためです。だから上限を超えたものは
+       **送らずに、ここで断ります**。
+       no-cors のせいで、受け口が断った理由は画面に出せません
+       （「送りました」と出たまま、どこにも残らない、が起きます）。
+       だから **上限にぶつかる道は、こちら側で塞ぎきります**。
+     ★同じ形は1つずつです。PDFを2つ選んでも、1つめだけを送ります。
+     ★開いただけでは1バイトも出ません。出るのは［送る］を押したときだけ。 */
+  var gdF = document.getElementById('goods-f');
+  if(gdF && OKURU_URL){
+    /* しっぽ → （送る欄の名前, 画面に出す名前, 上限MB）。
+       ★build.py の GOODS_FILE と、受け口（板書を受けとる.gs）の
+         GOODS_SHIPPO と、ここの3か所がそろっている必要があります。
+         1つ足すときは3か所です。 */
+    var GD_KATA = {
+      pdf:  ['pdf',  'PDF',        8],
+      docx: ['docx', 'Word',       4],
+      pptx: ['pptx', 'PowerPoint', 8],
+      xlsx: ['xlsx', 'Excel',      4]
+    };
+    var gdIn      = document.getElementById('gd-f');
+    var gdMihon   = document.getElementById('gd-mihon');
+    var gdShirase = document.getElementById('gd-shirase');
+    var gdBotan   = document.getElementById('gd-b');
+    var gdNen     = nen_fuda('gd-gn');
+    var gdU       = document.getElementById('gd-u');
+
+    var gd_shippo = function(f){
+      var m = String(f.name || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+      return (m && GD_KATA[m[1]]) ? m[1] : '';
+    };
+    /* 選ばれたファイルを、形ごとに1つずつに。断る理由も一緒に返します。 */
+    var gd_erabu = function(){
+      var eranda = {}, dame = [];
+      [].slice.call(gdIn.files).forEach(function(f){
+        var s = gd_shippo(f);
+        if(!s){
+          dame.push(f.name + ' … この形は受けとれません（PDF・Word・PowerPoint・Excel）');
+          return;
+        }
+        if(f.size > GD_KATA[s][2] * 1024 * 1024){
+          dame.push(f.name + ' … 大きすぎます（'
+            + GD_KATA[s][1] + 'は ' + GD_KATA[s][2] + 'MBまで。いまは '
+            + (f.size / 1024 / 1024).toFixed(1) + 'MB）');
+          return;
+        }
+        if(eranda[s]){
+          dame.push(f.name + ' … ' + GD_KATA[s][1] + 'は1つまでです（さきに選んだほうを送ります）');
+          return;
+        }
+        eranda[s] = f;
+      });
+      return {eranda: eranda, dame: dame};
+    };
+    var gd_kazu = function(){
+      var k = gd_erabu();
+      var na = Object.keys(k.eranda).map(function(s){
+        return GD_KATA[s][1] + '（' + (k.eranda[s].size / 1024).toFixed(0) + 'KB）';
+      });
+      gdMihon.innerHTML = '';
+      if(na.length){
+        var p = document.createElement('span');
+        p.textContent = '送るもの … ' + na.join(' ／ ');
+        gdMihon.appendChild(p);
+      }
+      k.dame.forEach(function(d){
+        var p = document.createElement('span');
+        p.className = 'okuru-dame';
+        p.textContent = '✕ ' + d;
+        gdMihon.appendChild(document.createElement('br'));
+        gdMihon.appendChild(p);
+      });
+    };
+    gdIn.addEventListener('change', gd_kazu);
+
+    /* 字数（1行の説明・使い方）。実践と同じ出し方にします。 */
+    [['gd-d', 'gd-d-kazu', 60], ['gd-m', 'gd-m-kazu', 600]].forEach(function(x){
+      var i = document.getElementById(x[0]), k = document.getElementById(x[1]);
+      if(!i || !k) return;
+      var kaku = function(){ k.textContent = i.value.length + ' / ' + x[2] + '字'; };
+      i.addEventListener('input', kaku); kaku();
+    });
+    /* 1行の説明に改行を入れさせません（札が1行ものなので、入ると崩れます） */
+    var gdD = document.getElementById('gd-d');
+    if(gdD){
+      gdD.addEventListener('input', function(){
+        if(gdD.value.indexOf('\n') >= 0) gdD.value = gdD.value.replace(/\n+/g, ' ');
+      });
+    }
+    /* 資料リンクの行き先を、書いているそばから見せます。
+       実践と同じ共用のものに任せます（受ける置き場の並びが1か所で済みます）。 */
+    shiryo_shirase_tsunagu(gdU, document.getElementById('gd-u-shirase'));
+    /* この端末が覚えているお名前を、はじめから入れておきます */
+    var gdOboe = nanori_yomu();
+    if(gdOboe){
+      nanori_ireru(gdOboe, true,
+        {na: 'gd-na', sh: 'gd-shozoku', ko: 'gd-ko', shirase: 'gd-nanori'});
+    }
+
+    var gd_yomu = function(file){
+      return new Promise(function(ok, dame){
+        var fr = new FileReader();
+        fr.onerror = function(){ dame(new Error(file.name + ' が読めませんでした')); };
+        fr.onload  = function(){ ok(fr.result); };
+        fr.readAsDataURL(file);
+      });
+    };
+
+    gdF.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var k = gd_erabu();
+      var kata = Object.keys(k.eranda);
+      var t  = document.getElementById('gd-t').value.trim();
+      var d  = document.getElementById('gd-d').value.trim();
+      var sh = document.getElementById('gd-sh').value;
+      var no = document.getElementById('gd-naoshi').value;
+      var na = document.getElementById('gd-na').value.trim();
+      var u  = gdU ? gdU.value.trim() : '';
+
+      var tomeru = function(ji, doko){
+        gdShirase.textContent = ji;
+        var e = doko && document.getElementById(doko);
+        if(e){ e.scrollIntoView({block:'center'}); e.focus({preventScroll:true}); }
+      };
+      if(!kata.length && !u){
+        return tomeru('ファイルか、資料のリンクが要ります。'
+          + (k.dame.length ? '（' + k.dame[0] + '）' : ''), 'gd-f');
+      }
+      if(!t)  return tomeru('グッズの名前を書いてください。', 'gd-t');
+      if(!d)  return tomeru('どんなものか、1行書いてください。', 'gd-d');
+      if(!sh) return tomeru('種類をえらんでください。', 'gd-sh');
+      if(!no) return tomeru('「直して使ってよいか」をえらんでください。', 'gd-naoshi');
+      /* そのまま刷るだけ、と決めた人のぶんは、直せる形を送りません。
+         ★受け口と build.py も同じことを見ています。ここで止めるのは、
+           送ったあとで黙って減らさないためです（何が出るか、押す前に分かる）。 */
+      if(no === 'sonomama'){
+        var naoseru = kata.filter(function(s){ return s !== 'pdf'; })
+                          .map(function(s){ return GD_KATA[s][1]; });
+        if(naoseru.length){
+          return tomeru('「そのまま刷って使ってください」を選ぶと、'
+            + naoseru.join('・') + ' は公開できません（直せる形のため）。'
+            + 'PDFだけにするか、「直してOK」を選んでください。', 'gd-naoshi');
+        }
+      }
+      if(u && !shiryo_doko(u)){
+        return tomeru('資料リンクの行き先が受けられません（' + uDokoJi + '）。', 'gd-u');
+      }
+      if(!na) return tomeru('お名前を書いてください。サイトに出すかどうかは、下でえらべます。', 'gd-na');
+
+      var jibun = document.getElementById('gd-jibun');
+      if(jibun && !jibun.checked){
+        var h1 = jibun.closest('.okuru-kakunin') || jibun;
+        h1.classList.add('okuru-kakunin--yobu');
+        return tomeru('「自分が作ったものです」に印を入れてください。'
+          + '市販のワークシートは、消しても落とした人の手もとに残ります。', 'gd-jibun');
+      }
+      var mita = document.getElementById('gd-mita');
+      if(mita && !mita.checked){
+        var h2 = mita.closest('.okuru-kakunin') || mita;
+        h2.classList.add('okuru-kakunin--yobu');
+        return tomeru('最後に「見ました」に印を入れてください。'
+          + 'ファイルの中（本文・ヘッダー・フッター）に、子どもの名前や学校名が'
+          + '残っていないか、もう一度だけ見てください。', 'gd-mita');
+      }
+
+      gdBotan.disabled = true;
+      gdShirase.textContent = '読んでいます…';
+      Promise.all(kata.map(function(s){ return gd_yomu(k.eranda[s]); }))
+      .then(function(nakami){
+        var f = {};
+        kata.forEach(function(s, i){ f[s] = nakami[i]; });
+        gdShirase.textContent = '送っています…';
+        return fetch(OKURU_URL, {
+          method: 'POST',
+          /* no-cors。返事は読めませんが、届いたかどうかは分かります。
+             だから断る理由は、ぜんぶ上でつぶしてあります。 */
+          mode: 'no-cors',
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify({
+            kind: 'goods',
+            f:  f,                                       /* 形 → data URI */
+            t:  t.slice(0, 30),                          /* グッズの名前 */
+            d:  d.slice(0, 60),                          /* どんなものか（1行） */
+            sh: sh,                                      /* 種類（→ icon） */
+            g:  gdNen.yomu(),                            /* 学年 */
+            kami: document.getElementById('gd-kami').value,
+            no: no,                                      /* 直して使ってよいか */
+            m:  document.getElementById('gd-m').value.slice(0, 600),
+            u:  u.slice(0, 300),                         /* 外の資料リンク */
+            ken: document.getElementById('gd-ken').value,
+            shk: document.getElementById('gd-shk').value.trim().slice(0, 20),
+            na: na.slice(0, 40),                         /* お名前（必須） */
+            s:  document.getElementById('gd-shozoku').value.trim().slice(0, 60),
+            ko: document.getElementById('gd-ko').checked ? 1 : 0
+          })
+        });
+      }).then(function(){
+        nanori_shimau({
+          na: na.slice(0, 40),
+          sh: document.getElementById('gd-shozoku').value.trim().slice(0, 60),
+          ko: document.getElementById('gd-ko').checked ? 1 : 0
+        });
+        gdF.reset();
+        gdNen.kesu();
+        gdMihon.innerHTML = '';
+        document.getElementById('gd-d-kazu').textContent = '0 / 60字';
+        document.getElementById('gd-m-kazu').textContent = '0 / 600字';
+        gdShirase.textContent = '送りました。数分で、上の「みんなのグッズ」に出ます。'
+          + 'ありがとうございました。';
+        gdBotan.disabled = false;
+      })['catch'](function(err){
+        gdShirase.textContent = 'うまく送れませんでした（'
+          + ((err && (err.message || err.name)) || '理由不明')
+          + '）。電波のいいところで、もう一度ためしてください。';
+        gdBotan.disabled = false;
       });
     });
   }
