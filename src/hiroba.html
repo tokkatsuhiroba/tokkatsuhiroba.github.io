@@ -4766,6 +4766,19 @@
   var oshita = null;
   var TAP_UGOKI = 10;   // 指の動いた長さ（px）
   var TAP_TOKI  = 700;  // 押していた長さ（ミリ秒）
+  /* ══ 大きくしたまま、となりの写真へ（2026-09-24 依頼）══════════
+     「大きくした状態でもスライドして複数を見れるようにして」
+     ★1件に何枚も届きます（いまは4枚のものがあります）。前は1枚ずつ
+       とじて、札の窓をよこに送って、また開く、でした。
+     ★送り方は3つ … 指ではらう／［まえ］［つぎ］を押す／← → のキー。
+     ★はらって送れるのは **「大きく」にしていないとき**だけです。
+       大きくしているときは、指は**写真を動かして読む**ために使います
+       （そこで送ってしまうと、読んでいる途中で飛ばされます）。
+       そのときは ボタンとキーで送れます。
+     ★送ると、札のほうの窓も同じ枚数めに合わせます。とじたときに
+       「さっき見ていた写真」が札にも出ているようにするためです。 */
+  var mai = [], ima = 0, mado = null;
+  var HARAU = 45;       // はらったと見なす長さ（px）
 
   function tsukuru(){
     zen = document.createElement('div');
@@ -4777,8 +4790,10 @@
     zen.innerHTML =
       '<div class="zen-naka"><img alt=""></div>' +
       '<div class="zen-te">' +
+        '<button class="zen-b zen-okuri" type="button" data-zen-te="mae" hidden>← まえ</button>' +
+        '<span class="zen-kazu" aria-live="polite" hidden></span>' +
+        '<button class="zen-b zen-okuri" type="button" data-zen-te="tsugi" hidden>つぎ →</button>' +
         '<button class="zen-b zen-yoko-b" type="button" data-zen-te="yoko" aria-pressed="false" hidden>よこにする</button>' +
-        '<button class="zen-b" type="button" data-zen-te="ookiku" aria-pressed="false">大きく</button>' +
         '<button class="zen-b zen-tojiru" type="button" data-zen-te="tojiru">とじる</button>' +
       '</div>';
     document.body.appendChild(zen);
@@ -4792,10 +4807,125 @@
          とじてしまいます。
        ★［とじる］のボタンは残します。押すところがはっきり見えるのは、
          はじめて開いた人のためです。 */
+    /* ══ 指の受けとり ════════════════════════════════════
+       1本 … 倍率1倍なら「はらって送る」／大きくしていれば「動かして読む」
+       2本 … つまんで大きく・小さく（ピンチ）
+       ★2本になったら、1本のときの はらいは やめます。2本めを置いた
+         ときの わずかな動きで、となりへ飛ばないようにするためです。 */
+    var yubi = {}, yubiKazu = 0, tsumami = null;
+
+    function futari(){
+      var k = Object.keys(yubi);
+      return k.length >= 2 ? [yubi[k[0]], yubi[k[1]]] : null;
+    }
+    function hanareta(a, b){
+      return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+    }
+
     zen.addEventListener('pointerdown', function(ev){
-      oshita = { x: ev.clientX, y: ev.clientY, t: Date.now() };
+      if(ev.target.closest && ev.target.closest('[data-zen-te]')) return;
+      yubi[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+      yubiKazu = Object.keys(yubi).length;
+      if(yubiKazu === 1){
+        oshita = { x: ev.clientX, y: ev.clientY, t: Date.now(), tx: tx, ty: ty };
+      } else if(yubiKazu === 2){
+        var f = futari();
+        tsumami = { d: hanareta(f[0], f[1]) || 1, bai: bai, tx: tx, ty: ty,
+                    cx: (f[0].x + f[1].x) / 2, cy: (f[0].y + f[1].y) / 2 };
+        oshita = null;                 /* はらい も とじる も、やめます */
+        hiku = 0; egaku(false);
+      }
+      if(zen.setPointerCapture){ try{ zen.setPointerCapture(ev.pointerId); }catch(e){} }
     });
-    zen.addEventListener('pointercancel', function(){ oshita = null; });
+
+    function yubiHanasu(ev){
+      delete yubi[ev.pointerId];
+      yubiKazu = Object.keys(yubi).length;
+      if(yubiKazu < 2) tsumami = null;
+      if(yubiKazu === 0) hiku = 0;
+    }
+    zen.addEventListener('pointercancel', function(ev){
+      yubiHanasu(ev); oshita = null; hiku = 0; egaku(true);
+    });
+
+    /* ══ 指ではらって送る ════════════════════════════════
+       ★動かしているあいだ、**写真が指についてきます**。どちらへ
+         送っているのかが、はなす前に分かるようにするためです。
+       ★送れるのは **「大きく」にしていないとき**だけ。大きくしている
+         ときの指は、写真を動かして読むためのものです。
+       ★［よこにする］のときは、写真そのものを90度まわしているので、
+         ついてくる動きは付けません（まわりと足し算になって傾きます）。
+       ★向きは **はじめの8px で1度だけ**決めます。決めたあとに迷わせると、
+         ななめに動かしたときに 写真が行ったり来たりします。
+       ★端では 3分の1しか動かしません。「これ以上は無い」が指に伝わります。
+       ★ボタンの上から始まったはらいは、数えません。 */
+    zen.addEventListener('pointermove', function(ev){
+      if(!(ev.pointerId in yubi)) return;
+      yubi[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+
+      /* ── 2本 … つまんで 大きく・小さく ── */
+      if(tsumami){
+        var f = futari();
+        if(!f) return;
+        var d = hanareta(f[0], f[1]) || 1;
+        var cx = (f[0].x + f[1].x) / 2, cy = (f[0].y + f[1].y) / 2;
+        /* つまんだまま手を動かしたぶんは、そのまま写真を動かします */
+        tx = tsumami.tx + (cx - tsumami.cx);
+        ty = tsumami.ty + (cy - tsumami.cy);
+        zoom(tsumami.bai * (d / tsumami.d), false);
+        return;
+      }
+
+      if(ev.pointerType === 'mouse' && !ev.buttons) return;
+      if(!oshita) return;
+      var dx = ev.clientX - oshita.x, dy = ev.clientY - oshita.y;
+
+      /* ── 1本 ＋ 大きくしている … 動かして読む ── */
+      if(bai > BAI_MIN){
+        tx = oshita.tx + dx;
+        ty = oshita.ty + dy;
+        osaeru();
+        egaku(false);
+        return;
+      }
+
+      /* ── 1本 ＋ ふだんの大きさ … はらって となりの写真へ ── */
+      if(mai.length < 2) return;
+      if(zen.classList.contains('zen--yoko')) return;
+      if(oshita.yoko === undefined){
+        if(Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        oshita.yoko = Math.abs(dx) > Math.abs(dy);
+      }
+      if(!oshita.yoko) return;
+      var hasi = (dx > 0 && ima === 0) || (dx < 0 && ima === mai.length - 1);
+      hiku = hasi ? dx / 3 : dx;
+      egaku(false);
+    });
+
+    zen.addEventListener('pointerup', function(ev){
+      var tsumandeita = !!tsumami;
+      yubiHanasu(ev);
+      if(tsumandeita){ oshita = null; return; }   /* つまみ終わりは、何もしません */
+      if(!oshita || mai.length < 2) return;
+      if(bai > BAI_MIN) return;                   /* 大きいときは 送りません */
+      if(ev.target.closest && ev.target.closest('[data-zen-te]')) return;
+      var dx = ev.clientX - oshita.x, dy = ev.clientY - oshita.y;
+      if(Math.abs(dx) < HARAU || Math.abs(dx) < Math.abs(dy) * 1.4){
+        hiku = 0; egaku(true);        /* 足りなければ、もとの位置へ戻します */
+        return;
+      }
+      oshita = null;                 /* この指は「とじる」には使いません */
+      hiku = 0;
+      okuru(dx < 0 ? 1 : -1);        /* 左へはらったら つぎの1枚 */
+    });
+
+    /* ホイールでも大きくできます（パソコン。指の無い人のため）。
+       ★ページごと大きくならないよう、preventDefault を付けます。 */
+    zen.addEventListener('wheel', function(ev){
+      if(zen.hidden) return;
+      ev.preventDefault();
+      zoom(bai * (ev.deltaY < 0 ? 1.12 : 1 / 1.12), false);
+    }, { passive: false });
 
     zen.addEventListener('click', function(ev){
       var b = ev.target.closest && ev.target.closest('[data-zen-te]');
@@ -4820,7 +4950,8 @@
       /* もう一度押すと もどります。ほかの札は外します
          （まわしながら もとの大きさ、は 何を見ているか分からなくなります） */
       if(te === 'yoko')   return yoko(!zen.classList.contains('zen--yoko'));
-      if(te === 'ookiku') return ookiku(!zen.classList.contains('zen--ookiku'));
+      if(te === 'mae')    return okuru(-1);
+      if(te === 'tsugi')  return okuru(1);
     });
     /* 端末の全画面から、こちらを通さずに出たとき（戻るボタンなど）も とじます */
     document.addEventListener('fullscreenchange', function(){
@@ -4838,43 +4969,131 @@
     zen.style.setProperty('--zen-h', naka.clientHeight + 'px');
   }
 
-  function ookiku(on){
-    if(on) yoko(false);
-    zen.classList.toggle('zen--ookiku', on);
-    zen.querySelector('[data-zen-te="ookiku"]').setAttribute('aria-pressed', on ? 'true' : 'false');
+  /* ══ 手でズームする（2026-09-24 依頼）══════════════════════
+     「拡大後の『大きく』がいらないわ。手でズームできるようにしておいて」
+
+     ★［大きく］のボタン（もとの大きさに切りかえる）はやめました。
+       **2本指でつまんで広げる**のが、いちばん手に馴染むためです。
+     ★指の無い人（パソコン）は、ホイールで同じことができます。
+     ★写真は いつも「画面に合う大きさ」で出ています。その上から
+       transform: scale() を重ねるので、倍率がいくつでも作りは同じです。
+     ★軸は **まんなか**です。つまんだところを軸にすると、計算は合っても
+       はなしたときに写真が思わぬ所へ飛びます。
+     ★倍率は 1〜6倍。1倍より小さくはしません（画面に合っているものを
+       さらに小さくしても、読めるようにはならないためです）。 */
+  var BAI_MIN = 1, BAI_MAX = 6;
+  var bai = 1, tx = 0, ty = 0;   // 倍率と、ずらし
+  var hiku = 0;                  // はらっている途中の、よこのずれ
+
+  /* いまの倍率とずらしを、1か所で絵にします。
+     ★transform を書くところを ここ1つに絞っています。2か所から書くと、
+       ピンチと はらいが 打ち消し合います（まわす rotate も同じ理由で
+       ここに入れています）。 */
+  function egaku(nameraka){
+    if(!img) return;
+    img.style.transition = nameraka ? 'transform .18s ease' : 'none';
+    img.style.transform =
+      'translate(' + (tx + hiku) + 'px,' + ty + 'px) ' +
+      (zen.classList.contains('zen--yoko') ? 'rotate(90deg) ' : '') +
+      'scale(' + bai + ')';
+    zen.classList.toggle('zen--zoom', bai > 1.02);
+  }
+
+  /* 写真が画面の外へ行ききらないように、ずらしを抑えます。
+     大きくしたぶんの はみ出し（half）までしか動かせません。 */
+  function osaeru(){
     var naka = zen.querySelector('.zen-naka');
-    /* 「大きく」にしたら、まんなかから見せます（左上だと黒板の端から始まります） */
-    if(on) naka.scrollLeft = (naka.scrollWidth - naka.clientWidth) / 2;
+    var w = naka.clientWidth  * (bai - 1) / 2;
+    var h = naka.clientHeight * (bai - 1) / 2;
+    tx = Math.max(-w, Math.min(w, tx));
+    ty = Math.max(-h, Math.min(h, ty));
+  }
+
+  function zoom(atarashii, nameraka){
+    bai = Math.max(BAI_MIN, Math.min(BAI_MAX, atarashii));
+    if(bai <= BAI_MIN + 0.02){ bai = BAI_MIN; tx = 0; ty = 0; }
+    osaeru();
+    egaku(nameraka);
   }
 
   function yoko(on){
-    if(on) ookiku(false);
     zen.classList.toggle('zen--yoko', on);
     zen.querySelector('[data-zen-te="yoko"]').setAttribute('aria-pressed', on ? 'true' : 'false');
+    /* まわすときは、倍率ともどします。まわしたうえに大きいままだと、
+       どこを見ているのか分からなくなります。 */
+    zoom(BAI_MIN, false);
     hakaru();
   }
 
-  function hiraku(moto){
-    if(!zen) tsukuru();
+  /* 1枚を出す。開いたあとの「送り」も、ここを通ります。 */
+  function miseru(i){
+    if(!mai.length) return;
+    ima = Math.min(mai.length - 1, Math.max(0, i));
+    var moto = mai[ima];
+    /* 指についてきたぶんと、倍率を、必ず もとに戻します。残すと、
+       送った先の写真が ずれた位置・大きいままで出ます。 */
+    hiku = 0; bai = BAI_MIN; tx = 0; ty = 0;
     img.src = moto.currentSrc || moto.src;
     img.alt = moto.alt || '';
-    zen.hidden = false;
     /* ★2026-09-22 夜（依頼）：前はここで、幅の広い写真を いきなり
        「大きく」で開いていました。板書の一部だけが画面をうめて、
        どこを見ているのか分かりませんでした。もうしません。
-       **かならず、ぜんぶ見える大きさ**で開きます。 */
-    ookiku(false);
+       **かならず、ぜんぶ見える大きさ**で開きます。
+       送ったときも同じです（前の1枚の倍率を持ちこしません）。 */
     yoko(false);
     /* ［よこにする］は、**横長の写真を たての画面で見ているときだけ**出します。
        よこ持ちの画面や、たて長の写真では、まわしても小さくなるだけです。
        ★naturalWidth は、まだ読みこんでいない画像では 0 です
          （資料は loading="lazy" なので、ここでつまずきました）。
-         build.py が width=／height= を必ず書いているので、そちらを控えにします。 */
+         build.py が width=／height= を必ず書いているので、そちらを控えにします。
+       ★1枚ずつ見ます。同じ1件でも、板書（よこ長）と学級会新聞（たて長）が
+         まざって届くためです。 */
     var w = moto.naturalWidth  || parseInt(moto.getAttribute('width'), 10)  || 0;
     var h = moto.naturalHeight || parseInt(moto.getAttribute('height'), 10) || 0;
     var yokoNaga = w && h && (w / h) > 1.3;
     var tateGamen = window.innerHeight > window.innerWidth;
     zen.querySelector('.zen-yoko-b').hidden = !(yokoNaga && tateGamen);
+
+    /* 送りのボタンと枚数。1枚しか無いときは、まるごと出しません
+       （押しても何も起きないものを作らない）。 */
+    var ooi = mai.length > 1;
+    var kazu = zen.querySelector('.zen-kazu');
+    kazu.hidden = !ooi;
+    kazu.textContent = ooi ? ((ima + 1) + ' / ' + mai.length) : '';
+    var mae = zen.querySelector('[data-zen-te="mae"]');
+    var tsugi = zen.querySelector('[data-zen-te="tsugi"]');
+    mae.hidden = tsugi.hidden = !ooi;
+    mae.disabled = (ima === 0);
+    tsugi.disabled = (ima === mai.length - 1);
+    /* 端まで来たら、焦点が消えないように［とじる］へ逃がします */
+    if(document.activeElement === mae && mae.disabled) tsugi.focus();
+    if(document.activeElement === tsugi && tsugi.disabled) mae.focus();
+
+    /* 札のほうの窓も、同じ枚数めに合わせます。とじたときに、さっき見て
+       いた写真が札にも出ているようにするためです。 */
+    if(mado && mado.clientWidth){
+      mado.scrollTo({ left: ima * mado.clientWidth, behavior: 'instant' });
+    }
+    hakaru();
+  }
+
+  function okuru(muki){
+    if(mai.length < 2) return;
+    var tsugi = ima + muki;
+    if(tsugi < 0 || tsugi > mai.length - 1) return;
+    miseru(tsugi);
+  }
+
+  function hiraku(moto){
+    if(!zen) tsukuru();
+    /* 同じ窓に並んでいる写真を、ぜんぶ持っておきます（よこ送りの順番）。
+       窓が見つからないときは、その1枚だけです。 */
+    mado = moto.closest('.bfuda-mado, .shiryo-mado');
+    mai = mado ? [].slice.call(mado.querySelectorAll('figure img')) : [moto];
+    if(!mai.length) mai = [moto];
+    var i = mai.indexOf(moto);
+    zen.hidden = false;
+    miseru(i < 0 ? 0 : i);
     document.documentElement.style.overflow = 'hidden';
     /* 本当の全画面にできる端末では、そうします。
        iPhoneのSafariは写真や図に この命令を受けつけないので、そこでは
@@ -4882,7 +5101,7 @@
     if(zen.requestFullscreen){
       try{ zen.requestFullscreen().catch(function(){}); }catch(e){}
     }
-    hakaru();
+    hakaru();      /* 全画面に入ったあと、もう一度 実寸を測りなおします */
     zen.querySelector('.zen-tojiru').focus();
   }
 
@@ -4920,6 +5139,7 @@
       b.focus({ preventScroll: true });
     }
     modoru = null;
+    mai = []; ima = 0; mado = null;
   }
 
   /* ［大きく見る］が どの図を開くか（2026-09-23 依頼で置き場が変わりました）。
@@ -4979,7 +5199,11 @@
   });
 
   document.addEventListener('keydown', function(ev){
-    if(ev.key === 'Escape') tojiru();
+    if(ev.key === 'Escape') return tojiru();
+    /* ← → で送ります（2026-09-24）。開いているときだけです。 */
+    if(!zen || zen.hidden || mai.length < 2) return;
+    if(ev.key === 'ArrowLeft'){  ev.preventDefault(); okuru(-1); }
+    if(ev.key === 'ArrowRight'){ ev.preventDefault(); okuru(1); }
   });
 })();
 

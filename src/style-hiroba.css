@@ -3063,6 +3063,18 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
    ただの place-items:center だと、ますめの大きさが中身で決まってしまい、
    height:100% が 1068px（画面は832px）になって、縦にはみ出しました。 */
 .zen-naka{
+  /* ★touch-action（2026-09-24 依頼「手のスライドでできるようにね」）。
+     これが無いと、**本物のスマホでは はらえません**。指の横の動きを
+     ブラウザが「ページを動かす」ほうに取ってしまい、こちらには
+     pointerup ではなく pointercancel が来ます（実測できない代わりに、
+     ここは仕様どおりに書いておきます）。
+     2026-09-24 依頼「手でズームできるようにしておいて」で none にしました。
+     ★pinch-zoom を残すと、**ブラウザがページごと**大きくしてしまい、
+       ボタンも帯も一緒に伸びます。写真だけを大きくしたいので、
+       2本指も1本指も こちらで受けとります。
+     ★そのかわり、はらう・動かす・ピンチを ぜんぶ自分で面倒みます
+       （→ src/hiroba.html）。 */
+  touch-action:none;
   overflow:auto;padding:8px;
   display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);
   place-items:stretch;
@@ -3076,6 +3088,11 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .zen-naka img{
   display:block;width:100%;height:100%;
   object-fit:contain;object-position:center;
+  touch-action:none;
+  /* まんなかを軸に大きくします。指でつまんだところを軸にすると、
+     計算は合っても、はなしたときに写真が思わぬ所へ飛びます。 */
+  transform-origin:center center;
+  will-change:transform;
 }
 /* ［よこにする］（2026-09-22 夜 依頼）。90度まわして、画面の長いほうに合わせます。
    まわしたあとの「入る大きさ」は、たてとよこが入れかわります。
@@ -3092,11 +3109,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* 「大きく」＝もとの大きさ。はみ出したぶんは指で動かせます（横長の黒板はこれで読めます） */
 /* はみ出していないほうの向きは、まんなかに寄せます（safe＝はみ出すときは端から）。
    これが start だと、画面より低い写真が上にはりついて、下に地が残ります。 */
-.zen--ookiku .zen-naka{place-items:safe center;grid-template-rows:auto}
-/* 「大きく」＝もとの大きさのまま。のばしも縮めもしません */
-.zen--ookiku .zen-naka img{
-  max-width:none;max-height:none;width:auto;height:auto;object-fit:none;
-}
+/* 2026-09-24 依頼：［大きく］のボタンをやめ、**2本指のピンチ**にしました。
+   だから .zen--ookiku（＝もとの大きさに切りかえる）はもうありません。
+   ★いまは、写真は いつも「画面に合う大きさ」で出ていて、その上から
+     transform: scale() で 指が広げたぶんだけ大きくします。
+     入れ物（.zen-naka）の作りは、倍率がいくつでも同じです。
+   ★大きくしているあいだだけ .zen--zoom が付きます（手のかたちと、
+     はらって送らない ための目じるし）。 */
 .zen-te{
   display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
   padding:12px 14px;background:#100F0E;
@@ -3110,6 +3129,23 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 }
 .zen-b[aria-pressed="true"]{background:#FCFBF7;color:#100F0E}
 .zen-b:hover,.zen-b:focus-visible{background:var(--ki);color:var(--ink);border-color:var(--ki)}
+/* ══ 大きくしたまま、となりの写真へ（2026-09-24 依頼）══════════
+   「大きくした状態でもスライドして複数を見れるようにして」
+   ★字は消しません（「← まえ」「つぎ →」）。しるしだけの丸にすると、
+     はじめて見る先生に何のボタンか伝わりません（札の足のボタンと同じ考え）。
+   ★端まで来たボタンは **消さずに、薄くして押せなくします**。
+     消すと並びが動いて、押そうとした指が「つぎ」から「とじる」へ
+     すべります。 */
+.zen-kazu{
+  display:inline-flex;align-items:center;
+  min-height:44px;padding:0 6px;
+  font-family:var(--f-en);font-size:14px;letter-spacing:.06em;
+  color:#FCFBF7;
+}
+.zen-okuri[disabled]{opacity:.35;cursor:default}
+.zen-okuri[disabled]:hover{
+  background:transparent;color:#FCFBF7;border-color:#FCFBF7;
+}
 .zen-tojiru{margin-inline-start:auto}
 @media (max-width:719px){
   /* スマホは「全画面」が身上なので、まわりの余白を落として
@@ -3132,6 +3168,13 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
     gap:8px;padding:8px 10px;
     padding-bottom:max(36px,calc(env(safe-area-inset-bottom,0px) + 16px));
   }
+  /* 2026-09-24：ボタンが増えて（まえ・枚数・つぎ）、スマホでは
+     2段に折れます。［とじる］を右端へ押しやる決まりを外して、
+     どちらの段も まんなかにそろえます。折れた段に1つだけ
+     右寄りで残ると、並びが崩れて見えます。 */
+  .zen-tojiru{margin-inline-start:0}
+  .zen-b{padding:10px 14px;font-size:13px}
+  .zen-okuri{padding:10px 13px}
   .zen-b{font-size:12.5px;padding:9px 13px}
   .zen-tojiru{margin-inline-start:0}
 }
@@ -5354,4 +5397,4 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
    ★［大きく］のときは、押すのではなく **動かして読む** ので、
      手のかたちを変えます（動かしても とじません → src/hiroba.html）。 */
 .zen-naka{cursor:zoom-out}
-.zen--ookiku .zen-naka{cursor:move}
+.zen--zoom .zen-naka{cursor:move}
