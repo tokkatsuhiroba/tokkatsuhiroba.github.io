@@ -5238,3 +5238,94 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
   .gt{grid-template-columns:84px 1fr;gap:12px;padding:12px}
   .gt-b{min-height:42px;padding:7px 16px;font-size:14px}
 }
+
+/* ══ スマホの札を、Twitterくらいの大きさに（2026-09-24 依頼）══════
+   「モバイル版の画像の仕様と投稿の大きさをこのツイッターぐらいを
+     参考にして欲しい。画像もタップしたら拡大するようにしてほしい。」
+
+   実測（iPhone 375×812）… 1件が **1170px＝1.4画面**。うちわけは
+     札の行 56／見出し 24／推しポイント 93／提供 19／ひとこと 45／
+     本文 337／**写真の窓 459（39%）**／足のボタン 58。
+   Twitterの投稿は、だいたい1画面に収まっています。
+
+   直すのは3つ。**ぜんぶスマホだけ**です（パソコンは今までどおり）。
+     ① 写真 … 幅いっぱい・**4:3で切る**・角丸　459px → 約245px
+     ② 本文 … 10行を超えたぶんをたたむ（［さらに表示］）
+     ③ 写真をタップしたら、そのまま大きく開く（→ src/hiroba.html）
+
+   ★切ったぶんは **タップで全部見えます**。Twitterと同じ考えで、
+     「札では大きさをそろえ、読むときは開く」です。切りっぱなしには
+     しません（③が無いと、これはただの改悪です）。
+   ★切る向きは **上ぞろえ**（object-position:top）。板書も学級会の紙も、
+     題と日づけが上にあるためです。まん中ぞろえだと、何の紙か分からなく
+     なります。
+   ★刷るときと画像に保存するときは、たたみません（いちばん下の @media print と、
+     ga_moji が innerText で読むので、隠れていても字は出ます）。 */
+@media (max-width:719px){
+
+  /* ── ① 写真 ───────────────────────────────── */
+  /* 札のふちまで広げるのをやめます（2026-09-23 に広げたところ）。
+     Twitterと同じで、**内余白のぶん内側に入れて、角を丸めます**。
+     幅を24pxゆずるかわりに、写真が「札の中の1つの部品」に見えます。
+     4:3で切るので、幅がそのまま高さに響かなくなりました。 */
+  .bfuda-mado--hiro{
+    margin-inline:0;
+    border:2px solid var(--ink);border-radius:16px;
+    background:var(--men-ki);
+  }
+  /* 窓の中の1枚。よこ送り（scroll-snap）はそのままです。 */
+  .bfuda-mado img,.shiryo-mado img,
+  .bfuda-mado--hiro .shot img{
+    width:100%;max-width:none;height:auto;max-height:none;
+    aspect-ratio:4 / 3;object-fit:cover;object-position:top center;
+    margin-inline:0;border:0;border-radius:0;
+  }
+
+  /* ── ② 本文を10行でたたむ ───────────────────── */
+  /* ★［さらに表示］は、**あふれた1件にだけ** JSが足します
+     （src/hiroba.html）。短い実践には、押すところが1つも出ません。
+     2026-09-22 に決めた「押す場所を1つも作らない」を、できるだけ
+     守るためです。頭の10行は、押さずに読めます。 */
+  .bfuda-naka{
+    /* 1行ぶんの高さ。.bfuda-naka p の font-size × line-height と
+       そろえてあります。片方だけ直すと、たたむ行数がずれます。 */
+    --gyo:calc(14px * var(--moji) * 1.62);
+    position:relative;
+  }
+  .bfuda-naka--tojita{max-height:calc(var(--gyo) * 10);overflow:hidden}
+  /* 下をぼかして「まだ続きがある」を見せます。色だけで伝えないよう、
+     すぐ下に［さらに表示］の字も出します。 */
+  .bfuda-naka--tojita::after{
+    content:"";position:absolute;inset-inline:0;bottom:0;
+    height:calc(var(--gyo) * 2);pointer-events:none;
+    /* ★ここの色は --bg（#FCFBF7）と同じにしてください。
+       ずれると、本文の下に薄い帯が出ます。 */
+    background:linear-gradient(to bottom,rgba(252,251,247,0) 0%,var(--bg) 88%);
+  }
+  .bfuda-motto{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    width:100%;min-height:44px;margin:4px 0 0;padding:0;
+    background:transparent;color:var(--accent);
+    font-family:var(--f-maru);font-weight:700;
+    font-size:calc(13.5px * var(--moji));letter-spacing:.06em;
+    border:0;border-top:1.5px solid var(--rule);
+    cursor:pointer;
+  }
+  .bfuda-motto::after{content:"⌄";font-size:16px;line-height:1}
+  .bfuda-motto:hover,.bfuda-motto:focus-visible{background:var(--men-midori)}
+}
+
+/* 押すと大きくなる、という合図。**画面の広さに関わらず**出します
+   （パソコンでも、写真を押せば開きます → src/hiroba.html の figure の受け）。
+   ★スマホには出ませんが、出しても害はありません。ここを @media の中に
+     入れると、パソコンだけ「押せると分からない」になります。 */
+.bfuda-mado figure,.shiryo-mado figure{cursor:zoom-in}
+
+/* 刷るときは、たたみません（紙は続きをめくれません）。
+   ★@media (max-width:719px) は、紙の幅しだいで **印刷でも当たります**。
+     だからここで戻します。 */
+@media print{
+  .bfuda-naka--tojita{max-height:none !important;overflow:visible !important}
+  .bfuda-naka--tojita::after{display:none !important}
+  .bfuda-motto{display:none !important}
+}

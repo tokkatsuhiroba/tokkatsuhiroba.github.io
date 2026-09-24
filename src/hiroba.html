@@ -4394,6 +4394,73 @@
     });
   }
 
+
+  /* ══ 長い本文を、10行でたたむ（2026-09-24 依頼）════════════════
+     「投稿の大きさをこのツイッターぐらいを参考にして欲しい」
+
+     ★**スマホだけ**です。パソコンでは、今までどおり ぜんぶ出ます。
+     ★**あふれた1件にだけ**［さらに表示］を足します。短い実践には、
+       押すところが1つも出ません。2026-09-22 に決めた
+       「押す場所を1つも作らない」を、できるだけ守るためです。
+       頭の10行は、押さずに読めます。
+     ★一度ひらいたら、たたみ直しません（読んでいる途中で閉じない）。
+     ★画面をまわしたときは測り直します（よこ持ちだと、同じ字が
+       少ない行数に収まって、あふれなくなることがあります）。
+     ★たたむ高さは CSS の --gyo が決めています（style-hiroba.css）。
+       ここに行数を書かないこと。2か所になります。 */
+  (function(){
+    var semai = window.matchMedia('(max-width:719px)');
+    var naka = [].slice.call(document.querySelectorAll('.bfuda-naka'));
+    if(!naka.length) return;
+
+    function botan(n){
+      var b = n.nextElementSibling;
+      return (b && b.classList.contains('bfuda-motto')) ? b : null;
+    }
+
+    function hitotsu(n){
+      if(n.getAttribute('data-hiraita') === '1') return;   /* 開いたものは そのまま */
+      var b = botan(n);
+      if(!semai.matches){
+        n.classList.remove('bfuda-naka--tojita');
+        if(b) b.hidden = true;
+        return;
+      }
+      /* あふれているかどうかは、**一度たたんでから**でないと分かりません */
+      n.classList.add('bfuda-naka--tojita');
+      if(n.scrollHeight <= n.clientHeight + 2){
+        n.classList.remove('bfuda-naka--tojita');
+        if(b) b.hidden = true;
+        return;
+      }
+      if(!b){
+        b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'bfuda-motto';
+        b.textContent = 'さらに表示';
+        b.addEventListener('click', function(){
+          n.setAttribute('data-hiraita', '1');
+          n.classList.remove('bfuda-naka--tojita');
+          b.parentNode.removeChild(b);
+        });
+        n.parentNode.insertBefore(b, n.nextSibling);
+      }
+      b.hidden = false;
+    }
+
+    function zenbu(){ naka.forEach(hitotsu); }
+    zenbu();
+    /* 書体が来てから行の高さが変わります。読みこみ終わりに測り直します */
+    window.addEventListener('load', zenbu);
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(zenbu);
+    if(semai.addEventListener) semai.addEventListener('change', zenbu);
+    var machi = null;
+    window.addEventListener('resize', function(){
+      clearTimeout(machi);
+      machi = setTimeout(zenbu, 150);
+    });
+  })();
+
   /* ══ グッズを送る（2026-09-24 依頼）════════════════════════
      「学級会グッズのデータも募集できるようにしたい。
        ワードとかPDFのデータを受信できるようにしたい」
@@ -4823,6 +4890,31 @@
     var moto = fig && fig.querySelector('img');
     if(!moto) return;
     modoru = b;
+    hiraku(moto);
+  });
+
+  /* ══ 写真そのものを押しても開きます（2026-09-24 依頼）══════════
+     「画像もタップしたら拡大するようにしてほしい」
+     ★スマホでは 写真を 4:3 で切って出しています（style-hiroba.css）。
+       **切ったぶんは、ここで全部見えます。**これが無いと、ただ
+       写真の下half分を捨てただけになります。対（つい）の直しです。
+     ★figure で受けます。写真の左上の「1 / 4」の札を押しても開くように
+       するためです（img だけで受けると、そこだけ反応しません）。
+     ★よこ送り（スワイプ）では click が出ないので、送っただけで
+       開いてしまうことはありません。
+     ★キーボードの人は、これまでどおり札の足の［大きく見る］から入れます
+       （写真そのものは、押せる部品にしていません）。 */
+  document.addEventListener('click', function(ev){
+    if(!ev.target.closest) return;
+    if(ev.target.closest('[data-zen]')) return;        /* ボタンは上で受けました */
+    var fig = ev.target.closest('.bfuda-mado figure, .shiryo-mado figure');
+    if(!fig) return;
+    var moto = fig.querySelector('img');
+    if(!moto) return;
+    var fuda = fig.closest('.bfuda');
+    /* とじたあと、どこへ戻すか。押せる部品がある札では ［大きく見る］へ、
+       無ければ どこへも戻しません（写真は押せる部品ではないので）。 */
+    modoru = (fuda && fuda.querySelector('[data-zen]')) || null;
     hiraku(moto);
   });
 
