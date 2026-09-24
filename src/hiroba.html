@@ -3013,8 +3013,21 @@
      ★写真は いまも **縮めるだけで、切りません**。全部写るのが先、は
        変えていません（→ ga_e_kumi）。 */
   var GA_W = 1200;              /* 絵のはば。スマホでもPCでも、これ1つ */
-  var GA_TAKASA_MAX = 3000;     /* これを超えたら、本文を切って「つづきはサイトで」 */
+  /* ══ たての上限（2026-09-24 依頼）══════════════════════════
+     「全部このサイズがいい！長いのもこれにできるかな。
+       黒板アートは長くなってしまうね。その関係で文字制限を設けるか」
+     ★**はばの 1.85倍**（1200 × 1.85 ＝ 2220px）でそろえます。
+       いちばん収まりのよかった1件（学級会のあゆみ 2186px＝1.82倍）に
+       合わせた数です。
+     ★越えたぶんは **本文を切ります**（「…つづきは、下のQRから読めます」）。
+       写真は切りません。写真は実践そのもので、字はQRの先に全部あります。
+     ★それでも入らない1件は、本文を GA_HON_SAITEI 行だけ残して、
+       少しだけ上限を越えます。**字が1行も無い絵は作りません。** */
+  var GA_TAKASA_HI  = 1.85;     /* はばに対する、たての上限 */
+  var GA_HON_SAITEI = 3;        /* 本文は、すくなくとも何行 出すか */
+  var GA_LEAD_MAX   = 4;        /* ひとことは、何行まで出すか */
   var GA_P = 64;                /* まわりの余白 */
+  var GA_TAKASA_MAX = Math.round(GA_W * GA_TAKASA_HI);   /* たての上限（px） */
   /* 資料の置き場の高さ。2026-09-23（依頼）で **切るのをやめました**。
      「添付資料が全部写るようにする。２枚のものは小さくして入れる」
      ★上だけ切り出すと、紙の下半分が誰にも届きません。縮めれば、
@@ -3542,6 +3555,9 @@
          合わず、絵の右はしから字がはみ出します。 */
     ctx.font = '500 32px ' + GA_HON;
     var leadG = lead ? ga_oru(ctx, lead, naka) : [];
+    /* ひとことにも天井（2026-09-24）。ここが長いと、本文を切っても
+       絵が上限を越えます。切ったことは、すぐ下の本文で言います。 */
+    if(leadG.length > GA_LEAD_MAX) leadG = leadG.slice(0, GA_LEAD_MAX);
     if(leadG.length){ okiba.push({t:'lead', g:leadG, y:y}); y += leadG.length * 50 + 22; }
 
     ctx.font = '400 29px ' + GA_HON;
@@ -3557,9 +3573,17 @@
        ★資料が無い実践は、これまでどおり1つだけ（332px。案内役も出ます）。
        ★上下の余白は そのままです。 */
     var ashi = sotoU ? 306 : 332;
-    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi) / 50);
+    /* 本文に出せる行数。**上限から、本文いがいの ぜんぶを引いた残り**です。
+       12（本文のあとのすきま）＋46（「つづきは」の1行）＋28（足もとの前）を
+       先に取っておかないと、切ったのに上限を越えます。 */
+    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi - 12 - 46 - 28) / 50);
     var kitta = false;
-    if(honG.length > kiru && kiru > 3){ honG = honG.slice(0, kiru); kitta = true; }
+    if(honG.length > kiru){
+      /* 1行も残らないのは やりすぎです。すくなくとも GA_HON_SAITEI 行は
+         出します（そのぶん、上限を少しだけ越えることがあります）。 */
+      honG = honG.slice(0, Math.max(GA_HON_SAITEI, kiru));
+      kitta = true;
+    }
     if(honG.length){ okiba.push({t:'hon', g:honG, y:y}); y += honG.length * 50 + 12; }
     if(kitta){ okiba.push({t:'kitta', y:y}); y += 46; }
     y += 28;
@@ -3717,7 +3741,7 @@
         ga_kaku(ctx, o.g, GA_P, o.y, 50);
       } else if(o.t === 'kitta'){
         ctx.fillStyle = '#63625C'; ctx.font = '700 26px ' + GA_JI;
-        ctx.fillText('…つづきは、下のURLで読めます', GA_P, o.y);
+        ctx.fillText('…つづきは、下のQRから読めます', GA_P, o.y);
       }
     });
 
