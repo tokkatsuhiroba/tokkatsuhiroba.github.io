@@ -4802,19 +4802,21 @@
       if(!b){
         /* pointerdown が来ない端末では、これまでどおり
            「まわりの黒いところ」だけで とじます */
-        if(!oshita){ if(ev.target === zen) tojiru(); return; }
+        if(!oshita){ if(ev.target === zen) tojiru(true); return; }
         var ugoki = Math.abs(ev.clientX - oshita.x) + Math.abs(ev.clientY - oshita.y);
         if(ugoki <= TAP_UGOKI && Date.now() - oshita.t < TAP_TOKI){
           /* この1押しは「とじる」だけに使います。押したところの下に
              リンクがあっても、そちらへは行きません（用心のため）。 */
           ev.preventDefault();
-          tojiru();
+          tojiru(true);                   /* 指でとじた → 枠は出しません */
         }
         oshita = null;
         return;
       }
       var te = b.getAttribute('data-zen-te');
-      if(te === 'tojiru') return tojiru();
+      /* ［とじる］。キーボードのEnterで押されたときは detail が 0 です。
+         そのときだけ、焦点の印を出します。 */
+      if(te === 'tojiru') return tojiru(ev.detail !== 0);
       /* もう一度押すと もどります。ほかの札は外します
          （まわしながら もとの大きさ、は 何を見ているか分からなくなります） */
       if(te === 'yoko')   return yoko(!zen.classList.contains('zen--yoko'));
@@ -4822,7 +4824,7 @@
     });
     /* 端末の全画面から、こちらを通さずに出たとき（戻るボタンなど）も とじます */
     document.addEventListener('fullscreenchange', function(){
-      if(!document.fullscreenElement && zen && !zen.hidden) tojiru();
+      if(!document.fullscreenElement && zen && !zen.hidden) tojiru(true);
     });
     window.addEventListener('resize', hakaru);
   }
@@ -4884,7 +4886,19 @@
     zen.querySelector('.zen-tojiru').focus();
   }
 
-  function tojiru(){
+  /* とじたあと、［大きく］のボタンへ焦点を戻します。
+     ★戻すこと自体はやめません。キーボードで開いた人が、とじたとたんに
+       ページの頭へ飛ばされるのを防ぐためです。
+     ★ただし **指やマウスでとじたときは、印（黒い枠）を出しません**
+       （2026-09-24 依頼「大きくして閉じたあとの重なりが気になる」）。
+       ボタンは :focus-visible で 黄色＋2pxずれ＋5pxの影になり、そこへ
+       :focus-visible の 3pxの枠（outline-offset:3px）が重なって、
+       **輪が二重に見えていました**。押した本人は、いま何を押したか
+       分かっているので、印は要りません。
+     ★キーボードでとじた人（Esc・［とじる］でEnter）には、これまでどおり
+       印を出します。どこに焦点があるか分からなくなるためです。
+     yubi … true なら 指かマウスでとじた、という意味 */
+  function tojiru(yubi){
     if(!zen || zen.hidden) return;
     zen.hidden = true;
     img.removeAttribute('src');          /* 同じ絵を二重に持たない */
@@ -4892,7 +4906,19 @@
     if(document.fullscreenElement && document.exitFullscreen){
       try{ document.exitFullscreen().catch(function(){}); }catch(e){}
     }
-    if(modoru && modoru.focus) modoru.focus();
+    if(modoru && modoru.focus){
+      var b = modoru;
+      if(yubi){
+        /* この1回だけ、枠を出しません。よそへ移ったら外します
+           （次にキーボードで戻ってきた人には、ちゃんと出ます）。 */
+        b.classList.add('zen-modori');
+        b.addEventListener('blur', function hazusu(){
+          b.classList.remove('zen-modori');
+          b.removeEventListener('blur', hazusu);
+        });
+      }
+      b.focus({ preventScroll: true });
+    }
     modoru = null;
   }
 

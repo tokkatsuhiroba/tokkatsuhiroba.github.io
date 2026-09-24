@@ -5330,6 +5330,26 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
   .bfuda-motto{display:none !important}
 }
 
+/* 大きくして とじたあと、焦点を戻したボタンの「重なり」を出さない
+   （2026-09-24 依頼「大きくして閉じたあとの重なりが気になる」）。
+
+   ★何が起きていたか … とじると［大きく］のボタンへ焦点が戻ります。
+     そこに :focus-visible が当たり、ボタンは
+       黄色（--ki）＋ 2px ずれ ＋ 5px の影　（.bansho-b:focus-visible）
+     になり、さらに全体の決まり
+       outline:3px solid ＋ outline-offset:3px　（いちばん上の :focus-visible）
+     の黒い枠が乗って、**輪が二重**に見えていました。
+   ★焦点を戻すこと自体はやめません。キーボードで開いた人が、とじたとたんに
+     ページの頭へ飛ばされるためです。**指やマウスでとじたときだけ**、
+     この1回ぶん 印を消します（→ src/hiroba.html の tojiru(yubi)）。
+   ★キーボードでとじた人（Esc・［とじる］でEnter）には、今までどおり出ます。 */
+.zen-modori:focus-visible{
+  outline:none;
+  transform:none;
+  box-shadow:3px 3px 0 var(--ink);
+  background:var(--bg);
+}
+
 /* もう一度押すと とじる、の合図（2026-09-24 依頼）。
    ★［大きく］のときは、押すのではなく **動かして読む** ので、
      手のかたちを変えます（動かしても とじません → src/hiroba.html）。 */
