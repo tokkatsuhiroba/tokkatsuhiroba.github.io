@@ -3332,6 +3332,39 @@
   var GA_KYARA = {gakkyu: 'gakkatsu', gyoji: 'gyoji',
                   jidokai: 'jidokai', club: 'club'};
 
+  /* ページの中の「絵を呼んでいる svg」を、1枚の絵として読みます。
+     ★ここに **絵の名前を字で書かないこと**。検問が本物の呼び出しと
+       まちがえて、ビルドが止まります（2026-09-24 に また踏みました）。
+     ★外へは出ません。同じページの中にある絵を、そのまま使うだけです。
+     ★2026-09-24：推しポイントの案内役にも使うので、共用にしました
+       （前は足もとの1人ぶんだけの作りでした）。 */
+  function ga_svg_yomu(sv){
+    if(!sv) return Promise.resolve(null);
+    var u = sv.querySelector('use');
+    var na = u && (u.getAttribute('href') || u.getAttribute('xlink:href') || '');
+    var g = na && document.getElementById(na.replace('#', ''));
+    if(!g) return Promise.resolve(null);
+    var vb = (sv.getAttribute('viewBox') || g.getAttribute('data-vb') || '').split(/\s+/);
+    if(vb.length !== 4) return Promise.resolve(null);
+    var w = parseFloat(vb[2]), h = parseFloat(vb[3]);
+    if(!(w > 0 && h > 0)) return Promise.resolve(null);
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h +
+              '" viewBox="' + vb.join(' ') + '">' + g.innerHTML + '</svg>';
+    return new Promise(function(ok){
+      var im = new Image();
+      im.onload  = function(){ ok(im.naturalWidth ? im : null); };
+      im.onerror = function(){ ok(null); };
+      im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    });
+  }
+
+  /* 推しポイントの案内役（2026-09-24 依頼）。
+     「画像保存をしたときに推しポイントのキャラクターと吹き出しが消えている」
+     画面では 札＋案内役＋吹き出し なのに、保存した絵は 緑の線と字だけでした。 */
+  function ga_oshi_kyara_yomu(fuda){
+    return ga_svg_yomu(fuda.querySelector('.bfuda-oshi-k svg'));
+  }
+
   function ga_kyara_yomu(fuda){
     /* ページの絵の入れ物（<defs>）にある1人を、1枚のSVGに組み直して読みます。
        ★外へは出ません。同じページの中にある絵を、そのまま使うだけです。
@@ -3366,7 +3399,7 @@
     return /(先生|教諭|教員)$/.test(t) ? t : t + '先生';
   }
 
-  function ga_tsukuru(fuda, url, shashin, kyara){
+  function ga_tsukuru(fuda, url, shashin, kyara, oshiKyara){
     var naka = GA_W - GA_P * 2;
     var tag  = fuda.querySelector('.bfuda-tag');
     var dai  = ga_moji(fuda.querySelector('.bfuda-h'));
@@ -3374,14 +3407,26 @@
        （2026-09-23：「推しポイントあいさつワッペン…」とくっついて出ていました） */
     var oshiEl = fuda.querySelector('.bfuda-oshi');
     var oshi = ga_moji(oshiEl);
-    if(oshi){
-      /* 2026-09-23：札は吹き出しの外（左の柱）へ出ました。同じ段落の中を
-         探しても、もう見つかりません。かこいのほうから拾います。 */
-      var oshiW = fuda.querySelector('.bfuda-oshi-w');
-      var oshiL = oshiW && oshiW.querySelector('.bfuda-oshi-l');
-      var lj = oshiL ? (oshiL.innerText || oshiL.textContent || '').trim() : '';
-      if(lj && oshi.indexOf(lj) !== 0) oshi = lj + '　' + oshi;
+    /* 2026-09-24：札（「推しポイント」）を、本文の頭にまぜるのをやめました。
+       画面と同じように **緑の丸い札** として、吹き出しの上に置きます。
+       まぜていたころは「推しポイント 毎回同じデザインで…」と ひと続きの
+       字になり、札にも吹き出しにも見えませんでした。 */
+    var oshiW = fuda.querySelector('.bfuda-oshi-w');
+    var oshiLEl = oshiW && oshiW.querySelector('.bfuda-oshi-l');
+    var oshiL = oshiLEl ? (oshiLEl.innerText || oshiLEl.textContent || '').trim() : '推しポイント';
+    if(oshi && oshiL && oshi.indexOf(oshiL) === 0){
+      oshi = oshi.slice(oshiL.length).replace(/^[\s　]+/, '');
     }
+
+    /* デジタル資料のリンク（2026-09-24 依頼）。
+       「このデジタル資料を載せた人のリンクが消えているから画像保存の場合は
+         リンクかQRが出るようにしてほしい」
+       ★札のボタン（.soto-b）から、そのまま拾います。出どころを1つにするため。 */
+    var sotoA = fuda.querySelector('.bfuda-soto a.soto-b');
+    var sotoU = sotoA ? (sotoA.getAttribute('href') || '') : '';
+    var sotoNa = sotoA && sotoA.querySelector('.soto-b-t b')
+               ? sotoA.querySelector('.soto-b-t b').textContent.trim() : 'デジタル資料';
+    var sotoHost = (/^https?:\/\/([^\/?#]+)/i.exec(sotoU) || [,''])[1].replace(/^www\./, '');
     var lead = ga_moji(fuda.querySelector('.bfuda-lead'));
     var hon  = ga_moji(fuda.querySelector('.bfuda-naka'));
     var by   = ga_moji(fuda.querySelector('.bfuda-by'));
@@ -3408,15 +3453,31 @@
     var daiG = ga_oru(ctx, dai, naka);
     okiba.push({t:'dai', g:daiG, y:y}); y += daiG.length * 74 + 16;
 
+    /* ── 推しポイント（2026-09-24 依頼で 画面と同じ形にしました）──
+       札（緑の丸）を上に、その下に **案内役＋吹き出し**。
+       ★前は「緑の縦線＋字」だけでした。画面には案内役も吹き出しも
+         出ているので、保存した絵だけ別ものになっていました。
+       ★案内役が読めなかったとき（古いブラウザなど）は、吹き出しだけを
+         出します。しっぽも付けません（さす先が無いためです）。
+       ★推しポイントも UD の書体で（2026-09-23 依頼）。
+       ★測るときと描くときで、同じ字にしてください（下の 'oshi' も）。 */
+    var OSHI_K_H = 132;   // 案内役の高さ
+    var OSHI_PAD = 26;    // 吹き出しの内余白
+    var OSHI_SHIPPO = 16; // しっぽの長さ
+    var oshiKw = 0;
+    if(oshi && oshiKyara && oshiKyara.naturalHeight){
+      oshiKw = Math.round(oshiKyara.naturalWidth * OSHI_K_H / oshiKyara.naturalHeight);
+    }
     if(oshi){
-      /* 推しポイント。題のすぐ下に、本文よりひとまわり大きく。
-         画面と同じように、左に太い線を引きます（色だけで目立たせない）。 */
-      /* ★推しポイントも UD の書体で（2026-09-23 依頼）。画面のほうを
-         UDにしたので、保存した絵だけ丸ゴシックだと別ものになります。
-         ★測るときと描くときで、同じ字にしてください（下の 'oshi' も）。 */
+      var oshiBx = GA_P + (oshiKw ? oshiKw + 10 : 0);        // 吹き出しの左はし
+      var oshiBw = GA_W - GA_P - oshiBx - (oshiKw ? OSHI_SHIPPO : 0);
       ctx.font = '700 36px ' + GA_HON;
-      var oshiG = ga_oru(ctx, oshi, naka - 26);
-      okiba.push({t:'oshi', g:oshiG, y:y}); y += oshiG.length * 54 + 18;
+      var oshiG = ga_oru(ctx, oshi, oshiBw - OSHI_PAD * 2);
+      var oshiBh = oshiG.length * 54 + OSHI_PAD * 2 - 8;
+      var oshiRow = Math.max(oshiBh, oshiKw ? OSHI_K_H : 0);
+      okiba.push({t:'oshi', g:oshiG, y:y, bx:oshiBx, bw:oshiBw,
+                  bh:oshiBh, row:oshiRow, kw:oshiKw});
+      y += 44 + 12 + oshiRow + 20;
     }
     if(meta){
       ctx.font = '500 27px ' + GA_HON;
@@ -3441,11 +3502,16 @@
     var honG = hon ? ga_oru(ctx, hon, naka) : [];
     /* 入りきらないぶんは切る。切ったことは、画面の中で正直に言う */
     var ashi = 300;     /* QRコードと「TOKKATSU広場へ」のぶん */
-    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi) / 54);
+    /* デジタル資料の1かたまり（QR＋名前＋URL）のぶんも、先に取っておきます。
+       取らないと、本文が資料の分まで伸びて、絵が上限を越えます。 */
+    var SOTO_QR = 150, SOTO_H = SOTO_QR + 44;
+    var sotoTakasa = sotoU ? (SOTO_H + 24) : 0;
+    var kiru = Math.floor((GA_TAKASA_MAX - y - ashi - sotoTakasa) / 54);
     var kitta = false;
     if(honG.length > kiru && kiru > 3){ honG = honG.slice(0, kiru); kitta = true; }
     if(honG.length){ okiba.push({t:'hon', g:honG, y:y}); y += honG.length * 54 + 12; }
     if(kitta){ okiba.push({t:'kitta', y:y}); y += 46; }
+    if(sotoU){ okiba.push({t:'soto', y:y + 8}); y += sotoTakasa; }
     y += 28;
 
     var takasa = y + ashi;
@@ -3499,10 +3565,86 @@
         ctx.fillStyle = '#1C1C1A'; ctx.font = '900 54px ' + GA_JI;
         ga_kaku(ctx, o.g, GA_P, o.y, 74);
       } else if(o.t === 'oshi'){
-        ctx.fillStyle = '#1F5C3F';
-        ctx.fillRect(GA_P, o.y + 2, 7, o.g.length * 54 - 10);
+        /* ①「推しポイント」の札（緑の丸帯）。画面と同じ形です。 */
+        ctx.font = '700 26px ' + GA_JI;
+        var lw = ctx.measureText(oshiL).width + 40;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(GA_P, o.y, lw, 44, 22);
+        else ctx.rect(GA_P, o.y, lw, 44);
+        ctx.fillStyle = '#1F5C3F'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A'; ctx.stroke();
+        ctx.fillStyle = '#FCFBF7'; ctx.fillText(oshiL, GA_P + 20, o.y + 9);
+
+        var ry = o.y + 56;                       /* 案内役と吹き出しの行 */
+        var bx = o.bx + (o.kw ? OSHI_SHIPPO : 0);
+        var by = ry + (o.row - o.bh) / 2;
+        /* ② 案内役（左） */
+        if(o.kw) ctx.drawImage(oshiKyara, GA_P, ry + (o.row - OSHI_K_H) / 2,
+                               o.kw, OSHI_K_H);
+        /* ③ 吹き出し。白地に、太めの緑のふち（画面と同じ） */
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(bx, by, o.bw, o.bh, 22);
+        else ctx.rect(bx, by, o.bw, o.bh);
+        ctx.fillStyle = '#FCFBF7'; ctx.fill();
+        ctx.lineWidth = 4; ctx.strokeStyle = '#1F5C3F'; ctx.stroke();
+        /* ④ しっぽ。案内役がいるときだけ、そちらへ向けます。
+           ★先にふちごと三角を描き、そのあと根もとの縦線を
+             白でなぞって消します（枠と二重にならないように）。 */
+        if(o.kw){
+          var sy = by + o.bh / 2;
+          ctx.beginPath();
+          ctx.moveTo(bx + 2, sy - 17);
+          ctx.lineTo(bx - OSHI_SHIPPO, sy);
+          ctx.lineTo(bx + 2, sy + 17);
+          ctx.closePath();
+          ctx.fillStyle = '#FCFBF7'; ctx.fill();
+          ctx.lineWidth = 4; ctx.strokeStyle = '#1F5C3F'; ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(bx + 2, sy - 14); ctx.lineTo(bx + 2, sy + 14);
+          ctx.lineWidth = 7; ctx.strokeStyle = '#FCFBF7'; ctx.stroke();
+        }
         ctx.fillStyle = '#1C1C1A'; ctx.font = '700 36px ' + GA_HON;
-        ga_kaku(ctx, o.g, GA_P + 26, o.y, 54);
+        ga_kaku(ctx, o.g, bx + OSHI_PAD, by + OSHI_PAD - 8, 54);
+      } else if(o.t === 'soto'){
+        /* ══ デジタル資料のリンク（2026-09-24 依頼）══════════════
+           「このデジタル資料を載せた人のリンクが消えているから
+             画像保存の場合はリンクかQRが出るようにしてほしい」
+           ★QRと字の**両方**を出します。QRはカメラを向けるだけ、
+             字は読み上げや手打ちのため。片方だけにしません。
+           ★行き先（canva.link など）を必ず添えます。押す前に どこへ
+             出るのかが分かるように、というのは 画面と同じ決めごとです。
+           ★足もとのQRは「この実践のページ」、こちらは「送ってくださった
+             先生の資料」です。別ものなので、見出しで書き分けます。 */
+        var sh = SOTO_H, sx = GA_P, sy2 = o.y;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(sx, sy2, naka, sh, 18);
+        else ctx.rect(sx, sy2, naka, sh);
+        ctx.fillStyle = '#FBF2D8'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A'; ctx.stroke();
+
+        var sqm = null;
+        try { sqm = qr_matrix(sotoU); } catch(e2) { sqm = null; }
+        var sTx = sx + 26;
+        if(sqm){
+          var sN = sqm.length, sms = Math.floor(SOTO_QR / (sN + 8)) || 1;
+          var sAtari = sms * (sN + 8), sqx = sx + 22, sqy = sy2 + (sh - sAtari) / 2;
+          ctx.fillStyle = '#FFFFFF'; ctx.fillRect(sqx, sqy, sAtari, sAtari);
+          ctx.fillStyle = '#1C1C1A';
+          for(var sr = 0; sr < sN; sr++) for(var sc = 0; sc < sN; sc++)
+            if(sqm[sr][sc]) ctx.fillRect(sqx + (sc + 4) * sms, sqy + (sr + 4) * sms, sms, sms);
+          ctx.lineWidth = 3; ctx.strokeStyle = '#1C1C1A';
+          ctx.strokeRect(sqx, sqy, sAtari, sAtari);
+          sTx = sqx + sAtari + 26;
+        }
+        var snoko = GA_W - GA_P - sTx - 20;
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '900 32px ' + GA_JI;
+        ctx.fillText('この実践のデジタル資料', sTx, sy2 + 26);
+        ctx.fillStyle = '#1C1C1A'; ctx.font = '700 27px ' + GA_HON;
+        ctx.fillText(sotoNa + (sotoHost ? '（' + sotoHost + '）' : ''), sTx, sy2 + 72);
+        ctx.fillStyle = '#63625C'; ctx.font = '500 23px ' + GA_HON;
+        var sug = ga_oru(ctx, sotoU, snoko);
+        if(sug.length > 2){ sug = sug.slice(0, 2); sug[1] = sug[1].slice(0, -1) + '…'; }
+        ga_kaku(ctx, sug, sTx, sy2 + 112, 32);
       } else if(o.t === 'meta'){
         ctx.fillStyle = '#63625C'; ctx.font = '500 27px ' + GA_HON;
         ga_kaku(ctx, o.g, GA_P, o.y, 42);
@@ -3600,9 +3742,10 @@
     /* 書体が来る前に描くと、別の書体で焼きついてしまいます */
     (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
     .then(function(){
-      return Promise.all([ga_e_yomu(fuda), ga_kyara_yomu(fuda)]);
+      return Promise.all([ga_e_yomu(fuda), ga_kyara_yomu(fuda), ga_oshi_kyara_yomu(fuda)]);
     }).then(function(x){
-      var c = ga_tsukuru(fuda, botan.getAttribute('data-url') || location.href, x[0], x[1]);
+      var c = ga_tsukuru(fuda, botan.getAttribute('data-url') || location.href,
+                         x[0], x[1], x[2]);
       var na = (ga_moji(fuda.querySelector('.bfuda-h')) || '実践')
                  .replace(/[\\/:*?"<>|\s]+/g, '_').slice(0, 40) + '.png';
       return new Promise(function(ok){ c.toBlob(ok, 'image/png'); }).then(function(b){
