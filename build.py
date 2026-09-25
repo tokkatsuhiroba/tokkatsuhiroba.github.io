@@ -6733,6 +6733,22 @@ def robots_tag(f):
     return '<meta name="robots" content="index, follow">' 
 
 
+def canonical_tag(f):
+    """「これが本物の住所です」の札（2026-09-26）。
+
+       なぜ要るのか
+         引っこしたあと、古い住所 yuutennis657-beep.github.io/tokkatsu-hiroba/ は
+         「転送の札」になっています。転送は JavaScript なので、読む側によっては
+         **古い住所のまま中身を覚えてしまう**ことがあります。
+         ここで「覚えるのは こっち」と1行書いておけば、そちらに寄ります。
+
+       ★検索に出さないページ（管理画面）には書きません。書くと「在る」と
+         教えることになり、DASANAI の考え方と食いちがいます。"""
+    if f in DASANAI:
+        return ''
+    return '<link rel="canonical" href="%s%s">' % (SITE_URL, '' if f == HOME else f)
+
+
 # LINEに貼ったときの絵。**中身を差しかえたら、必ず「ファイル名」を変えてください。**
 # （2026-09-23：前は ?v=4 のように ? で版を上げていました。しかし ? のうしろは
 #   取りに来る側がうまく読まないことがあるので、名前で版を分けます。）
@@ -6780,6 +6796,7 @@ def head_de(f, na):
     """頭は1つの型を使い回し、題と自分のURLだけをページごとに差しかえます。"""
     head = rd('src/head-hiroba.html')
     head = head.replace('<!--BUILD:ROBOTS-->', robots_tag(f))
+    head = head.replace('<!--BUILD:CANONICAL-->', canonical_tag(f))
     dai = 'TOKKATSU広場' if f == HOME else '%s｜TOKKATSU広場' % page_na(f)
     head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
