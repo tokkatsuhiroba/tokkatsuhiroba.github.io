@@ -6799,6 +6799,27 @@ def canonical_tag(f):
     return '<link rel="canonical" href="%s%s">' % (SITE_URL, '' if f == HOME else f)
 
 
+def jsonld_tag(f):
+    """サイトの名前を、機械に分かる形で1回だけ書く（2026-09-26 依頼）。
+
+       なぜ要るのか
+         このサイトの名前は「TOKKATSU広場」です。でも探す人は
+         **漢字で「特活広場」と打ちます。** 人には同じものだと分かりますが、
+         機械には分かりません。alternateName は「これも同じ場所の名前です」と
+         伝えるための欄です。
+
+       ★ホームにだけ書きます。サイトの名前は1か所で言えば足ります。
+       ★中身は名前と住所だけです。人のことは1文字も入れません。"""
+    if f != HOME:
+        return ''
+    return ('<script type="application/ld+json">'
+            '{"@context":"https://schema.org","@type":"WebSite",'
+            '"name":"TOKKATSU広場",'
+            '"alternateName":["特活広場","とっかつひろば","TOKKATSUひろば"],'
+            '"inLanguage":"ja",'
+            '"url":"%s"}</script>' % SITE_URL)
+
+
 # LINEに貼ったときの絵。**中身を差しかえたら、必ず「ファイル名」を変えてください。**
 # （2026-09-23：前は ?v=4 のように ? で版を上げていました。しかし ? のうしろは
 #   取りに来る側がうまく読まないことがあるので、名前で版を分けます。）
@@ -6847,7 +6868,15 @@ def head_de(f, na):
     head = rd('src/head-hiroba.html')
     head = head.replace('<!--BUILD:ROBOTS-->', robots_tag(f))
     head = head.replace('<!--BUILD:CANONICAL-->', canonical_tag(f))
-    dai = 'TOKKATSU広場' if f == HOME else '%s｜TOKKATSU広場' % page_na(f)
+    head = head.replace('<!--BUILD:JSONLD-->', jsonld_tag(f))
+    # ══ 題に「特活広場」を添える（2026-09-26 依頼）════════════
+    #   名前は TOKKATSU広場 のままです。変えたのは **探されたときの当たり方**。
+    #   それまで「特活広場」は 絵の説明（SVGの<title>）の中にしか無く、
+    #   漢字で探している先生には ひっかかりませんでした。
+    #   ★ここは検索結果に出る題です。LINEに貼ったときの題（og:title）は
+    #     さわっていません。あちらは「TOKKATSU広場」のままです。
+    dai = ('TOKKATSU広場（特活広場）｜特別活動・学級会の実践と一次資料' if f == HOME
+           else '%s｜TOKKATSU広場（特活広場）' % page_na(f))
     head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
         head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))

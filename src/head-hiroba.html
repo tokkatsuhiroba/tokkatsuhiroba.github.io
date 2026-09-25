@@ -10,6 +10,9 @@
      どちらを覚えればよいか、検索する側にはっきり言います。
      ページごとの住所は build.py の head_de が書きます。 -->
 <!--BUILD:CANONICAL-->
+<!-- サイトの名前を、機械に分かる形で1回だけ書きます（ホームだけ）。
+     検索結果に出る「サイト名」と、別名（特活広場）の伝え方です。 -->
+<!--BUILD:JSONLD-->
 <!-- Google Search Console に「このサイトは私のものです」と示す札（2026-09-26）。
      ここを消すと確認が外れ、検索の様子（どんな言葉で来たか・拾われたか）が
      見られなくなります。**消さないでください。**
@@ -39,7 +42,9 @@
 <meta name="twitter:image" content="https://tokkatsuhiroba.github.io/ogp-hiroba.png">
 <meta name="twitter:title" content="TOKKATSU広場｜特別活動で、輝く。">
 <meta name="twitter:description" content="ニュース・一次資料・研究日程・すぐ使える実践。LINEは話す場、ここは確かめて持ち帰る場です。">
-<meta name="description" content="特別活動で、輝く。ニュース・一次資料・学級会の学習過程・研究日程。">
+<!-- 検索結果に出る説明。ここは og:description（LINEに貼ったとき）とは別です。
+     「特活広場」の字を入れてあります（2026-09-26）。 -->
+<meta name="description" content="TOKKATSU広場（特活広場）は、特別活動の情報が溜まる場。ニュース・一次資料・学級会の学習過程・研究日程・みんなの実践。">
 <!-- ══ ホーム画面に追加したときの絵（2026-09-24 依頼）══════════
      何も書いていないと、iPhoneは **そのページを縮めた写真**を札にします。
      字がつぶれて、何のサイトか分からない灰色の四角になっていました。
