@@ -6863,20 +6863,64 @@ def meta_kaku(head, na, ji):
     return re.sub(p, lambda m: m.group(1) + '"%s"' % atara, head, count=1)
 
 
+# ══ 検索結果に出る 題と説明（2026-09-26 依頼）════════════
+#   ここは **探されたときの当たり方** を決めるところです。名前は
+#   TOKKATSU広場 のままで、見た目も変えていません。
+#
+#   ★ページの中の見出し（<h1 class="ko-h">）とは **別もの** です。
+#     あちらは page_na が作ります。ここを直しても見出しは変わりません。
+#   ★LINEに貼ったときの札（og:title・og:description）とも別ものです。
+#     あちらは短い名前のままにしてあります。
+#
+#   書き方の決めごと
+#     ① **探す言葉を先に置く。** 検索結果は だいたい30字で切られます。
+#        切られてよいのは うしろ（サイトの名前）のほうです。
+#          ○ 特別活動とは｜4つの内容と学習過程｜TOKKATSU広場（特活広場）
+#          × TOKKATSU広場｜特活とは　4つの内容　学習過程　一次資料　ことばの意味
+#     ② 「特活広場」を入れる。漢字で探す人に当てるためです。
+#     ③ 説明はページごとに変える。8枚とも同じ説明だと、どれを出せばよいか
+#        機械が決められません（2026-09-26まで、8枚とも同じ1文でした）。
+KENSAKU_DAI = {
+    'index.html':    'TOKKATSU広場（特活広場）｜特別活動・学級会の実践と一次資料',
+    'shiru.html':    '特別活動とは｜4つの内容と学習過程｜TOKKATSU広場（特活広場）',
+    'manabu.html':   '明日から使える学級会グッズ｜TOKKATSU広場（特活広場）',
+    'bansho.html':   'みんなの実践と板書｜TOKKATSU広場（特活広場）',
+    'komari.html':   '学級会のお悩みBOX｜TOKKATSU広場（特活広場）',
+    'atsumaru.html': '特別活動の研究会・研究日程｜TOKKATSU広場（特活広場）',
+    'news.html':     '特別活動のニュース｜TOKKATSU広場（特活広場）',
+    'okuru.html':    '実践を送る｜TOKKATSU広場（特活広場）',
+}
+
+KENSAKU_SETSU = {
+    'index.html':    'TOKKATSU広場（特活広場）は、特別活動の情報が溜まる場。'
+                     'ニュース・一次資料・学級会の学習過程・研究日程・みんなの実践。',
+    'shiru.html':    '特別活動とは何か。学級活動・児童会活動・クラブ活動・学校行事の'
+                     '4つの内容、学級会の学習過程、一次資料、ことばの意味。',
+    'manabu.html':   '学級会で明日から使えるグッズ。計画委員会の進め方、議題の集め方、'
+                     '話合いの型。刷ってそのまま配れます。',
+    'bansho.html':   '全国の先生から届いた特別活動の実践と、学級会の板書。'
+                     '準備・流れ・板書まで、まるごと見られます。',
+    'komari.html':   '学級会・特別活動のお悩みBOX。うまくいかないところを送ると、'
+                     '同じところでつまずいた人の答えが集まります。',
+    'atsumaru.html': '特別活動の研究会と研究日程。全国・都道府県・市の大会を、'
+                     'こよみの形で。申し込みは各会のページへ。',
+    'news.html':     '特別活動にかかわる一次情報だけ。中教審・文部科学省・各研究会の'
+                     '動きを、こちらの言葉で短く。',
+    'okuru.html':    '学級会の実践を送るところ。写真1枚でも大丈夫。'
+                     'ログインも会員登録も要りません。',
+}
+
+
 def head_de(f, na):
     """頭は1つの型を使い回し、題と自分のURLだけをページごとに差しかえます。"""
     head = rd('src/head-hiroba.html')
     head = head.replace('<!--BUILD:ROBOTS-->', robots_tag(f))
     head = head.replace('<!--BUILD:CANONICAL-->', canonical_tag(f))
     head = head.replace('<!--BUILD:JSONLD-->', jsonld_tag(f))
-    # ══ 題に「特活広場」を添える（2026-09-26 依頼）════════════
-    #   名前は TOKKATSU広場 のままです。変えたのは **探されたときの当たり方**。
-    #   それまで「特活広場」は 絵の説明（SVGの<title>）の中にしか無く、
-    #   漢字で探している先生には ひっかかりませんでした。
-    #   ★ここは検索結果に出る題です。LINEに貼ったときの題（og:title）は
-    #     さわっていません。あちらは「TOKKATSU広場」のままです。
-    dai = ('TOKKATSU広場（特活広場）｜特別活動・学級会の実践と一次資料' if f == HOME
-           else '%s｜TOKKATSU広場（特活広場）' % page_na(f))
+    setsu = KENSAKU_SETSU.get(f)
+    if setsu:
+        head = meta_kaku(head, 'description', setsu)
+    dai = KENSAKU_DAI.get(f) or ('%s｜TOKKATSU広場（特活広場）' % page_na(f))
     head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
         head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))
