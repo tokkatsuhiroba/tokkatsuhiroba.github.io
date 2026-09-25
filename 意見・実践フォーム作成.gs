@@ -34,7 +34,7 @@
 // ── ここだけ書きかえれば使える ──────────────────────────
 var FORM_IKEN_MEI   = 'TOKKATSU広場｜困りごと・意見';
 var FORM_JISSEN_MEI = 'TOKKATSU広場｜実践・板書を送る';
-var SITE_URL        = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/';
+var SITE_URL        = 'https://tokkatsuhiroba.github.io/';
 var TSUUCHI_SAKI    = 'yuutennis657@gmail.com';
 // ────────────────────────────────────────────────────
 

@@ -75,7 +75,7 @@ SHIRYO_ZEN_MAX = 16.0    # 1ページに入る資料の合計
 #   天井が近づいたら年度で割ります（bansho-2026.html → bansho-2027.html）。
 #   そのとき慌てないよう、build の最後に「いま何MB・あと何枚」を出します。
 BANSHO_NOKORI_KB = 120.0  # 残り枚数を見つもるときの、板書1枚の目安（実測して直してよい）
-SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/'
+SITE_URL = 'https://tokkatsuhiroba.github.io/'
 OKURU_URL = ('https://script.google.com/macros/s/'
              'AKfycbwb0xkl5HpPDX2WqSov42N8L2FkAVD6ZYx5sbbs_7r332mmsRYY8_VYDyfD29yqKHCH/exec')
 
@@ -8477,7 +8477,7 @@ def sitemap_kaku(pages):
         #   robots.txt は誰でも読めます。「見に来ないで」と書くことは
         #   「そこに在る」と教えることでもあります。管理画面は そもそも
         #   Pages に出していないので、名ざす理由がありません。
-        + ''.join('Disallow: /tokkatsu-hiroba/%s\n' % f
+        + ''.join('Disallow: /%s\n' % f
                   for f in DASANAI if f in pages)
         + '\nSitemap: %ssitemap.xml\n' % SITE_URL)
     print('  検索　　　　… %d枚を sitemap.xml に。管理画面は そもそも公開しません。'

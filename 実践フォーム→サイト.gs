@@ -18,7 +18,7 @@
  * 先に入れておくもの（プロジェクトの設定 → スクリプト プロパティ）
  *   ADMIN_MAIL     … 知らせを受けとるメールアドレス
  *   GITHUB_TOKEN   … GitHubの細かい権限つきトークン（Contents: Read and write）
- *   GITHUB_REPO    … 例 yuutennis657-beep/tokkatsu-hiroba
+ *   GITHUB_REPO    … 例 tokkatsuhiroba/tokkatsuhiroba.github.io
  *   GITHUB_BRANCH  … 例 main（空なら main）
  *
  *   LINE_TOKEN     … LINE公式アカウントのチャネルアクセストークン（省いてよい）

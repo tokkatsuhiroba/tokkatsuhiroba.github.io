@@ -33,7 +33,7 @@
  *
  *   ほかのものは、空なら次のように自分で決めます。
  *     ADMIN_MAIL    … デプロイした人（あなた）のアドレス
- *     GITHUB_REPO   … yuutennis657-beep/tokkatsu-hiroba
+ *     GITHUB_REPO   … tokkatsuhiroba/tokkatsuhiroba.github.io
  *     GITHUB_BRANCH … main
  *     WEBAPP_URL    … このウェブアプリ自身のURL
  *     DRIVE_FOLDER  … マイドライブの直下
@@ -875,7 +875,7 @@ function _line_bun(d, na, m) {
   return gyo.join('\n');
 }
 
-var SITE_URL = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/';
+var SITE_URL = 'https://tokkatsuhiroba.github.io/';
 var NITTEI_YOUBI = ['日', '月', '火', '水', '木', '金', '土'];
 
 /* 2026-10-09 → 10月9日（木） */
@@ -1609,7 +1609,7 @@ var GOODS_NEN  = { '1年':1, '2年':1, '3年':1, '4年':1, '5年':1, '6年':1,
    空や知らない合いことばは「そのまま刷るだけ」に倒します
    （許しの無いほうへ倒す。Wordを出してからでは取り返せません）。 */
 var GOODS_NAOSERU = { naoshite:1, kubatte:1 };
-var GOODS_SITE = 'https://yuutennis657-beep.github.io/tokkatsu-hiroba/downloads/';
+var GOODS_SITE = 'https://tokkatsuhiroba.github.io/downloads/';
 var GOODS_T_MAX = 30;     // グッズの名前
 var GOODS_D_MAX = 60;     // どんなものか（1行）
 var GOODS_M_MAX = 600;    // 使い方
@@ -1856,8 +1856,36 @@ function _github_kesu(michi, sha, riyu) {
   }
 }
 
+/* ══ 引っこし（2026-09-26）════════════════════════════════
+   サイトの置き場所が変わりました。
+     もと  yuutennis657-beep/tokkatsu-hiroba
+     いま  tokkatsuhiroba/tokkatsuhiroba.github.io
+   スクリプトプロパティ GITHUB_REPO が古い名前のままでも、ここで
+   **読みかえて、ついでに書き直します**。手で直し忘れても、次に1件
+   届いた時点でひとりでにそろいます（板書が止まらないように）。 */
+var REPO_MOTO = 'yuutennis657-beep/tokkatsu-hiroba';
+var REPO_IMA  = 'tokkatsuhiroba/tokkatsuhiroba.github.io';
+
+function _gh_repo() {
+  var r = _p('GITHUB_REPO', REPO_IMA);
+  if (r === REPO_MOTO) {
+    try { P.setProperty('GITHUB_REPO', REPO_IMA); } catch (e) {}
+    r = REPO_IMA;
+  }
+  return r;
+}
+
+/** 手で1回だけ動かすためのもの。エディタで選んで実行すると、
+    GITHUB_REPO を新しい名前に直して、いまの値を返します。 */
+function hikkoshi_repo_naosu() {
+  P.setProperty('GITHUB_REPO', REPO_IMA);
+  var ima = P.getProperty('GITHUB_REPO');
+  Logger.log('GITHUB_REPO = ' + ima);
+  return ima;
+}
+
 function _gh_url(michi) {
-  return 'https://api.github.com/repos/' + _p('GITHUB_REPO', 'yuutennis657-beep/tokkatsu-hiroba') +
+  return 'https://api.github.com/repos/' + _gh_repo() +
          '/contents/' + encodeURI(michi).replace(/#/g, '%23');
 }
 function _gh_atama() {
