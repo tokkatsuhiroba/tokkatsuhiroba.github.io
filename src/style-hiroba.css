@@ -284,6 +284,37 @@ img,svg{max-width:100%}
 .hyo .t{font-family:var(--f-maru);font-size:16px;font-weight:500;line-height:1.75}
 .hyo .sub{display:block;font-size:12.5px;font-weight:400;color:var(--mute);margin-top:3px}
 .hyo .d{flex:none;font-size:12px;color:var(--mute);white-space:nowrap}
+
+/* ── ニュースに「こちらでまとめた資料」を添えた行（2026-09-26 依頼）──
+   行ぜんたいは <div class="gyo">。題だけが <a class="sh-na"> です。
+   （行を <a> にしたままだと、中の配るボタンがリンクの入れ子になって
+     押せなくなります。）
+   ★出どころを混ぜないため、ボタンの前に必ず札（.sh-lb）を出します。
+     上の行は「外部」＝一次情報、こちらは「自作」です。 */
+/* ★ .hyo a{display:grid;padding:18px 4px;color:var(--ink)} は、行そのもの
+      に当てている決まりですが、**中に入れたリンクにも降りてきます**
+      （.hyo a のほうが .btn より強いため）。そのままだと
+        ・配るボタンの字が 朱色の上の黒字になって読めない
+        ・題も ボタンも 行と同じ格子・同じ余白に引きのばされる
+      ので、ここで元に戻します。.hyo .gyo--sh … と3つ重ねて強くしています。 */
+.hyo .gyo--sh .sh-na{
+  display:inline;padding:0;border-bottom:0;
+  color:var(--ink);text-decoration:none;
+}
+.hyo .gyo--sh:hover .sh-na{text-decoration:underline;text-underline-offset:4px}
+.hyo .gyo--sh .gt-b{
+  display:inline-flex;grid-template-columns:none;align-items:center;
+  padding:8px 20px;min-height:44px;
+  background:var(--shu);color:var(--bg);
+  border:2.5px solid var(--ink);border-radius:999px;
+  box-shadow:4px 4px 0 var(--ink);
+  font-family:var(--f-maru);font-weight:700;font-size:14.5px;letter-spacing:.06em;
+}
+.hyo .sh-dl{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.hyo .sh-lb{
+  font-family:var(--f-maru);font-size:12px;font-weight:700;color:var(--mute);
+  letter-spacing:.04em;white-space:nowrap;
+}
 .hyo--ken .nokori{
   flex:none;font-family:var(--f-en);font-size:11px;font-weight:700;color:var(--mute);
   white-space:nowrap;
@@ -321,6 +352,10 @@ img,svg{max-width:100%}
   .midashi .ja{letter-spacing:.1em}
   .hyo a,.hyo .gyo{grid-template-columns:1fr;gap:4px}
   .hyo .d{justify-self:start}
+  /* 資料のボタンは、指で押すものなので 幅いっぱいに置きます（2026-09-26） */
+  .hyo .sh-dl{gap:8px}
+  .hyo .sh-lb{width:100%}
+  .hyo .sh-dl .gt-b{flex:1 1 100%;justify-content:center}
   .naka{flex-direction:column;align-items:stretch}
   .naka .btn{justify-content:center}
 }

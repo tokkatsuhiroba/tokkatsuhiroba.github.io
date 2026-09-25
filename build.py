@@ -5710,14 +5710,64 @@ def build_foot_rei(f, kyara, jissen, komari, ken, kiji, goods, kotoba):
 NEWS_H_N = 5      # ニュースを、上から何件だけ出しておくか（のこりはふたの中）
 
 
+# ══ ニュースに「こちらでまとめた資料」を添える（2026-09-26 依頼）══
+#   ニュースの行は、一次情報（外部）へ飛ばすのが決まりです。そこは変えません。
+#   ただ、審議まとめのように **原文が何百ページもある回** は、開いたところで
+#   読み切れません。そこで、こちらで読み解いた資料（PDF）を、その行に
+#   添えられるようにしました。
+#
+#   front matter の書き方（4つまで。番号の順に並びます）
+#     shiryo1:    chukyoshin-20260925-kounai.pdf
+#     shiryo1_na: 校内向け（PDF・9ページ）
+#
+#   ★実体は src/downloads/ に置きます。無ければビルドを止めます
+#     （押して404になるリンクを、公開ページに出さないため）。グッズと同じ考えです。
+#   ★原文ではなく **こちらが作ったもの** だと、ひと目で分かるように
+#     「こちらでまとめた資料」の札を必ず付けます。出どころを混ぜないためです。
+#   ★PDFはページの中に埋めこみません。downloads/ に置いて、**押した人だけ**が
+#     取りにいきます。開いただけでは1バイトも出ません（原則2）。
+NEWS_SHIRYO_N = 4
+
+
+def news_shiryo(a):
+    """front matter の shiryo1〜4 を [(画面に出す名前, URL), …] にして返す。"""
+    out = []
+    for i in range(1, NEWS_SHIRYO_N + 1):
+        f = a.get('shiryo%d' % i)
+        if not f:
+            continue
+        if not os.path.exists(os.path.join(GOODS_OKI, f)):
+            raise Tomeru('%s：shiryo%d の指す src/downloads/%s がありません'
+                         '（押しても404になります）' % (a['_file'], i, f))
+        out.append((a.get('shiryo%d_na' % i) or f, GOODS_OKIBA + f))
+    return out
+
+
 def build_hyo_news(kiji):
     def gyo(a):
         # 行そのものは一次情報（外部）へ。そこは飛ばすのが正しいので「外部」と書きます
-        return ('      <a href="%s" target="_blank" rel="noopener noreferrer">'
-                '<span class="t">%s<span class="sub">%s</span></span>'
-                '<span class="d">%s ・外部</span></a>'
-                % (a['url'], esc_html(a.get('home') or a['title']),
-                   esc_html(a['source']), ja_md(a['d'])))
+        sh = news_shiryo(a)
+        na = esc_html(a.get('home') or a['title'])
+        moto = esc_html(a['source'])
+        hi = ja_md(a['d'])
+        if not sh:
+            return ('      <a href="%s" target="_blank" rel="noopener noreferrer">'
+                    '<span class="t">%s<span class="sub">%s</span></span>'
+                    '<span class="d">%s ・外部</span></a>'
+                    % (a['url'], na, moto, hi))
+        # 資料が添えてある行。行ぜんたいを <a> にすると、中のボタンが
+        #   リンクの入れ子になって押せません。だから <div class="gyo"> にして、
+        #   題のほうだけを <a> にします（見た目は同じ行のままです）。
+        dl = ''.join('<a class="btn gt-b" href="%s" download>%s</a>'
+                     % (esc_html(u), esc_html(n)) for n, u in sh)
+        return ('      <div class="gyo gyo--sh">'
+                '<span class="t">'
+                '<a class="sh-na" href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
+                '<span class="sub">%s</span>'
+                '<span class="sh-dl"><span class="sh-lb">こちらでまとめた資料</span>%s</span>'
+                '</span>'
+                '<span class="d">%s ・外部</span></div>'
+                % (a['url'], na, moto, dl, hi))
     # いつまでのニュースが入っているか（2026-09-23 依頼）。
     #   ★出すのは「いちばん新しい記事の日」です。**組んだ日ではありません。**
     #     組んだ日を出すと、ほかの直しでビルドしただけで日が進み、
