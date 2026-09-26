@@ -6017,7 +6017,7 @@ def build_igi(kyara):
             #   ここだけ btn--line が付いておらず、赤いボタンでした。
             '    <p class="igi-b"><a class="btn btn--line" href="' + LINKS['LINE_OC'] + '" '
             'target="_blank" rel="noopener noreferrer">'
-            'みんなの特活ひろば（仮）へ</a></p>\n'
+            'LINEオープンチャットへ</a></p>\n'
             '  </div>\n'
             '</section>')
 
@@ -7267,8 +7267,8 @@ KOTOBA = {
          'لدعوة زميل، أرسل له رابط هذه الشاشة. '
          'فتحه ينقله مباشرة إلى الاستمارة.'),
     'このサイトを紹介する': ('Share this site', 'شارِك هذا الموقع'),
-    'みんなの特活ひろば（LINE）':
-        ('Minna no Tokkatsu Hiroba (LINE)', 'ساحة توكاتسو للجميع (LINE)'),
+    'LINEオープンチャットへ':
+        ('To the LINE OpenChat', 'إلى الدردشة المفتوحة على LINE'),
 
     # ── このサイトは、なに（4行） ──
     '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span>'
@@ -7571,9 +7571,9 @@ KOTOBA = {
     '管理画面': ('Admin page', 'لوحة الإدارة'),
 
     # ── いちばん上の LINE の帯 ──
-    '<b>LINE</b>みんなの特活ひろば<i aria-hidden="true">↗</i>':
-        ('<b>LINE</b>Minna no Tokkatsu Hiroba<i aria-hidden="true">↗</i>',
-         '<b>LINE</b>ساحة توكاتسو للجميع<i aria-hidden="true">↗</i>'),
+    '<b>LINE</b>オープンチャットへ<i aria-hidden="true">↗</i>':
+        ('<b>LINE</b>OpenChat<i aria-hidden="true">↗</i>',
+         '<b>LINE</b>الدردشة المفتوحة<i aria-hidden="true">↗</i>'),
 
     # ── 2026-09-23 追加（送るところ・ことばの意味・欄の名前）──
     '特別活動':
