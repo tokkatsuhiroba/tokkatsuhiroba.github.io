@@ -43,7 +43,7 @@
 
     /* マイタブの「書き出し」用。Obsidian にそのまま貼れるテキストにする */
     dump: function () {
-      var keys = ['mode', 'view', 'stock', 'memo', 'read'], out = ['# 特活広場 書き出し'];
+      var keys = ['mode', 'view', 'stock', 'memo', 'read'], out = ['# みんなの特活ひろば（仮） 書き出し'];
       keys.forEach(function (k) {
         var v = Store.get(k);
         if (v === null) return;

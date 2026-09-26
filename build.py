@@ -103,11 +103,14 @@ PAGES = (
     #   同じページなので、お願い専用の絵（4人組が手をあげている）を
     #   出せませんでした。別ページにすると、それができます。
     #   ★いままでの …/#okuru のリンクは、{{SAKI}} の表で自動で送られます。
-    ('index.html',    'TOKKATSU広場', '', ()),
+    ('index.html',    'みんなの特活ひろば（仮）', '', ()),
     ('okuru.html',    '実践を送る', '写真1枚でも大丈夫。ログインも要りません。',
      ('okuru',)),
     ('shiru.html',    '知る',   '特別活動って、なに。4つの内容は、どれ。ことばの意味も。',
-     ('about', 'yotsu', 'katei', 'ichiji', 'kotoba')),
+     # 2026-09-26 依頼：文科省資料（monka）を足しました。帯の8つめです。
+     #   よく開く6つの公式資料へ、すぐ飛べるボタンを並べる節です。
+     #   一次資料（ichiji）のすぐ前に置きます（どちらも「国の資料」なので隣どうし）。
+     ('about', 'yotsu', 'katei', 'monka', 'ichiji', 'kotoba')),
     ('manabu.html',   'はじめかた', '学級会の学習過程と、一次資料と、持ち帰れる道具。',
      ('manabu',)),
     # 2026-09-23 依頼：研究会（つぎの日程 → 各地の会）を先にまとめ、
@@ -189,6 +192,9 @@ SETSU_NA = {
     #   読むところ（届いているお悩み）に分けています（src/hiroba.html）。
     'bansho': 'みんなの実践', 'komari': 'お悩みBOX', 'kiku': 'お悩みBOX',
     'kotoba': 'ことばの意味',
+    # 2026-09-26 依頼：「文科省資料っていうタブあってもいい」
+    #   国研の資料もまとめて入っていますが、呼び名は本人の言葉のままにします。
+    'monka':  '文科省資料',
 }
 
 # 外のフォームなどのURL。差しかえる場所はここ1つだけ。
@@ -202,6 +208,26 @@ LINKS = {
     'LINE_OC'    : 'https://line.me/ti/g2/9xsmT5pjwv8jTB-EtUfHn2OoA3Iq0H2ZZqq1gA'
                    '?utm_source=invitation&utm_medium=link_copy&utm_campaign=default',
     'SITE_URL'   : SITE_URL,
+    # ── 文科省資料（#monka）と一次資料（#ichiji）の公式リンク（2026-09-26）──
+    #   2か所から同じ資料を指すので、URLはここ1か所に置きます。
+    #   どれも 2026-09-26 に掲載ページから辿って、開けることを確かめました。
+    #   緑本＝国研『みんなで、よりよい学級・学校生活をつくる特別活動』教師用指導資料
+    'MONKA_MIDORI_SHO': 'https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_20240722-01.pdf',
+    #   中学校・高等学校 特別活動指導資料（国研）
+    'MONKA_MIDORI_CHUKO': 'https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_j-h_leafb_1.pdf',
+    #   「指導と評価の一体化」のための学習評価に関する参考資料 特別活動（国研）
+    'MONKA_HYOKA_SHO': 'https://www.nier.go.jp/kaihatsu/pdf/hyouka/r020326_pri_tokubetsuk.pdf',
+    'MONKA_HYOKA_CHU': 'https://www.nier.go.jp/kaihatsu/pdf/hyouka/r020326_mid_tokubetsuk.pdf',
+    'MONKA_HYOKA_KO' : 'https://www.nier.go.jp/kaihatsu/pdf/hyouka/r030820_hig_tokubetsuk.pdf',
+    #   小学校特別活動 映像資料（国研）
+    'MONKA_EIZO_GAKKATSU': 'https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo/',
+    'MONKA_EIZO_CLUB'    : 'https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo2/',
+    #   道徳教育アーカイブ（文部科学省）
+    'MONKA_DOTOKU': 'https://doutoku.mext.go.jp/',
+    #   学習指導要領解説 特別活動編（文部科学省）。小中は平成29年、高は平成30年告示
+    'MONKA_KAISETSU_SHO': 'https://www.mext.go.jp/content/20221213-mxt_kyoiku02-100002607_014.pdf',
+    'MONKA_KAISETSU_CHU': 'https://www.mext.go.jp/content/20260730-mxt_kyoiku01-100002608_13.pdf',
+    'MONKA_KAISETSU_KO' : 'https://www.mext.go.jp/content/1407196_22_1_1_2.pdf',
 }
 
 # ══ 管理画面は公開しません（2026-09-23 依頼）══════════════
@@ -1584,7 +1610,7 @@ def komari_line(a):
          短縮URLの業者にも頼れません（原則2）。
          そこで、**URLの すぐ上の行に 道しるべを置く**ところまでにします。
          押せはしませんが、目は必ずその下のURLへ行きます。"""
-    gyo = ['【TOKKATSU広場】お悩みが届いています',
+    gyo = ['【みんなの特活ひろば（仮）】お悩みが届いています',
            '■ ' + a['mijikai'],
            komari_hira(a['hon']),
            '▼ こちらをタップ（その場で答えられます）',
@@ -4744,7 +4770,7 @@ def line_matome_bun(jissen, kyou=None):
     aru = line_matome_aru(jissen, kyou)
     if not aru:
         return ''
-    gyo = ['【今週のTOKKATSU広場】新しい実践が%d件' % len(aru)]
+    gyo = ['【今週のみんなの特活ひろば（仮）】新しい実践が%d件' % len(aru)]
     # 並べるのは5件まで。それ以上は、上の数だけで伝えます（長い文はLINEで
     # 途中から読まれません）。
     for i, a in enumerate(aru[:len(MARU)]):
@@ -5082,7 +5108,7 @@ def build_kanri_page(jissen, komari, ken, tobashita, odai=None, goods=None):
         raise Tomeru('管理画面に差しこまれていない目じるしが残っています')
     head = rd('src/head-hiroba.html')
     head = head.replace('<!--BUILD:ROBOTS-->', robots_tag('kanri.html'))
-    head = head.replace('<title>TOKKATSU広場</title>', '<title>実践の管理｜TOKKATSU広場</title>')
+    head = head.replace('<title>みんなの特活ひろば（仮）</title>', '<title>実践の管理｜みんなの特活ひろば（仮）</title>')
     head = re.sub(r'<meta property="og:[^>]+>\n?', '', head)
     # アイコンは 公開用/ に置いてあり、管理画面は 管理/ にあります（2026-09-24）。
     # そのままだと1つ上の引き出しを探しに行って見つからず、札が出ません。
@@ -5950,7 +5976,7 @@ def build_igi(kyara):
     return ('<section class="sec" id="igi">\n'
             '  <div class="uchi">\n'
             '    <h2 class="midashi"><span class="en">WHY</span>'
-            '<span class="ja">TOKKATSU広場とは？</span></h2>\n'
+            '<span class="ja">みんなの特活ひろば（仮）<wbr>とは？</span></h2>\n'
             # 1文＝1行。<span> を1つずつ立てて、行の折れ目を文の切れ目に
             # そろえます（2026-09-22）。<br> だと、画面が狭いときに文の
             # 途中でも折れて「みんなの特／活ひろば」のように割れます。
@@ -6034,6 +6060,9 @@ HOME_FUDA = (
     ('about',  'about',  'gakkatsu-board', '教科書がない時間の、見るところ。4つの内容も、ここに。'),
     # ニュースは「別枠」。読みものではなく、外の動きです。いちばん後ろに置きます
     ('news',   'news',   'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
+    # 2026-09-26 依頼：文科省資料。帯の8つめ（スマホでは下の段の右はし）。
+    #   行き先は 特活とは と同じ shiru.html の #monka です。
+    ('monka',  'monka',  'gyoji-guide', '緑本・評価資料・映像・解説へ、ひと押しで。'),
 )
 
 # 節の見出しに立つ人。ホームの札から入ってきた人を、行き先で迎えます。
@@ -6058,6 +6087,7 @@ SETSU_KYARA_MIGI = {
     'news':   'club-welcome',       # ニュースへ手まねき
     'kai':    'gyoji-welcome',      # 各地の会へ手まねき
     'about':  'club-try',           # やってみよう
+    'monka':  'jidokai-welcome',    # 資料の棚へ手まねき（左は 行人が指して案内）
 }
 
 HOME_T = """      <a class="hfuda p--{page}" href="{saki}">
@@ -6090,6 +6120,10 @@ def home_kazu(sid, sec, kiji, jissen, ken, komari):
     if sid == 'about':
         n = kazoe(r'class="manabu-box"')
         return mitsu('話が%dつ' % n, '%d topics' % n, '%d موضوعات' % n)
+    if sid == 'monka':
+        # 文科省資料（2026-09-26）。並べた資料の札を数えます
+        n = kazoe(r'class="monka-k"')
+        return mitsu('資料%dつ' % n, '%d documents' % n, '%d وثائق' % n)
     # 2026-09-23：学習過程と一次資料は「特活とは」へ移り、道具と1つにまとめました。
     #   ここで数えるのは **グッズの数** です。
     if sid == 'manabu':
@@ -6579,21 +6613,18 @@ def build_obi(ima_file, doko):
        数がちがって分かりにくい、という話になったので8つに戻しました。
        行き先はページをまたぎます。いまのページにある項目には印をつけます。"""
     gyo = []
-    # ホーム（2026-09-23 依頼「帯の中にホームを左上に設置して」）。
-    #   いちばん左＝スマホでは左上に置きます。
-    #   ★前は帯の左に「TOKKATSU広場」の字を出していましたが、
-    #     同じ行き先が2つ並ぶので、そちらをやめて これ1つにしました。
-    ie_ima = (ima_file == HOME)
-    gyo.append('      <li class="o--home"><a class="obi-s s--home%s" href="%s"%s>'
-               '<span class="obi-e" aria-hidden="true">'
-               '<svg viewBox="0 0 %d %d" focusable="false">'
-               '<use href="#ill-m-home"/></svg></span>'
-               '<span class="obi-ji">ホーム</span></a></li>'
-               % (' obi-ima' if ie_ima else '', '#ue' if ie_ima else HOME,
-                  ' aria-current="page"' if ie_ima else '', MARK_BOX, MARK_BOX))
+    # ホームのボタンは、2026-09-26 の依頼で外しました
+    #   （「今のホームの帯ボタンを消してそこに設置」→ 文科省資料が8つめ）。
+    #   ホームへの戻り道は、各ページの頭の「← サイト名」（KO_T の ko-modoru）です。
+    #   ホームの頭にはヒーローがあるので、帯から戻れなくても迷いません。
+    ima_zumi = False
     for sid, shirushi, _, _ in HOME_FUDA:
         saki = doko[sid]
-        ima = (saki == ima_file)
+        # 「いまここ」の黒は1つだけ（2026-09-26）。shiru.html には
+        #   特活とは と 文科省資料 の2つがあり、両方黒くなっていました。
+        #   同じページの2つめ以降は、行き先の節へ飛ぶだけのボタンにします。
+        ima = (saki == ima_file) and not ima_zumi
+        ima_zumi = ima_zumi or ima
         # s--◯◯ … 項目ごとの印。いまは 幅を2ます分にしたいとき
         #   （明日から使えるグッズ）だけに使っています。
         # p--◯◯ … ページの色。2026-09-23 の依頼で **帯では使っていません**
@@ -6612,8 +6643,8 @@ def build_obi(ima_file, doko):
                       MARK_BOX, MARK_BOX, shirushi,
                       '<span class="obi-ji">%s</span>'
                       % esc_html(OBI_NA.get(sid, SETSU_NA[sid]))))
-    return ('<nav class="obi" aria-label="TOKKATSU広場の中の、%d の行き先">\n'
-            % (len(HOME_FUDA) + 1) + 
+    return ('<nav class="obi" aria-label="みんなの特活ひろば（仮）の中の、%d の行き先">\n'
+            % len(HOME_FUDA) + 
             '  <div class="obi-uchi">\n'
             '    <ul class="obi-l">\n'
             + '\n'.join(gyo) + '\n'
@@ -6630,7 +6661,7 @@ def build_obi(ima_file, doko):
 KO_T = """<header class="ko{uchi}" id="ue">
   <div class="uchi">
     <div class="ko-ue">
-      <p class="ko-modoru"><a href="{home}">TOKKATSU広場</a>{oya}</p>
+      <p class="ko-modoru"><a href="{home}">みんなの特活ひろば（仮）</a>{oya}</p>
       <div class="ue-migi"></div>
     </div>
     <h1 class="ko-h">{na}</h1>
@@ -6678,7 +6709,7 @@ def page_na(f):
             for t in setsu:
                 if SETSU_NA[t] not in na:
                     na.append(SETSU_NA[t])
-            return '　'.join(na) or 'TOKKATSU広場'
+            return '　'.join(na) or 'みんなの特活ひろば（仮）'
     raise Tomeru('%s は PAGES にありません' % f)
 
 
@@ -6814,8 +6845,11 @@ def jsonld_tag(f):
         return ''
     return ('<script type="application/ld+json">'
             '{"@context":"https://schema.org","@type":"WebSite",'
-            '"name":"TOKKATSU広場",'
-            '"alternateName":["特活広場","とっかつひろば","TOKKATSUひろば"],'
+            '"name":"みんなの特活ひろば（仮）",'
+            # 2026-09-26：名前を「みんなの特活ひろば（仮）」に変えました。
+            #   前の名前（TOKKATSU広場・特活広場）で探す人のために、別名に残します。
+            '"alternateName":["みんなの特活ひろば","TOKKATSU広場","特活広場",'
+            '"とっかつひろば","TOKKATSUひろば"],'
             '"inLanguage":"ja",'
             '"url":"%s"}</script>' % SITE_URL)
 
@@ -6824,14 +6858,14 @@ def jsonld_tag(f):
 # （2026-09-23：前は ?v=4 のように ? で版を上げていました。しかし ? のうしろは
 #   取りに来る側がうまく読まないことがあるので、名前で版を分けます。）
 # 名前を変えたら、ここと src/head-hiroba.html の2か所を合わせます。
-OGP_MOTO = 'ogp-hiroba.png'
+OGP_MOTO = 'ogp-hiroba2.png'   # 2026-09-26：名前を変えて絵の字も変わったので 2 に
 OGP_E = {
-    'okuru.html': ('ogp-okuru.png',
+    'okuru.html': ('ogp-okuru2.png',
                    '4人のキャラクターが手をあげて「実践を、共有してください。」とお願いしている絵'),
     # お悩みBOX（2026-09-24 依頼）。1件をLINEに流したとき、札に出ていたのは
     #   4人が肩を組んだ絵と サイト全体の説明で、**何の話か分かりません**でした。
     #   ここだけ、困っている絵に差しかえます。
-    'komari.html': ('ogp-komari.png',
+    'komari.html': ('ogp-komari2.png',
                     '学活くんが あごに手をあてて考えている絵と'
                     '「お悩みBOX｜答えを、待っています。」の字'),
 }
@@ -6875,24 +6909,24 @@ def meta_kaku(head, na, ji):
 #   書き方の決めごと
 #     ① **探す言葉を先に置く。** 検索結果は だいたい30字で切られます。
 #        切られてよいのは うしろ（サイトの名前）のほうです。
-#          ○ 特別活動とは｜4つの内容と学習過程｜TOKKATSU広場（特活広場）
+#          ○ 特別活動とは｜4つの内容と学習過程｜みんなの特活ひろば（仮）
 #          × TOKKATSU広場｜特活とは　4つの内容　学習過程　一次資料　ことばの意味
 #     ② 「特活広場」を入れる。漢字で探す人に当てるためです。
 #     ③ 説明はページごとに変える。8枚とも同じ説明だと、どれを出せばよいか
 #        機械が決められません（2026-09-26まで、8枚とも同じ1文でした）。
 KENSAKU_DAI = {
-    'index.html':    'TOKKATSU広場（特活広場）｜特別活動・学級会の実践と一次資料',
-    'shiru.html':    '特別活動とは｜4つの内容と学習過程｜TOKKATSU広場（特活広場）',
-    'manabu.html':   '明日から使える学級会グッズ｜TOKKATSU広場（特活広場）',
-    'bansho.html':   'みんなの実践と板書｜TOKKATSU広場（特活広場）',
-    'komari.html':   '学級会のお悩みBOX｜TOKKATSU広場（特活広場）',
-    'atsumaru.html': '特別活動の研究会・研究日程｜TOKKATSU広場（特活広場）',
-    'news.html':     '特別活動のニュース｜TOKKATSU広場（特活広場）',
-    'okuru.html':    '実践を送る｜TOKKATSU広場（特活広場）',
+    'index.html':    'みんなの特活ひろば（仮）｜特別活動・学級会の実践と一次資料',
+    'shiru.html':    '特別活動とは｜4つの内容と学習過程｜みんなの特活ひろば（仮）',
+    'manabu.html':   '明日から使える学級会グッズ｜みんなの特活ひろば（仮）',
+    'bansho.html':   'みんなの実践と板書｜みんなの特活ひろば（仮）',
+    'komari.html':   '学級会のお悩みBOX｜みんなの特活ひろば（仮）',
+    'atsumaru.html': '特別活動の研究会・研究日程｜みんなの特活ひろば（仮）',
+    'news.html':     '特別活動のニュース｜みんなの特活ひろば（仮）',
+    'okuru.html':    '実践を送る｜みんなの特活ひろば（仮）',
 }
 
 KENSAKU_SETSU = {
-    'index.html':    'TOKKATSU広場（特活広場）は、特別活動の情報が溜まる場。'
+    'index.html':    'みんなの特活ひろば（仮）（旧名 TOKKATSU広場・特活広場）は、特別活動の情報が溜まる場。'
                      'ニュース・一次資料・学級会の学習過程・研究日程・みんなの実践。',
     'shiru.html':    '特別活動とは何か。学級活動・児童会活動・クラブ活動・学校行事の'
                      '4つの内容、学級会の学習過程、一次資料、ことばの意味。',
@@ -6920,12 +6954,12 @@ def head_de(f, na):
     setsu = KENSAKU_SETSU.get(f)
     if setsu:
         head = meta_kaku(head, 'description', setsu)
-    dai = KENSAKU_DAI.get(f) or ('%s｜TOKKATSU広場（特活広場）' % page_na(f))
-    head = head.replace('<title>TOKKATSU広場</title>', '<title>%s</title>' % esc_html(dai))
+    dai = KENSAKU_DAI.get(f) or ('%s｜みんなの特活ひろば（仮）' % page_na(f))
+    head = head.replace('<title>みんなの特活ひろば（仮）</title>', '<title>%s</title>' % esc_html(dai))
     if f != HOME:
         head = head.replace('content="%s"' % SITE_URL, 'content="%s%s"' % (SITE_URL, f))
-        head = head.replace('content="TOKKATSU広場｜特別活動で、輝く。"',
-                            'content="%s｜TOKKATSU広場"' % esc_html(page_na(f)), 1)
+        head = head.replace('content="みんなの特活ひろば（仮）｜特別活動で、輝く。"',
+                            'content="%s｜みんなの特活ひろば（仮）"' % esc_html(page_na(f)), 1)
     # LINEに貼ったときの絵（2026-09-23 依頼）。
     #   ふだん … 4人が肩を組んでいる絵
     #   送るページだけ … 4人が手をあげて「実践を共有してください」とお願いする絵
@@ -7058,7 +7092,12 @@ KOTOBA = {
          'قبل الإرسال، افتح الملف وتحقّق من أنه لم يبقَ فيه اسم طفل أو اسم مدرسة، '
          'لا في المتن ولا في الرأس ولا في التذييل. فما تُرسله يظهر مباشرة على الصفحة العامّة.'),
     # ── 節の見出し ──
-    'TOKKATSU広場とは？': ('What TOKKATSU Hiroba is', 'ما هو ميدان توكّاتسو'),
+    'みんなの特活ひろば（仮）<wbr>とは？': ('About Minna no Tokkatsu Hiroba (tentative name)',
+                                   'ما هي ساحة توكاتسو للجميع (اسم مؤقت)'),
+    # いちばん上の大きな題字（2026-09-26、名前を変えたときに足しました）
+    'みんなの特活ひろば<span class="hero-kari">（仮）</span>':
+        ('Minna no Tokkatsu Hiroba <span class="hero-kari">(tentative)</span>',
+         'ساحة توكاتسو للجميع <span class="hero-kari">(اسم مؤقت)</span>'),
     '<span>日本の特別活動の<b>情報交流</b>を高めるためのサイトです。</span><span>実践や研究日程を共有して、<b>特別活動を盛ん</b>にしたいです。</span>':
         ('<span>A site for raising the <b>flow of information</b> in Japanese special activities.</span>'
          '<span>By sharing practices and study-meeting dates, we want to see '
@@ -7135,6 +7174,48 @@ KOTOBA = {
     'ニュース': ('News', 'الأخبار'),
     '研究会': ('Societies', 'الجمعيات'),
     '特活とは': ('About Tokkatsu', 'عن توكاتسو'),
+    # ── 文科省資料（2026-09-26 依頼）──────────────────────────
+    #   帯・札・見出しの名前と、節の中の6つの札（monka-h／monka-yo／monka-b）。
+    #   札の下の小さい出どころ（monka-de）は資料の正式名なので、訳しません。
+    '文科省資料': ('MEXT documents', 'وثائق وزارة التعليم'),
+    '緑本・評価資料・映像・解説へ、ひと押しで。':
+        ('The Green Book, assessment guides, videos and the official commentary, one tap away.',
+         'الكتاب الأخضر وأدلة التقييم والفيديوهات والشرح الرسمي، بضغطة واحدة.'),
+    'よく開く公式の資料を、6つ。押すと、公式のPDFやページが新しいタブで開きます。':
+        ('Six official documents people open often. Tap one and the official PDF or page opens in a new tab.',
+         'ست وثائق رسمية يكثر فتحها. اضغط على إحداها فيُفتح ملف PDF أو الصفحة الرسمية في تبويب جديد.'),
+    '緑本': ('The Green Book', 'الكتاب الأخضر'),
+    '学級会の進め方と板書の例。はじめて学級会を開く前に。':
+        ('How to run a class meeting, with board examples. Read it before your first class meeting.',
+         'كيف يُدار اجتماع الفصل، مع أمثلة للسبورة. اقرأه قبل أول اجتماع للفصل.'),
+    '評価資料': ('Assessment guide', 'دليل التقييم'),
+    '評価規準の立て方と、評価の事例。評価計画や通知表を書く前に。':
+        ('How to set assessment criteria, with worked examples. Before writing an assessment plan or report cards.',
+         'كيف توضع معايير التقييم، مع أمثلة. قبل كتابة خطة التقييم أو بطاقات التقارير.'),
+    '映像資料 学級活動編': ('Videos: Classroom Activities', 'فيديوهات: أنشطة الفصل'),
+    '学級会の話合いを、動画で見る。子どもと一緒に見てもよい。':
+        ('Watch class-meeting discussions on video. You can watch it with the children too.',
+         'شاهد نقاشات اجتماع الفصل بالفيديو. ويمكن مشاهدتها مع التلاميذ أيضًا.'),
+    '映像資料 クラブ・児童会編': ('Videos: Clubs and Student Council',
+                          'فيديوهات: النوادي ومجلس التلاميذ'),
+    '代表委員会やクラブの実際を、動画で。担当が決まったときに。':
+        ('The representative committee and clubs in action, on video. When you are put in charge of one.',
+         'لجنة الممثلين والنوادي على أرض الواقع، بالفيديو. حين تُكلَّف بالإشراف على أحدها.'),
+    '道徳アーカイブ': ('Moral Education Archive', 'أرشيف التربية الأخلاقية'),
+    '道徳の授業映像・指導案・教材。道徳と学級活動をつなげたいときに。':
+        ('Lesson videos, lesson plans and materials for moral education. When you want to link it with Classroom Activities.',
+         'فيديوهات دروس وخطط ومواد للتربية الأخلاقية. حين تريد ربطها بأنشطة الفصل.'),
+    '学習指導要領解説 特別活動編': ('Course of Study commentary: Special Activities',
+                            'شرح المنهج الدراسي: الأنشطة الخاصة'),
+    '目標と内容の、公式の説明。指導案の目標や根拠を確かめるときに。':
+        ('The official explanation of aims and content. When you check the aims or basis of a lesson plan.',
+         'الشرح الرسمي للأهداف والمحتوى. حين تتحقق من أهداف خطة الدرس أو سندها.'),
+    '小学校': ('Elementary', 'الابتدائية'),
+    '中学校': ('Junior high', 'المتوسطة'),
+    '高校': ('High school', 'الثانوية'),
+    '中学校・高校': ('Junior high / High school', 'المتوسطة والثانوية'),
+    '動画を見る': ('Watch videos', 'شاهد الفيديوهات'),
+    'ひらく': ('Open', 'افتح'),
 
     # ── 札のひとこと ──
     '写真もPDFも、送るとそのまま出ます。':
@@ -7920,6 +8001,10 @@ KOTOBA = {
     '特活とは 4つの内容 学習過程 一次資料 ことばの意味':
         ('About Tokkatsu · The four areas · The learning process · Sources · What the words mean',
          'عن توكاتسو · المجالات الأربعة · مسار التعلّم · المصادر · معاني المصطلحات'),
+    # 2026-09-26：文科省資料（monka）を足したぶん
+    '特活とは 4つの内容 学習過程 文科省資料 一次資料 ことばの意味':
+        ('About Tokkatsu · The four areas · The learning process · MEXT documents · Sources · What the words mean',
+         'عن توكاتسو · المجالات الأربعة · مسار التعلّم · وثائق وزارة التعليم · المصادر · معاني المصطلحات'),
     '一次資料':
         ('Primary sources', 'المصادر الأوّلية'),
     '学級活動(1)が、どんな順で回るか。①から⑤がひと回りして、また①に戻ります。':
@@ -7985,6 +8070,7 @@ KOTOBA_TEKI = (
     # 2026-09-23：帯に しるし（絵）が入ったので、**字の span だけ**を見ます。
     #   <a> ごと見ると、見出しに svg の字が混ざります。
     (r'(<span class="obi-ji">)(.*?)(</span>)', '帯'),
+    (r'(<h1 class="hero-logo">)(.*?)(</h1>)', 'いちばん上の題字'),
     (r'(<b class="hfuda-h">)(.*?)(</b>)', '札の名前'),
     (r'(<span class="hfuda-yo">)(.*?)(</span>)', '札のひとこと'),
     (r'(<b class="gfuda-h">)(.*?)(</b>)', '概要の札の名前'),
@@ -8049,6 +8135,12 @@ KOTOBA_TEKI = (
     # ── 今週のお題（2026-09-23 追加）────────────────────────
     #   お題の中身（odai-h・odai-sub）は、わざと入れていません（上の注）。
     (r'(<span class="odai-kago">)(.*?)(</span>)', 'お題の名のり'),
+
+    # ── 文科省資料の6つの札（2026-09-26 追加）──────────────────
+    #   名前・ひとこと・ボタンの字。出どころ（monka-de）は正式名なので見ません。
+    (r'(<b class="monka-h">)(.*?)(</b>)', '文科省資料・札の名前'),
+    (r'(<span class="monka-yo">)(.*?)(</span>)', '文科省資料・札のひとこと'),
+    (r'(<span class="monka-b">)(.*?)(</span>)', '文科省資料・ボタン'),
 )
 
 

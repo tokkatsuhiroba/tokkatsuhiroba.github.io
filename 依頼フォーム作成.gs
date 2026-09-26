@@ -122,7 +122,7 @@ function 通知メールを付ける() {
 function 回答が届いたとき(e) {
 
   var kotae = e.response.getItemResponses();
-  var honbun = ['TOKKATSU広場のフォームに、回答が届きました。', ''];
+  var honbun = ['みんなの特活ひろば（仮）のフォームに、回答が届きました。', ''];
 
   for (var i = 0; i < kotae.length; i++) {
     honbun.push('■ ' + kotae[i].getItem().getTitle());
@@ -134,7 +134,7 @@ function 回答が届いたとき(e) {
 
   MailApp.sendEmail(
     TSUUCHI_SAKI,
-    '[TOKKATSU広場] フォームに回答が届きました',
+    '[みんなの特活ひろば（仮）] フォームに回答が届きました',
     honbun.join('\n')
   );
 }

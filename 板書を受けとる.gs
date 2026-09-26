@@ -139,7 +139,7 @@ function saisho_ni_ichido() {
   var m = Session.getEffectiveUser().getEmail();
   if (!m) throw new Error('アドレスが取れませんでした。ログインを確かめてください');
   P.setProperty('ADMIN_MAIL', m);
-  MailApp.sendEmail(m, '【TOKKATSU広場】板書の受け口、ここまで届いています',
+  MailApp.sendEmail(m, '【みんなの特活ひろば（仮）】板書の受け口、ここまで届いています',
     'このメールが読めていれば、板書の知らせも届きます。\n\n' +
     '　覚えたアドレス：' + m + '\n');
   return m;
@@ -444,7 +444,7 @@ function _shiraseru_kotae(slug, d, m, toi, nose) {
          : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
   var mail = _mail();
-  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】お悩みに答えがとどきました', honbun);
+  if (mail) MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】お悩みに答えがとどきました', honbun);
 }
 
 /* 札に出す短い言葉。本文の1行目を、文の切れ目で切ります。
@@ -513,7 +513,7 @@ function _shiraseru_komari(slug, d, m, nose) {
          : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
   var mail = _mail();
-  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】困りごとが1件とどきました', honbun);
+  if (mail) MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】困りごとが1件とどきました', honbun);
 }
 
 
@@ -855,13 +855,13 @@ function _shiraseru_nittei(slug, d, na, m, nose) {
          : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
   var mail = _mail();
-  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】研究日程が1件とどきました', honbun);
+  if (mail) MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】研究日程が1件とどきました', honbun);
 }
 
 /* LINEに貼る文。サイト側（src/hiroba.html の ntBun）と同じ形にそろえています。
    どちらを直すときも、もう一方も直してください。 */
 function _line_bun(d, na, m) {
-  var gyo = ['【TOKKATSU広場】研究日程を更新しました！', ''];
+  var gyo = ['【みんなの特活ひろば（仮）】研究日程を更新しました！', ''];
   gyo.push(_hi_ja(_hiduke(d.h1))
            + (_hiduke(d.h2) ? '〜' + _hi_ja(_hiduke(d.h2)) : '') + '　' + na);
   var ba = [_arau(d.ba), _arau(d.to)].filter(String).join('　');
@@ -956,7 +956,7 @@ function _kazoeru() {
 function _uwamawatta(kyou, n) {
   var mail = _mail();
   if (!mail) return;
-  MailApp.sendEmail(mail, '【TOKKATSU広場】板書の受けとりを、今日はここで止めました',
+  MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】板書の受けとりを、今日はここで止めました',
     kyou + ' に ' + HI_MAX + '件を受けとったので、今日はこれ以上 受けとりません。\n\n' +
     'ふつうの使い方では当たらない数です。いたずらが続いているなら、\n' +
     'Apps Script でデプロイを作り直すと、URLが変わって止まります。\n' +
@@ -998,7 +998,7 @@ function _shiraseru(slug, d, folder, nose) {
 
   var mail = _mail();
   if (mail) {
-    MailApp.sendEmail(mail, '【TOKKATSU広場】板書が1件とどきました', honbun);
+    MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】板書が1件とどきました', honbun);
     return;
   }
   /* アドレスが取れないときは、黙って消さずに、写真のとなりに置き手紙を残します。
@@ -1307,7 +1307,7 @@ function _shiraseru_naoshita(slug, d, n) {
   var url = _webapp();
   var mail = _mail();
   if (!mail) return;
-  MailApp.sendEmail(mail, '【TOKKATSU広場】実践が1件 なおされました',
+  MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】実践が1件 なおされました',
     '送った人（または管理人）が、1件をなおしました。数分でページに出ます。\n\n' +
     '　議題名：' + (_arau(d.t) || '（なし）') + '\n' +
     '　学年　：' + (_arau(d.g) || '（なし）') + '\n' +
@@ -1803,7 +1803,7 @@ function _shiraseru_goods(slug, d, t, de, oku, naoseru, nose) {
          : '（WEBAPP_URL が空なので、消すところを出せていません）');
 
   var mail = _mail();
-  if (mail) MailApp.sendEmail(mail, '【TOKKATSU広場】学級会グッズが1点とどきました', honbun);
+  if (mail) MailApp.sendEmail(mail, '【みんなの特活ひろば（仮）】学級会グッズが1点とどきました', honbun);
 }
 
 

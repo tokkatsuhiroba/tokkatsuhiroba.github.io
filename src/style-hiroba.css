@@ -147,6 +147,9 @@ img,svg{max-width:100%}
   font-size:calc(clamp(21px,3.3vw,34px) * var(--moji));letter-spacing:.1em;line-height:1.42;
   text-indent:.15em;
 }
+/* 「みんなの特活ひろば（仮）とは？」が「…（仮）と／は？」と割れないように（2026-09-26）。
+   折れてよいのは build.py が入れた <wbr> と、かっこの前だけ。 */
+#igi .midashi .ja{word-break:keep-all}
 /* 2行の「よみ」。1文＝1行にして、行の折れ目を文の切れ目にそろえます
    （2026-09-23）。狭い画面で入りきらないときだけ、その行の中で折れます。 */
 .yomi--nigyo span{display:block;word-break:auto-phrase;text-wrap:pretty}
@@ -223,6 +226,9 @@ img,svg{max-width:100%}
   margin:0;font-family:var(--f-maru);font-weight:900;
   font-size:clamp(30px,6.2vw,72px);letter-spacing:.10em;line-height:1.25;text-indent:.10em;
 }
+/* 「（仮）」は小さく、ひとかたまりで（2026-09-26、名前を変えたとき）。
+   同じ大きさだと 375px で「（仮）」だけが次の行へ落ちます。 */
+.hero-kari{display:inline-block;font-size:.5em;letter-spacing:0;white-space:nowrap;vertical-align:.12em}
 .hero-copy{
   margin:14px 0 0;font-family:var(--f-te);font-weight:600;
   font-size:calc(clamp(15px,2.2vw,23px) * var(--moji));letter-spacing:.10em;
@@ -4430,7 +4436,7 @@ html.nuru-tomeru,html.nuru-tomeru body{overflow:hidden}
   .kami-taisho .shiryo-naka{display:block!important;height:auto!important;overflow:visible!important}
   /* 紙の足もと。どこから出した紙かが、あとで分かるように */
   .kami-taisho::after{
-    content:"TOKKATSU広場（特別活動の情報が、溜まる場）　" attr(data-kami-url);
+    content:"みんなの特活ひろば（仮）（特別活動の情報が、溜まる場）　" attr(data-kami-url);
     display:block;margin-top:8mm;padding-top:3mm;
     border-top:1px solid #999;font-size:9pt;color:#444;
   }
@@ -5433,3 +5439,62 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
      手のかたちを変えます（動かしても とじません → src/hiroba.html）。 */
 .zen-naka{cursor:zoom-out}
 .zen--zoom .zen-naka{cursor:move}
+
+/* ══ 文科省資料（#monka・2026-09-26 依頼）═════════════════════
+   「すぐ飛べるようにして欲しい」。節のいちばん上に6つの札を並べます。
+   ★札ごとに「何が載っているか・いつ開くか」を1行（ただのリンク集にしない）。
+   ★押すところは札の下のボタン（44px以上）。小・中・高に分かれる資料は、
+     ボタンを横に並べます。字には --moji を掛けます（つまみで動くように）。
+   ★左右は inline-start / inline-end で書いています（アラビア語で反転）。 */
+.monka-l{
+  list-style:none;margin:0;padding:0;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
+}
+.monka-k{
+  position:relative;display:flex;flex-direction:column;gap:6px;
+  padding:16px 16px 14px;border:2px solid var(--ink);border-radius:16px;
+  background:var(--bg);box-shadow:3px 3px 0 var(--ink);
+}
+.monka-no{
+  position:absolute;inset-inline-end:12px;top:10px;
+  font-family:var(--f-en);font-weight:700;font-size:calc(22px * var(--moji));
+  line-height:1;color:var(--midori);
+}
+.monka-h{
+  display:block;padding-inline-end:28px;
+  font-family:var(--f-maru);font-weight:900;font-size:calc(16px * var(--moji));line-height:1.45;
+}
+.monka-yo{display:block;font-size:calc(13.5px * var(--moji));line-height:1.6}
+.monka-de{display:block;font-size:calc(11px * var(--moji));line-height:1.55;color:var(--mute)}
+.monka-go{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:6px}
+.monka-a{
+  flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:44px;padding:6px 12px;border:2px solid var(--ink);border-radius:999px;
+  background:var(--men-midori);color:var(--ink);text-decoration:none;
+  font-family:var(--f-maru);font-weight:700;font-size:calc(13.5px * var(--moji));
+  transition:background .14s ease;
+}
+.monka-a:hover,.monka-a:focus-visible{background:var(--ki)}
+.monka-a i{
+  flex:none;padding:1px 6px;border:1.5px solid var(--ink);border-radius:999px;
+  font-size:calc(10px * var(--moji));font-style:normal;font-weight:700;letter-spacing:.03em;
+  background:var(--bg);
+}
+@media (max-width:959px){
+  .monka-l{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:559px){
+  .monka-l{grid-template-columns:1fr;gap:10px}
+  .monka-k{padding:13px 13px 12px}
+  .monka-yo{font-size:calc(13px * var(--moji))}
+}
+@media (prefers-reduced-motion:reduce){
+  .monka-a{transition:none}
+}
+/* 帯の「文科省資料」は5字で、4列のうちいちばん長い名前です。
+   せまい画面では、この1つだけ 絵とすきまを少し詰めて、1行に収めます
+   （字を2行に折ると、帯の高さがそろわなくなります）。 */
+@media (max-width:719px){
+  .obi-l .o--monka a{gap:2px;padding-inline:1px;font-size:11.5px}
+  .obi-l .o--monka .obi-e{width:15px;height:15px}
+}

@@ -134,7 +134,7 @@ function okuru_(ans) {
   if (mail) {
     MailApp.sendEmail({
       to: mail,
-      subject: '【特活広場】実践がとどきました：' + (ans.title || '(題名なし)'),
+      subject: '【みんなの特活ひろば（仮）】実践がとどきました：' + (ans.title || '(題名なし)'),
       body: honbun
     });
   }

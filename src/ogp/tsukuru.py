@@ -60,13 +60,13 @@ def kaku(f, s):
     print('%-14s %s  %.0fKB' % (f + '.png', Image.open(f + '.png').size,
                                 os.path.getsize(f + '.png') / 1024))
 
-kaku('ogp-hiroba', svg('group-shoulders',
-                'TOKKATSU広場', '特別活動の情報が、溜まる場。',
+kaku('ogp-hiroba2', svg('group-shoulders',
+                'みんなの特活ひろば<tspan font-size="44">（仮）</tspan>', '特別活動の情報が、溜まる場。',
                 'ニュース・実践・板書・研究日程・お悩みBOX',
                 '#FCFBF7', '#2FBA68'))
-kaku('ogp-okuru', svg('group-welcome',
+kaku('ogp-okuru2', svg('group-welcome',
                       '実践を、共有してください。', '写真1枚でも大丈夫。ログインも要りません。',
-                      'TOKKATSU広場',
+                      'みんなの特活ひろば（仮）',
                       '#FBF2D8', '#D2552A', dai_size=66, haba=1000.0))
 # お悩みBOX（2026-09-24 依頼）。お悩み1件をLINEに流したとき、
 #   札に出ていたのは「4人が肩を組んだ絵」と サイト全体の説明でした。
@@ -75,7 +75,7 @@ kaku('ogp-okuru', svg('group-welcome',
 #     肩を組んだ4人は「みんなで集まる場」の絵で、お願いの顔になりません。
 #   ★haba を 460 にしたのは、1人ぶんの絵だからです。
 #     4人ぶんの 760／1000 のままだと、人が引きのばされて大きすぎます。
-kaku('ogp-komari', svg('gakkatsu-think',
+kaku('ogp-komari2', svg('gakkatsu-think',
                        'お悩みBOX', '答えを、待っています。',
-                       'TOKKATSU広場｜特別活動',
+                       'みんなの特活ひろば（仮）｜特別活動',
                        '#E1EAF3', '#3A6EA5', dai_size=80, haba=460.0))

@@ -16,7 +16,7 @@
     <div class="ue-migi">
       <a class="line-sumi" href="{{LINE_OC}}" target="_blank" rel="noopener noreferrer"><b>LINE</b>みんなの特活ひろば<i aria-hidden="true">↗</i></a>
     </div>
-    <h1 class="hero-logo">TOKKATSU広場</h1>
+    <h1 class="hero-logo">みんなの特活ひろば<span class="hero-kari">（仮）</span></h1>
     <p class="hero-copy"><!--BUILD:COPY--></p>
     <p class="hero-botan">
       <a class="btn" href="#okuru">実践を送る<span class="btn-ya">→</span></a>
@@ -269,6 +269,82 @@
   </div>
 </section>
 
+<!-- ══ 文科省資料（2026-09-26 依頼）══════════════════════════════
+     「文科省資料っていうタブあってもいい」「1緑本 2評価資料 3映像資料 学級活動編
+       4映像資料 クラブ児童会編 5道徳アーカイブ 6学習指導要領解説 小中高
+       はすぐ飛べるようにして欲しい」
+     ★節のいちばん上に6つの札。押すと公式の掲載先が新しいタブで開きます。
+     ★ただのリンク集にしないため、札ごとに「何が載っているか・いつ開くか」を1行。
+     ★URLは build.py の LINKS 1か所（一次資料の節と同じものを指します）。
+     ★札の字の訳は build.py の KOTOBA（monka-h／monka-yo／monka-b を見ます）。 -->
+<section class="sec" id="monka">
+  <div class="uchi">
+    <h2 class="midashi"><span class="en">MEXT</span><span class="ja">文科省資料</span></h2>
+    <p class="yomi">よく開く公式の資料を、6つ。押すと、公式のPDFやページが新しいタブで開きます。</p>
+    <ol class="monka-l">
+      <li class="monka-k">
+        <span class="monka-no" aria-hidden="true">1</span>
+        <b class="monka-h">緑本</b>
+        <span class="monka-yo">学級会の進め方と板書の例。はじめて学級会を開く前に。</span>
+        <small class="monka-de">国立教育政策研究所「みんなで、よりよい学級・学校生活をつくる特別活動」</small>
+        <span class="monka-go">
+          <a class="monka-a" href="{{MONKA_MIDORI_SHO}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">小学校</span><i>PDF・外部</i></a>
+          <a class="monka-a" href="{{MONKA_MIDORI_CHUKO}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">中学校・高校</span><i>PDF・外部</i></a>
+        </span>
+      </li>
+      <li class="monka-k">
+        <span class="monka-no" aria-hidden="true">2</span>
+        <b class="monka-h">評価資料</b>
+        <span class="monka-yo">評価規準の立て方と、評価の事例。評価計画や通知表を書く前に。</span>
+        <small class="monka-de">国立教育政策研究所「指導と評価の一体化」のための学習評価に関する参考資料</small>
+        <span class="monka-go">
+          <a class="monka-a" href="{{MONKA_HYOKA_SHO}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">小学校</span><i>PDF・外部</i></a>
+          <a class="monka-a" href="{{MONKA_HYOKA_CHU}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">中学校</span><i>PDF・外部</i></a>
+          <a class="monka-a" href="{{MONKA_HYOKA_KO}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">高校</span><i>PDF・外部</i></a>
+        </span>
+      </li>
+      <li class="monka-k">
+        <span class="monka-no" aria-hidden="true">3</span>
+        <b class="monka-h">映像資料 学級活動編</b>
+        <span class="monka-yo">学級会の話合いを、動画で見る。子どもと一緒に見てもよい。</span>
+        <small class="monka-de">国立教育政策研究所 小学校特別活動映像資料</small>
+        <span class="monka-go">
+          <a class="monka-a" href="{{MONKA_EIZO_GAKKATSU}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">動画を見る</span><i>外部</i></a>
+        </span>
+      </li>
+      <li class="monka-k">
+        <span class="monka-no" aria-hidden="true">4</span>
+        <b class="monka-h">映像資料 クラブ・児童会編</b>
+        <span class="monka-yo">代表委員会やクラブの実際を、動画で。担当が決まったときに。</span>
+        <small class="monka-de">国立教育政策研究所 小学校特別活動映像資料（児童会活動・クラブ活動編）</small>
+        <span class="monka-go">
+          <a class="monka-a" href="{{MONKA_EIZO_CLUB}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">動画を見る</span><i>外部</i></a>
+        </span>
+      </li>
+      <li class="monka-k">
+        <span class="monka-no" aria-hidden="true">5</span>
+        <b class="monka-h">道徳アーカイブ</b>
+        <span class="monka-yo">道徳の授業映像・指導案・教材。道徳と学級活動をつなげたいときに。</span>
+        <small class="monka-de">文部科学省 道徳教育アーカイブ</small>
+        <span class="monka-go">
+          <a class="monka-a" href="{{MONKA_DOTOKU}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">ひらく</span><i>外部</i></a>
+        </span>
+      </li>
+      <li class="monka-k">
+        <span class="monka-no" aria-hidden="true">6</span>
+        <b class="monka-h">学習指導要領解説 特別活動編</b>
+        <span class="monka-yo">目標と内容の、公式の説明。指導案の目標や根拠を確かめるときに。</span>
+        <small class="monka-de">文部科学省（小・中は平成29年告示、高は平成30年告示）</small>
+        <span class="monka-go">
+          <a class="monka-a" href="{{MONKA_KAISETSU_SHO}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">小学校</span><i>PDF・外部</i></a>
+          <a class="monka-a" href="{{MONKA_KAISETSU_CHU}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">中学校</span><i>PDF・外部</i></a>
+          <a class="monka-a" href="{{MONKA_KAISETSU_KO}}" target="_blank" rel="noopener noreferrer"><span class="monka-b">高校</span><i>PDF・外部</i></a>
+        </span>
+      </li>
+    </ol>
+  </div>
+</section>
+
 <section class="sec" id="ichiji">
   <i class="kazari kazari--migi" data-b="shosho" style="--y:26%;--w:108px;--d:.8s"></i>
   <div class="uchi">
@@ -281,9 +357,9 @@
         <summary><span class="a">資料5件を、ここで開く</span><span class="b">とじる</span></summary>
       <ul class="learn-links">
         <li><a href="https://www.mext.go.jp/content/20230120-mxt_kyoiku02-100002604_01.pdf" target="_blank" rel="noopener noreferrer"><span><b>小学校学習指導要領（平成29年告示）</b><small>特別活動は第6章／文部科学省</small></span><i>PDF</i></a></li>
-        <li><a href="https://www.mext.go.jp/content/20221213-mxt_kyoiku02-100002607_014.pdf" target="_blank" rel="noopener noreferrer"><span><b>解説 特別活動編</b><small>学級活動・児童会・クラブ・学校行事の解説／文部科学省</small></span><i>PDF</i></a></li>
-        <li><a href="https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_20240722-01.pdf" target="_blank" rel="noopener noreferrer"><span><b>教師用指導資料（小学校編）</b><small>学級会の流れと板書例／国立教育政策研究所</small></span><i>PDF</i></a></li>
-        <li><a href="https://www.nier.go.jp/kaihatsu/shidousiryou/sho_tokkatsueizo/" target="_blank" rel="noopener noreferrer"><span><b>映像資料 学級活動編</b><small>話合いの実際を動画で見る／国立教育政策研究所</small></span><i>外部</i></a></li>
+        <li><a href="{{MONKA_KAISETSU_SHO}}" target="_blank" rel="noopener noreferrer"><span><b>解説 特別活動編</b><small>学級活動・児童会・クラブ・学校行事の解説／文部科学省</small></span><i>PDF</i></a></li>
+        <li><a href="{{MONKA_MIDORI_SHO}}" target="_blank" rel="noopener noreferrer"><span><b>教師用指導資料（小学校編）</b><small>学級会の流れと板書例／国立教育政策研究所</small></span><i>PDF</i></a></li>
+        <li><a href="{{MONKA_EIZO_GAKKATSU}}" target="_blank" rel="noopener noreferrer"><span><b>映像資料 学級活動編</b><small>話合いの実際を動画で見る／国立教育政策研究所</small></span><i>外部</i></a></li>
         <li><a href="https://www.nier.go.jp/kaihatsu/shidousiryou.html" target="_blank" rel="noopener noreferrer"><span><b>指導資料・事例集の一覧</b><small>アラビア語・英語・中国語版もここから</small></span><i>外部</i></a></li>
       </ul>
       </details>
@@ -431,7 +507,7 @@
       <!--BUILD:KYARA-->
       <p class="about-chu">矢印の先は、その活動がつながっていく、大人になってからの集団です。<br>4つの中身は、下の「4つの内容」でくわしく見られます。</p>
       </details>
-      <p class="manabu-note manabu-source">出典：特別活動指導資料『みんなで、よりよい学級・学校生活をつくる特別活動（小学校編）』（文部科学省 国立教育政策研究所 教育課程研究センター、平成30年12月）。この節は、同資料の総論から組み直しました。「特別活動の目標」は『小学校学習指導要領（平成29年告示）』第6章、「自発的、自治的な活動」の定義は『同解説 特別活動編』からの引用で、いずれも同資料が引いているものです。読点は、このサイトの表記（、）にそろえました。まとめと言いかえは本サイトによるものです。<br><a href="https://www.nier.go.jp/kaihatsu/pdf/tokkatsu_20240722-01.pdf" target="_blank" rel="noopener noreferrer">この資料を開く（PDF・国立教育政策研究所）</a></p>
+      <p class="manabu-note manabu-source">出典：特別活動指導資料『みんなで、よりよい学級・学校生活をつくる特別活動（小学校編）』（文部科学省 国立教育政策研究所 教育課程研究センター、平成30年12月）。この節は、同資料の総論から組み直しました。「特別活動の目標」は『小学校学習指導要領（平成29年告示）』第6章、「自発的、自治的な活動」の定義は『同解説 特別活動編』からの引用で、いずれも同資料が引いているものです。読点は、このサイトの表記（、）にそろえました。まとめと言いかえは本サイトによるものです。<br><a href="{{MONKA_MIDORI_SHO}}" target="_blank" rel="noopener noreferrer">この資料を開く（PDF・国立教育政策研究所）</a></p>
     </div>
   </div>
 </section>
@@ -1265,7 +1341,7 @@
            ホームを指します。 -->
     <div class="foot-shokai">
       <canvas class="foot-qr" id="shokai-qr" width="220" height="220"
-              aria-label="TOKKATSU広場のホームへのQRコード"></canvas>
+              aria-label="みんなの特活ひろば（仮）のホームへのQRコード"></canvas>
       <div class="foot-shokai-te">
         <p class="foot-shokai-yo">このサイトを紹介する</p>
         <!-- 2026-09-23 依頼：「コピーするボタンを配置。リンク名は表記しなくていい」
@@ -3643,8 +3719,8 @@
     var hy = GA_P;                       /* 札の上ぶち。高さ44の帯です */
     ctx.fillStyle = '#1C1C1A';
     ctx.font = '900 30px ' + GA_JI;
-    ctx.fillText('TOKKATSU広場', GA_P, hy + 8);
-    var hx = GA_P + ctx.measureText('TOKKATSU広場').width + 22;
+    ctx.fillText('みんなの特活ひろば（仮）', GA_P, hy + 8);
+    var hx = GA_P + ctx.measureText('みんなの特活ひろば（仮）').width + 22;
     function fuda_kaku(ji, ji_iro, ji_ha){
       ctx.font = '700 25px ' + GA_JI;
       var w = ctx.measureText(ji).width + 38;
@@ -3822,13 +3898,16 @@
       var han = (naka - 40) / 2, qy2 = fy + 26, QS2 = 196;
       /* ★字は短く。ここは1列 335px しかありません。長いと2行に折れて、
          「…ひらき／ます。」のように行の頭が1字になります（実測）。 */
-      [[url, 'TOKKATSU広場へ', 'この実践がひらきます', ''],
+      [[url, 'みんなの特活ひろばへ', 'この実践がひらきます', ''],
        [sotoU, 'デジタル資料', sotoNa, sotoHost]].forEach(function(k, n2){
         var kx2 = GA_P + n2 * (han + 40);
         var a3 = qr_kaku(k[0], kx2, qy2, QS2);
         var tx2 = kx2 + (a3 ? a3 + 22 : 0);
         var haba2 = kx2 + han - tx2;
         ctx.fillStyle = '#1C1C1A'; ctx.font = '900 31px ' + GA_JI;
+        /* 名前が長くなったので（2026-09-26）、入らないときだけ字を少し小さく */
+        for(var fs2 = 31; fs2 > 24 && ctx.measureText(k[1]).width > haba2; fs2--)
+          ctx.font = '900 ' + (fs2 - 1) + 'px ' + GA_JI;
         ctx.fillText(k[1], tx2, qy2 + 22);
         ctx.fillStyle = '#1C1C1A'; ctx.font = '500 23px ' + GA_HON;
         ga_kaku(ctx, ga_oru(ctx, k[2], haba2).slice(0, 2), tx2, qy2 + 72, 32);
@@ -3844,7 +3923,7 @@
       if(atari){
         var qy = fy + 28, tx = GA_P + atari + 32;
         ctx.fillStyle = '#1C1C1A'; ctx.font = '900 38px ' + GA_JI;
-        ctx.fillText('TOKKATSU広場へ', tx, qy + 18);
+        ctx.fillText('みんなの特活ひろば（仮）へ', tx, qy + 18);
         ctx.fillStyle = '#63625C'; ctx.font = '500 25px ' + GA_HON;
         ctx.fillText('QRコードを読みこむと、', tx, qy + 76);
         ctx.fillText('この実践がそのままひらきます。', tx, qy + 112);
@@ -3859,7 +3938,7 @@
         }
       } else {
         ctx.fillStyle = '#1C1C1A'; ctx.font = '900 32px ' + GA_JI;
-        ctx.fillText('TOKKATSU広場へ', GA_P, fy + 40);
+        ctx.fillText('みんなの特活ひろば（仮）へ', GA_P, fy + 40);
         ctx.fillStyle = '#1C1C1A'; ctx.font = '500 24px ' + GA_HON;
         var u = ga_oru(ctx, url, naka);
         ga_kaku(ctx, u, GA_P, fy + 92, 34);
@@ -3979,7 +4058,7 @@
          折る場所を1バイトでも間違えると字が壊れます。折りません
          （iPhone・Google・Outlook で、折らないまま読めます）。 */
     return ['BEGIN:VCALENDAR', 'VERSION:2.0',
-            'PRODID:-//TOKKATSU広場//JA', 'CALSCALE:GREGORIAN',
+            'PRODID:-//みんなの特活ひろば//JA', 'CALSCALE:GREGORIAN',
             'BEGIN:VEVENT', 'UID:' + uid, 'DTSTAMP:' + ima,
             'DTSTART;VALUE=DATE:' + e.getAttribute('data-cal-d'),
             'DTEND;VALUE=DATE:' + e.getAttribute('data-cal-e'),
@@ -4262,7 +4341,7 @@
     var SAKI = {
       '': {url: ie, dai: ['特別活動で、', '輝く。'],
            yo: ['カメラを向けると、', 'このサイトがひらきます。'],
-           na: 'TOKKATSU広場.png'}
+           na: 'みんなの特活ひろば.png'}
     };
 
     function qr_egaku(ctx, qm, x, y, atari){
@@ -4315,7 +4394,7 @@
 
         var tx = 72 + atari + 56;
         x.fillStyle = '#1C1C1A'; x.font = '900 68px ' + GA_JI;
-        x.fillText('TOKKATSU広場', 72, 110);
+        x.fillText('みんなの特活ひろば（仮）', 72, 110);
         x.font = '900 40px ' + GA_JI;
         x.fillText(k.dai[0], tx, 210);
         x.fillText(k.dai[1], tx, 262);
@@ -4590,7 +4669,7 @@
          できるのは、文を作って **1押しで送れる形にしておく** ところまでです。
          残る1押し（送り先をえらぶ）は、どうしても人の手になります。 */
     var ntBun = function(n){
-      var gyo = ['【TOKKATSU広場】研究日程を更新しました！', ''];
+      var gyo = ['【みんなの特活ひろば（仮）】研究日程を更新しました！', ''];
       gyo.push(ntHi(n.h1) + (n.h2 ? '〜' + ntHi(n.h2) : '') + '　' + n.na);
       if(n.ba || n.to) gyo.push('会場：' + [n.ba, n.to].filter(Boolean).join('　'));
       if(n.sh) gyo.push('申込〆切：' + ntHi(n.sh));
