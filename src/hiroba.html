@@ -276,13 +276,17 @@
      ★節のいちばん上に6つの札。押すと公式の掲載先が新しいタブで開きます。
      ★ただのリンク集にしないため、札ごとに「何が載っているか・いつ開くか」を1行。
      ★URLは build.py の LINKS 1か所（一次資料の節と同じものを指します）。
-     ★札の字の訳は build.py の KOTOBA（monka-h／monka-yo／monka-b を見ます）。 -->
+     ★札の字の訳は build.py の KOTOBA（monka-h／monka-yo／monka-b を見ます）。
+     ★札の上のサムネイル（2026-09-26 依頼「文科資料はサムネイルをつけて」）は
+       札の中の目じるし（BUILD:MONKA_E:名前|alt）を、build.py が src/monka/名前.webp に置きかえます。
+       押すと、札の1つめのボタンと同じ所へ行きます（Tabでは止まりません。ボタンで足ります）。 -->
 <section class="sec" id="monka">
   <div class="uchi">
     <h2 class="midashi"><span class="en">MEXT</span><span class="ja">文科省資料</span></h2>
     <p class="yomi">よく開く公式の資料を、6つ。押すと、公式のPDFやページが新しいタブで開きます。</p>
     <ol class="monka-l">
       <li class="monka-k">
+        <a class="monka-e" href="{{MONKA_MIDORI_SHO}}" target="_blank" rel="noopener noreferrer" tabindex="-1"><!--BUILD:MONKA_E:midori|緑本（小学校編・中学校／高等学校編）の表紙--></a>
         <span class="monka-no" aria-hidden="true">1</span>
         <b class="monka-h">緑本</b>
         <span class="monka-yo">学級会の進め方と板書の例。はじめて学級会を開く前に。</span>
@@ -293,6 +297,7 @@
         </span>
       </li>
       <li class="monka-k">
+        <a class="monka-e" href="{{MONKA_HYOKA_SHO}}" target="_blank" rel="noopener noreferrer" tabindex="-1"><!--BUILD:MONKA_E:hyoka|学習評価に関する参考資料（小・中・高）の表紙--></a>
         <span class="monka-no" aria-hidden="true">2</span>
         <b class="monka-h">評価資料</b>
         <span class="monka-yo">評価規準の立て方と、評価の事例。評価計画や通知表を書く前に。</span>
@@ -304,6 +309,7 @@
         </span>
       </li>
       <li class="monka-k">
+        <a class="monka-e" href="{{MONKA_EIZO_GAKKATSU}}" target="_blank" rel="noopener noreferrer" tabindex="-1"><!--BUILD:MONKA_E:eizo-gakkatsu|小学校特別活動映像資料 学級活動編の見出し--></a>
         <span class="monka-no" aria-hidden="true">3</span>
         <b class="monka-h">映像資料 学級活動編</b>
         <span class="monka-yo">学級会の話合いを、動画で見る。子どもと一緒に見てもよい。</span>
@@ -313,6 +319,7 @@
         </span>
       </li>
       <li class="monka-k">
+        <a class="monka-e" href="{{MONKA_EIZO_CLUB}}" target="_blank" rel="noopener noreferrer" tabindex="-1"><!--BUILD:MONKA_E:eizo-club|小学校特別活動映像資料 児童会活動・クラブ活動編の見出し--></a>
         <span class="monka-no" aria-hidden="true">4</span>
         <b class="monka-h">映像資料 クラブ・児童会編</b>
         <span class="monka-yo">代表委員会やクラブの実際を、動画で。担当が決まったときに。</span>
@@ -322,6 +329,7 @@
         </span>
       </li>
       <li class="monka-k">
+        <a class="monka-e" href="{{MONKA_DOTOKU}}" target="_blank" rel="noopener noreferrer" tabindex="-1"><!--BUILD:MONKA_E:dotoku|道徳教育アーカイブのトップページ--></a>
         <span class="monka-no" aria-hidden="true">5</span>
         <b class="monka-h">道徳アーカイブ</b>
         <span class="monka-yo">道徳の授業映像・指導案・教材。道徳と学級活動をつなげたいときに。</span>
@@ -331,6 +339,7 @@
         </span>
       </li>
       <li class="monka-k">
+        <a class="monka-e" href="{{MONKA_KAISETSU_SHO}}" target="_blank" rel="noopener noreferrer" tabindex="-1"><!--BUILD:MONKA_E:kaisetsu|学習指導要領解説 特別活動編（小・中・高）の表紙--></a>
         <span class="monka-no" aria-hidden="true">6</span>
         <b class="monka-h">学習指導要領解説 特別活動編</b>
         <span class="monka-yo">目標と内容の、公式の説明。指導案の目標や根拠を確かめるときに。</span>

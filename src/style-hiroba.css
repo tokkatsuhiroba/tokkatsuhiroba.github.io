@@ -5480,6 +5480,23 @@ html[data-moji="chiisai"] .okuru-kakunin label{line-height:1.6}
   font-size:calc(10px * var(--moji));font-style:normal;font-weight:700;letter-spacing:.03em;
   background:var(--bg);
 }
+/* 札の上のサムネイル（2026-09-26 依頼「文科資料はサムネイルをつけて」）。
+   ★絵は build.py が src/monka/*.webp を埋めこみます（外から読まない）。
+   ★角丸と縁は札にそろえます（縁2px・札の角16pxより一回り小さく）。
+   ★番号は、絵の角にのせる丸い札にします（絵の右上に重ねると、字が沈むため）。 */
+.monka-e{
+  display:block;margin:0 0 4px;border:2px solid var(--ink);border-radius:10px;
+  overflow:hidden;background:#fff;line-height:0;
+}
+.monka-ei{display:block;width:100%;height:auto;aspect-ratio:8 / 5}
+.monka-e:hover .monka-ei,.monka-e:focus-visible .monka-ei{opacity:.88}
+.monka-k .monka-no{
+  top:8px;inset-inline-end:auto;inset-inline-start:8px;
+  display:grid;place-items:center;width:34px;height:34px;
+  border:2px solid var(--ink);border-radius:50%;background:var(--bg);
+  font-size:calc(18px * var(--moji));
+}
+.monka-k .monka-h{padding-inline-end:0}
 @media (max-width:959px){
   .monka-l{grid-template-columns:repeat(2,minmax(0,1fr))}
 }

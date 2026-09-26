@@ -8302,6 +8302,7 @@ def build_shin():
             raise Tomeru('src/hiroba.html に目じるし %s がありません' % mark.strip())
         body = body.replace(mark, html)
 
+    body = monka_e_ireru(body)   # 文科省資料の札のサムネイル（2026-09-26）
     body = storage_ireru(body, 'src/hiroba.html')
     body = nuru_ireru(body, 'src/hiroba.html')
     body, _ = build_kazari(body, buhin, kyara)
@@ -8716,6 +8717,59 @@ def sitemap_kaku(pages):
           % len(dasu))
     print('  　　　　　　　 %s は 字だけ出します（写真は画像検索に載せません）'
           % '・'.join(KAKUSU_E))
+
+
+MONKA_E_DIR = os.path.join(SRC, 'monka')   # 文科省資料の札のサムネイル（480×300）
+MONKA_E_KB_MAX = 40.0
+
+
+def monka_e_ireru(body):
+    """文科省資料（#monka）の札に、サムネイルを入れる（2026-09-26 依頼）。
+
+       「文科資料はサムネイルをつけて。視覚的にわかりやすくして」
+       ★目じるし <!--BUILD:MONKA_E:名前|alt--> を、src/monka/名前.webp の
+         <img>（data URI）に置きかえます。外からは読みません（原則2）。
+       ★絵じたいは src/monka/tsukuru.py が作ります（表紙＝PDFの1ページめ）。
+       ★検問：札（monka-k）が1枚でも、絵なし・絵の置き場なし・重すぎ なら止めます。
+         字だけの札と絵のある札が混ざったまま出すより、止めます。"""
+    import base64
+    m = re.search(r'<section class="sec" id="monka">(.*?)</section>', body, re.S)
+    if not m:
+        raise Tomeru('src/hiroba.html に #monka の節がありません')
+    fuda = re.findall(r'<li class="monka-k">(.*?)</li>', m.group(1), re.S)
+    if not fuda:
+        raise Tomeru('#monka に札（monka-k）が1枚もありません')
+    for i, f in enumerate(fuda, 1):
+        n = len(re.findall(r'<!--BUILD:MONKA_E:', f))
+        if n != 1:
+            raise Tomeru('#monka の %d枚めの札に、サムネイルの目じるし'
+                         '（<!--BUILD:MONKA_E:名前|alt-->）が %d個あります（1個にしてください）'
+                         % (i, n))
+    zen = 0
+    for na, alt in re.findall(r'<!--BUILD:MONKA_E:([a-z0-9-]+)\|([^>]*?)-->', body):
+        p = os.path.join(MONKA_E_DIR, na + '.webp')
+        if not os.path.exists(p):
+            raise Tomeru('文科省資料のサムネイル src/monka/%s.webp がありません'
+                         '（作り方は src/monka/tsukuru.py）' % na)
+        b = io.open(p, 'rb').read()
+        if len(b) / 1024.0 > MONKA_E_KB_MAX:
+            raise Tomeru('src/monka/%s.webp が %.0fKB あります（上限 %.0fKB）'
+                         % (na, len(b) / 1024.0, MONKA_E_KB_MAX))
+        if not alt.strip():
+            raise Tomeru('src/monka/%s.webp の alt が空です（「◯◯の表紙」のように）' % na)
+        w, h = gazou_size(b, 'src/monka/%s.webp' % na)
+        img = ('<img class="monka-ei" src="data:image/webp;base64,%s" width="%d" height="%d" '
+               'alt="%s" loading="lazy" decoding="async">'
+               % (base64.b64encode(b).decode(), w, h, alt))
+        body = body.replace('<!--BUILD:MONKA_E:%s|%s-->' % (na, alt), img)
+        zen += len(b)
+    _GOUKEI['shiru.html'] = _GOUKEI.get('shiru.html', 0) + zen
+    if '<!--BUILD:MONKA_E:' in body:
+        raise Tomeru('#monka に、形のくずれたサムネイルの目じるしが残っています'
+                     '（<!--BUILD:MONKA_E:英小文字の名前|alt-->）')
+    print('  文科省資料… 札%d枚に サムネイルを埋めこみました（合わせて %.0fKB）'
+          % (len(fuda), zen / 1024.0))
+    return body
 
 
 OGP_DIR = os.path.join(SRC, 'ogp')    # LINEに貼ったときの絵（1200×630）
