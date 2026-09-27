@@ -5823,14 +5823,55 @@ def news_shiryo(a):
     return out
 
 
+# ══ ニュースに「主催者の案内」を添える（2026-09-27 依頼）══════════
+#   「全特活の熱海も九州の大会もPDFをHP内で開けるようにして」
+#   案内のページを画像にして、グッズの見本と同じ「写真を大きく見る」で開きます。
+#     annai1:    annai-20260803-kyushu        … src/downloads/<名前>-zen-<n>.webp
+#     annai1_na: 大会の案内
+#   ★こちらでまとめた資料（shiryo）とは札を分けます（出どころを混ぜない）。
+#   ★画像は押した人の端末だけが取りにいきます（loading="lazy"＋隠した入れ物）。
+def news_annai(a):
+    """annai1〜4 を [(名前, [(URL, 横, 縦), …]), …] にして返す。"""
+    out = []
+    for i in range(1, NEWS_SHIRYO_N + 1):
+        na = a.get('annai%d' % i)
+        if not na:
+            continue
+        mai = []
+        j = 1
+        while True:
+            f = os.path.join(GOODS_OKI, '%s-zen-%d.webp' % (na, j))
+            if not os.path.exists(f):
+                break
+            w, h = gazou_size(io.open(f, 'rb').read(), f)
+            mai.append((GOODS_OKIBA + os.path.basename(f), w, h))
+            j += 1
+        if not mai:
+            raise Tomeru('%s：annai%d の指す src/downloads/%s-zen-1.webp がありません'
+                         % (a['_file'], i, na))
+        out.append((a.get('annai%d_na' % i) or '案内', mai))
+    return out
+
+
+def annai_html(na, mai):
+    return ('<span class="zen-hako"><button class="btn gt-b" type="button" data-zen="pages">'
+            '%s（%dページ）</button><span class="gt-zen" hidden>%s</span></span>'
+            % (esc_html(na), len(mai),
+               ''.join('<figure><img src="%s" width="%d" height="%d" loading="lazy" '
+                       'decoding="async" alt="%s の%dページ目"></figure>'
+                       % (esc_html(u), w, h, esc_html(na), k + 1)
+                       for k, (u, w, h) in enumerate(mai))))
+
+
 def build_hyo_news(kiji):
     def gyo(a):
         # 行そのものは一次情報（外部）へ。そこは飛ばすのが正しいので「外部」と書きます
         sh = news_shiryo(a)
+        an = news_annai(a)
         na = esc_html(a.get('home') or a['title'])
         moto = esc_html(a['source'])
         hi = ja_md(a['d'])
-        if not sh:
+        if not sh and not an:
             return ('      <a href="%s" target="_blank" rel="noopener noreferrer">'
                     '<span class="t">%s<span class="sub">%s</span></span>'
                     '<span class="d">%s ・外部</span></a>'
@@ -5838,13 +5879,19 @@ def build_hyo_news(kiji):
         # 資料が添えてある行。行ぜんたいを <a> にすると、中のボタンが
         #   リンクの入れ子になって押せません。だから <div class="gyo"> にして、
         #   題のほうだけを <a> にします（見た目は同じ行のままです）。
-        dl = ''.join('<a class="btn gt-b" href="%s" download>%s</a>'
-                     % (esc_html(u), esc_html(n)) for n, u in sh)
+        dl = ''
+        if an:
+            dl += ('<span class="sh-dl"><span class="sh-lb">主催者の案内</span>%s</span>'
+                   % ''.join(annai_html(n, m) for n, m in an))
+        if sh:
+            dl += ('<span class="sh-dl"><span class="sh-lb">こちらでまとめた資料</span>%s</span>'
+                   % ''.join('<a class="btn gt-b" href="%s" download>%s</a>'
+                             % (esc_html(u), esc_html(n)) for n, u in sh))
         return ('      <div class="gyo gyo--sh">'
                 '<span class="t">'
                 '<a class="sh-na" href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
                 '<span class="sub">%s</span>'
-                '<span class="sh-dl"><span class="sh-lb">こちらでまとめた資料</span>%s</span>'
+                '%s'
                 '</span>'
                 '<span class="d">%s ・外部</span></div>'
                 % (a['url'], na, moto, dl, hi))

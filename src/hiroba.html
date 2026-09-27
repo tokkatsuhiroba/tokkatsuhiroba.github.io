@@ -5526,6 +5526,11 @@
     if(gt && b.getAttribute('data-zen') === 'goods'){
       return gt.querySelector('.gt-zen figure');
     }
+    /* ニュースの「主催者の案内」（2026-09-27）。ボタンのすぐ隣の入れ物から開きます */
+    var hako = b.closest('.zen-hako');
+    if(hako && b.getAttribute('data-zen') === 'pages'){
+      return hako.querySelector('.gt-zen figure');
+    }
     var fig = b.closest('figure');
     if(fig) return fig;                      /* 図の中にあるとき（昔の置き方） */
     var fuda = b.closest('.bfuda');
