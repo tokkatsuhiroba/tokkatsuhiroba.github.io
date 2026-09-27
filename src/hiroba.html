@@ -5459,7 +5459,7 @@
     if(!zen) tsukuru();
     /* 同じ窓に並んでいる写真を、ぜんぶ持っておきます（よこ送りの順番）。
        窓が見つからないときは、その1枚だけです。 */
-    mado = moto.closest('.bfuda-mado, .shiryo-mado');
+    mado = moto.closest('.bfuda-mado, .shiryo-mado, .gt-zen');
     mai = mado ? [].slice.call(mado.querySelectorAll('figure img')) : [moto];
     if(!mai.length) mai = [moto];
     var i = mai.indexOf(moto);
@@ -5519,6 +5519,13 @@
      取られないようにするためです。だから、どの窓かを data-zen で受けとり、
      その窓の「いま見えている1枚」を選びます（窓はよこ送りです）。 */
   function zuToru(b){
+    /* グッズの見本（2026-09-27 依頼）。隠してある .gt-zen の1ページ目から開きます。
+       ★.gt-zen は hidden のままです。大きく見る用の画像は loading="lazy" なので、
+         ここで開くまで端末は1枚も取りにいきません。 */
+    var gt = b.closest('.gt');
+    if(gt && b.getAttribute('data-zen') === 'goods'){
+      return gt.querySelector('.gt-zen figure');
+    }
     var fig = b.closest('figure');
     if(fig) return fig;                      /* 図の中にあるとき（昔の置き方） */
     var fuda = b.closest('.bfuda');
@@ -5575,6 +5582,50 @@
     if(!zen || zen.hidden || mai.length < 2) return;
     if(ev.key === 'ArrowLeft'){  ev.preventDefault(); okuru(-1); }
     if(ev.key === 'ArrowRight'){ ev.preventDefault(); okuru(1); }
+  });
+})();
+
+/* ══ グッズを保存する（2026-09-27 依頼）══════════════════════
+   「PDFの今のボタンは開いたらそのまま保存できるようにして欲しい」
+   ★<a download> だけでは、スマホ（とくに iPhone・LINEの中のブラウザ）は
+     PDFを**開いて**しまいます。中を見るのは見本の［大きく見る］でできるので、
+     このボタンは「保存」だけにします。
+   ★押したら、このサイトから1度だけ取ってきて、端末の中で保存させます。
+       スマホ … 共有の画面（［ファイルに保存］が選べます）
+       パソコン … そのまま保存（名前はグッズの題）
+     取りにいくのは同じサイトの downloads/ だけです（外へは出ません）。
+   ★うまくいかない端末では、何もせず ふつうのリンクとして動かします。 */
+(function(){
+  'use strict';
+  if(!window.fetch || !window.Blob || !window.URL) return;
+  var yubi = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  document.addEventListener('click', function(ev){
+    var a = ev.target.closest && ev.target.closest('a.gt-b[data-na]');
+    if(!a || a.getAttribute('aria-busy') === 'true') return;
+    ev.preventDefault();
+    var na = a.getAttribute('data-na');
+    var moto = a.innerHTML;
+    a.setAttribute('aria-busy', 'true');
+    a.textContent = '用意しています…';
+    function modosu(){ a.innerHTML = moto; a.removeAttribute('aria-busy'); }
+    fetch(a.href).then(function(r){
+      if(!r.ok) throw new Error(r.status);
+      return r.blob();
+    }).then(function(b){
+      var f = null;
+      try{ f = new File([b], na, { type: b.type || 'application/octet-stream' }); }catch(e){}
+      if(yubi && f && navigator.canShare && navigator.canShare({ files: [f] })){
+        return navigator.share({ files: [f], title: na }).catch(function(){});
+      }
+      var u = URL.createObjectURL(b);
+      var x = document.createElement('a');
+      x.href = u; x.download = na; x.style.display = 'none';
+      document.body.appendChild(x); x.click(); x.remove();
+      setTimeout(function(){ URL.revokeObjectURL(u); }, 30000);
+    }).then(modosu, function(){
+      modosu();
+      window.location.href = a.href;     /* だめなら、ふつうに開きます */
+    });
   });
 })();
 

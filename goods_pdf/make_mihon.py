@@ -81,6 +81,66 @@ def md_ni_kaku():
     return kaita
 
 
+# ── 大きく見る用（2026-09-27 依頼）────────────────────────
+#   「サムネイルをクリックしたら画像で見れるようにする。実践と同じ仕組みで」
+#   見本（480px）は札に埋めこむ小さな絵なので、全画面にすると字がつぶれます。
+#   だから **全ページを、読める幅で** 別に作ります。
+#     src/downloads/<名前>-zen-<n>.webp（n は 1 から）
+#   ★HTML には埋めこみません。押した人の端末だけが、このサイトから取りにいきます
+#     （PDFを落とすのと同じ。外のサイトへは1バイトも出ません）。
+#   ★置き場を downloads/ の **直下** にしているのは、ワークフローが
+#     `cp src/downloads/*` で写しているからです（下のフォルダは写りません）。
+#   ★作るのは、グッズの .md が pdf: で指しているPDFだけです
+#     （ニュースの資料など、ほかのPDFのぶんは作りません）。
+ZEN_W   = 1600    # 横幅。B4の細かい字（学級活動シート）が読める幅
+ZEN_Q   = 62
+ZEN_MAX = 20      # 1点あたりのページ数の上限（多すぎるPDFは頭から20枚）
+
+
+def zen_tsukuru(pdf, na):
+    import pymupdf
+    from PIL import Image
+    d = pymupdf.open(pdf)
+    n = min(d.page_count, ZEN_MAX)
+    kb = 0
+    for i in range(n):
+        p = d[i]
+        bai = ZEN_W / float(p.rect.width)
+        pix = p.get_pixmap(matrix=pymupdf.Matrix(bai, bai), alpha=False)
+        im = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+        out = os.path.join(DL, '%s-zen-%d.webp' % (na, i + 1))
+        im.save(out, 'WEBP', quality=ZEN_Q, method=6)
+        kb += os.path.getsize(out) / 1024.0
+    d.close()
+    return n, kb
+
+
+def zen_zenbu(zenbu):
+    """グッズの PDF ぶん、大きく見る用の画像を作る。壊れたPDFでも止めません。"""
+    for p in sorted(glob.glob(os.path.join(GOODS, '*.md'))):
+        if os.path.basename(p).startswith('_'):
+            continue
+        m = PDF_GYO.search(io.open(p, encoding='utf-8').read())
+        if not m:
+            continue
+        na = m.group(1)
+        pdf = os.path.join(DL, na + '.pdf')
+        if not os.path.exists(pdf):
+            continue
+        if os.path.exists(os.path.join(DL, na + '-zen-1.webp')) and not zenbu:
+            continue
+        for old in glob.glob(os.path.join(DL, na + '-zen-*.webp')):
+            os.remove(old)
+        try:
+            n, kb = zen_tsukuru(pdf, na)
+            print('  大きく見る用 … %s（%dページ・%.0fKB）' % (na, n, kb))
+        except Exception as err:
+            for old in glob.glob(os.path.join(DL, na + '-zen-*.webp')):
+                os.remove(old)
+            print('  ⚠ 大きく見る用が作れませんでした（見本は押せないまま出ます） … %s … %s'
+                  % (na, str(err)[:120]))
+
+
 def main():
     zenbu = '--zenbu' in sys.argv
     os.makedirs(MIHON, exist_ok=True)
@@ -110,6 +170,7 @@ def main():
         tsukutta += 1
         print('  できました … %s.webp （%.0fKB）' % (na, kb))
     kaita = md_ni_kaku()
+    zen_zenbu(zenbu)
     print('\n  %d枚 作り、%d件の .md に mihon: を足しました'
           ' → src/goods/mihon/\n' % (tsukutta, kaita))
 

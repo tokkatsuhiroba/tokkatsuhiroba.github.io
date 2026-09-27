@@ -2019,6 +2019,33 @@ def goods_mihon_yomu(g, page):
     return ('data:image/webp;base64,' + base64.b64encode(b).decode(), w, h)
 
 
+def goods_zen_yomu(g):
+    """大きく見る用の画像（src/downloads/<名前>-zen-<n>.webp）を並べて返す。
+
+       [(URL, 横, 縦), ...]。無ければ []（見本は押せないまま出ます）。
+       ★HTML には埋めこみません。押した人の端末だけが、このサイトから
+         取りにいきます（loading="lazy" ＋ 隠した入れ物なので、開くまで読みません）。
+       ★作るのは goods_pdf/make_mihon.py（ワークフローも走らせます）。
+    """
+    pdf = [url for k, _, url in g.get('file', ()) if k == 'pdf']
+    if not pdf:
+        return []
+    m = re.search(r'/downloads/([A-Za-z0-9._-]+)\.pdf$', pdf[0])
+    if not m:
+        return []
+    na = m.group(1)
+    out = []
+    i = 1
+    while True:
+        f = os.path.join(GOODS_OKI, '%s-zen-%d.webp' % (na, i))
+        if not os.path.exists(f):
+            break
+        w, h = gazou_size(io.open(f, 'rb').read(), f)
+        out.append((GOODS_OKIBA + os.path.basename(f), w, h))
+        i += 1
+    return out
+
+
 GT = """      <li class="gt{cls}" id="goods-{id}">
         <div class="gt-mi gt-mi--{men}">{mi}</div>
         <div class="gt-hon">
@@ -2040,11 +2067,27 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
 
         # ── 左の絵。見本があれば見本、無ければ種類の字 ──────
         mi = goods_mihon_yomu(g, page)
+        zen = goods_zen_yomu(g)
         if mi:
             uri, w, h = mi
             mi_html = ('<img src="%s" width="%d" height="%d" loading="lazy" '
                        'decoding="async" alt="%s の1ページ目">'
                        % (uri, w, h, esc_html(g['title'])))
+            # 見本を押すと、全ページを大きく見られます（2026-09-27 依頼）。
+            #   実践の写真と同じ「写真を大きく見る」（src/hiroba.html の .zen）で開きます。
+            if zen:
+                mi_html = ('<button class="gt-mi-b" type="button" data-zen="goods" '
+                           'aria-label="%s を大きく見る（%dページ）">%s'
+                           '<span class="gt-mi-ooki" aria-hidden="true">大きく見る</span>'
+                           '</button>'
+                           % (esc_html(g['title']), len(zen), mi_html)
+                           + '<div class="gt-zen" hidden>'
+                           + ''.join('<figure><img src="%s" width="%d" height="%d" '
+                                     'loading="lazy" decoding="async" alt="%s の%dページ目">'
+                                     '</figure>'
+                                     % (esc_html(u), zw, zh, esc_html(g['title']), i + 1)
+                                     for i, (u, zw, zh) in enumerate(zen))
+                           + '</div>')
         else:
             mi_html = ('<span class="gt-mi-ji">%s</span>'
                        % esc_html(GOODS_SHURUI_NA.get(g['icon'], 'グッズ')))
@@ -2080,9 +2123,14 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
 
         # ── 取りにいくボタン。押した人だけが動きます ──────
         dl = []
-        for _, na, url in g.get('file', ()):
-            dl.append('<a class="btn gt-b" href="%s" download>%s</a>'
-                      % (esc_html(url), esc_html(na)))
+        # ★data-na … 保存するときのファイル名（2026-09-27 依頼「開いたらそのまま
+        #   保存できるように」）。スマホは download の印を無視してPDFを開くので、
+        #   src/hiroba.html の「グッズを保存する」が、この名前で保存させます。
+        for k, na, url in g.get('file', ()):
+            shippo = url.rsplit('.', 1)[-1].lower()
+            fna = re.sub(r'[\\/:*?"<>|]', '', g['title']) + '.' + shippo
+            dl.append('<a class="btn gt-b" href="%s" download="%s" data-na="%s">%s</a>'
+                      % (esc_html(url), esc_html(fna), esc_html(fna), esc_html(na)))
         if not dl:
             dl.append('<span class="gt-mada">準備中</span>')
 
