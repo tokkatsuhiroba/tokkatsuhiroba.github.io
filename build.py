@@ -6116,7 +6116,7 @@ HOME_FUDA = (
     ('news',   'news',   'gyoji-news', '一次情報だけ。要約は、こちらの言葉で。'),
     # 2026-09-26 依頼：文科省資料。帯の8つめ（スマホでは下の段の右はし）。
     #   行き先は 特活とは と同じ shiru.html の #monka です。
-    ('monka',  'monka',  'gyoji-guide', '緑本・評価資料・映像・解説へ、ひと押しで。'),
+    ('monka',  'monka',  'gyoji-guide', '指導資料・評価資料・映像・解説へ、ひと押しで。'),
 )
 
 # 節の見出しに立つ人。ホームの札から入ってきた人を、行き先で迎えます。
@@ -7232,13 +7232,13 @@ KOTOBA = {
     #   帯・札・見出しの名前と、節の中の6つの札（monka-h／monka-yo／monka-b）。
     #   札の下の小さい出どころ（monka-de）は資料の正式名なので、訳しません。
     '文科省資料': ('MEXT documents', 'وثائق وزارة التعليم'),
-    '緑本・評価資料・映像・解説へ、ひと押しで。':
-        ('The Green Book, assessment guides, videos and the official commentary, one tap away.',
-         'الكتاب الأخضر وأدلة التقييم والفيديوهات والشرح الرسمي، بضغطة واحدة.'),
+    '指導資料・評価資料・映像・解説へ、ひと押しで。':
+        ('Teaching guides, assessment guides, videos and the official commentary, one tap away.',
+         'أدلة التدريس وأدلة التقييم والفيديوهات والشرح الرسمي، بضغطة واحدة.'),
     'よく開く公式の資料を、6つ。押すと、公式のPDFやページが新しいタブで開きます。':
         ('Six official documents people open often. Tap one and the official PDF or page opens in a new tab.',
          'ست وثائق رسمية يكثر فتحها. اضغط على إحداها فيُفتح ملف PDF أو الصفحة الرسمية في تبويب جديد.'),
-    '緑本': ('The Green Book', 'الكتاب الأخضر'),
+    '指導資料': ('Teaching guide', 'دليل التدريس'),
     '学級会の進め方と板書の例。はじめて学級会を開く前に。':
         ('How to run a class meeting, with board examples. Read it before your first class meeting.',
          'كيف يُدار اجتماع الفصل، مع أمثلة للسبورة. اقرأه قبل أول اجتماع للفصل.'),
