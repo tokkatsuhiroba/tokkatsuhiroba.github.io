@@ -2047,7 +2047,7 @@ def goods_zen_yomu(g):
 
 
 GT = """      <li class="gt{cls}" id="goods-{id}">
-        <div class="gt-mi gt-mi--{men}">{mi}</div>
+        <div class="gt-hidari"><div class="gt-mi gt-mi--{men}">{mi}</div>{mi_shita}</div>
         <div class="gt-hon">
 {me}          <h3 class="gt-na">{title}{new}</h3>
           <p class="gt-de">{desc}</p>
@@ -2068,6 +2068,7 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
         # ── 左の絵。見本があれば見本、無ければ種類の字 ──────
         mi = goods_mihon_yomu(g, page)
         zen = goods_zen_yomu(g)
+        mi_shita = ''
         if mi:
             uri, w, h = mi
             mi_html = ('<img src="%s" width="%d" height="%d" loading="lazy" '
@@ -2078,7 +2079,6 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
             if zen:
                 mi_html = ('<button class="gt-mi-b" type="button" data-zen="goods" '
                            'aria-label="%s を大きく見る（%dページ）">%s'
-                           '<span class="gt-mi-ooki" aria-hidden="true">大きく見る</span>'
                            '</button>'
                            % (esc_html(g['title']), len(zen), mi_html)
                            + '<div class="gt-zen" hidden>'
@@ -2088,6 +2088,12 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
                                      % (esc_html(u), zw, zh, esc_html(g['title']), i + 1)
                                      for i, (u, zw, zh) in enumerate(zen))
                            + '</div>')
+                # 見本の真下の一言（2026-09-27 依頼「大きく見るのボタンがダサい。
+                #   サムネイルの真下に配置して。↑タップで大きく とか」）。
+                #   ここを押しても開きます。読み上げとTabは上の見本のボタン1つで足りるので、
+                #   こちらは隠します（同じものが2回読まれないように）。
+                mi_shita = ('<button class="gt-mi-shita" type="button" data-zen="goods" '
+                            'tabindex="-1" aria-hidden="true"><span>↑タップで</span><span>大きく</span></button>')
         else:
             mi_html = ('<span class="gt-mi-ji">%s</span>'
                        % esc_html(GOODS_SHURUI_NA.get(g['icon'], 'グッズ')))
@@ -2137,7 +2143,7 @@ def build_goods_hiroba(goods, okurareta, page='manabu.html'):
         out.append(GT.format(
             cls=' gt--todoita' if g['okurareta'] else '',
             id=g['id'], men=GOODS_SHURUI_MEN.get(g['icon'], 'ki'),
-            mi=mi_html, me=me_html,
+            mi=mi_html, mi_shita=mi_shita, me=me_html,
             title=esc_html(g['title']), new=new_fuda(g.get('d')),
             desc=esc_html(g['desc']), naka=naka, naoshi=naoshi, by=by,
             dl=''.join(dl)))
