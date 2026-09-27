@@ -6,8 +6,9 @@ icon: g-note
 kami: B4たて
 nen: 5年,6年
 naoshi: naoshite
-pdf: 
+pdf: https://tokkatsuhiroba.github.io/downloads/yoshii-katsudo-sheet.pdf
 docx: https://tokkatsuhiroba.github.io/downloads/yoshii-katsudo-sheet.docx
 pptx:
 xlsx:
+mihon: yoshii-katsudo-sheet
 ---

@@ -6,8 +6,9 @@ icon: g-card
 kami: その他
 nen: 1年,2年,3年,4年
 naoshi: naoshite
-pdf: 
+pdf: https://tokkatsuhiroba.github.io/downloads/yoshii-teian-card.pdf
 docx: https://tokkatsuhiroba.github.io/downloads/yoshii-teian-card.docx
 pptx:
 xlsx:
+mihon: yoshii-teian-card
 ---

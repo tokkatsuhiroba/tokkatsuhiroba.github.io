@@ -6,8 +6,9 @@ icon: g-shikai
 kami: B4たて
 nen: 3年,4年,5年,6年
 naoshi: naoshite
-pdf: 
+pdf: https://tokkatsuhiroba.github.io/downloads/yoshii-daihon-daihyo.pdf
 docx: https://tokkatsuhiroba.github.io/downloads/yoshii-daihon-daihyo.docx
 pptx:
 xlsx:
+mihon: yoshii-daihon-daihyo
 ---

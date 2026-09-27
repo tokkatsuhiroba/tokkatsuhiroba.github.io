@@ -6,8 +6,9 @@ icon: g-corner
 kami: A3よこ
 nen: 
 naoshi: naoshite
-pdf: 
+pdf: https://tokkatsuhiroba.github.io/downloads/yoshii-teian-riyu-board.pdf
 docx: https://tokkatsuhiroba.github.io/downloads/yoshii-teian-riyu-board.docx
 pptx:
 xlsx:
+mihon: yoshii-teian-riyu-board
 ---
