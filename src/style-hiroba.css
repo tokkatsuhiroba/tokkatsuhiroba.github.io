@@ -120,6 +120,22 @@ body{
 a{color:var(--accent)}
 :focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 img,svg{max-width:100%}
+/* ── 長いURLや英数字の列は、どこででも折る（2026-10-02）──────────
+   送られた実践の本文に、Apps Script のURL（約100字、途中に折れめが1つも
+   無い英数字）がそのまま書かれていました。日本語はどこでも折れますが、
+   英数字の列は折れません。その1行が 649px を言い張り、**スマホの実践集の
+   札が14件ぜんぶ 678px に広がって、右半分が切れました**。
+   上の clip のおかげで横スクロールは出ませんが、そのぶん **切れても
+   見た目では気づけません**。
+   ★anywhere にします（break-word ではなく）。break-word は折るだけで、
+     「この行はここまで細くなれる」という幅の計算には効きません。
+     anywhere なら、札の幅を押し広げること自体が起きません。
+   ★字の入るところ（段落・項目・見出し）にだけ掛けます。ボタンや札の
+     ふだには掛けません（短い字が1字ずつに崩れるのを避けるため）。
+   ★入れたときに、8ページ × スマホ375px・パソコン1280px で、
+     動いたのは このURLの段落だけでした（実測）。
+   ★機械の見張り：sumaho_haba.py（公開のまえに、375pxで幅を測る） */
+p,li,dd,dt,h1,h2,h3,h4,h5,figcaption,blockquote,td,th{overflow-wrap:anywhere}
 
 .skip{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .skip:focus{
@@ -2282,9 +2298,10 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 /* ── 板書のページ ── */
 /* ★列は minmax(0,1fr)、札は min-width:0（2026-10-02 スマホで崩れたのを直す）。
    ただの grid だと、列の幅は「中身がいちばん縮んだときの幅」より細くなれません。
-   札の中の写真の窓（よこ送り）が、たて長の写真が来たときに 645px を言い張り、
+   本文に書かれた長いURL（折れめの無い英数字）が 649px を言い張り、
    **1件のせいで、全部の札が画面の外へはみ出しました**（キャリアパスポートDX）。
-   ここで「列は画面の幅まで」と決めておけば、どんな写真が届いても崩れません。 */
+   ここで「列は画面の幅まで」と決めておけば、1件が何を抱えてきても、
+   ほかの札は道づれになりません。URLそのものは、上の overflow-wrap で折ります。 */
 .bantana{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(12px,1.8vw,18px)}
 .bfuda{
   min-width:0;

@@ -18,7 +18,7 @@ name: build
 on:
   push:
     branches: [main]
-    paths: ['src/**', 'build.py', '.github/workflows/build.yml']
+    paths: ['src/**', 'build.py', 'sumaho_haba.py', '.github/workflows/build.yml']
   workflow_dispatch: {}
 
 permissions:
@@ -190,6 +190,22 @@ jobs:
           git add -A src/shiryo src/bansho src/downloads src/goods
           git commit -m '送られたPDFと写真を軽くし、グッズの作成者を消して見本を作る' || exit 0
           git push origin HEAD:main
+
+      # ══ スマホの幅で、画面の外へはみ出していないか（2026-10-02 依頼）══
+      #   送られた実践の本文に長いURLが1本あっただけで、スマホの実践集が
+      #   14件ぜんぶ右半分切れました。build.py の検問は字と項目を見るので、
+      #   **並べたときの幅**は見ていません。ここで本物の Chrome に 375px で
+      #   並べて測り、はみ出しがあれば **公開を止めます**（前のページが残ります）。
+      #   ★Chrome は ubuntu-latest に はじめから入っています。
+      #   ★日本語の字体が無いと幅が実物とずれるので、Noto を入れてから測ります。
+      #   ★写真の書き戻しのあと・公開のまえに置きます。ここで止まっても、
+      #     WebPにしたぶんは書き戻されます（次の回でやり直さずにすむ）。
+      #   止まったときは、ログに「どの札（#b-bansho-…）の、どの字か」が出ます。
+      - name: スマホの幅ではみ出していないか測る（はみ出したら、ここで止まる）
+        run: |
+          sudo apt-get update -qq >/dev/null 2>&1 || true
+          sudo apt-get install -y -qq fonts-noto-cjk >/dev/null 2>&1 || echo '⚠ 日本語の字体を入れられませんでした（測るのは続けます）'
+          python3 sumaho_haba.py
 
       - name: 公開するものだけを取り出す
         run: |
