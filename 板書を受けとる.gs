@@ -268,6 +268,7 @@ function doPost(e) {
        そのかわり、知らせに［すぐ消す］を付けています。 */
     var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: d.m || '',
               n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,
+              nk: d.nk || '',     // よみがな（2026-10-02）→ _yomi
               /* 送った人の合いことばの**ハッシュ**。合いことばそのものは
                  こちらには来ません（来ないほうが安全です）。 */
               nushi: _nushi_arau(d.nushi) };
@@ -985,6 +986,9 @@ function _shiraseru(slug, d, folder, nose) {
     '　お名前　：' + (d.na || '（なし）')
       + (d.ko ? '　← サイトにも出しています' : '　← サイトには出していません') + '\n' +
     '　所属　　：' + (d.sh || '（なし）') + '\n' +
+    /* よみがな（2026-10-02）。動画の台本用。.md に書くのは「出してよい」のときだけ */
+    '　よみがな：' + (_arau(d.nk) || '（なし）')
+      + (_arau(d.nk) && !_yomi(d) ? '　← 名前を出さないので、.md には書いていません' : '') + '\n' +
     '　枚数　　：' + (d.e || []).length + '枚' +
       ((d.p || []).length ? '／PDF1つ' : '') + '\n' +
     '　置き場　：' + folder.getUrl() + '\n\n' +
@@ -1172,7 +1176,7 @@ function _naosu(d, kanriMado) {
   if (oshi) hon = '★推しポイント：' + oshi + '\n\n' + hon;
   var n = { uri: uri, pdf: pdf, t: d.t || '', g: d.g || '', m: hon,
             n: d.n || '', na: d.na || '', sh: d.sh || '', ko: !!d.ko,
-            nushi: moto.nushi };
+            nk: d.nk || '', nushi: moto.nushi };
   /* 新しい管理画面は、名前・所属・公開の有無をそのまま送る。
      以前は古い by を必ず優先していたため、名前や所属を
      書き換えても更新されなかった。古い公開済み画面だけ互換用に by を引きつぐ。 */
@@ -1210,6 +1214,12 @@ function _naosu(d, kanriMado) {
 
   var md = _md(slug, n);
   md = _hikitsugu(md, moto.hon, ['date', 'todoita']);
+  /* よみがなの欄を持たない古い画面から直されたときは、もとの yomi: を引きつぎます
+     （欄そのものが来ていないだけで、消したいわけではないため）。
+     名前を出さないに変えたときは、引きつぎません（→ _yomi と同じ線）。 */
+  if (d.nk === undefined && n.ko && String(n.na || '').trim()) {
+    md = _hikitsugu(md, moto.hon, ['yomi']);
+  }
   if (!uri.length && moto.bansho) md = md.replace(/\n---\n/, '\nbansho: ' + slug + '\n---\n');
   if (!pdf && moto.shiryo)        md = md.replace(/\n---\n/, '\nshiryo: 送ってもらった資料|' + slug + '\n---\n');
   _github('src/jissen/' + moto.michi_na, Utilities.base64Encode(md, Utilities.Charset.UTF_8),
@@ -1534,6 +1544,19 @@ function _by(n) {
   return sh ? (na + '（' + sh + '）') : na;
 }
 
+/* お名前のよみがな（2026-10-02 依頼）。
+   「実践だより」動画の読み上げ（Gemini）が、漢字の名前を読みまちがえるため
+   （眞田＝さなだ →「まさだ」）。送る人に、よみも書いてもらいます。
+   ★**「名前を出してよい」に印が無いときは、よみも書きません。**
+     名前を出さない人のよみだけが .md（＝GitHubの公開リポジトリ）に残るのは、
+     名前を半分出しているのと同じだからです。
+   ★サイトには出しません。build.py の yomi_arau が、管理画面にだけ渡します。
+   ★ひらがな・カタカナ・空白のほかは、黙って削ります（画面のほうで先に止めています）。 */
+function _yomi(d) {
+  if (!d.ko || !String(d.na || '').trim()) return '';
+  return _arau(d.nk).replace(/[^ぁ-んァ-ヶー\s　]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+
 function _md(slug, n) {
   var t = _arau(n.t);
   var g = _arau(n.g);
@@ -1564,6 +1587,8 @@ function _md(slug, n) {
   if (n.pdf)        gyo.push('shiryo: 送ってもらった資料|' + slug);
   gyo.push('by: ' + (n.by_hyoji !== undefined
                      ? (n.by_hyoji || '送ってくださった先生') : _by(n)));
+  var yomi = _yomi(n);
+  if (yomi) gyo.push('yomi: ' + yomi);
   gyo.push('---');
   gyo.push('');
   gyo.push(m || (n.uri.length ? '送ってもらった板書です。' : '送ってもらった資料です。'));
@@ -1745,6 +1770,8 @@ function _md_goods(slug, d, t, de, oku, naoseru) {
      所属は かっこの中に入り、公開ページでは build.py の namae_dake() が
      落とします（管理画面には残ります）。 */
   gyo.push('by: ' + _by({ ko: d.ko, na: d.na, sh: d.s }));
+  var yomi = _yomi(d);
+  if (yomi) gyo.push('yomi: ' + yomi);
 
   var ken = _arau(d.ken);
   if (/^.{2,5}[都道府県]$/.test(ken)) {
@@ -1792,7 +1819,9 @@ function _shiraseru_goods(slug, d, t, de, oku, naoseru, nose) {
       + (String(d.na || '').trim()
            ? (d.ko ? '　← サイトにも出しています' : '　← サイトには出していません')
            : '') + '\n' +
-    '　所属　：' + (d.s || '（なし）') + '\n\n' +
+    '　所属　：' + (d.s || '（なし）') + '\n' +
+    '　よみ　：' + (_arau(d.nk) || '（なし）')
+      + (_arau(d.nk) && !_yomi(d) ? '　← 名前を出さないので、.md には書いていません' : '') + '\n\n' +
     '＜使い方＞\n' + (_arau_hon(d.m) || '（なし）') + '\n\n' +
     '★ ファイルの中（本文・ヘッダー・フッター）に 学校名や子どもの名前が\n' +
     '　 残っていないか、**かならず開いて**確かめてください。\n' +

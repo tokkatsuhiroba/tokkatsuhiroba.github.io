@@ -683,6 +683,51 @@ GOODS_TOBASHITA = []
 # 届いたグッズから **削ったところ**（欄ひとつぶん）。これも ⚠ で出します。
 GOODS_KEZUTTA = []
 
+# ══ お名前のよみがな（2026-10-02 依頼）══════════════════════
+#   「実践だより」動画のナレーションは Gemini の読み上げで作っています。
+#   漢字の名前を読みまちがえるので（眞田＝さなだ →「まさだ」）、
+#   送る人によみがなも書いてもらい、front matter の yomi: に入れます。
+#
+#   ★**公開ページには1字も出しません。**使うのは 管理画面（kanri.html）と
+#     動画の台本だけです。公開ページに出す手は、ここには1つもありません。
+#     出したくなったら、まず指示書（2026-10-02 v1.0）の「やらないこと」を。
+#   ★受け口（板書を受けとる.gs）は「名前を出してよい」に印があるときだけ
+#     yomi: を書きます。ここでも同じ線を引きます（by が名前でなければ捨てる）。
+#   ★変な字・出してはいけない語が混ざったら、**よみだけ**捨てて先へ進みます。
+#     管理画面も ngword_check を通るので、残すとビルドごと止まるためです。
+#     捨てたものは、組み立ての最後に ⚠ で出ます。
+YOMI_MAX = 40
+YOMI_JI = re.compile(r'^[ぁ-んァ-ヶー\s　]+$')
+YOMI_SUTETA = []
+
+
+def yomi_arau(fm):
+    """front matter の yomi: を検めて返す。通らなければ ''（理由は YOMI_SUTETA へ）。"""
+    y = re.sub(r'\s+', ' ', (fm.get('yomi') or '').replace('　', ' ')).strip()
+    if not y:
+        return ''
+    f = fm['_file']
+    by = (fm.get('by') or '').strip()
+    if not by or by in ('送ってくださった先生', '本サイト'):
+        YOMI_SUTETA.append('%s（名前を出していないので、よみも持ちません）' % f)
+        return ''
+    if not YOMI_JI.match(y):
+        YOMI_SUTETA.append('%s（ひらがな・カタカナ以外の字があります）' % f)
+        return ''
+    if len(y) > YOMI_MAX:
+        YOMI_SUTETA.append('%s（%d字あります。%d字まで）' % (f, len(y), YOMI_MAX))
+        return ''
+    if ngword_aru(y):
+        # 語そのものは書きません（_ngword.txt は上げていない表です）
+        YOMI_SUTETA.append('%s（出してはいけない語が入っています）' % f)
+        return ''
+    return y
+
+
+def yomi_soeru(namae, yomi):
+    """管理画面で、名前の横に（よみ）を添える。公開ページでは使わないこと。"""
+    return '%s（%s）' % (namae, yomi) if (namae and yomi) else namae
+
 
 def load_goods():
     goods = {}
@@ -817,6 +862,8 @@ def load_goods():
                 shi = shi[:CHIIKI_SHI_MAX]
         fm['ken'], fm['shi'] = ken, shi
         fm['chiiki'] = (ken + ('　' + shi if shi else '')) if ken else ''
+        # お名前のよみがな（2026-10-02）。管理画面と動画の台本だけ → yomi_arau
+        fm['yomi'] = yomi_arau(fm)
 
         # ── 外の資料リンクは、グッズには置きません（2026-09-24 依頼）──
         #   「グッズに関しては、デジタル資料リンクはいらないのでは、
@@ -1015,6 +1062,8 @@ def kenmon_jissen(fm, goods):
     if not re.match(r'^[a-z0-9-]+$', fm['slug']):
         raise Tomeru('%s：ファイル名の _ から後ろは 英小文字・数字・- だけにしてください' % f)
     fm['by'] = fm.get('by') or '本サイト'
+    # お名前のよみがな（2026-10-02）。公開ページには出しません → yomi_arau
+    fm['yomi'] = yomi_arau(fm)
     # ── 推しポイント（2026-09-22 夜 依頼）──────────────────
     #   いちばん伝えたいことを、ひとことで。題のすぐ下に大きく出ます。任意です。
     #
@@ -4886,6 +4935,8 @@ def build_kanri_list(jissen):
             'v': a['slug'], 't': a['title'], 'o': a.get('oshi') or '',
             'm': a['summary'].strip(), 'g': a['grade'], 's': a['scene'],
             'n': scene_key, 'na': na, 'sh': sh, 'ko': ko, 'by': a['by'],
+            # よみがな（2026-10-02）。管理画面からなおすときも、消えないように
+            'nk': a.get('yomi') or '',
             # 地域（2026-09-22）。ken は都道府県、shk は自治体。
             #   sh は「所属」で先に使っているので、名前を分けています。
             'ken': a.get('ken') or '', 'shk': a.get('shi') or '',
@@ -4895,7 +4946,8 @@ def build_kanri_list(jissen):
         sagasu = ' '.join((a['title'], a['summary'], a['grade'], a['scene'], a['by'],
                            a.get('chiiki') or ''))
         meta = '・'.join(x for x in (a.get('chiiki') or '', a['scene'], a['grade'],
-                                     ja_md(a['d']), '実践者：' + sensei_ja(a['by'])) if x)
+                                     ja_md(a['d']),
+                                     '実践者：' + yomi_soeru(sensei_ja(a['by']), a.get('yomi'))) if x)
         out.append(
             '      <article class="kanri-card" data-v="%s" data-date="%s" data-sagasu="%s">\n'
             '        <div><h3>%s</h3><p data-kanri-meta>%s</p>'
@@ -5042,7 +5094,7 @@ def build_kanri_hoka(komari, ken, tobashita, goods=None):
                 g.get('kami') or '', '・'.join(g.get('nen') or []),
                 g.get('chiiki') or '',
                 # 管理画面には、かっこの中（所属）も残します
-                '提供：' + (g.get('by') or '')) if x)
+                '提供：' + yomi_soeru(g.get('by') or '', g.get('yomi'))) if x)
             out.append(KANRI_HOKA_T.format(
                 v=esc_html(g['id']), dai=esc_html(g['title']),
                 meta=esc_html(meta), nani='グッズ',
@@ -7929,6 +7981,16 @@ KOTOBA = {
     'お名前':
         ('Your name',
          'اسمك'),
+    # お名前のよみがな（2026-10-02 依頼）。サイトには出ず、動画の読み上げにだけ使います。
+    'お名前のよみがな':
+        ('Reading of your name (in kana)',
+         'قراءة اسمك (بالكانا)'),
+    'サイトには出ません。実践紹介の動画で、お名前を正しく読むために使います。':
+        ('This does not appear on the site. We use it so your name is read correctly in our introduction videos.',
+         'لا يظهر هذا على الموقع. نستخدمه لكي يُنطق اسمك نطقًا صحيحًا في مقاطع الفيديو التعريفية.'),
+    '名前を出してくださる場合は、よみがなもあると助かります（空のままでも送れます）。':
+        ('If you are showing your name, the reading would help us too (you can still send without it).',
+         'إن كنت ستُظهر اسمك، فستفيدنا قراءته أيضًا (ويمكنك الإرسال من دونها).'),
     '所属':
         ('School or affiliation',
          'المدرسة أو الجهة'),
@@ -8695,6 +8757,8 @@ def main_shin(check_only):
         print('  ⚠ グッズを1点 出しませんでした … %s' % t_g)
     for k_g in GOODS_KEZUTTA:
         print('  ⚠ グッズの欄を1つ 削りました … %s' % k_g)
+    for y_s in dict.fromkeys(YOMI_SUTETA):
+        print('  ⚠ よみがなを捨てました … %s' % y_s)
     print('  実践　　　　… %d件（うち議題が%d件。ぜんぶ、中身までこのページに）'
           % (len(jissen), sum(1 for a in jissen if a['kind'] == 'gidai')))
     print('  板書　　　　… %d件・%d枚（写真は bansho.html にだけ入れています）'

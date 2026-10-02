@@ -169,6 +169,13 @@
       <label for="kanri-naosu-na">お名前<span class="okuru-nin">任意</span></label>
       <input class="okuru-i" id="kanri-naosu-na" name="na" maxlength="40" autocomplete="name">
     </div>
+    <!-- お名前のよみがな（2026-10-02）。動画の読み上げ用で、サイトには出ません。
+         ★ここに欄が無いと、管理画面から直すたびに yomi: が消えます。 -->
+    <div class="kanri-naosu-g">
+      <label for="kanri-naosu-nk">よみがな<span class="okuru-nin">任意・サイトに出ない</span></label>
+      <input class="okuru-i" id="kanri-naosu-nk" name="nk" maxlength="40" autocomplete="off"
+             placeholder="例：いとう ゆう">
+    </div>
     <div class="kanri-naosu-g">
       <label for="kanri-naosu-sh">所属<span class="okuru-nin">任意</span></label>
       <input class="okuru-i" id="kanri-naosu-sh" name="sh" maxlength="60">
@@ -911,6 +918,7 @@
     document.getElementById('kanri-naosu-u').value = d.u || '';
     document.getElementById('kanri-naosu-na').value = d.na || '';
     document.getElementById('kanri-naosu-sh').value = d.sh || '';
+    document.getElementById('kanri-naosu-nk').value = d.nk || '';
     document.getElementById('kanri-naosu-ko').checked = !!d.ko;
   }
   function naosu_yomu(){
@@ -931,6 +939,7 @@
       shk: document.getElementById('kanri-naosu-shk').value.trim(),
       na: document.getElementById('kanri-naosu-na').value.trim(),
       sh: document.getElementById('kanri-naosu-sh').value.trim(),
+      nk: document.getElementById('kanri-naosu-nk').value.trim(),
       ko: document.getElementById('kanri-naosu-ko').checked
     };
   }

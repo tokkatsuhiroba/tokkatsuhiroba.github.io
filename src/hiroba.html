@@ -691,6 +691,23 @@
                autocomplete="name" placeholder="例：伊藤 優">
       </div>
 
+      <!-- お名前のよみがな（2026-10-02 依頼）。任意です。
+           「実践だより」動画の読み上げ（Gemini）が、漢字の名前を読みまちがえる
+           ため（姓をまちがえて読んだことがあります）。
+           グッズの紹介にも使うので、実践と同じ欄を置きます。
+           ★**サイトには出しません。**受け口は「名前を出してよい」に印が
+             あるときだけ .md の yomi: に書き、build.py は管理画面にだけ出します。
+             画面の字を変えるときは、そちらも一緒に見てください（嘘になります）。
+           ★id の「gd-yomi」は使いません。class の okuru-yomi（説明の字）と
+             まぎれるためです。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="gd-nk">お名前のよみがな<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトには出ません。</b>実践紹介の動画で、お名前を正しく読むために使います。</p>
+        <input class="okuru-i" type="text" id="gd-nk" name="nk" maxlength="40"
+               autocomplete="off" placeholder="例：いとう ゆう">
+        <div id="gd-nk-yobi" hidden><p class="okuru-yomi okuru-yomi--sub">名前を出してくださる場合は、よみがなもあると助かります（空のままでも送れます）。</p></div>
+      </div>
+
       <div class="okuru-g">
         <label class="okuru-l" for="gd-shozoku">所属<span class="okuru-nin">任意</span></label>
         <p class="okuru-yomi okuru-yomi--sub"><b>サイトには出ません。</b>管理人にだけ届きます。</p>
@@ -1230,6 +1247,22 @@
                autocomplete="name" placeholder="例：伊藤 優">
       </div>
 
+      <!-- お名前のよみがな（2026-10-02 依頼）。任意です。
+           「実践だより」動画の読み上げ（Gemini）が、漢字の名前を読みまちがえる
+           ため（姓をまちがえて読んだことがあります）。
+           ★**サイトには出しません。**受け口は「名前を出してよい」に印が
+             あるときだけ .md の yomi: に書き、build.py は管理画面にだけ出します。
+             画面の字を変えるときは、そちらも一緒に見てください（嘘になります）。
+           ★id の「okuru-yomi」は使いません。class の okuru-yomi（説明の字）と
+             まぎれるためです。 -->
+      <div class="okuru-g">
+        <label class="okuru-l" for="okuru-nk">お名前のよみがな<span class="okuru-nin">任意</span></label>
+        <p class="okuru-yomi okuru-yomi--sub"><b>サイトには出ません。</b>実践紹介の動画で、お名前を正しく読むために使います。</p>
+        <input class="okuru-i" type="text" id="okuru-nk" name="nk" maxlength="40"
+               autocomplete="off" placeholder="例：いとう ゆう">
+        <div id="okuru-nk-yobi" hidden><p class="okuru-yomi okuru-yomi--sub">名前を出してくださる場合は、よみがなもあると助かります（空のままでも送れます）。</p></div>
+      </div>
+
       <div class="okuru-g">
         <label class="okuru-l" for="okuru-sh">所属<span class="okuru-nin">任意</span></label>
         <!-- 2026-09-23 依頼：「所属はHP上には表示されません。と明記」。
@@ -1747,12 +1780,42 @@
     try{
       if(!n || !String(n.na || '').trim()) return false;
       localStorage.setItem(NANORI_KAGI, JSON.stringify(
-        {na: n.na || '', sh: n.sh || '', ko: n.ko ? 1 : 0}));
+        {na: n.na || '', sh: n.sh || '', ko: n.ko ? 1 : 0, nk: n.nk || ''}));
       return true;
     }catch(e){ return false; }   /* 覚えられなくても、送るのは止めません */
   }
   function nanori_wasureru(){
     try{ localStorage.removeItem(NANORI_KAGI); }catch(e){}
+  }
+
+  /* ══ お名前のよみがな（2026-10-02 依頼）══════════════════════
+     動画の読み上げが漢字の名前を読みまちがえるので、よみも書いてもらいます。
+     ★任意です。空でも送れます。
+     ★「名前を出してよい」に印があって よみが空のときだけ、欄の下に
+       やさしい1行を出します（止めません）。
+     ★ひらがな・カタカナ・空白のほかが混ざっていたら、送るまえに止めます。
+       受け口（板書を受けとる.gs）は、ちがう字を黙って削ります。黙って
+       削られるより、ここで言われたほうが直せます。
+     ★サイトには出ません（→ build.py の yomi_arau）。 */
+  var YOMI_JI = /^[ぁ-んァ-ヶー\s　]*$/;
+  function yomi_toru(id){
+    var e = document.getElementById(id);
+    return e ? e.value.replace(/[\s　]+/g, ' ').trim().slice(0, 40) : '';
+  }
+  function yomi_dame(id){
+    var e = document.getElementById(id);
+    return !!e && !YOMI_JI.test(e.value);
+  }
+  function yomi_yobi(nkId, koId){
+    var nk = document.getElementById(nkId);
+    var ko = document.getElementById(koId);
+    var yobi = document.getElementById(nkId + '-yobi');
+    if(!nk || !ko || !yobi) return function(){};
+    var miru = function(){ yobi.hidden = !(ko.checked && !nk.value.trim()); };
+    nk.addEventListener('input', miru);
+    ko.addEventListener('change', miru);
+    miru();
+    return miru;
   }
 
   /* お名前・所属・印を、欄に入れます（2026-09-23 依頼。2026-09-24 に、
@@ -1762,14 +1825,21 @@
      知らせると、直しているのに前の話に見えます）。
      doko … 入れる欄の名前。省くと「実践を送る」のものになります。 */
   function nanori_ireru(n, shirasu, doko){
-    doko = doko || {na: 'okuru-na', sh: 'okuru-sh', ko: 'okuru-ko', shirase: 'okuru-nanori'};
+    doko = doko || {na: 'okuru-na', sh: 'okuru-sh', ko: 'okuru-ko', nk: 'okuru-nk',
+                    shirase: 'okuru-nanori'};
     var naI = document.getElementById(doko.na);
     var shI = document.getElementById(doko.sh);
     var koI = document.getElementById(doko.ko);
+    var nkI = doko.nk && document.getElementById(doko.nk);
     if(!n || !naI) return;
     naI.value = n.na || '';
     if(shI) shI.value = n.sh || '';
-    if(koI) koI.checked = !!n.ko;
+    if(koI){
+      koI.checked = !!n.ko;
+      /* 印を入れたことを、よみがなの1行にも知らせます（→ yomi_yobi） */
+      koI.dispatchEvent(new Event('change'));
+    }
+    if(nkI) nkI.value = n.nk || '';
     if(!shirasu || !naI.value) return;
     var oya = naI.parentNode;
     if(!oya || document.getElementById(doko.shirase)) return;
@@ -1781,7 +1851,7 @@
       'まえに この端末で書いたお名前と所属を入れてあります。ちがえば、書きかえてください。';
     p.querySelector('button').addEventListener('click', function(){
       nanori_wasureru();
-      nanori_ireru({na: '', sh: '', ko: 0}, false, doko);
+      nanori_ireru({na: '', sh: '', ko: 0, nk: ''}, false, doko);
       p.parentNode.removeChild(p);
       naI.focus();
     });
@@ -2371,7 +2441,7 @@
            ★控えの無い古い1件は、この端末が覚えているものを入れます。
            ★管理画面から来たときは入れません。送り主の名前を、
              管理人の名前で上書きしてしまうためです。 */
-        nanori_ireru((n.na || n.sh || n.ko) ? {na: n.na, sh: n.sh, ko: n.ko}
+        nanori_ireru((n.na || n.sh || n.ko) ? {na: n.na, sh: n.sh, ko: n.ko, nk: n.nk}
                                             : (n.kanri ? null : nanori_yomu()), false);
         botan.innerHTML = 'なおす<span class="btn-ya">→</span>';
         var shirase2 = document.createElement('p');
@@ -2475,6 +2545,7 @@
       /* なおすのでなければ、この端末が覚えているお名前を入れます
          （2026-09-23 依頼）。2件めからは、書かなくて済みます。 */
       else nanori_ireru(nanori_yomu(), true);
+      var nkMiru = yomi_yobi('okuru-nk', 'okuru-ko');
 
       okuruF.addEventListener('submit', function(ev){
         ev.preventDefault();
@@ -2502,6 +2573,11 @@
              : (!naIn.value.trim() && !(naoshi && naoshi.kanri)
                 ? [naIn, 'お名前を書いてください。出すかどうかは、下のチェックで選べます。']
                 : null));
+        /* よみがな（2026-10-02）。任意ですが、変な字は送るまえに言います */
+        if(!tarinai && yomi_dame('okuru-nk')){
+          tarinai = [document.getElementById('okuru-nk'),
+                     'お名前のよみがなは、ひらがなで入れてください（カタカナでも大丈夫です）。'];
+        }
         if(tarinai){
           shirase.textContent = tarinai[1];
           tarinai[0].focus();
@@ -2585,7 +2661,8 @@
                    })(chiiki_yomu()),
               na: naIn.value.trim().slice(0, 40),              /* お名前（必須） */
               sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
-              ko: document.getElementById('okuru-ko').checked ? 1 : 0
+              ko: document.getElementById('okuru-ko').checked ? 1 : 0,
+              nk: yomi_toru('okuru-nk')                        /* よみがな（任意・サイトに出ない） */
             })
           });
         }).then(function(){
@@ -2598,7 +2675,8 @@
           var mina = {
             na: naIn.value.trim().slice(0, 40),
             sh: document.getElementById('okuru-sh').value.trim().slice(0, 60),
-            ko: document.getElementById('okuru-ko').checked ? 1 : 0
+            ko: document.getElementById('okuru-ko').checked ? 1 : 0,
+            nk: yomi_toru('okuru-nk')
           };
           if(!(naoshi && naoshi.kanri)) nanori_shimau(mina);
           if(naoshi){
@@ -2607,7 +2685,7 @@
                ★控えの中身だけ、いまの字にそろえます。そろえないと、
                  2回めの［なおす］で 古い名前と題が出てきます。 */
             if(naoshi.key) aikotoba_kakikae(naoshi.key,
-              {t: dai, na: mina.na, sh: mina.sh, ko: mina.ko});
+              {t: dai, na: mina.na, sh: mina.sh, ko: mina.ko, nk: mina.nk});
             try{ sessionStorage.removeItem(NAOSHI_KAGI); }catch(e){}
             shirase.textContent = 'なおしました。数分で「みんなの実践」に出ます。';
             botan.disabled = false;
@@ -2615,8 +2693,8 @@
           }
           var shimaeta = nushi && aikotoba_shimau(
             {k: aikotoba, n: nushi, t: dai, d: new Date().toISOString().slice(0, 10),
-             na: mina.na, sh: mina.sh, ko: mina.ko});
-          okuruF.reset(); tenpu.kesu(); nen_kesu(); naiyo.kesu();
+             na: mina.na, sh: mina.sh, ko: mina.ko, nk: mina.nk});
+          okuruF.reset(); tenpu.kesu(); nen_kesu(); naiyo.kesu(); nkMiru();
           if(kazu) kazu.textContent = '0 / 1000字';
           if(uShirase) uShirase.textContent = '';
           shirase.textContent = '送りました。数分で「みんなの実践」に出ます。';
@@ -2696,7 +2774,7 @@
                   /* お名前・所属・印は、札に載っていません（所属はサイトに
                      出さないと約束しているためです）。だから、送ったときの
                      控えから持っていきます（2026-09-23 依頼）。 */
-                  na: h.na || '', sh: h.sh || '', ko: h.ko ? 1 : 0
+                  na: h.na || '', sh: h.sh || '', ko: h.ko ? 1 : 0, nk: h.nk || ''
                 }));
                 location.href = 'index.html#okuru';
               }catch(e){
@@ -4928,8 +5006,9 @@
     var gdOboe = nanori_yomu();
     if(gdOboe){
       nanori_ireru(gdOboe, true,
-        {na: 'gd-na', sh: 'gd-shozoku', ko: 'gd-ko', shirase: 'gd-nanori'});
+        {na: 'gd-na', sh: 'gd-shozoku', ko: 'gd-ko', nk: 'gd-nk', shirase: 'gd-nanori'});
     }
+    var gdNkMiru = yomi_yobi('gd-nk', 'gd-ko');
 
     var gd_yomu = function(file){
       return new Promise(function(ok, dame){
@@ -4976,6 +5055,9 @@
         }
       }
       if(!na) return tomeru('お名前を書いてください。サイトに出すかどうかは、下でえらべます。', 'gd-na');
+      if(yomi_dame('gd-nk')){
+        return tomeru('お名前のよみがなは、ひらがなで入れてください（カタカナでも大丈夫です）。', 'gd-nk');
+      }
 
       var jibun = document.getElementById('gd-jibun');
       if(jibun && !jibun.checked){
@@ -5020,16 +5102,19 @@
             shk: document.getElementById('gd-shk').value.trim().slice(0, 20),
             na: na.slice(0, 40),                         /* お名前（必須） */
             s:  document.getElementById('gd-shozoku').value.trim().slice(0, 60),
-            ko: document.getElementById('gd-ko').checked ? 1 : 0
+            ko: document.getElementById('gd-ko').checked ? 1 : 0,
+            nk: yomi_toru('gd-nk')                       /* よみがな（任意・サイトに出ない） */
           })
         });
       }).then(function(){
         nanori_shimau({
           na: na.slice(0, 40),
           sh: document.getElementById('gd-shozoku').value.trim().slice(0, 60),
-          ko: document.getElementById('gd-ko').checked ? 1 : 0
+          ko: document.getElementById('gd-ko').checked ? 1 : 0,
+          nk: yomi_toru('gd-nk')
         });
         gdF.reset();
+        gdNkMiru();
         gdNen.kesu();
         gdMihon.innerHTML = '';
         document.getElementById('gd-d-kazu').textContent = '0 / 60字';
