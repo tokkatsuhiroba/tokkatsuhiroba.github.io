@@ -2280,8 +2280,14 @@ a.fuda-tag:hover,a.fuda-tag:focus-visible{transform:translateY(-2px)}
 .shiryo-s i{font-style:normal;font-size:11px;letter-spacing:.08em}
 
 /* ── 板書のページ ── */
-.bantana{display:grid;gap:clamp(12px,1.8vw,18px)}
+/* ★列は minmax(0,1fr)、札は min-width:0（2026-10-02 スマホで崩れたのを直す）。
+   ただの grid だと、列の幅は「中身がいちばん縮んだときの幅」より細くなれません。
+   札の中の写真の窓（よこ送り）が、たて長の写真が来たときに 645px を言い張り、
+   **1件のせいで、全部の札が画面の外へはみ出しました**（キャリアパスポートDX）。
+   ここで「列は画面の幅まで」と決めておけば、どんな写真が届いても崩れません。 */
+.bantana{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(12px,1.8vw,18px)}
 .bfuda{
+  min-width:0;
   /* ★内余白は、かならずこの --bfuda-pad を使ってください。
      板書の窓（.bfuda-mado--hiro）が、同じ値ぶん外へ出て
      「札のふちいっぱい」を作っています。ここに数を直接書くと、
