@@ -7082,7 +7082,7 @@ KENSAKU_SETSU = {
     'index.html':    'みんなの特活ひろば（仮）（旧名 TOKKATSU広場・特活広場）は、特別活動の情報が溜まる場。'
                      'ニュース・一次資料・学級会の学習過程・研究日程・みんなの実践。',
     'shiru.html':    '特別活動とは何か。学級活動・児童会活動・クラブ活動・学校行事の'
-                     '4つの内容、学級会の学習過程、一次資料、ことばの意味。',
+                     '4つの内容、学級会の学習過程、文科省資料（緑本・評価資料・映像）、ことばの意味。',
     'manabu.html':   '学級会で明日から使えるグッズ。計画委員会の進め方、議題の集め方、'
                      '話合いの型。刷ってそのまま配れます。',
     'bansho.html':   '全国の先生から届いた特別活動の実践と、学級会の板書。'
@@ -7338,9 +7338,9 @@ KOTOBA = {
         ('Six official documents people open often. Tap one and the official PDF or page opens in a new tab.',
          'ست وثائق رسمية يكثر فتحها. اضغط على إحداها فيُفتح ملف PDF أو الصفحة الرسمية في تبويب جديد.'),
     '指導資料': ('Teaching guide', 'دليل التدريس'),
-    '学級会の進め方と板書の例。はじめて学級会を開く前に。':
-        ('How to run a class meeting, with board examples. Read it before your first class meeting.',
-         'كيف يُدار اجتماع الفصل، مع أمثلة للسبورة. اقرأه قبل أول اجتماع للفصل.'),
+    '通称「緑本」。学級会の進め方と板書の例。はじめて学級会を開く前に。':
+        ('Known as the "green book". How to run a class meeting, with board examples. Read it before your first class meeting.',
+         'يُعرف بـ«الكتاب الأخضر». كيف يُدار اجتماع الفصل، مع أمثلة للسبورة. اقرأه قبل أول اجتماع للفصل.'),
     '評価資料': ('Assessment guide', 'دليل التقييم'),
     '評価規準の立て方と、評価の事例。評価計画や通知表を書く前に。':
         ('How to set assessment criteria, with worked examples. Before writing an assessment plan or report cards.',
