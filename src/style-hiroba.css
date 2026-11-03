@@ -1032,6 +1032,8 @@ div.naiyo .naiyo-t .naiyo-saki{color:var(--mute)}
    ══════════════════════════════════════════════════════════════ */
 
 .ima-2{min-width:0;display:grid;gap:clamp(20px,3vw,34px)}
+/* 2026-11-03：子にも min-width:0。無いと、札が増えたとき中身の幅で列が広がり、スマホではみ出しました */
+.ima-2>*{min-width:0}
 @media (min-width:860px){
   .ima-2{grid-template-columns:minmax(290px,330px) 1fr;align-items:start}
   /* ★2026-09-24：左右の「よこにスライド →」と ‹ › が、22.5px ずれていました。
